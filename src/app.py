@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, render_template
-from config import config_data as config
+from src.config import config_data as config
 from flask_sqlalchemy import SQLAlchemy
 import psycopg
 
