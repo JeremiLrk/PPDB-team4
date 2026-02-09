@@ -38,7 +38,7 @@ class Books(db.Model):
 # Load SQL before app runs
 def load_sql():
     try:
-        sql_file_path = './sql/schema.sql'
+        sql_file_path = '../sql/schema.sql'
         with open(sql_file_path, 'r') as file:
             sql_script = file.read()
         with psycopg.connect(
