@@ -1,0 +1,135 @@
+@startuml
+class User{
+    name
+    id
+}
+class TeamLid{
+}
+class TeamMn{
+}
+class ClubMn{
+}
+class Admin{
+    acc_level
+}
+
+class Club {
+    id
+    name
+    disk
+    vector<Team>
+}
+class Ladder{
+    clubid
+    min_lid_n
+    max_lid_n
+    challenge rules
+    scheduling frequency
+    rating parameters
+    SportType
+}
+class Team {
+    id
+    SportType
+    clubid
+    availability for match
+}
+class SportType {
+
+}
+class TeamList{
+    teamid
+    lidid
+}
+
+class MatchProposal{
+    team1
+    team2
+    status
+}
+
+class Match{
+    result
+    score
+}
+
+
+User <|-- TeamLid
+User <|-- TeamMn
+User <|-- ClubMn
+User <|-- Admin
+ClubMn <|-- TeamMn
+
+TeamLid ..> Team: is membr
+Team ..> TeamList: /
+TeamList --> TeamLid: show mmbr
+TeamMn --> Team : have one
+Club --> Team : Owns
+Club ..> Team : can owns
+
+
+Club --> Ladder : Owns
+ClubMn --> Club : Owns
+
+User --> Ladder: can join if min_lid_n = 1
+
+Match --> Team : tvt (team v team)
+MatchProposal <|-- Match
+TeamMn --> MatchProposal: create
+TeamMn --> MatchProposal: confirm or decline
+TeamMn --> MatchProposal: 2 tems mnd report result
+
+
+
+
+note top of TeamLid
+    acc by TeamMn
+end note
+
+note top of TeamLid
+    acc by TeamMn
+end note
+
+note top of TeamLid
+    acc by ClubMn
+    can be only in one Team??
+end note
+
+note top of TeamMn
+    acc by ClubMn
+    mnd one or mm Team-s
+end note
+
+note top of ClubMn
+    acc by Admin
+    mnd only one Clube
+    act ass TeamMn for all Club Teams
+end note
+
+note top of Admin
+    acc by API
+    have diff acc level (aka local admin|superadmin|siteowner)
+    can have acc to full sis
+end note
+
+
+
+note top of MatchProposal
+    only if 2 teams has same type
+end note
+
+note top of SportType
+    aka enum
+end note
+
+note top of Team
+
+end note
+
+note top of Club
+    type can be rtv by trv all teams type
+end note
+
+
+
+@enduml
