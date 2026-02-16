@@ -1,0 +1,38 @@
+@startuml
+
+!ifndef DB_CLUB_BLOCK
+!define DB_CLUB_BLOCK
+
+!include arh_UserBlock.puml
+!include arh_TeamBlock.puml
+
+package ClubBlock{
+    class Club {
+        id : int : p_key
+        name : string
+        description : string : optional
+    }
+    class ClubTeams{
+        club_id : int : f_key
+        team_id : int : f_key
+    }
+
+    Club ..> ClubTeams
+    ClubTeams ..> TeamBlock.Team
+    UserBlock.ClubOwner --> Club : Owns
+}
+
+!ifdef SHOW_COMMENTS
+
+package ClubBlock{
+
+    note top of User
+        Basic status of a user registered on the website
+    end note
+
+}
+
+!endif
+
+!endif
+@enduml

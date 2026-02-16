@@ -1,0 +1,82 @@
+@startuml
+
+!ifndef DB_TEAM_BLOCK
+!define DB_TEAM_BLOCK
+
+!include arh_UserBlock.puml
+
+
+package TeamBlock{
+
+    class Team {
+        id : int : p_key
+        sport_type : SportType
+        club_id : optional
+        minimum_time_between_matches : time
+        availability_for_match : bool : Possible Derived Attribute
+    }
+
+    class SportType {
+        id : int : p_key
+        name : string
+        minimum_number_of_players_on_a_team : int
+        maximum_number_of_players_per_team : int
+    }
+    class TeamList{
+        team_id : int : f_id
+        lid_id : int : f_id
+    }
+
+    class MatchStatus {
+        id : f_id
+        name : string
+        description : string
+    }
+    class MatchProposal{
+        id : int : p_id
+        team1_id : int : f_id
+        team2_id : int : f_id
+        status : MatchStatus
+    }
+    class Match{
+        score : optional | required if MatchStatus = Match_Ended
+    }
+
+    Team ..> TeamList
+    UserBlock.TeamManager --> Team : manages
+    UserBlock.TeamManager --> MatchProposal: create | confirm or decline | reports the results
+
+    UserBlock.Player ..> TeamList
+
+    MatchProposal <|-- Match
+    Team ..> MatchProposal : participant
+
+
+}
+
+!ifdef SHOW_COMMENTS
+package TeamBlock{
+    note top of MatchStatus
+        For example, "No response", "Accepted", "Rejected", "Completed with results".
+    end note
+
+    note top of SportType
+        Use to expand the types of sports for teams.
+    end note
+
+    note top of MatchProposal
+        Both teams must have the same SportType.
+    end note
+
+    note top of Match
+        It may be redundant if the price for id + score is higher than for empty cells in MatchProposal.
+    end note
+
+    note top of TeamList
+        List of team players
+    end note
+}
+!endif
+
+!endif
+@enduml

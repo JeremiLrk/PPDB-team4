@@ -1,0 +1,30 @@
+@startuml
+
+!ifndef DB_INFRA_BLOCK
+!define DB_INFRA_BLOCK
+
+!include arh_ClubBlock.puml
+
+package InfraBlock{
+
+    class Ladder{
+        id : int : p_key
+        club_id : int : optional
+        sport_type : SportType
+        name : string
+        description : string : optional
+
+        scheduling_frequency : time
+        minimum_number_of_players_on_a_team : int : optional
+        maximum_number_of_players_per_team : int : optional
+
+        rating_parameters : ? : optional
+        challenge_rules : ? : optional
+    }
+
+    ClubBlock.Club --> Ladder : can make
+    UserBlock.Admin --> Ladder : can make
+}
+
+!endif
+@enduml

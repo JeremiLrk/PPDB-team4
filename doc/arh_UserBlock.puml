@@ -1,0 +1,67 @@
+@startuml
+!ifndef DB_USER_BLOCK
+!define DB_USER_BLOCK
+
+
+package UserBlock{
+    class User{
+        id : int : p_key
+        first_name : string
+        last_name : string
+        date_of_birth : date : optional
+    }
+    class Player{
+        team_id : int : f_key
+    }
+    class TeamManager{
+
+    }
+    class ClubOwner{
+        club_id : int : f_key
+    }
+    class Admin{
+        access_level : int : 0--inf
+    }
+
+    User <|-- Player
+    User <|-- TeamManager
+    TeamManager <|-- ClubOwner
+    User <|-- Admin
+}
+
+
+
+
+!ifdef SHOW_COMMENTS
+
+package UserBlock{
+
+    note top of User
+        Basic status of a user registered on the website
+    end note
+
+    note top of  Player
+        The role is assigned by the Team Manager through a question from the User, or through a question from the Manager to the User.
+    end note
+
+    note left of TeamManager
+        Role can be obtained by applying for Team Manager status or by creating your own team Without a Club.
+    end note
+
+    note left of ClubOwner
+        Role can be obtained by submitting an application to create a Club.
+        Sole owner of one club.
+        Has complete control over his club, can create new club teams, appoint managers and players, and create forests.
+    end note
+
+    note top of Admin
+        Site administrators (e.g., its owner, managers, developers).
+        Can only be assigned by another administrator.
+        Depending on the access level, they may have almost complete access.
+    end note
+}
+
+!endif
+
+!endif
+@enduml
