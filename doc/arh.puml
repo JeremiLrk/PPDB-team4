@@ -1,68 +1,97 @@
 @startuml
-class User{
-    name
-    id
-}
-class TeamLid{
-}
-class TeamMn{
-}
-class ClubMn{
-}
-class Admin{
-    acc_level
+
+package UserSis{
+    class User{
+        id : p_key
+        name
+    }
+    class TeamLid{
+        team_id: f_key
+    }
+    class TeamMn{
+        team_id: f_key
+    }
+    class ClubMn{
+        club_id: f_key
+    }
+    class Admin{
+        acc_level : max=0 min=inf
+    }
 }
 
-class Club {
-    id
-    name
-    disk
-    vector<Team>
-}
-class Ladder{
-    clubid
-    min_lid_n
-    max_lid_n
-    challenge rules
-    scheduling frequency
-    rating parameters
-    SportType
-}
-class Team {
-    id
-    SportType
-    clubid
-    availability for match
-}
-class SportType {
+package ClubSis{
+    class Club {
+        id : p_key
+        name
+        disk
+    }
+    class ClubTeams{
+        club_id : f_key
+        team_id : f_key
+    }
+    class Ladder{
+        id : p_key
+        club_id  : optional
 
-}
-class TeamList{
-    teamid
-    lidid
+        min_lid_n
+        max_lid_n
+        challenge rules
+        scheduling frequency
+        rating parameters
+        SportType
+    }
 }
 
-class MatchProposal{
-    team1
-    team2
-    status
+package TeamSis{
+    class Team {
+        id : p_key
+        SportType
+        club_id : optional
+        availability for match
+    }
+
+    class SportType {
+        id : p_key
+        name
+        min_num_of_pl_in_team
+        max_num_of_pl_in_team
+    }
+    class TeamList{
+        team_id : f_id
+        lid_id : f_id
+    }
+
+    class MatchStatus {
+        id : f_id
+        name
+        desk
+    }
+    class MatchProposal{
+        team1_id : f_id
+        team2_id : f_id
+        status
+    }
+    class Match{
+        result : optional
+        score : optional | recc is Status = End
+    }
 }
 
-class Match{
-    result
-    score
-}
+
+
+
+
 
 
 User <|-- TeamLid
 User <|-- TeamMn
-User <|-- ClubMn
 User <|-- Admin
 ClubMn <|-- TeamMn
 
-TeamLid ..> Team: is membr
-Team ..> TeamList: /
+Team ..> TeamList
+
 TeamList --> TeamLid: show mmbr
+
 TeamMn --> Team : have one
 Club --> Team : Owns
 Club ..> Team : can owns
@@ -71,7 +100,6 @@ Club ..> Team : can owns
 Club --> Ladder : Owns
 ClubMn --> Club : Owns
 
-User --> Ladder: can join if min_lid_n = 1
 
 Match --> Team : tvt (team v team)
 MatchProposal <|-- Match
@@ -81,54 +109,56 @@ TeamMn --> MatchProposal: 2 tems mnd report result
 
 
 
+package UserSis{
 
-note top of TeamLid
-    acc by TeamMn
-end note
+    note top of TeamLid
+        acc by TeamMn
+    end note
 
-note top of TeamLid
-    acc by TeamMn
-end note
+    note top of TeamMn
+        acc by ClubMn || acc by Sis
+        mnd one or mm Team-s
+    end note
 
-note top of TeamLid
-    acc by ClubMn
-    can be only in one Team??
-end note
+    note top of ClubMn
+        acc by Admin
+        mnd only one Clube
+        act ass TeamMn for all Club Teams
+    end note
 
-note top of TeamMn
-    acc by ClubMn
-    mnd one or mm Team-s
-end note
+    note top of Admin
+        acc by Sis
+        have diff acc level (aka local admin|superadmin|siteowner)
+        can have acc to full sis
+    end note
+}
 
-note top of ClubMn
-    acc by Admin
-    mnd only one Clube
-    act ass TeamMn for all Club Teams
-end note
+package ClubSis{
+    note top of Club
+        type can be rtv by trv all teams type
+    end note
 
-note top of Admin
-    acc by API
-    have diff acc level (aka local admin|superadmin|siteowner)
-    can have acc to full sis
-end note
-
+}
 
 
-note top of MatchProposal
-    only if 2 teams has same type
-end note
+package TeamSis{
+    note top of MatchProposal
+        only if 2 teams has same type
+    end note
 
-note top of SportType
-    aka enum
-end note
+    note top of SportType
+        aka enum
+    end note
 
-note top of Team
+    note top of Team
 
-end note
+    end note
+}
 
-note top of Club
-    type can be rtv by trv all teams type
-end note
+
+
+
+
 
 
 
