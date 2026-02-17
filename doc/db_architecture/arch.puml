@@ -1,0 +1,16 @@
+@startuml
+
+skinparam groupInheritance 2
+!pragma layout smetana
+
+
+'!define SHOW_COMMENTS
+!include arch_users.puml
+!include arch_infrastructure.puml
+!include arch_ladders.puml
+!include arch_matches.puml
+!include arch_teams.puml
+!include arch_clubs.puml
+
+
+@enduml

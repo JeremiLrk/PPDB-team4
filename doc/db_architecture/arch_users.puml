@@ -3,7 +3,7 @@
 !define DB_USER_BLOCK
 
 
-package UserBlock{
+package users{
     class User{
         id : int : p_key
         first_name : string
@@ -30,11 +30,8 @@ package UserBlock{
 }
 
 
-
-
 !ifdef SHOW_COMMENTS
-
-package UserBlock{
+package users{
 
     note top of User
         Basic status of a user registered on the website
@@ -60,7 +57,6 @@ package UserBlock{
         Depending on the access level, they may have almost complete access.
     end note
 }
-
 !endif
 
 !endif

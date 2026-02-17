@@ -1,0 +1,40 @@
+@startuml
+
+!ifndef DB_CLUB_BLOCK
+!define DB_CLUB_BLOCK
+
+!include arch_users.puml
+!include arch_teams.puml
+!include arch_matches.puml
+!include arch_infrastructure.puml
+
+package clubs{
+    class Club {
+        id : int : p_key
+        owner_id : int : f_key
+        name : string
+        description : string : optional
+        ruleset_id : int : f_key
+    }
+    class ClubTeams{
+        club_id : int : f_key
+        team_id : int : f_key
+    }
+
+    Club .. ClubTeams
+    ClubTeams .. teams.Team
+    users.ClubOwner .. Club
+    Club .. matches.RuleSet
+}
+
+!ifdef SHOW_COMMENTS
+
+package clubs{
+
+
+}
+
+!endif
+
+!endif
+@enduml

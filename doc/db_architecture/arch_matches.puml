@@ -1,0 +1,90 @@
+@startuml
+!ifndef DB_MATCHES
+!define DB_MATCHES
+
+!include arch_teams.puml
+!include arch_users.puml
+!include arch_infrastructure.puml
+
+
+package matches{
+    class Rule{
+        id : int : p_key
+        sport_type_id : int : f_key
+        name : string
+        description : string : optional
+    }
+    class RuleSet{
+        id : int : p_key
+        name : string
+        description : string : optional
+    }
+    class RuleSet_Rules{
+        rule_set_id : int : f_key
+        rule_id : int : f_key
+    }
+
+    class MatchStatus {
+        id : f_id
+        name : string
+        description : string
+    }
+
+    class MatchProposal{
+        id : int : p_id
+        sport_type_id : int : f_key
+        ruleset_id : int : f_id : optional?
+
+        team1_id : int : f_id
+        team2_id : int : f_id
+
+        status_id : int : f_key
+    }
+    class Match{
+        score : optional | required if MatchStatus = Match_Ended
+    }
+
+    MatchProposal <|-- Match
+    MatchProposal .. MatchStatus
+    MatchProposal .. SportType
+    users.Admin --> MatchProposal: create
+    users.TeamManager --> MatchProposal: create | confirm or decline | reports the results
+
+    RuleSet_Rules .. Rule
+    RuleSet .. RuleSet_Rules
+
+    MatchProposal .. RuleSet
+
+    teams.Team .. MatchProposal
+}
+
+
+!ifdef SHOW_COMMENTS
+package matches{
+    note top of Rule
+        Can be created by a team leader, club leader, or administrator.
+    end note
+
+    note top of RuleSet
+        Collection of rules
+        Can be created by a team leader, club leader, or administrator.
+        May only have rules for one sport
+    end note
+
+    note top of MatchStatus
+        For example, "No response", "Accepted", "Rejected", "Completed with results".
+    end note
+
+    note top of MatchProposal
+        Can be created by a team manager, club leader, or administrator.
+        Both teams must have the same SportType.
+    end note
+
+    note top of Match
+        It may be redundant if the price for id + score is higher than for empty cells in MatchProposal.
+    end note
+}
+!endif
+
+!endif
+@enduml

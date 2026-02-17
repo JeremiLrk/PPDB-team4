@@ -1,0 +1,51 @@
+@startuml
+!ifndef DB_LADDER
+!define DB_ADDER
+
+!include arch_users.puml
+!include arch_matches.puml
+!include arch_infrastructure.puml
+!include arch_teams.puml
+
+package ladders{
+    class Ladder{
+        id : int : p_key
+        name : string
+        description : string : optional
+
+        sporttype_id : int : f_key
+        rating_parameters : int : f_key
+
+        scheduling_frequency : time
+        ruleset_id : int : f_key : optional
+        minimum_number_of_players_on_a_team : int : optional
+        maximum_number_of_players_per_team : int : optional
+
+        club_id : int : optional
+    }
+    class RatingFunction{
+        id : int : p_key
+        name : string
+    }
+
+
+    Ladder .. SportType
+    Ladder .. matches.RuleSet
+    Ladder .. RatingFunction
+    users.Admin --> Ladder : can make
+    users.ClubOwner --> Ladder : can make
+    Ladder ..  teams.ParticipatesInLadder
+}
+
+
+!ifdef SHOW_COMMENTS
+package ladders{
+    note top of RatingFunction
+        Functions that can be used for evaluation.
+        Must contain the function name, not its implementation.
+    end note
+}
+!endif
+
+!endif
+@enduml

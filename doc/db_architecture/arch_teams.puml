@@ -1,0 +1,58 @@
+@startuml
+
+!ifndef DB_TEAM_BLOCK
+!define DB_TEAM_BLOCK
+
+!include arch_users.puml
+!include arch_infrastructure.puml
+
+package teams{
+    class ManagerTeams{
+        manager_id : int : f_key
+        team_id : int : f_key
+    }
+
+    class Team {
+        id : int : p_key
+        sport_type_id : int : f_key
+        club_id : optional
+        minimum_time_between_matches : time
+        availability_for_match : bool : Possible Derived Attribute
+    }
+
+    class TeamList{
+        team_id : int : f_id
+        lid_id : int : f_id
+    }
+
+    class ParticipatesInLadder{
+        ladder_id : int : f_id
+        team_id : int : f_id
+    }
+
+    Team .. ParticipatesInLadder
+
+
+    Team .. SportType
+    Team .. TeamList
+    users.TeamManager .. ManagerTeams
+    ManagerTeams .. Team
+    users.Player .. TeamList
+}
+
+!ifdef SHOW_COMMENTS
+package teams{
+
+    note top of ParticipatesInLadder
+        Shows whether the team is participating in the ladder or not
+    end note
+
+    note top of TeamList
+        List of team players
+    end note
+
+}
+!endif
+
+!endif
+@enduml

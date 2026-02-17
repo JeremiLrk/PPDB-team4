@@ -1,0 +1,22 @@
+@startuml
+!ifndef DB_INFRA_BLOCK
+!define DB_INFRA_BLOCK
+
+class SportType {
+    id : int : p_key
+    name : string
+    minimum_number_of_players_on_a_team : int
+    maximum_number_of_players_per_team : int
+}
+
+
+!ifdef SHOW_COMMENTS
+
+note top of SportType
+    Use to expand the types of sports for teams.
+end note
+
+!endif
+
+!endif
+@enduml
