@@ -147,10 +147,9 @@ def delete_book(id):
 ########
 
 # Home route (renders index page)
-@app.route('/')
-def index(): 
-    app_data['interface'] = ""
-    return render_template('index.html', app_data=app_data)
+@app.route("/")
+def index():
+    return jsonify({"ok": True, "msg": "Backend running."})
 
 # Server-Side Rendered HTML views using different UI frameworks
 @app.route("/ssr/classic")
