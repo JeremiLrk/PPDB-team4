@@ -38,7 +38,7 @@ class Books(db.Model):
 # Load SQL before app runs
 def load_sql():
     try:
-        sql_file_path = '../sql/schema.sql'
+        sql_file_path = '../../sql/schema.sql'
         with open(sql_file_path, 'r') as file:
             sql_script = file.read()
         with psycopg.connect(
@@ -85,7 +85,7 @@ with app.app_context():
 ############
 
 # Endpoint to retrieve all books (optionally filter by author)
-@app.route('/books', methods=['GET'])
+@app.route('/api/books', methods=['GET'])
 def get_books():
     query = Books.query
 
@@ -101,7 +101,7 @@ def get_books():
     ])
 
 # Endpoint to retrieve a book by its ID
-@app.route('/books/<int:id>', methods=['GET'])
+@app.route('/api/books/<int:id>', methods=['GET'])
 def get_books_id(id):
     book = Books.query.get(id)
     if book:
@@ -114,7 +114,7 @@ def get_books_id(id):
         return jsonify({'message': 'Book not found'}), 404
 
 # Endpoint to add a new book
-@app.route('/books', methods=['POST'])
+@app.route('/api/books', methods=['POST'])
 def add_book():
     data = request.get_json(silent=True)
 
@@ -135,7 +135,7 @@ def add_book():
     return jsonify({'message': 'Book added successfully'}), 201
 
 # Endpoint to delete a book by ID
-@app.route('/books/<int:id>', methods=['DELETE'])
+@app.route('/api/books/<int:id>', methods=['DELETE'])
 def delete_book(id):
     book = Books.query.get_or_404(id)
     db.session.delete(book)
@@ -179,6 +179,11 @@ def show_quotes_vue():
     app_data['interface'] = "(vue)"
     # Render quote_objects "server-side" using Jinja 2 template system
     return render_template('vue.html', app_data=app_data)
+
+@app.get("/api/health")
+def health():
+    return {"ok": True}
+
 
 ##################
 # RUN DEV SERVER #
