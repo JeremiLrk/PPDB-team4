@@ -88,7 +88,10 @@ const Login = () => {
                         Register
                     </Link>
                 </p>
-            </div>
+            <Link to="/" className="text-1xl font-semibold mt-6 text-indigo-400 hover:text-indigo-300 underline">
+                Continue as guest
+            </Link>                  
+            </div>          
         </div>
     )
 }

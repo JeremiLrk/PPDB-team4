@@ -46,11 +46,11 @@ function App() {
               }
             : status.state === "ok"
               ? {
-                    text: "Database connected",
+                    text: "Online",
                     cls: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
                 }
               : {
-                    text: "Not connected",
+                    text: "Offline",
                     cls: "border-red-500/20 bg-red-500/10 text-red-200",
                 }
 
