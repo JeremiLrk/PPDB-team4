@@ -1,7 +1,10 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, make_response
 from config import config_data as config
 from flask_sqlalchemy import SQLAlchemy
-import psycopg
+from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import text
+import jwt
+import datetime
 
 DEBUG = True
 HOST = "127.0.0.1" if DEBUG else "0.0.0.0"
@@ -22,125 +25,77 @@ db_port = config['db_port']
 db_name = config['db_name']
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = "test_secret_key"
 
 # Initialize the database
 db = SQLAlchemy(app)
 
-# Define the database model
-class Books(db.Model):
+class User(db.Model):
+    __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    author = db.Column(db.String(80), nullable=False)
+    email = db.Column(db.String(254), nullable=False, unique=True, index=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default="user")
 
-    def __repr__(self):
-        return f"<Book {self.title} by {self.author}>"
-
-# Load SQL before app runs
-def load_sql():
-    try:
-        sql_file_path = '../../sql/schema.sql'
-        with open(sql_file_path, 'r') as file:
-            sql_script = file.read()
-        with psycopg.connect(
-            dbname=db_name,
-            user=db_username,
-            password=db_password,
-            host=db_host,
-            port=db_port
-        ) as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(sql_script)
-                conn.commit()
-        print("SQL script executed successfully.")
-    except Exception as e:
-        print(f"Error executing SQL script: {e}")
-
-# Initialize the database and load the SQL before the app starts
 with app.app_context():
-    # Drop everything in the database to avoid duplication
     db.drop_all()
-    # Load SQL and manually create tables before the app runs
-    load_sql()
-    '''
-    # Instead of load_sql(), you could also do the following:
-
-    # 1) Create tables based on the ORM models
     db.create_all()
-
-    # 2) Add an item to the database
-    books = [
-        Books(title='The Linux Command Line', author='William Shotts'),
-        Books(title='The Mythical Man-Month', author='Frederick P. Brooks Jr.'),
-        Books(title='Press Reset', author='Jason Schreier'),
-        Books(title='How to code Snake in Python', author='Len Feremans'),
-        Books(title='Blood, Sweat, and Pixels', author='Jason Schreier')
-    ]
-
-    db.session.add_all(books)
-    db.session.commit()
-    '''
 
 ############
 # REST API #
 ############
 
-# Endpoint to retrieve all books (optionally filter by author)
-@app.route('/api/books', methods=['GET'])
-def get_books():
-    query = Books.query
+@app.route("/api/signup", methods=["POST"])
+def register():
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
 
-    # Optional filter (/books?author=Jason Schreier)
-    author = request.args.get('author')
-    if author:
-        # Case-insensitive partial match
-        query = query.filter(Books.author.ilike(f"%{author}%"))
+    if not email or not password:
+        return jsonify({"message": "Email and password are required."}), 400
+    
+    if len(password) < 6:
+        return jsonify({"message": "Password is too short."}), 400
 
-    books = query.all()
-    return jsonify([
-        {'id': b.id, 'title': b.title, 'author': b.author} for b in books
-    ])
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return jsonify({"message": "User already exists."}), 400
 
-# Endpoint to retrieve a book by its ID
-@app.route('/api/books/<int:id>', methods=['GET'])
-def get_books_id(id):
-    book = Books.query.get(id)
-    if book:
-        return jsonify({
-            'id': book.id,
-            'title': book.title,
-            'author': book.author
-        })
-    else:
-        return jsonify({'message': 'Book not found'}), 404
+    new_user = User(email=email, password_hash=generate_password_hash(password))
 
-# Endpoint to add a new book
-@app.route('/api/books', methods=['POST'])
-def add_book():
-    data = request.get_json(silent=True)
-
-    # Fallback to form data if JSON is not found
-    if data is None:
-        data = {
-            "title": request.form.get("title"),
-            "author": request.form.get("author")
-        }
-
-    book_title = data.get('title')
-    book_author = data.get('author')
-
-    # Create and save new book
-    new_book = Books(title=book_title, author=book_author)
-    db.session.add(new_book)
+    db.session.add(new_user)
     db.session.commit()
-    return jsonify({'message': 'Book added successfully'}), 201
 
-# Endpoint to delete a book by ID
-@app.route('/api/books/<int:id>', methods=['DELETE'])
-def delete_book(id):
-    book = Books.query.get_or_404(id)
-    db.session.delete(book)
-    db.session.commit()
-    return jsonify({'message': 'Book deleted successfully'})
+    response = make_response(jsonify({"message": "Registered successfully."}), 201)
+
+    return response
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+
+    if not email or not password:
+        return jsonify({"message": "Email and password are required."}), 400
+    
+    user = User.query.filter_by(email=email).first()
+    if not user or not check_password_hash(user.password_hash, password):
+        return jsonify({"message": "Invalid credentials."}), 401
+    
+    payload = {
+        "user_id": user.id,
+        "role": user.role,
+        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
+    }
+
+    token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
+
+    response = make_response(jsonify({"message": "Login successful."}), 200)
+
+    response.set_cookie("access_token", token, httponly=True, secure=True, samesite="Lax")
+
+    return response
 
 ########
 # VIEW #
@@ -151,37 +106,17 @@ def delete_book(id):
 def index():
     return jsonify({"ok": True, "msg": "Backend running."})
 
-# Server-Side Rendered HTML views using different UI frameworks
-@app.route("/ssr/classic")
-def show_classic():
-    app_data['interface'] = "(pure html/classic)"
-
-    books = Books.query.all()
-    books_data = [{'id': b.id, 'title': b.title, 'author': b.author} for b in books]
-    # Render quote_objects "server-side" using Jinja 2 template system
-    return render_template('classic.html', app_data=app_data, books=books_data)
-
-@app.route("/ssr/ajax")
-def show_quotes_ajax():
-    app_data['interface'] = "(ajax)"
-    # Render quote_objects "server-side" using Jinja 2 template system
-    return render_template('ajax.html', app_data=app_data)
-
-@app.route("/ssr/react")
-def show_quotes_react():
-    app_data['interface'] = "(react)"
-    # Render quote_objects "server-side" using Jinja 2 template system
-    return render_template('react.html', app_data=app_data)
-
-@app.route("/ssr/vue")
-def show_quotes_vue():
-    app_data['interface'] = "(vue)"
-    # Render quote_objects "server-side" using Jinja 2 template system
-    return render_template('vue.html', app_data=app_data)
-
 @app.get("/api/health")
 def health():
-    return {"ok": True}
+    try:
+        db.session.execute(text("SELECT 1"))
+        return {"ok": True, "db_connected": True}
+    except Exception:
+        return {
+            "ok": False,
+            "db_connected": False,
+            "msg": "Database not reachable",
+        }, 503
 
 
 ##################
