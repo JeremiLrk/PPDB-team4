@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, make_response
 from config import config_data as config
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -66,7 +66,9 @@ def register():
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({"message": "Registered successfully."}), 201
+    response = make_response(jsonify({"message": "Registered successfully."}), 201)
+
+    return response
 
 @app.route("/api/login", methods=["POST"])
 def login():
@@ -89,10 +91,11 @@ def login():
 
     token = jwt.encode(payload, app.config["SECRET_KEY"], algorithm="HS256")
 
-    return jsonify({
-        "message": "Login successful.", 
-        "token": token
-    })
+    response = make_response(jsonify({"message": "Login successful."}), 200)
+
+    response.set_cookie("access_token", token, httponly=True, secure=True, samesite="Lax")
+
+    return response
 
 ########
 # VIEW #
