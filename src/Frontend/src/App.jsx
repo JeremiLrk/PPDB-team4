@@ -5,6 +5,7 @@ import Home from "./pages/Home.jsx"
 import Login from "./pages/Login.jsx"
 import Register from "./pages/Register.jsx"
 import NotFound from "./pages/NotFound.jsx"
+import Ladder from "./pages/Ladder.jsx"
 
 function App() {
   const [status, setStatus] = useState({ state: "loading", msg: "" });
@@ -102,6 +103,7 @@ return (
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/ladder" element={<Ladder />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </main>
