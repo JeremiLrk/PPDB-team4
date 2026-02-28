@@ -6,7 +6,7 @@ from sqlalchemy import text
 import jwt
 import datetime
 
-DEBUG = False
+DEBUG = True
 HOST = "127.0.0.1" if DEBUG else "0.0.0.0"
 
 # Initialize the Flask app
