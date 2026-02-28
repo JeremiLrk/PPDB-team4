@@ -3,7 +3,7 @@ from config import config_data as config
 from flask_sqlalchemy import SQLAlchemy
 import psycopg
 
-DEBUG = False
+DEBUG = True
 HOST = "127.0.0.1" if DEBUG else "0.0.0.0"
 
 # Initialize the Flask app
