@@ -4,6 +4,7 @@ import { Routes, Route, useNavigate } from "react-router-dom";
 import Home from "./pages/Home.jsx"
 import Login from "./pages/Login.jsx"
 import Register from "./pages/Register.jsx"
+import NotFound from "./pages/NotFound.jsx"
 
 function App() {
   const [status, setStatus] = useState({ state: "loading", msg: "" });
@@ -15,20 +16,18 @@ function App() {
 
     async function check() {
       try {
-        // 1) API alive?
-        const h = await fetch("/api/health");
-        if (!h.ok) throw new Error("Backend not reachable");
+        // API + DB status from health endpoint
+        const h = await fetch("/api/health")
+        const data = await h.json()
+        if (!h.ok || !data?.db_connected)
+          throw new Error(data?.msg || "Database not reachable")
 
-        // 2) DB ok? (we check if /api/books returns JSON)
-        const b = await fetch("/api/books");
-        if (!b.ok) throw new Error("Database not reachable (books endpoint failed)");
-
-        const data = await b.json();
-        if (!Array.isArray(data)) throw new Error("Unexpected API response");
-
-        if (alive) setStatus({ state: "ok", msg: "Database connected" });
-      } catch (e) {
-        if (alive) setStatus({ state: "err", msg: e?.message || "Connection error" });
+          if (alive) setStatus({ state: "ok", msg: "Database connected" })
+          } catch (e) {
+              if (alive)
+                setStatus({
+                state: "err",
+                msg: e?.message || "Connection error"})
       }
     }
 
@@ -38,12 +37,21 @@ function App() {
     };
   }, []);
 
-  const badge =
-    status.state === "loading"
-      ? { text: "Checking…", cls: "border-white/10 bg-white/5 text-slate-200/80" }
-      : status.state === "ok"
-        ? { text: "Database connected", cls: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200" }
-        : { text: "Not connected", cls: "border-red-500/20 bg-red-500/10 text-red-200" };
+    const badge =
+        status.state === "loading"
+            ? {
+                  text: "Checking…",
+                  cls: "border-white/10 bg-white/5 text-slate-200/80",
+              }
+            : status.state === "ok"
+              ? {
+                    text: "Database connected",
+                    cls: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
+                }
+              : {
+                    text: "Not connected",
+                    cls: "border-red-500/20 bg-red-500/10 text-red-200",
+                }
 
 return (
   <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -94,6 +102,7 @@ return (
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </main>
   </div>

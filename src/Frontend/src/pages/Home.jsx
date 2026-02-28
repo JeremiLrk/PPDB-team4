@@ -1,100 +1,87 @@
-import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 
 function Home() {
-    const [status, setStatus] = useState({ state: "loading", msg: "" })
-
-    useEffect(() => {
-        let alive = true
-
-        async function check() {
-            try {
-                // API + DB status from health endpoint
-                const h = await fetch("/api/health")
-                const data = await h.json()
-                if (!h.ok || !data?.db_connected)
-                    throw new Error(data?.msg || "Database not reachable")
-
-                if (alive) setStatus({ state: "ok", msg: "Database connected" })
-            } catch (e) {
-                if (alive)
-                    setStatus({
-                        state: "err",
-                        msg: e?.message || "Connection error",
-                    })
-            }
-        }
-
-        check()
-        return () => {
-            alive = false
-        }
-    }, [])
-
-    const badge =
-        status.state === "loading"
-            ? {
-                  text: "Checking…",
-                  cls: "border-white/10 bg-white/5 text-slate-200/80",
-              }
-            : status.state === "ok"
-              ? {
-                    text: "Database connected",
-                    cls: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-                }
-              : {
-                    text: "Not connected",
-                    cls: "border-red-500/20 bg-red-500/10 text-red-200",
-                }
+    const navigate = useNavigate()
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100">
-            <div className="pointer-events-none fixed inset-0 opacity-35">
-                <div className="absolute -top-40 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-indigo-500 blur-3xl" />
-                <div className="absolute top-20 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-cyan-500 blur-3xl" />
-            </div>
 
-            <div className="relative mx-auto w-full max-w-6xl px-6 py-16">
-                <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-                    {/* Left: hero */}
-                    <section className="rounded-3xl border border-white/10 bg-white/5 p-10 backdrop-blur">
-                        <p className="text-sm text-slate-300/70">PPDB Team 4</p>
+            <div className="relative mx-auto w-full max-w-6xl px-6 py-20">
+                
+                <section className="text-center">
+                    <h1 className="text-5xl font-semibold tracking-tight">
+                        NetRank
+                    </h1>
 
-                        <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-                            Web-based Club Ladder
-                        </h1>
+                    <p className="mt-6 text-lg text-slate-300/70">
+                        Compete. Challenge. Climb the ladder.
+                    </p>
 
-                        <p className="mt-6 text-sm text-slate-300/70">
-                            React frontend + Flask REST API + PostgreSQL +
-                            Tailwind CSS.
-                        </p>
-                    </section>
+                    <p className="mt-2 text-sm text-slate-400">
+                        The competitive ranking system for tennis and padel clubs.
+                    </p>
 
-                    {/* Right: status */}
-                    <aside className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-                        <p className="text-sm font-semibold text-slate-200/90">
-                            Status
-                        </p>
+                    <div className="mt-10 flex justify-center gap-4">
+                        <button
+                            onClick={() => navigate("/register")}
+                            className="rounded-xl bg-indigo-500 px-6 py-3 font-medium hover:bg-indigo-400 transition"
+                        >
+                            Join the Ladder
+                        </button>
 
-                        <div className="mt-4 space-y-3">
-                            <div className="flex items-center justify-between gap-3">
-                                <span className="text-sm text-slate-300/70">
-                                    Database
-                                </span>
-                                <span
-                                    className={`rounded-lg border px-2 py-1 text-xs ${badge.cls}`}
-                                >
-                                    {badge.text}
-                                </span>
-                            </div>
+                        <button
+                            onClick={() => navigate("/login")}
+                            className="rounded-xl border border-white/20 px-6 py-3 hover:bg-white/10 transition"
+                        >
+                            Login
+                        </button>
+                    </div>
+                </section>
+
+                <section className="mt-20 rounded-3xl border border-white/10 bg-white/5 p-10 backdrop-blur">
+                    <h2 className="text-xl font-semibold mb-6">
+                        Top Players
+                    </h2>
+
+                    <div className="space-y-4 text-sm">
+                        <div className="flex justify-between">
+                            <span>#1 Alex</span>
+                            <span>1450 pts</span>
                         </div>
+                        <div className="flex justify-between">
+                            <span>#2 Emma</span>
+                            <span>1390 pts</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>#3 Liam</span>
+                            <span>1320 pts</span>
+                        </div>
+                    </div>
+                </section>
 
-                        {status.state === "err" && (
-                            <p className="mt-4 text-xs text-red-200/80">
-                                {status.msg}
-                            </p>
-                        )}
-                    </aside>
-                </div>
+                <section className="mt-20 grid gap-6 md:grid-cols-3">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                        <h3 className="font-semibold">Real-Time Rankings</h3>
+                        <p className="mt-2 text-sm text-slate-300/70">
+                            Rankings update automatically after each match result.
+                        </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                        <h3 className="font-semibold">Challenge System</h3>
+                        <p className="mt-2 text-sm text-slate-300/70">
+                            Challenge players above you to move up the ladder.
+                        </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                        <h3 className="font-semibold">Match History</h3>
+                        <p className="mt-2 text-sm text-slate-300/70">
+                            Track all played matches and performance statistics.
+                        </p>
+                    </div>
+                </section>
+
             </div>
         </div>
     )
