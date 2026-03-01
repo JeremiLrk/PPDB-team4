@@ -146,6 +146,23 @@ def health():
         }, 503
 
 
+# Show all users for demo
+@app.get("/api/users")
+def get_users():
+    users = User.query.all()
+
+    result = []
+    for user in users:
+        result.append({
+            "id": user.id,
+            "email": user.email,
+            "role": user.role,
+            "password_hash": user.password_hash
+
+        })
+
+    return jsonify(result), 200
+
 ##################
 # RUN DEV SERVER #
 ##################
