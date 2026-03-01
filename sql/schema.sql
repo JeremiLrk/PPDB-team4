@@ -25,9 +25,12 @@ CREATE TABLE IF NOT EXISTS RatingFunction (
 -- 2. USER HIERARCHY
 CREATE TABLE IF NOT EXISTS "user" (
     id SERIAL PRIMARY KEY,
-    first_name VARCHAR(255) NOT NULL,
-    last_name VARCHAR(255) NOT NULL,
-    date_of_birth DATE
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    date_of_birth DATE,
+    email VARCHAR(254) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'user'
 );
 
 CREATE TABLE IF NOT EXISTS admin (
