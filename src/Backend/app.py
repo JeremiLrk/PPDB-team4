@@ -64,7 +64,7 @@ def load_sql():
 
 
 with app.app_context():
-    db.drop_all()
+#    db.drop_all()
     load_sql()
     db.create_all()
 
