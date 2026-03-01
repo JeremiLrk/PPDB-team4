@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import text
 import jwt
 import datetime
+import psycopg
 
 DEBUG = True
 HOST = "127.0.0.1" if DEBUG else "0.0.0.0"
@@ -31,14 +32,40 @@ app.config['SECRET_KEY'] = "test_secret_key"
 db = SQLAlchemy(app)
 
 class User(db.Model):
-    __tablename__ = "users"
+    __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
+
+    first_name = db.Column(db.String(255), nullable=True) 
+    last_name = db.Column(db.String(255), nullable=True)
+    date_of_birth = db.Column(db.Date, nullable=True)
+
     email = db.Column(db.String(254), nullable=False, unique=True, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default="user")
 
+def load_sql():
+    try:
+        sql_file_path = '../../sql/schema.sql'
+        with open(sql_file_path, 'r') as file:
+            sql_script = file.read()
+        with psycopg.connect(
+            dbname=db_name,
+            user=db_username,
+            password=db_password,
+            host=db_host,
+            port=db_port
+        ) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(sql_script)
+                conn.commit()
+        print("SQL script executed successfully.")
+    except Exception as e:
+        print(f"Error executing SQL script: {e}")
+
+
 with app.app_context():
     db.drop_all()
+    load_sql()
     db.create_all()
 
 ############
