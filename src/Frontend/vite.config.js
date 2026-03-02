@@ -9,4 +9,11 @@ export default defineConfig({
       "/api": "http://127.0.0.1:5000",
     },
   },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: "./tests/setupTests.js",
+    include: ["tests/**/*.{test,spec}.{js,jsx,ts,tsx}"],
+    css: true,
+  },
 });
