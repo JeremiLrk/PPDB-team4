@@ -1,0 +1,47 @@
+@reference "tailwindcss";
+
+
+.container{
+    @apply grid gap-10 lg:grid-cols-[1fr_2fr_1fr] items-start
+}
+
+.ladderAside{
+    @apply flex flex-col gap-6;
+}
+.ladderContainer{
+    @apply rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur h-fit;
+}
+.ladderContainerText{
+    @apply text-xl font-semibold mb-6;
+}
+.ladderCard{
+    @apply relative mx-auto w-full max-w-6xl px-6 py-20;
+}
+.ladderButton{
+    @apply text-left rounded-xl border border-white/10 px-4 py-3 hover:bg-white/10 transition;
+}
+
+
+
+/* RIGHT — SCOREBOARDS */
+.scoreboardAside{
+    @apply flex flex-col gap-8;
+}
+
+.scoreboardContainer{
+    @apply rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur h-fit;
+}
+
+.scoreboardContainerText{
+    @apply text-xl font-semibold mb-6;
+}
+
+.scoreboardCard{
+    @apply space-y-4 text-sm;
+}
+.scoreboardCardTeam{
+    @apply flex justify-between;
+}
+.scoreboardCardMatch{
+    @apply flex justify-between;
+}

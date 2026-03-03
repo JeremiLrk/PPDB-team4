@@ -1,52 +1,61 @@
 import { useNavigate } from "react-router-dom"
-import background from "../assets/background.webp"
+import background from "@/assets/background.webp"
+import styles from "@/style/Home.module.css"
+
 
 function Home() {
     const navigate = useNavigate()
 
     return (
-        <div className="grid gap-10 lg:grid-cols-[1fr_2fr_1fr] items-start">
+        <div className={styles.container}>
 
         {/* LEFT — LADDER */}
-        <aside className="flex flex-col gap-6">
+            <aside className={styles.ladderAside}>
 
-        <section className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur h-fit">
-            <h2 className="text-xl font-semibold mb-6">Ladders</h2>
+                <section className={styles.ladderContainer}>
+                    <h2 className={styles.ladderContainerText}>Ladders</h2>
 
-            <div className="flex flex-col gap-4 text-sm">
+                    <div className={styles.ladderCard}>
 
-            <button
-                onClick={() => navigate("/ladder")}
-                className="text-left rounded-xl border border-white/10 px-4 py-3 hover:bg-white/10 transition"
-            >
-                Men’s Tennis
-            </button>
+                        <button
+                            onClick={() => navigate("/ladder")}
+                            className={styles.ladderButton}
+                        >
+                            Men’s Tennis
+                        </button>
 
-            <button
-                onClick={() => navigate("/ladder")}
-                className="text-left rounded-xl border border-white/10 px-4 py-3 hover:bg-white/10 transition"
-            >
-                Women’s Tennis
-            </button>
+                        <button
+                            onClick={() => navigate("/ladder")}
+                            className={styles.ladderButton}
+                        >
+                            Women’s Tennis
+                        </button>
 
-            <button
-                onClick={() => navigate("/ladder")}
-                className="text-left rounded-xl border border-white/10 px-4 py-3 hover:bg-white/10 transition"
-            >
-                Padel
-            </button>
+                        <button
+                            onClick={() => navigate("/ladder")}
+                            className={styles.ladderButton}
+                        >
+                            Padel
+                        </button>
 
-            <button
-                onClick={() => navigate("/ladder")}
-                className="text-left rounded-xl border border-white/10 px-4 py-3 hover:bg-white/10 transition"
-            >
-                Juniors
-            </button>
+                        <button
+                            onClick={() => navigate("/ladder")}
+                            className={styles.ladderButton}
+                        >
+                            Juniors
+                        </button>
 
-            </div>
-        </section>
+                        <div className={styles.ladderCard}>
 
-        </aside>
+                            <section className="text-center">
+                                <h1 className="text-5xl font-semibold tracking-tight">
+                                    NetRank
+                                </h1>
+                            </section>
+                        </div>
+                    </div>
+                </section>
+            </aside>
 
         {/* CENTER — PICTURE */}
         <section className="text-center">
@@ -81,41 +90,41 @@ function Home() {
 
 
         {/* RIGHT — SCOREBOARDS */}
-        <aside className= "flex flex-col gap-8">
-            <section className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur h-fit">
-                <h2 className="text-xl font-semibold mb-6">Top Players</h2>
+        <aside className= {styles.scoreboardAside}>
+            <section className={styles.scoreboardContainer}>
+                <h2 className={styles.scoreboardContainerText}>Top Players</h2>
 
-                <div className="space-y-4 text-sm">
-                <div className="flex justify-between">
-                    <span>#1 Lorem</span>
-                    <span>Ipsum</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>#2 Lorem</span>
-                    <span>Ipsum</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>#3 Lorem</span>
-                    <span>Ipsum</span>
-                </div>
+                <div className={styles.scoreboardCard}>
+                    <div className={styles.scoreboardCardTeam}>
+                        <span>#1 Lorem</span>
+                        <span>Ipsum</span>
+                    </div>
+                    <div className={styles.scoreboardCardTeam}>
+                        <span>#2 Lorem</span>
+                        <span>Ipsum</span>
+                    </div>
+                    <div className={styles.scoreboardCardTeam}>
+                        <span>#3 Lorem</span>
+                        <span>Ipsum</span>
+                    </div>
                 </div>
             </section>
-            <section className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur h-fit">
-                <h2 className="text-xl font-semibold mb-6">Top Matches</h2>
+            <section className={styles.scoreboardContainer}>
+                <h2 className={styles.scoreboardContainerText}>Top Matches</h2>
 
-                <div className="space-y-4 text-sm">
-                <div className="flex justify-between">
-                    <span>Lorem vs Ipsum</span>
-                    <span>Pending</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Dolor vs Sit</span>
-                    <span>Pending</span>
-                </div>
-                <div className="flex justify-between">
-                    <span>Amet vs Consectetur</span>
-                    <span>Pending</span>
-                </div>
+                <div className={styles.scoreboardCard}>
+                    <div className={styles.scoreboardCardMatch}>
+                        <span>Lorem vs Ipsum</span>
+                        <span>Pending</span>
+                    </div>
+                    <div className={styles.scoreboardCardMatch}>
+                        <span>Dolor vs Sit</span>
+                        <span>Pending</span>
+                    </div>
+                    <div className={styles.scoreboardCardMatch}>
+                        <span>Amet vs Consectetur</span>
+                        <span>Pending</span>
+                    </div>
                 </div>
             </section>
         </aside>

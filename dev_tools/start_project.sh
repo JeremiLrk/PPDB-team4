@@ -64,7 +64,7 @@ fi
 if [ "$REBUILD" = true ] || [ ! -d "$VENV_DIR" ]; then
     echo -e "\033[32mCreating virtual environment with $PYTHON_BIN...\033[0m"
     rm -rf "$VENV_DIR"
-    $PYTHON_BIN -m venv venv
+    $PYTHON_BIN -m venv "$VENV_DIR"
 fi
 
 # --- Activate venv ---
@@ -87,12 +87,12 @@ fi
 
 # --- Start PostgreSQL ---
 echo -e "\033[32mStarting PostgreSQL...\033[0m"
-sudo systemctl start postgresql
+sudo systemctl is-active --quiet postgresql || sudo systemctl start postgresql
 
 # --- Start Backend ---
 echo -e "\033[34mStarting backend...\033[0m"
 cd "$PROJECT_DIR" || exit 1
-stdbuf -oL $PYTHON_BIN -m server.wsgi 2>&1 | tee "$PROJECT_DIR/backend.log" &
+stdbuf -oL python -m server.wsgi 2>&1 | tee "$PROJECT_DIR/backend.log" &
 BACKEND_PID=$!
 echo -e "\033[35mBackend PID: $BACKEND_PID (logs: backend.log)\033[0m"
 

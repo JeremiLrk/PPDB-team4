@@ -1,0 +1,42 @@
+@reference "tailwindcss";
+/* Header container */
+.header {
+    @apply relative z-10 border-b border-white/10 bg-white/5 backdrop-blur;
+}
+
+/* Inner wrapper */
+.headerInner {
+    @apply mx-auto flex max-w-6xl items-center justify-between px-6 py-4;
+}
+
+/* Centered title */
+.headerTitle {
+    @apply absolute left-1/2 -translate-x-1/2 text-lg font-semibold tracking-tight;
+}
+
+/* Right section for auth buttons / user menu */
+.headerRight {
+    @apply flex items-center gap-3;
+}
+
+/* Buttons */
+.headerButton {
+    @apply rounded-xl border border-white/20 px-4 py-2 text-sm hover:bg-white/10 transition;
+}
+
+.headerPrimaryButton {
+    @apply rounded-xl bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400 transition;
+}
+
+/* User dropdown */
+.userButton {
+    @apply rounded-full border border-white/20 px-3 py-2 text-sm hover:bg-white/10 transition;
+}
+
+.userDropdown {
+    @apply absolute right-0 mt-2 w-48 rounded-lg bg-white/5 backdrop-blur border border-white/10 shadow-lg hidden group-hover:block;
+}
+
+.userDropdownItem {
+    @apply w-full text-left px-3 py-2 hover:bg-white/10 rounded;
+}

@@ -40,3 +40,14 @@
 .read-the-docs {
   color: #888;
 }
+
+
+input:focus {
+  outline: none;
+  border-color: #6366f1; /* Tailwind indigo-500 */
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
