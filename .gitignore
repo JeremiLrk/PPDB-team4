@@ -45,11 +45,11 @@ env/
 ENV/
 env.bak/
 venv.bak/
+source/
 
 # Packaging
 .Python
 build/
-dist/
 downloads/
 eggs/
 .eggs/

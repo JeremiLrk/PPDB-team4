@@ -24,7 +24,7 @@ db_password = config['db_password']
 db_host = config['db_host']
 db_port = config['db_port']
 db_name = config['db_name']
-app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql+psycopg://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = "test_secret_key"
 
@@ -45,7 +45,7 @@ class User(db.Model):
 
 def load_sql():
     try:
-        sql_file_path = '../../sql/schema.sql'
+        sql_file_path = '../sql/schema.sql'
         with open(sql_file_path, 'r') as file:
             sql_script = file.read()
         with psycopg.connect(
@@ -64,7 +64,7 @@ def load_sql():
 
 
 with app.app_context():
- #   db.drop_all()
+    # db.drop_all()
     load_sql()
     db.create_all()
 
