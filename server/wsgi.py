@@ -1,4 +1,7 @@
-from app import app
+from server.app import create_app
+from server.config import DEBUG, HOST
+
+app = create_app()
 
 if __name__ == "__main__":
-    app.run()
+    app.run(HOST, debug=DEBUG)

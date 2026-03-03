@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 
-import Home from "./pages/Home.jsx"
-import Login from "./pages/Login.jsx"
-import Register from "./pages/Register.jsx"
-import NotFound from "./pages/NotFound.jsx"
-import Ladder from "./pages/Ladder.jsx"
+import Home from "@/pages/Home.jsx"
+import Login from "@/pages/Login.jsx"
+import Register from "@/pages/Register.jsx"
+import NotFound from "@/pages/NotFound.jsx"
+import Ladder from "@/pages/Ladder.jsx"
 
 function App() {
   const [status, setStatus] = useState({ state: "loading", msg: "" });
@@ -58,8 +58,8 @@ return (
   <div className="min-h-screen bg-slate-950 text-slate-100">
     {/* Background glow */}
     <div className="pointer-events-none fixed inset-0 opacity-35">
-      <div className="absolute -top-40 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-indigo-500 blur-3xl" />
-      <div className="absolute top-20 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-cyan-500 blur-3xl" />
+      <div className="absolute -top-40 left-1/2 h-72 w-2xl -translate-x-1/2 rounded-full bg-indigo-500 blur-3xl" />
+      <div className="absolute top-20 left-1/2 h-72 w-2xl -translate-x-1/2 rounded-full bg-cyan-500 blur-3xl" />
     </div>
 
     {/* Top Banner (always visible) */}
