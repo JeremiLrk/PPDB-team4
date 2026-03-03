@@ -48,7 +48,7 @@ function Home() {
                         <div className={styles.ladderCard}>
 
                             <section className="text-center">
-                                <h1 className="text-5xl font-semibold tracking-tight">
+                                <h1 className="text-3xl font-semibold tracking-tight">
                                     NetRank
                                 </h1>
                             </section>

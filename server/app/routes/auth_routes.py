@@ -31,6 +31,12 @@ def login():
         return jsonify({"message": "Invalid credentials"}), 401
 
     token, user = result
-    response = make_response(jsonify({"message": "Login successful"}), 200)
+    response = make_response(
+        jsonify(
+            {
+                "message": "Login successful",
+                "user": {"id": user.id, "email": user.email}
+            }
+                ), 200)
     response.set_cookie("access_token", token, httponly=True, secure=True, samesite="Lax")
     return response

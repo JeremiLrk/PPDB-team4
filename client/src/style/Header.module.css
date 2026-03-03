@@ -1,7 +1,7 @@
 @reference "tailwindcss";
 /* Header container */
 .header {
-    @apply relative z-10 border-b border-white/10 bg-white/5 backdrop-blur;
+    @apply relative z-50 border-b border-white/10 bg-white/5 backdrop-blur ;
 }
 
 /* Inner wrapper */
@@ -39,4 +39,8 @@
 
 .userDropdownItem {
     @apply w-full text-left px-3 py-2 hover:bg-white/10 rounded;
+}
+
+.group:hover .userDropdown {
+    display: block;
 }

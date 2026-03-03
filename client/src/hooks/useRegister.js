@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export function useRegister() {
+export function useRegister(setUser) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
@@ -22,7 +22,10 @@ export function useRegister() {
                 throw new Error(data?.message || "Registration failed");
             }
 
-            navigate("/login");
+            setUser(data.user);
+            localStorage.setItem("currentUser", JSON.stringify(data.user));
+
+            navigate("/");
         } catch (err) {
             console.error(err.message || "Registration failed");
         }

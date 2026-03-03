@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import Badge from "./Badge";
 import styles from "@/style/Header.module.css";
+import {useState} from "react";
 
-export default function Header({ status, user }) {
+export default function Header({ status, user, setUser }) {
     const navigate = useNavigate();
+    const [menuOpen, setMenuOpen] = useState(false);
 
     return (
         <header className={styles.header}>
@@ -32,32 +34,42 @@ export default function Header({ status, user }) {
                             </button>
                         </>
                     ) : (
-                        <div className="relative group">
+                        <div className="relative"
+                             onMouseEnter={() => setMenuOpen(true)}
+                             onMouseLeave={() => setMenuOpen(false)}
+                        >
                             <button className={styles.userButton}>
                                 {user.name || "User"} ▾
                             </button>
 
                             {/* Dropdown Menu */}
-                            <div className={styles.userDropdown}>
-                                <ul className="flex flex-col p-2">
-                                    <li>
-                                        <button
-                                            className={styles.userDropdownItem}
-                                            onClick={() => console.log("Go to profile")}
-                                        >
-                                            Profile
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button
-                                            className={styles.userDropdownItem}
-                                            onClick={() => console.log("Logout")}
-                                        >
-                                            Logout
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
+                            {menuOpen && (
+                                <div className="absolute right-0 mt-2 bg-white text-black rounded shadow-lg z-50">
+                                    <ul className="flex flex-col p-2">
+                                        <li>
+                                            <button
+                                                className={styles.userDropdownItem}
+                                                onClick={() => console.log("Go to profile")}
+                                            >
+                                                Profile
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button
+                                                className={styles.userDropdownItem}
+                                                onClick={() => {
+                                                    localStorage.removeItem("currentUser");
+                                                    setUser(null);
+                                                    navigate("/");
+                                                }}
+                                            >
+                                                Logout
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                                )
+                            }
                         </div>
                     )}
                 </div>

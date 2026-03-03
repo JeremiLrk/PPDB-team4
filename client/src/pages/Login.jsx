@@ -2,8 +2,8 @@ import { Link } from "react-router-dom"
 import {useLogin} from "@/hooks/useLogin.js";
 import styles from "@/style/Login.module.css";
 
-const Login = () => {
-    const { email, setEmail, password, setPassword, handleSubmit } = useLogin();
+const Login = ({ setUser }) => {
+    const { email, setEmail, password, setPassword, handleSubmit } = useLogin(setUser);
 
     return (
         <div className={styles.loginContainer}>

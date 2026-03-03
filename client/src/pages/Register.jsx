@@ -4,8 +4,8 @@ import {useRegister} from "@/hooks/useRegister.js";
 import styles from "@/style/Register.module.css";
 
 
-const Register = () => {
-    const { email, setEmail, password, setPassword, handleSubmit } = useRegister();
+const Register = ({ setUser }) => {
+    const { email, setEmail, password, setPassword, handleSubmit } = useRegister(setUser);
 
     return (
         <div className={styles.registerContainer}>

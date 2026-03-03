@@ -7,7 +7,19 @@ import AppRoutes from "@/app/AppRoutes.jsx";
 function App() {
     const [status, setStatus] = useState({ state: "loading", msg: "" });
 
-    const [currentUser, _setCurrentUser] = useState(null);
+    const [currentUser, setCurrentUser] = useState(null);
+
+
+    useEffect(() => {
+        try {
+            const savedUser = localStorage.getItem("currentUser");
+            if (savedUser && savedUser !== "undefined") {
+                setCurrentUser(JSON.parse(savedUser));
+            }
+        } catch (err) {
+            console.error("Failed to parse saved user:", err);
+        }
+    }, []);
 
     useEffect(() => {
         let alive = true;
@@ -51,9 +63,9 @@ function App() {
 return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
         <Background_Glow />
-        <Header status={status} user={currentUser}/>
+        <Header status={status} user={currentUser} setUser={setCurrentUser}/>
         <main className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-6">
-            <AppRoutes />
+            <AppRoutes currentUser={currentUser} setUser={setCurrentUser}/>
         </main>
     </div>
     );
