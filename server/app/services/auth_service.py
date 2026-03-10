@@ -4,15 +4,15 @@ import jwt
 import datetime
 from server.config import SECRET_KEY
 
-def register_user(email, password):
+def register_user(email, password, firstName, lastName, dateOfBirth):
     if len(password) < 6:
-        raise ValueError("Password too short")
+        raise ValueError("Password is too short.")
 
     user = User.query.filter_by(email=email).first()
     if user:
-        raise ValueError("User already exists")
+        raise ValueError("User already exists.")
 
-    new_user = User(email=email, password_hash=generate_password_hash(password))
+    new_user = User(email=email, password_hash=generate_password_hash(password), first_name=firstName, last_name=lastName, date_of_birth=dateOfBirth)
     db.session.add(new_user)
     db.session.commit()
     return new_user

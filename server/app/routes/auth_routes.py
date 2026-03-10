@@ -8,12 +8,16 @@ def signup():
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
-    if not email or not password:
-        return jsonify({"message": "Email and password required"}), 400
+    firstName = data.get("firstName")
+    lastName = data.get("lastName")
+    dateOfBirth = data.get("dateOfBirth")
+
+    if not email or not password or not firstName or not lastName or not dateOfBirth:
+        return jsonify({"message": "Missing credentials."}), 400
 
     try:
-        user = register_user(email, password)
-        return jsonify({"message": "Registered successfully"}), 201
+        user = register_user(email, password, firstName, lastName, dateOfBirth)
+        return jsonify({"message": "Registered successfully."}), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
 
@@ -24,19 +28,25 @@ def login():
     password = data.get("password") or ""
 
     if not email or not password:
-        return jsonify({"message": "Email and password required"}), 400
+        return jsonify({"message": "Email and password are required."}), 400
 
     result = login_user(email, password)
     if not result:
-        return jsonify({"message": "Invalid credentials"}), 401
+        return jsonify({"message": "Invalid credentials."}), 401
 
     token, user = result
     response = make_response(
         jsonify(
             {
-                "message": "Login successful",
+                "message": "Login successful.",
                 "user": {"id": user.id, "email": user.email}
             }
                 ), 200)
     response.set_cookie("access_token", token, httponly=True, secure=True, samesite="Lax")
+    return response
+
+@auth_bp.route("/logout", methods=["POST"])
+def logout():
+    response = make_response(jsonify({"message": "Successfully logged out."}), 200)
+    response.set_cookie("access_token", "", expires=0)
     return response

@@ -1,17 +1,40 @@
-import { useNavigate } from "react-router-dom";
-import Badge from "./Badge";
-import styles from "@/style/Header.module.css";
-import {useState} from "react";
+import { useNavigate } from "react-router-dom"
+import Badge from "./Badge"
+import styles from "@/style/Header.module.css"
+import { useState } from "react"
 
 export default function Header({ status, user, setUser }) {
-    const navigate = useNavigate();
-    const [menuOpen, setMenuOpen] = useState(false);
+    const navigate = useNavigate()
+    const [menuOpen, setMenuOpen] = useState(false)
+
+    const handleLogout = async () => {
+        try {
+            const response = await fetch("/api/logout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data?.message || "Logout failed")
+            }
+
+            localStorage.removeItem("currentUser")
+            setUser(null)
+            navigate("/")
+        } catch (err) {
+            console.error(err.message || "Logout failed")
+        }
+    }
 
     return (
         <header className={styles.header}>
             <div className={styles.headerInner}>
                 {/* Left: Database Status */}
-                <div><Badge status={status} /></div>
+                <div>
+                    <Badge status={status} />
+                </div>
 
                 {/* Center: Title */}
                 <h1 className={styles.headerTitle}>NetRank</h1>
@@ -34,9 +57,10 @@ export default function Header({ status, user, setUser }) {
                             </button>
                         </>
                     ) : (
-                        <div className="relative"
-                             onMouseEnter={() => setMenuOpen(true)}
-                             onMouseLeave={() => setMenuOpen(false)}
+                        <div
+                            className="relative pb-2"
+                            onMouseEnter={() => setMenuOpen(true)}
+                            onMouseLeave={() => setMenuOpen(false)}
                         >
                             <button className={styles.userButton}>
                                 {user.name || "User"} ▾
@@ -48,32 +72,33 @@ export default function Header({ status, user, setUser }) {
                                     <ul className="flex flex-col p-2">
                                         <li>
                                             <button
-                                                className={styles.userDropdownItem}
-                                                onClick={() => console.log("Go to profile")}
+                                                className={
+                                                    styles.userDropdownItem
+                                                }
+                                                onClick={() =>
+                                                    console.log("Go to profile")
+                                                }
                                             >
                                                 Profile
                                             </button>
                                         </li>
                                         <li>
                                             <button
-                                                className={styles.userDropdownItem}
-                                                onClick={() => {
-                                                    localStorage.removeItem("currentUser");
-                                                    setUser(null);
-                                                    navigate("/");
-                                                }}
+                                                className={
+                                                    styles.userDropdownItem
+                                                }
+                                                onClick={handleLogout}
                                             >
                                                 Logout
                                             </button>
                                         </li>
                                     </ul>
                                 </div>
-                                )
-                            }
+                            )}
                         </div>
                     )}
                 </div>
             </div>
         </header>
-    );
+    )
 }

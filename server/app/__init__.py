@@ -1,6 +1,6 @@
 from flask import Flask
 from server.config import config_data, SECRET_KEY
-from server.app.models.user import db
+from server.app.models.user import db, User
 from server.app.routes.auth_routes import auth_bp
 from server.app.routes.health_routes import api
 from server.app.routes.root_routes import root_bp
