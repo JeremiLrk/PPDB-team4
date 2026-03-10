@@ -1,11 +1,30 @@
 import { useNavigate } from "react-router-dom";
 import Badge from "./Badge";
 import styles from "@/style/Header.module.css";
-import {useState} from "react";
+import { useState, useRef } from "react";
 
 export default function Header({ status, user, setUser }) {
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    const handleClickOutside = (e) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+            setMenuOpen(false);
+        }
+    };
+
+    const toggleMenu = () => {
+        setMenuOpen((prev) => !prev);
+    };
+
+    // Add event listener to close dropdown when clicking outside
+    useState(() => {
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     return (
         <header className={styles.header}>
@@ -14,7 +33,12 @@ export default function Header({ status, user, setUser }) {
                 <div><Badge status={status} /></div>
 
                 {/* Center: Title */}
-                <h1 className={styles.headerTitle}>NetRank</h1>
+                <h1 className={styles.headerTitle}>
+                    <button onClick={() => navigate("/")}>
+                        NetRank
+                    </button>
+                </h1>
+
 
                 {/* Right: Auth Buttons / User Menu */}
                 <div className={styles.headerRight}>
@@ -34,30 +58,32 @@ export default function Header({ status, user, setUser }) {
                             </button>
                         </>
                     ) : (
-                        <div className="relative"
-                             onMouseEnter={() => setMenuOpen(true)}
-                             onMouseLeave={() => setMenuOpen(false)}
-                        >
-                            <button className={styles.userButton}>
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                className={styles.userButton}
+                                onClick={toggleMenu}
+                            >
                                 {user.name || "User"} ▾
                             </button>
 
                             {/* Dropdown Menu */}
                             {menuOpen && (
-                                <div className="absolute right-0 mt-2 bg-white text-black rounded shadow-lg z-50">
+                                <div
+                                    className="absolute right-0 mt-2 bg-white text-black rounded shadow-lg z-50"
+                                >
                                     <ul className="flex flex-col p-2">
                                         <li>
                                             <button
                                                 className={styles.userDropdownItem}
-                                                onClick={() => console.log("Go to profile")}
+                                                onMouseDown={() => navigate("/dashboard")}
                                             >
-                                                Profile
+                                                Dashboard
                                             </button>
                                         </li>
                                         <li>
                                             <button
                                                 className={styles.userDropdownItem}
-                                                onClick={() => {
+                                                onMouseDown={() => {
                                                     localStorage.removeItem("currentUser");
                                                     setUser(null);
                                                     navigate("/");
@@ -68,8 +94,7 @@ export default function Header({ status, user, setUser }) {
                                         </li>
                                     </ul>
                                 </div>
-                                )
-                            }
+                            )}
                         </div>
                     )}
                 </div>

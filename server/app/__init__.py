@@ -2,6 +2,8 @@ from flask import Flask
 from server.config import config_data, SECRET_KEY
 from server.app.models.user import db
 from server.app.routes.auth_routes import auth_bp
+from server.app.routes.clubs_routes import clubs_bp
+from server.app.routes.dashboard_routes import dashboard_bp
 from server.app.routes.health_routes import api
 from server.app.routes.root_routes import root_bp
 from server.app.utils.db_loader import load_sql
@@ -18,12 +20,13 @@ def create_app():
     app.register_blueprint(root_bp)
     app.register_blueprint(api)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(clubs_bp)
+    app.register_blueprint(dashboard_bp)
 
 
     # Load SQL and create tables
     with app.app_context():
         load_sql()
-        db.create_all()
 
     @app.get("/")
     def root():
