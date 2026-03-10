@@ -2,12 +2,15 @@ import { useNavigate, useParams } from "react-router-dom"
 import background from "@/assets/background.webp"
 import styles from "@/style/Home.module.css"
 import { useLadders } from "@/hooks/useLadders"
+import { useTopPlayers } from "@/hooks/useTopPlayers"
 
 
 function Home() {
     const { clubId } = useParams()
     const navigate = useNavigate()
     const { ladders, loading } = useLadders(clubId)
+    const { players: topPlayers, loading: topLoading } = useTopPlayers(clubId)
+    const medals = ["🥇","🥈","🥉"]
 
     return (
         <div className={styles.container}>
@@ -41,7 +44,7 @@ function Home() {
         {/* CENTER — PICTURE */}
         <section className="text-center">
             <h1 className="text-5xl font-semibold tracking-tight">
-            NetRank
+            Club {clubId}
             </h1>
 
             <img src={background} alt="Tennis match" className="mt-6 rounded-2xl w-full"/>
@@ -76,18 +79,14 @@ function Home() {
                 <h2 className={styles.scoreboardContainerText}>Top Players</h2>
 
                 <div className={styles.scoreboardCard}>
-                    <div className={styles.scoreboardCardTeam}>
-                        <span>#1 Lorem</span>
-                        <span>Ipsum</span>
+                {topLoading && <p>Loading...</p>}
+
+                {!topLoading && topPlayers.map((player, index) => (
+                    <div key={index} className={styles.scoreboardCardTeam}>
+                        <span>{medals[index]} {player.name}</span>
+                        <span>{player.rating}</span>
                     </div>
-                    <div className={styles.scoreboardCardTeam}>
-                        <span>#2 Lorem</span>
-                        <span>Ipsum</span>
-                    </div>
-                    <div className={styles.scoreboardCardTeam}>
-                        <span>#3 Lorem</span>
-                        <span>Ipsum</span>
-                    </div>
+                ))}
                 </div>
             </section>
             <section className={styles.scoreboardContainer}>

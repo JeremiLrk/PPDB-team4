@@ -1,5 +1,9 @@
 from flask import Blueprint
 from server.app.services.ladders_service import get_all_club_ladders
+from server.app.models.team import Team
+from server.app.models.ladder import Ladder
+from server.app.models.ladder_team import LadderTeam
+from server.app.models import db
 
 ladders_bp = Blueprint("ladders", __name__, url_prefix="/api")
 
@@ -18,3 +22,15 @@ def get_ladders(club_id):
         }
         for l in ladders
     ]
+
+@ladders_bp.get("/clubs/<int:club_id>/top-players")
+def get_top_players(club_id: int, limit: int = 3):
+    return (
+        db.session.query(Team, LadderTeam)
+        .join(LadderTeam, Team.id == LadderTeam.team_id)
+        .join(Ladder, Ladder.id == LadderTeam.ladder_id)
+        .filter(Ladder.club_id == club_id)
+        .order_by(LadderTeam.rating.desc())
+        .limit(limit)
+        .all()
+    )

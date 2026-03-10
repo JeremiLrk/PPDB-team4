@@ -14,3 +14,4 @@ def get_players(club_id, ladder_id):
             }
         for t, r in [team, team_rating]
     ]
+
