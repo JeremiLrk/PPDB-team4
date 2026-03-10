@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom"
 import background from "@/assets/background.webp"
 import styles from "@/style/Home.module.css"
+import { useLadders } from "@/hooks/useLadder"
 
 
 function Home() {
     const navigate = useNavigate()
+    const { ladders, loading } = useLadders()
 
     return (
         <div className={styles.container}>
@@ -17,41 +19,19 @@ function Home() {
 
                     <div className={styles.ladderCard}>
 
-                        <button
-                            onClick={() => navigate("/ladder")}
-                            className={styles.ladderButton}
-                        >
-                            Men’s Tennis
-                        </button>
+                        {loading && <p>Loading ladders...</p>}
 
-                        <button
-                            onClick={() => navigate("/ladder")}
-                            className={styles.ladderButton}
-                        >
-                            Women’s Tennis
-                        </button>
-
-                        <button
-                            onClick={() => navigate("/ladder")}
-                            className={styles.ladderButton}
-                        >
-                            Padel
-                        </button>
-
-                        <button
-                            onClick={() => navigate("/ladder")}
-                            className={styles.ladderButton}
-                        >
-                            Juniors
-                        </button>
+                        {!loading && ladders.map((ladder) => (
+                            <button
+                                key={ladder.id}
+                                onClick={() => navigate(`/ladder`)}
+                                className={styles.ladderButton}
+                            >
+                                {ladder.name}
+                            </button>
+                        ))}
 
                         <div className={styles.ladderCard}>
-
-                            <section className="text-center">
-                                <h1 className="text-3xl font-semibold tracking-tight">
-                                    NetRank
-                                </h1>
-                            </section>
                         </div>
                     </div>
                 </section>

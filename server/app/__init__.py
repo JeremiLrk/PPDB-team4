@@ -1,9 +1,10 @@
 from flask import Flask
 from server.config import config_data, SECRET_KEY
-from server.app.models.user import db
+from server.app.models import db
 from server.app.routes.auth_routes import auth_bp
 from server.app.routes.health_routes import api
 from server.app.routes.root_routes import root_bp
+from server.app.routes.ladder_routes import ladder_bp
 from server.app.utils.db_loader import load_sql
 
 def create_app():
@@ -18,6 +19,7 @@ def create_app():
     app.register_blueprint(root_bp)
     app.register_blueprint(api)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(ladder_bp)
 
 
     # Load SQL and create tables

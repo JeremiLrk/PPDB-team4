@@ -20,7 +20,7 @@ package matches{
         description : string : optional
     }
     class RuleSet_Rules{
-        rule_set_id : int : f_key
+        ruleset_id : int : f_key
         rule_id : int : f_key
     }
 
