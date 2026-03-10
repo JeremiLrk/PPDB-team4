@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS team_manager_team (
 
 /*
  =====
- MATCHE RULES
+ MATCH RULES
  =====
  */
 
@@ -363,6 +363,7 @@ CREATE TABLE IF NOT EXISTS match_cancelled (
  */
 CREATE TABLE IF NOT EXISTS ladder (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
+    club_id BIGINT NOT NULL,
     name VARCHAR(64) NOT NULL,
     description VARCHAR(1024),
     sport_type_id BIGINT,
@@ -384,12 +385,37 @@ CREATE TABLE IF NOT EXISTS ladder (
         REFERENCES ladder_rating_function(id)
         ON DELETE SET NULL,
 
+    CONSTRAINT fk_ladder_club_id
+        FOREIGN KEY (club_id)
+        REFERENCES club(id)
+        ON DELETE CASCADE,
+
     CONSTRAINT pk_ladder
         PRIMARY KEY (id)
 );
 
 
+CREATE TABLE IF NOT EXISTS ladder_team (
+    ladder_id BIGINT NOT NULL,
+    team_id BIGINT NOT NULL,
 
+    rank INT,
+    rating INT DEFAULT 1000,
+    matches_played INT DEFAULT 0,
+
+    CONSTRAINT fk_ladder_team_ladder
+        FOREIGN KEY (ladder_id)
+        REFERENCES ladder(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_ladder_team_team
+        FOREIGN KEY (team_id)
+        REFERENCES team(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT pk_ladder_team
+        PRIMARY KEY (ladder_id, team_id)
+);
 /*
  =====
  TRIGGERS

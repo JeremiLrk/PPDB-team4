@@ -1,19 +1,16 @@
 from flask import Blueprint
-from server.app.services.ladder_service import get_all_ladder
+from server.app.services.ladder_service import get_all_players_ladder
 
-ladder_bp = Blueprint("ladders", __name__, url_prefix="/api")
+ladder_bp = Blueprint("ladder", __name__, url_prefix="/api")
 
-@ladder_bp.get("/ladders")
-def get_ladders():
-    ladders = get_all_ladder()
+@ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>")
+def get_players(club_id, ladder_id):
+    [team, team_rating] = get_all_players_ladder(ladder_id)
     return [
-        {
-            "id": l.id,
-            "name": l.name,
-            "description": l.description,
-            "sport_type_id": l.sport_type,
-            "ruleset_id": l.rule_set,
-            "ladder_rating_function_id": l.ladder_rating_function_id
-        }
-        for l in ladders
+            {
+                "id": t.id,
+                "name": t.name,
+                "rating": r.rating
+            }
+        for t, r in [team, team_rating]
     ]

@@ -1,12 +1,13 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import background from "@/assets/background.webp"
 import styles from "@/style/Home.module.css"
-import { useLadders } from "@/hooks/useLadder"
+import { useLadders } from "@/hooks/useLadders"
 
 
 function Home() {
+    const { clubId } = useParams()
     const navigate = useNavigate()
-    const { ladders, loading } = useLadders()
+    const { ladders, loading } = useLadders(clubId)
 
     return (
         <div className={styles.container}>
@@ -24,7 +25,7 @@ function Home() {
                         {!loading && ladders.map((ladder) => (
                             <button
                                 key={ladder.id}
-                                onClick={() => navigate(`/ladder`)}
+                                onClick={() => navigate(`/clubs/${clubId}/ladders`)}
                                 className={styles.ladderButton}
                             >
                                 {ladder.name}
