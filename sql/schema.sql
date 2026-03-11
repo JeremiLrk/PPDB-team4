@@ -3,6 +3,7 @@
  INFRASTRUCTURE
  =====
  */
+
 CREATE TABLE IF NOT EXISTS venue_type(
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name VARCHAR(32) NOT NULL UNIQUE -- outdoor, indoor, indoor/outdoor

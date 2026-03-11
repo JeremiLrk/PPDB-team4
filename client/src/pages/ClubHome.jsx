@@ -3,12 +3,14 @@ import background from "@/assets/background.webp"
 import styles from "@/style/Home.module.css"
 import { useLadders } from "@/hooks/useLadders"
 import { useTopPlayers } from "@/hooks/useTopPlayers"
+import useClub from "@/hooks/useClub"
 
 
 function ClubHome() {
     const { clubId } = useParams()
     const navigate = useNavigate()
     const { ladders, loading } = useLadders(clubId)
+    const { club, loading: clubLoading, error: clubError } = useClub(clubId)
     const { players: topPlayers, loading: topLoading } = useTopPlayers(clubId)
     const medals = ["🥇","🥈","🥉"]
 
@@ -43,9 +45,13 @@ function ClubHome() {
 
         {/* CENTER — PICTURE */}
         <section className="text-center">
-            <h1 className="text-5xl font-semibold tracking-tight">
-            Club {clubId}
-            </h1>
+            {clubLoading && <h1>Loading club...</h1>}
+            {clubError && <h1>Error loading club</h1>}
+            {!clubLoading && club && (
+                <h1 className="text-5xl font-semibold tracking-tight">
+                    {club.name}
+                </h1>
+            )}
 
             <img src={background} alt="Tennis match" className="mt-6 rounded-2xl w-full"/>
 
