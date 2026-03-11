@@ -1,0 +1,48 @@
+.container {
+    width: 100%;
+    max-width: 1100px;
+    color: #f8fafc;
+}
+
+.header {
+    margin-bottom: 1.5rem;
+}
+
+.title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.subtitle {
+    margin-top: 0.4rem;
+    color: #cbd5e1;
+}
+
+.warning {
+    margin-bottom: 1rem;
+    color: #fca5a5;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.card {
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 0.75rem;
+    background: rgba(15, 23, 42, 0.7);
+    padding: 1rem;
+}
+
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.card p {
+    margin: 0;
+    color: #cbd5e1;
+}
