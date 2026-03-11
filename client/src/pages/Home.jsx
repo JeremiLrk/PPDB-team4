@@ -1,10 +1,16 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import background from "@/assets/background.webp"
 import styles from "@/style/Home.module.css"
+import { useLadders } from "@/hooks/useLadders"
+import { useTopPlayers } from "@/hooks/useTopPlayers"
 
 
 function Home() {
+    const { clubId } = useParams()
     const navigate = useNavigate()
+    const { ladders, loading } = useLadders(clubId)
+    const { players: topPlayers, loading: topLoading } = useTopPlayers(clubId)
+    const medals = ["🥇","🥈","🥉"]
 
     return (
         <div className={styles.container}>
@@ -17,41 +23,19 @@ function Home() {
 
                     <div className={styles.ladderCard}>
 
-                        <button
-                            onClick={() => navigate("/ladder")}
-                            className={styles.ladderButton}
-                        >
-                            Men’s Tennis
-                        </button>
+                        {loading && <p>Loading ladders...</p>}
 
-                        <button
-                            onClick={() => navigate("/ladder")}
-                            className={styles.ladderButton}
-                        >
-                            Women’s Tennis
-                        </button>
-
-                        <button
-                            onClick={() => navigate("/ladder")}
-                            className={styles.ladderButton}
-                        >
-                            Padel
-                        </button>
-
-                        <button
-                            onClick={() => navigate("/ladder")}
-                            className={styles.ladderButton}
-                        >
-                            Juniors
-                        </button>
+                        {!loading && ladders.map((ladder) => (
+                            <button
+                                key={ladder.id}
+                                onClick={() => navigate(`/clubs/${clubId}/ladders`)}
+                                className={styles.ladderButton}
+                            >
+                                {ladder.name}
+                            </button>
+                        ))}
 
                         <div className={styles.ladderCard}>
-
-                            <section className="text-center">
-                                <h1 className="text-3xl font-semibold tracking-tight">
-                                    NetRank
-                                </h1>
-                            </section>
                         </div>
                     </div>
                 </section>
@@ -60,7 +44,7 @@ function Home() {
         {/* CENTER — PICTURE */}
         <section className="text-center">
             <h1 className="text-5xl font-semibold tracking-tight">
-            NetRank
+            Club {clubId}
             </h1>
 
             <img src={background} alt="Tennis match" className="mt-6 rounded-2xl w-full"/>
@@ -95,18 +79,14 @@ function Home() {
                 <h2 className={styles.scoreboardContainerText}>Top Players</h2>
 
                 <div className={styles.scoreboardCard}>
-                    <div className={styles.scoreboardCardTeam}>
-                        <span>#1 Lorem</span>
-                        <span>Ipsum</span>
+                {topLoading && <p>Loading...</p>}
+
+                {!topLoading && topPlayers.map((player, index) => (
+                    <div key={index} className={styles.scoreboardCardTeam}>
+                        <span>{medals[index]} {player.name}</span>
+                        <span>{player.rating}</span>
                     </div>
-                    <div className={styles.scoreboardCardTeam}>
-                        <span>#2 Lorem</span>
-                        <span>Ipsum</span>
-                    </div>
-                    <div className={styles.scoreboardCardTeam}>
-                        <span>#3 Lorem</span>
-                        <span>Ipsum</span>
-                    </div>
+                ))}
                 </div>
             </section>
             <section className={styles.scoreboardContainer}>
