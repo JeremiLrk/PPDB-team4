@@ -1,0 +1,45 @@
+@reference "tailwindcss";
+
+.page {
+    @apply relative min-h-[calc(100vh-80px)] w-full;
+}
+
+.background {
+    @apply pointer-events-none absolute inset-0;
+}
+
+.glowTop {
+    @apply absolute left-1/2 top-0 h-[34rem] w-[48rem] -translate-x-1/2 rounded-full bg-indigo-500/20 blur-[110px];
+}
+
+.glowBottom {
+    @apply absolute -bottom-10 -left-10 h-80 w-80 rounded-full bg-cyan-500/15 blur-[90px];
+}
+
+.hero {
+    @apply relative z-10 mx-auto flex min-h-[calc(100vh-80px)] w-full flex-col items-center justify-center px-6 py-12 text-center;
+}
+
+.title {
+    @apply px-1 pb-2 text-6xl font-extrabold leading-[1.12] text-slate-100 sm:text-7xl lg:text-8xl;
+}
+
+.titleAccent {
+    @apply inline-block px-1 bg-gradient-to-r from-white via-sky-200 to-blue-500 bg-clip-text text-transparent;
+}
+
+.kicker {
+    @apply mt-5 text-xs uppercase tracking-[0.2em] text-slate-400;
+}
+
+.actions {
+    @apply mt-10 flex flex-wrap items-center justify-center gap-4;
+}
+
+.primaryButton {
+    @apply rounded-xl bg-indigo-500 px-6 py-3 font-medium text-white transition hover:bg-indigo-400;
+}
+
+.secondaryButton {
+    @apply rounded-xl border border-white/20 px-6 py-3 text-slate-100 transition hover:bg-white/10;
+}
