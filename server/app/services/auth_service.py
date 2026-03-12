@@ -29,3 +29,20 @@ def login_user(email, password):
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token, user
+
+def verify_user(token):
+    if not token:
+        return None
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+    user_id = payload.get("user_id")
+    if not user_id:
+        return None
+
+    return User.query.filter_by(id=user_id).first()

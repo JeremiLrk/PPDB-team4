@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, make_response
-from server.app.services.auth_service import register_user, login_user
+from server.app.services.auth_service import register_user, login_user, verify_user
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api")
 
@@ -16,8 +16,31 @@ def signup():
         return jsonify({"message": "Missing credentials."}), 400
 
     try:
-        user = register_user(email, password, firstName, lastName, dateOfBirth)
-        return jsonify({"message": "Registered successfully."}), 201
+        register_user(email, password, firstName, lastName, dateOfBirth)
+
+        token, user = login_user(email, password)
+        response = make_response(
+            jsonify(
+                {
+                    "message": "Registered successfully.",
+                    "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "firstName": user.first_name,
+                        "lastName": user.last_name,
+                    },
+                }
+            ),
+            201,
+        )
+        response.set_cookie(
+            "access_token",
+            token,
+            httponly=True,
+            secure=True,
+            samesite="Lax"
+        )
+        return response
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
 
@@ -39,14 +62,50 @@ def login():
         jsonify(
             {
                 "message": "Login successful.",
-                "user": {"id": user.id, "email": user.email}
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "firstName": user.first_name,
+                    "lastName": user.last_name,
+                },
             }
-                ), 200)
+        ),
+        200,
+    )
     response.set_cookie("access_token", token, httponly=True, secure=True, samesite="Lax")
     return response
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
     response = make_response(jsonify({"message": "Successfully logged out."}), 200)
-    response.set_cookie("access_token", "", expires=0)
+    response.set_cookie(
+        "access_token",
+        "",
+        expires=0,
+        httponly=True,
+        secure=True,
+        samesite="Lax"
+    )
     return response
+
+@auth_bp.route("/me", methods=["GET"])
+def me():
+    token = request.cookies.get("access_token")
+    user = verify_user(token)
+
+    if not user:
+        return jsonify({"message": "Unauthorized."}), 401
+
+    return (
+        jsonify(
+            {
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "firstName": user.first_name,
+                    "lastName": user.last_name,
+                }
+            }
+        ),
+        200,
+    )

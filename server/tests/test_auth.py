@@ -122,3 +122,23 @@ def test_logout_jwt_cookie(client: FlaskClient):
 
     cookie = client.get_cookie("access_token")
     assert cookie is None or cookie.value == ""
+
+
+def test_me_success(client: FlaskClient):
+    email = _unique_email()
+    client.post("/api/signup",json={"email": email,"password": "password123","firstName": "Test","lastName": "User","dateOfBirth": "2000-01-01"})
+
+    response = client.get("/api/me")
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["user"]["email"] == email
+    assert data["user"]["firstName"] == "Test"
+    assert data["user"]["lastName"] == "User"
+
+
+def test_me_unauthorized(client: FlaskClient):
+    response = client.get("/api/me")
+
+    assert response.status_code == 401
+    assert response.get_json()["message"] == "Unauthorized."

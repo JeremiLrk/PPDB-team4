@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { toast } from "react-hot-toast"
 
 export function useRegister(setUser) {
     const [email, setEmail] = useState("")
@@ -16,6 +17,7 @@ export function useRegister(setUser) {
             const response = await fetch("/api/signup", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify({
                     email: email.toLowerCase(),
                     password,
@@ -32,11 +34,13 @@ export function useRegister(setUser) {
             }
 
             setUser(data.user)
-            localStorage.setItem("currentUser", JSON.stringify(data.user))
+
+            toast.success("Registration successful")
 
             navigate("/")
         } catch (err) {
             console.error(err.message || "Registration failed")
+            toast.error(err.message || "Registration failed")
         }
     }
 

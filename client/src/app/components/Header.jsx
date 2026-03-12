@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom"
 import Badge from "./Badge"
 import styles from "@/style/Header.module.css"
 import { useState } from "react"
+import { toast } from "react-hot-toast"
 
 export default function Header({ status, user, setUser }) {
     const navigate = useNavigate()
@@ -12,6 +13,7 @@ export default function Header({ status, user, setUser }) {
             const response = await fetch("/api/logout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
             })
 
             const data = await response.json()
@@ -20,11 +22,14 @@ export default function Header({ status, user, setUser }) {
                 throw new Error(data?.message || "Logout failed")
             }
 
-            localStorage.removeItem("currentUser")
             setUser(null)
+
+            toast.success("Logout successful")
+
             navigate("/")
         } catch (err) {
             console.error(err.message || "Logout failed")
+            toast.error(err.message || "Logout failed")
         }
     }
 
@@ -63,7 +68,8 @@ export default function Header({ status, user, setUser }) {
                             onMouseLeave={() => setMenuOpen(false)}
                         >
                             <button className={styles.userButton}>
-                                {user.name || "User"} ▾
+                                {user.firstName + " " + user.lastName || "User"}{" "}
+                                ▾
                             </button>
 
                             {/* Dropdown Menu */}
