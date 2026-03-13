@@ -46,7 +46,8 @@ def _init_db(app: Flask):
             unique_fields=["page", "key", "language"]
         )
 
-        from server.app.models.PageText import PageText
-        rows = PageText.query.all()
-        for r in rows:
-            print(r.page, r.key, r.language, r.value)
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_authorization.json",
+            unique_fields=["page", "key", "language"]
+        )

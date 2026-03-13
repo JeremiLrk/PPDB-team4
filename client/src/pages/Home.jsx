@@ -2,9 +2,11 @@ import { useNavigate } from "react-router-dom"
 import background from "@/assets/background.webp"
 import styles from "@/style/Home.module.css"
 import {usePageTexts} from "@/hooks/usePageTexts.js"
+import {useLangContext} from "@/context/useLangContext.js";
 
 
-function Home(lang) {
+function Home() {
+    const {lang, setLang } = useLangContext();
     const texts = usePageTexts("home", lang);
     const navigate = useNavigate()
 

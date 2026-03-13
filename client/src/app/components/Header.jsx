@@ -5,11 +5,15 @@ import {useState} from "react";
 
 import {usePageTexts} from "@/hooks/usePageTexts.js"
 import {useLangContext} from "@/context/useLangContext.js";
+import {useCurrentUserContext} from "@/context/useCurrentUserContext.js";
 
-export default function Header({ status, user, setUser}) {
+export default function Header({ status}) {
 
     const {lang, setLang } = useLangContext();
-    const texts = usePageTexts("home", lang);
+    const {currentUser, setCurrentUser } = useCurrentUserContext();
+
+    const base_texts = usePageTexts("base", lang);
+    const au_texts = usePageTexts("authorization", lang);
 
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
@@ -21,27 +25,26 @@ export default function Header({ status, user, setUser}) {
                 <div><Badge status={status} /></div>
 
                 {/* Center: Title */}
-                <h1 className={styles.headerTitle}>NetRank</h1>
+                <h1 className={styles.headerTitle}>{base_texts.net_rank}</h1>
 
                 {/* Right: Auth Buttons / User Menu */}
                 <div className={styles.headerRight}>
                     <button onClick={() => setLang("nl")}>NL</button>
                     <button onClick={() => setLang("en")}>EN</button>
 
-                    <h3>{texts.hero_title}</h3>
-                    {!user ? (
+                    {!currentUser ? (
                         <>
                             <button
                                 onClick={() => navigate("/login")}
                                 className={styles.headerButton}
                             >
-                                Login
+                                {au_texts.log_in}
                             </button>
                             <button
                                 onClick={() => navigate("/register")}
                                 className={styles.headerPrimaryButton}
                             >
-                                Register
+                                {au_texts.register}
                             </button>
                         </>
                     ) : (
@@ -50,7 +53,7 @@ export default function Header({ status, user, setUser}) {
                              onMouseLeave={() => setMenuOpen(false)}
                         >
                             <button className={styles.userButton}>
-                                {user.name || "User"} ▾
+                                {currentUser.name || au_texts.user} ▾
                             </button>
 
                             {/* Dropdown Menu */}
@@ -62,7 +65,7 @@ export default function Header({ status, user, setUser}) {
                                                 className={styles.userDropdownItem}
                                                 onClick={() => console.log("Go to profile")}
                                             >
-                                                Profile
+                                                {au_texts.profile}
                                             </button>
                                         </li>
                                         <li>
@@ -70,11 +73,11 @@ export default function Header({ status, user, setUser}) {
                                                 className={styles.userDropdownItem}
                                                 onClick={() => {
                                                     localStorage.removeItem("currentUser");
-                                                    setUser(null);
+                                                    setCurrentUser(null);
                                                     navigate("/");
                                                 }}
                                             >
-                                                Logout
+                                                {au_texts.log_out}
                                             </button>
                                         </li>
                                     </ul>
