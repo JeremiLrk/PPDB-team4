@@ -3,12 +3,11 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
-from app import User, db
-
+from server.app.models.user import User
+from server.extensions import db
 
 def _unique_email() -> str:
     return f"test-{uuid.uuid4()}@example.com"
-
 
 def test_signup_success(client: FlaskClient, app: Flask):
     email = _unique_email()

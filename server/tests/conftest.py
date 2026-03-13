@@ -1,17 +1,17 @@
 import pytest
-from app import app as flask_app, db
+from server.app import create_app
+from server.extensions import db
 
 @pytest.fixture
 def app():
-    flask_app.config.update(
-        {
-            "TESTING": True,
-            "SECRET_KEY": "test_secret_key",
-        }
-    )
+    app = create_app()
+    app.config.update({
+        "TESTING": True,
+        "SECRET_KEY": "test_secret_key",
+    })
 
-    with flask_app.app_context():
-        yield flask_app
+    with app.app_context():
+        yield app
         db.session.remove()
 
 

@@ -1,10 +1,12 @@
+from typing import Optional
 from werkzeug.security import generate_password_hash, check_password_hash
-from server.app.models.user import User, db
+from server.app.models.user import User
+from server.extensions import db
 import jwt
 import datetime
 from server.config import SECRET_KEY
 
-def register_user(email, password):
+def register_user(email, password) -> User:
     if len(password) < 6:
         raise ValueError("Password too short")
 
@@ -17,7 +19,7 @@ def register_user(email, password):
     db.session.commit()
     return new_user
 
-def login_user(email, password):
+def login_user(email, password) -> Optional[tuple[str, User]]:
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.password_hash, password):
         return None
