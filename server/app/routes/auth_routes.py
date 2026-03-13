@@ -1,5 +1,13 @@
+import os
+import resend
+from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, make_response
-from server.app.services.auth_service import register_user, login_user, verify_user
+from server.app.models.user import User
+from server.app.services.auth_service import register_user, login_user, verify_user, generate_reset_token, verify_reset_token, update_password
+
+load_dotenv()
+
+resend.api_key = os.environ["RESEND_API_KEY"]
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api")
 
@@ -109,3 +117,48 @@ def me():
         ),
         200,
     )
+
+@auth_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json() or {}
+    email = (data.get("email") or "").strip().lower()
+
+    if not email:
+        return jsonify({"message": "Email is required."}), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        token = generate_reset_token(email)
+
+        params: resend.Emails.SendParams = {
+            "from": "NetRank <onboarding@resend.dev>",
+            "to": [email],
+            "subject": "Password reset request",
+            "html": f'<a href="http://localhost:5173/reset-password/{token}">Reset Password</a>',
+        }
+
+        resend.Emails.send(params)
+    
+    response = make_response(jsonify({"message": "Check your inbox for the password reset link."}), 200)
+    
+    return response
+
+@auth_bp.route("/reset-password/<token>", methods=["POST"])
+def reset_password(token):
+    email = verify_reset_token(token)
+    
+    data = request.get_json() or {}
+    password = data.get("password") or ""
+
+    if not email:
+        return jsonify({"message": "Token is invalid or expired."}), 400
+
+    if not password:
+        return jsonify({"message": "Password is required."}), 400
+    
+    try:
+        update_password(email, password)
+        return jsonify({"message": "Password updated successfully."}), 200
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400

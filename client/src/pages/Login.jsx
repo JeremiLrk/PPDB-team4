@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom"
-import {useLogin} from "@/hooks/useLogin.js";
-import styles from "@/style/Login.module.css";
+import { useLogin } from "@/hooks/useLogin.js"
+import styles from "@/style/Login.module.css"
 
 const Login = ({ setUser }) => {
-    const { email, setEmail, password, setPassword, handleSubmit } = useLogin(setUser);
+    const { email, setEmail, password, setPassword, handleSubmit } =
+        useLogin(setUser)
 
     return (
         <div className={styles.loginContainer}>
@@ -12,7 +13,12 @@ const Login = ({ setUser }) => {
 
                 <form className={styles.loginForm} onSubmit={handleSubmit}>
                     <div className={styles.loginFormGroup}>
-                        <label htmlFor="login-email" className={styles.loginLabel}>Email</label>
+                        <label
+                            htmlFor="login-email"
+                            className={styles.loginLabel}
+                        >
+                            Email
+                        </label>
                         <input
                             id="login-email"
                             type="email"
@@ -24,7 +30,12 @@ const Login = ({ setUser }) => {
                     </div>
 
                     <div className={styles.loginFormGroup}>
-                        <label htmlFor="login-password" className={styles.loginLabel}>Password</label>
+                        <label
+                            htmlFor="login-password"
+                            className={styles.loginLabel}
+                        >
+                            Password
+                        </label>
                         <input
                             id="login-password"
                             type="password"
@@ -35,15 +46,25 @@ const Login = ({ setUser }) => {
                         />
                     </div>
 
-                    <button type="submit" className={styles.loginButton}>Login</button>
+                    <button type="submit" className={styles.loginButton}>
+                        Login
+                    </button>
                 </form>
 
                 <p className={styles.loginText}>
                     Don't have an account?{" "}
-                    <Link to="/register" className={styles.loginLink}>Register</Link>
+                    <Link to="/register" className={styles.loginLink}>
+                        Register
+                    </Link>
                 </p>
 
-                <Link to="/" className={styles.guestLink}>Continue as guest</Link>
+                <Link to="/forgot-password" className={styles.loginLink}>
+                    Forgot Password?
+                </Link>
+
+                <Link to="/" className={styles.guestLink}>
+                    Continue as guest
+                </Link>
             </div>
         </div>
     )
