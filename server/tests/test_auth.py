@@ -1,9 +1,14 @@
 import uuid
 from flask import Flask
 from flask.testing import FlaskClient
+<<<<<<< HEAD
 
 from server.app.models.user import User
 from server.extensions import db
+=======
+from server.app import User, Administrator, db
+
+>>>>>>> e275562 (beetje vanalles)
 
 def _unique_email() -> str:
     return f"test-{uuid.uuid4()}@example.com"
@@ -106,6 +111,7 @@ def test_login_jwt_cookie(client: FlaskClient):
     assert cookie.http_only is True
     assert cookie.secure is True
     assert cookie.same_site == "Lax"
+<<<<<<< HEAD
 
 def test_logout_jwt_cookie(client: FlaskClient):
     email = _unique_email()
@@ -141,3 +147,30 @@ def test_me_unauthorized(client: FlaskClient):
 
     assert response.status_code == 401
     assert response.get_json()["message"] == "Unauthorized."
+=======
+"""def test_isAdmin_False(client: FlaskClient, app: Flask):
+    email = _unique_email()
+    payload = {"email": email, "password": "password123"}
+    client.post("/api/signup", json=payload)
+
+    with app.app_context():
+        user = User.query.filter_by(email=email).first()
+        assert user is not None
+        assert user.is_admin() is False
+def test_isAdmin_True(client: FlaskClient, app: Flask):
+    email = _unique_email()
+    payload = {"email": email, "password": "password123"}
+    client.post("/api/signup", json=payload)
+
+    with app.app_context():
+        user = User.query.filter_by(email=email).first()
+        assert user is not None
+
+        # Create an administrator profile for this user
+        admin_profile = Administrator(access_level=10)
+        user.admin_profile = admin_profile
+        db.session.commit()
+
+        assert user.is_admin() is True"""
+    
+>>>>>>> e275562 (beetje vanalles)
