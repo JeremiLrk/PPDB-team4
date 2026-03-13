@@ -3,7 +3,14 @@ import Badge from "./Badge";
 import styles from "@/style/Header.module.css";
 import {useState} from "react";
 
-export default function Header({ status, user, setUser }) {
+import {usePageTexts} from "@/hooks/usePageTexts.js"
+import {useLangContext} from "@/context/useLangContext.js";
+
+export default function Header({ status, user, setUser}) {
+
+    const {lang, setLang } = useLangContext();
+    const texts = usePageTexts("home", lang);
+
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
 
@@ -18,6 +25,10 @@ export default function Header({ status, user, setUser }) {
 
                 {/* Right: Auth Buttons / User Menu */}
                 <div className={styles.headerRight}>
+                    <button onClick={() => setLang("nl")}>NL</button>
+                    <button onClick={() => setLang("en")}>EN</button>
+
+                    <h3>{texts.hero_title}</h3>
                     {!user ? (
                         <>
                             <button

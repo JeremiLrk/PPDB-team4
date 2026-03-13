@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import Background_Glow from "@/app/components/Background_Glow.jsx";
 import Header from "@/app/components/Header.jsx";
 import AppRoutes from "@/app/AppRoutes.jsx";
-
+import {useLang} from "@/hooks/useLang.js";
+import { LangContext } from "@/context/useLangContext.js"
 
 function App() {
+    const [lang, setLang] = useLang("en");
+
+
     const [status, setStatus] = useState({ state: "loading", msg: "" });
-
     const [currentUser, setCurrentUser] = useState(null);
-
 
     useEffect(() => {
         try {
@@ -62,11 +64,13 @@ function App() {
 
 return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-        <Background_Glow />
-        <Header status={status} user={currentUser} setUser={setCurrentUser}/>
-        <main className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-6">
-            <AppRoutes currentUser={currentUser} setUser={setCurrentUser}/>
-        </main>
+        <LangContext.Provider value={{ lang, setLang }}>
+            <Background_Glow />
+            <Header status={status} user={currentUser} setUser={setCurrentUser} lang={lang} setLang={setLang}/>
+            <main className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-6">
+                <AppRoutes currentUser={currentUser} setUser={setCurrentUser} lang={lang}/>
+            </main>
+        </LangContext.Provider>
     </div>
     );
 }

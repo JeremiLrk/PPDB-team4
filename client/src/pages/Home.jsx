@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom"
 import background from "@/assets/background.webp"
 import styles from "@/style/Home.module.css"
+import {usePageTexts} from "@/hooks/usePageTexts.js"
 
 
-function Home() {
+function Home(lang) {
+    const texts = usePageTexts("home", lang);
     const navigate = useNavigate()
 
     return (
@@ -13,7 +15,7 @@ function Home() {
             <aside className={styles.ladderAside}>
 
                 <section className={styles.ladderContainer}>
-                    <h2 className={styles.ladderContainerText}>Ladders</h2>
+                    <h2 className={styles.ladderContainerText}>{texts.hero_title}</h2>
 
                     <div className={styles.ladderCard}>
 
