@@ -1,7 +1,0 @@
-[
-  {"page": "base", "key": "hero_title", "language": "en", "value": "Welcome"},
-  {"page": "base", "key": "hero_title", "language": "nl", "value": "Van harte welkom"},
-
-  {"page": "base", "key": "net_rank", "language": "en", "value": "NetRank"},
-  {"page": "base", "key": "net_rank", "language": "nl", "value": "NetRank"}
-]

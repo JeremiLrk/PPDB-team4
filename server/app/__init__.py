@@ -42,12 +42,30 @@ def _init_db(app: Flask):
         # --- seed data ---
         seed_table(
             model=PageText,
-            seeds_file="server/seeds/page_text.json",
+            seeds_file="server/seeds/page_text_base.json",
+            unique_fields=["page", "key", "language"]
+        )
+
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_home.json",
             unique_fields=["page", "key", "language"]
         )
 
         seed_table(
             model=PageText,
             seeds_file="server/seeds/page_text_authorization.json",
+            unique_fields=["page", "key", "language"]
+        )
+
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_ladder.json",
+            unique_fields=["page", "key", "language"]
+        )
+
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_score.json",
             unique_fields=["page", "key", "language"]
         )
