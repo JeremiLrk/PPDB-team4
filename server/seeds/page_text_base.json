@@ -1,0 +1,10 @@
+[
+  {"page": "base", "key": "hero_title", "language": "en", "value": "Welcome"},
+  {"page": "base", "key": "hero_title", "language": "nl", "value": "Van harte welkom"},
+
+  {"page": "base", "key": "pending", "language": "en", "value": "Pending"},
+  {"page": "base", "key": "pending", "language": "nl", "value": "In behandeling"},
+  {"page": "base", "key": "e404", "language": "en", "value": "404 - Page Not Found"},
+  {"page": "base", "key": "e404", "language": "nl", "value": "404 - Pagina niet gevonden"}
+
+]

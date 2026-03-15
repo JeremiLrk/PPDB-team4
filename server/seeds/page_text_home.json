@@ -1,0 +1,15 @@
+[
+  {"page": "home", "key": "home", "language": "en", "value": "Home"},
+  {"page": "home", "key": "home", "language": "nl", "value": "Thuis"},
+  {"page": "home", "key": "net_rank", "language": "en", "value": "NetRank"},
+  {"page": "home", "key": "net_rank", "language": "nl", "value": "NetRank"},
+  {"page": "home", "key": "padel", "language": "en", "value": "Padel"},
+  {"page": "home", "key": "padel", "language": "nl", "value": "Padel"},
+  {"page": "home", "key": "juniors", "language": "en", "value": "Juniors"},
+  {"page": "home", "key": "juniors", "language": "nl", "value": "Junioren"},
+
+  {"page": "home", "key": "mens_tennis", "language": "en", "value": "Men's Tennis"},
+  {"page": "home", "key": "mens_tennis", "language": "nl", "value": "Heren tennis"},
+  {"page": "home", "key": "womens_tennis", "language": "en", "value": "Women’s Tennis"},
+  {"page": "home", "key": "womens_tennis", "language": "nl", "value": "Dames tennis"}
+]

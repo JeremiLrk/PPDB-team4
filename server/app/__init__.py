@@ -1,10 +1,6 @@
 from flask import Flask
+from server.extensions import db
 from server.config import config_data, SECRET_KEY
-from server.app.models.user import db
-from server.app.routes.auth_routes import auth_bp
-from server.app.routes.health_routes import api
-from server.app.routes.root_routes import root_bp
-from server.app.utils.db_loader import load_sql
 
 def create_app():
     app = Flask(__name__)
@@ -14,19 +10,62 @@ def create_app():
 
     db.init_app(app)
 
-    # Register Blueprints
+    _register_blueprints(app)
+    _init_db(app)
+
+    return app
+
+def _register_blueprints(app: Flask):
+    from server.app.routes.texts_routes import texts
+    from server.app.routes.auth_routes import auth_bp
+    from server.app.routes.health_routes import api
+    from server.app.routes.root_routes import root_bp
+
     app.register_blueprint(root_bp)
     app.register_blueprint(api)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(texts)
 
 
-    # Load SQL and create tables
+def _init_db(app: Flask):
+    from server.app.utils.db_loader import load_sql
+    from server.app.utils.seed_table import seed_table
+    from server.app.models.PageText import PageText
+
     with app.app_context():
-        load_sql()
+
+        # --- reset schema ---
+        sql_file_path = "server/sql/schema.sql"
+        load_sql(sql_file_path)
         db.create_all()
 
-    @app.get("/")
-    def root():
-        return {"message": "API running"}, 200
+        # --- seed data ---
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_base.json",
+            unique_fields=["page", "key", "language"]
+        )
 
-    return app
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_home.json",
+            unique_fields=["page", "key", "language"]
+        )
+
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_authorization.json",
+            unique_fields=["page", "key", "language"]
+        )
+
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_ladder.json",
+            unique_fields=["page", "key", "language"]
+        )
+
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_score.json",
+            unique_fields=["page", "key", "language"]
+        )
