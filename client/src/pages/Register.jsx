@@ -1,18 +1,28 @@
 import { Link } from "react-router-dom"
-import {useRegister} from "@/hooks/useRegister.js";
-import styles from "@/style/Register.module.css";
-import {useCurrentUserContext} from "@/context/useCurrentUserContext.js";
-import {useLangContext} from "@/context/useLangContext.js";
-import {usePageTexts} from "@/hooks/usePageTexts.js";
-
+import { useRegister } from "@/hooks/useRegister.js"
+import styles from "@/style/Register.module.css"
+import { useCurrentUserContext } from "@/context/useCurrentUserContext.js"
+import { useLangContext } from "@/context/useLangContext.js"
+import { usePageTexts } from "@/hooks/usePageTexts.js"
 
 const Register = () => {
+    const { lang } = useLangContext()
+    const au_texts = usePageTexts("authorization", lang)
 
-    const {lang, setLang } = useLangContext();
-    const au_texts = usePageTexts("authorization", lang);
-
-    const {currentUser, setCurrentUser } = useCurrentUserContext();
-    const { email, setEmail, password, setPassword, handleSubmit } = useRegister(setCurrentUser);
+    const { setCurrentUser } = useCurrentUserContext()
+    const {
+        email,
+        setEmail,
+        password,
+        setPassword,
+        firstName,
+        setFirstName,
+        lastName,
+        setLastName,
+        dateOfBirth,
+        setDateOfBirth,
+        handleSubmit,
+    } = useRegister(setCurrentUser)
 
     return (
         <div className={styles.registerContainer}>
@@ -20,8 +30,65 @@ const Register = () => {
                 <h1 className={styles.registerTitle}>{au_texts.register}</h1>
 
                 <form className={styles.registerForm} onSubmit={handleSubmit}>
+                    <div className={styles.nameFieldsRow}>
+                        <div className={styles.registerFormGroup}>
+                            <label
+                                htmlFor="register-firstname"
+                                className={styles.registerLabel}
+                            >
+                                {au_texts.first_name}
+                            </label>
+                            <input
+                                id="register-firstname"
+                                type="text"
+                                placeholder={au_texts.placeholder_first_name}
+                                value={firstName}
+                                onChange={(e) => setFirstName(e.target.value)}
+                                className={styles.registerInput}
+                            />
+                        </div>
+
+                        <div className={styles.registerFormGroup}>
+                            <label
+                                htmlFor="register-lastname"
+                                className={styles.registerLabel}
+                            >
+                                {au_texts.last_name}
+                            </label>
+                            <input
+                                id="register-lastname"
+                                type="text"
+                                placeholder={au_texts.placeholder_last_name}
+                                value={lastName}
+                                onChange={(e) => setLastName(e.target.value)}
+                                className={styles.registerInput}
+                            />
+                        </div>
+                    </div>
+
                     <div className={styles.registerFormGroup}>
-                        <label htmlFor="register-email" className={styles.registerLabel}>{au_texts.email}</label>
+                        <label
+                            htmlFor="register-dateofbirth"
+                            className={styles.registerLabel}
+                        >
+                            {au_texts.date_of_birth}
+                        </label>
+                        <input
+                            id="register-dateofbirth"
+                            type="date"
+                            value={dateOfBirth}
+                            onChange={(e) => setDateOfBirth(e.target.value)}
+                            className={styles.registerInput}
+                        />
+                    </div>
+
+                    <div className={styles.registerFormGroup}>
+                        <label
+                            htmlFor="register-email"
+                            className={styles.registerLabel}
+                        >
+                            {au_texts.email}
+                        </label>
                         <input
                             id="register-email"
                             type="email"
@@ -33,7 +100,12 @@ const Register = () => {
                     </div>
 
                     <div className={styles.registerFormGroup}>
-                        <label htmlFor="register-password" className={styles.registerLabel}>{au_texts.password}</label>
+                        <label
+                            htmlFor="register-password"
+                            className={styles.registerLabel}
+                        >
+                            {au_texts.password}
+                        </label>
                         <input
                             id="register-password"
                             type="password"
@@ -44,15 +116,21 @@ const Register = () => {
                         />
                     </div>
 
-                    <button type="submit" className={styles.registerButton}>{au_texts.create_account}</button>
+                    <button type="submit" className={styles.registerButton}>
+                        {au_texts.create_account}
+                    </button>
                 </form>
 
                 <p className={styles.registerText}>
                     {au_texts.has_account}{" "}
-                    <Link to="/login" className={styles.registerLink}>{au_texts.log_in}</Link>
+                    <Link to="/login" className={styles.registerLink}>
+                        {au_texts.log_in}
+                    </Link>
                 </p>
 
-                <Link to="/" className={styles.guestLink}>{au_texts.as_guest}</Link>
+                <Link to="/" className={styles.guestLink}>
+                    {au_texts.as_guest}
+                </Link>
             </div>
         </div>
     )

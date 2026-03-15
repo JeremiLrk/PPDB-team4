@@ -4,14 +4,16 @@ from server.extensions import db
 
 @pytest.fixture
 def app():
-    app = create_app()
-    app.config.update({
-        "TESTING": True,
-        "SECRET_KEY": "test_secret_key",
-    })
+    flask_app = create_app()
+    flask_app.config.update(
+        {
+            "TESTING": True,
+            "SECRET_KEY": "test_secret_key",
+        }
+    )
 
-    with app.app_context():
-        yield app
+    with flask_app.app_context():
+        yield flask_app
         db.session.remove()
 
 

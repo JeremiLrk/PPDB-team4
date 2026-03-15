@@ -1,6 +1,11 @@
 from flask import Flask
 from server.extensions import db
 from server.config import config_data, SECRET_KEY
+from server.app.models.user import db, User
+from server.app.routes.auth_routes import auth_bp
+from server.app.routes.health_routes import api
+from server.app.routes.root_routes import root_bp
+from server.app.utils.db_loader import load_sql
 
 def create_app():
     app = Flask(__name__)

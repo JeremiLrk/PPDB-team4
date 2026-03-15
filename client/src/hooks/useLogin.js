@@ -1,37 +1,38 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { toast } from "react-hot-toast"
 
 export function useLogin(setUser) {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const navigate = useNavigate();
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
         try {
             const response = await fetch("/api/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify({ email: email.toLowerCase(), password }),
-            });
+            })
 
-            const data = await response.json();
+            const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data?.message || "Login failed");
+                throw new Error(data?.message || "Login failed")
             }
 
+            setUser(data.user)
 
-            setUser(data.user);
-            localStorage.setItem("currentUser", JSON.stringify(data.user));
+            toast.success("Login successful")
 
-
-            navigate("/");
+            navigate("/")
         } catch (err) {
-            console.error(err.message || "Login failed");
-            alert(err.message || "Login failed");
+            console.error(err.message || "Login failed")
+            toast.error(err.message || "Login failed")
         }
-    };
+    }
 
-    return { email, setEmail, password, setPassword, handleSubmit };
+    return { email, setEmail, password, setPassword, handleSubmit }
 }

@@ -24,7 +24,7 @@
 }
 
 .loginLabel {
-    @apply text-sm text-black;
+    @apply text-sm text-white;
 }
 
 .loginInput {
