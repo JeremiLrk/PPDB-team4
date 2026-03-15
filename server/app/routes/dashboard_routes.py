@@ -29,8 +29,7 @@ def get_my_dashboard():
     if not user:
         return jsonify({"message": "User not found"}), 404
 
-    # TODO(team): replace this temporary shape with real queries from membership/request tables.
-    # This keeps the frontend dashboard route working while auth/database flows are being finalized.
+    # TODO(team): replace this placeholder payload with real membership/request table queries.
     return jsonify(
         {
             "user": {"id": user.id, "email": user.email},
@@ -38,8 +37,7 @@ def get_my_dashboard():
             "clubs": [],
             "pending_requests": {
                 "my_requests": [],
-                "join_requests_to_review": [],
-                "club_creation_to_review": [],
+                "my_club_creation_requests": [],
             },
         }
     ), 200

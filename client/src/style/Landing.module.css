@@ -1,45 +1,270 @@
-@reference "tailwindcss";
-
 .page {
-    @apply relative min-h-[calc(100vh-80px)] w-full;
+    --font-ui: "Space Grotesk", "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+    position: relative;
+    min-height: calc(100vh - 80px);
+    width: 100%;
+    padding: 2.4rem 1rem 3rem;
+    font-family: var(--font-ui);
+    color: #eef6ff;
+    overflow: hidden;
 }
 
-.background {
-    @apply pointer-events-none absolute inset-0;
-}
-
-.glowTop {
-    @apply absolute left-1/2 top-0 h-[34rem] w-[48rem] -translate-x-1/2 rounded-full bg-indigo-500/20 blur-[110px];
-}
-
-.glowBottom {
-    @apply absolute -bottom-10 -left-10 h-80 w-80 rounded-full bg-cyan-500/15 blur-[90px];
+.hero,
+.stepsSection {
+    position: relative;
+    z-index: 1;
+    max-width: 1120px;
+    margin: 0 auto;
+    text-align: center;
 }
 
 .hero {
-    @apply relative z-10 mx-auto flex min-h-[calc(100vh-80px)] w-full flex-col items-center justify-center px-6 py-12 text-center;
-}
-
-.title {
-    @apply px-1 pb-2 text-6xl font-extrabold leading-[1.12] text-slate-100 sm:text-7xl lg:text-8xl;
-}
-
-.titleAccent {
-    @apply inline-block px-1 bg-gradient-to-r from-white via-sky-200 to-blue-500 bg-clip-text text-transparent;
+    min-height: 64vh;
+    display: grid;
+    place-content: center;
+    gap: 0.55rem;
 }
 
 .kicker {
-    @apply mt-5 text-xs uppercase tracking-[0.2em] text-slate-400;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #93c5fd;
+}
+
+.title {
+    margin: 0;
+    font-size: clamp(3.3rem, 13vw, 10rem);
+    line-height: 0.95;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: transparent;
+    text-shadow: 0 0 38px rgba(56, 189, 248, 0.22);
+    animation: riseIn 500ms ease;
+}
+
+.titleGradient {
+    background: linear-gradient(110deg, #f8fbff 0%, #67e8f9 32%, #34d399 70%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
 }
 
 .actions {
-    @apply mt-10 flex flex-wrap items-center justify-center gap-4;
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.72rem;
+}
+
+.primaryButton,
+.secondaryButton {
+    border: none;
+    font-family: inherit;
+    padding: 0.75rem 1.05rem;
+    border-radius: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .primaryButton {
-    @apply rounded-xl bg-indigo-500 px-6 py-3 font-medium text-white transition hover:bg-indigo-400;
+    color: #042a36;
+    background: linear-gradient(130deg, #67e8f9, #34d399);
+    box-shadow: 0 12px 24px rgba(45, 212, 191, 0.3);
+}
+
+.primaryButton:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 16px 30px rgba(45, 212, 191, 0.38);
 }
 
 .secondaryButton {
-    @apply rounded-xl border border-white/20 px-6 py-3 text-slate-100 transition hover:bg-white/10;
+    color: #e2e8f0;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(15, 23, 42, 0.5);
+}
+
+.secondaryButton:hover {
+    transform: translateY(-2px);
+    background: rgba(30, 41, 59, 0.72);
+}
+
+.stepsSection {
+    margin-top: 1rem;
+}
+
+.stepsSection h2 {
+    margin: 0;
+    font-size: 1.28rem;
+    letter-spacing: -0.01em;
+    color: #dbeafe;
+}
+
+.dualTimelines {
+    margin: 1.2rem auto 0;
+    width: min(1080px, 100%);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.4rem;
+}
+
+.timelineColumn {
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 1rem;
+    background: rgba(15, 23, 42, 0.35);
+    padding: 0.7rem 0.75rem;
+}
+
+.columnTitle {
+    margin: 0;
+    font-size: 0.86rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8dd9ff;
+    font-weight: 700;
+    text-align: center;
+}
+
+.altTimeline {
+    position: relative;
+    margin: 0.8rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.altTimeline::before {
+    content: "";
+    position: absolute;
+    top: 0.1rem;
+    bottom: 0.1rem;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(103, 232, 249, 0.85), rgba(52, 211, 153, 0.45));
+    box-shadow: 0 0 12px rgba(45, 212, 191, 0.2);
+}
+
+.altItem {
+    position: relative;
+    min-height: 4.7rem;
+}
+
+.altDot {
+    position: absolute;
+    left: 50%;
+    top: 1rem;
+    transform: translateX(-50%);
+    width: 0.82rem;
+    height: 0.82rem;
+    border-radius: 999px;
+    background: radial-gradient(circle at 35% 30%, #e6fcff, #34d399 65%);
+    box-shadow: 0 0 0 4px rgba(14, 116, 144, 0.2), 0 0 14px rgba(45, 212, 191, 0.35);
+}
+
+.altCard {
+    width: calc(50% - 1.2rem);
+    border: 1px solid rgba(148, 163, 184, 0.26);
+    border-radius: 0.85rem;
+    background: rgba(15, 23, 42, 0.5);
+    padding: 0.55rem 0.62rem;
+    transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.altCard:hover {
+    transform: translateY(-2px);
+    border-color: rgba(103, 232, 249, 0.62);
+    box-shadow: 0 10px 22px rgba(14, 165, 233, 0.14);
+}
+
+.sideLeft {
+    margin-right: auto;
+    text-align: right;
+}
+
+.sideRight {
+    margin-left: auto;
+    text-align: left;
+}
+
+.altMeta {
+    display: block;
+    margin: 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8ed7ff;
+    font-weight: 700;
+}
+
+.altCard h4 {
+    margin: 0.28rem 0 0;
+    font-size: 0.9rem;
+    color: #e8f4ff;
+}
+
+.altCard p {
+    margin: 0.3rem 0 0;
+    color: #a4c3de;
+    font-size: 0.81rem;
+    line-height: 1.35;
+}
+
+@keyframes riseIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 900px) {
+    .hero {
+        min-height: 56vh;
+    }
+
+    .dualTimelines {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .altTimeline::before {
+        left: 0.5rem;
+        transform: none;
+    }
+
+    .altDot {
+        left: 0.5rem;
+        transform: none;
+    }
+
+    .altCard {
+        width: calc(100% - 1.65rem);
+        margin-left: 1.65rem;
+    }
+
+    .sideLeft,
+    .sideRight {
+        text-align: left;
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .actions {
+        width: 100%;
+    }
+
+    .actions button {
+        width: 100%;
+    }
 }

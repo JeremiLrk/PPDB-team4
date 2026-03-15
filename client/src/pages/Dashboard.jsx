@@ -1,74 +1,64 @@
 import styles from "@/style/Dashboard.module.css";
-import { useDashboard } from "@/hooks/useDashboard.js";
+import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
+import DashboardSidebar from "@/app/components/dashboard/DashboardSidebar.jsx";
+import { CreateClubTab, OverviewTab, RequestsTab, SearchTab } from "@/app/components/dashboard/DashboardTabs.jsx";
 
-function Dashboard({ currentUser }) {
-    const { dashboardData, loading, error } = useDashboard();
+function Dashboard({ currentUser, setUser }) {
+    const workspace = useDashboardWorkspace(setUser);
 
-    if (loading) {
-        return <div className={styles.container}>Dashboard laden...</div>;
+    if (workspace.loading) {
+        return <div className={styles.loading}>Dashboard laden...</div>;
     }
 
-    const roles = dashboardData?.roles || [];
-    const isPlayer = roles.includes("player");
-    const isClubManager = roles.includes("club_manager");
-    const isAdmin = roles.includes("admin");
-
     return (
-        <section className={styles.container}>
-            <header className={styles.header}>
-                <h2 className={styles.title}>Mijn Dashboard</h2>
-                <p className={styles.subtitle}>
-                    Ingelogd als {currentUser?.email || "onbekende gebruiker"}
-                </p>
-            </header>
+        <section className={`${styles.shell} ${workspace.theme === "light" ? styles.light : ""}`}>
+            <DashboardSidebar
+                currentUser={currentUser}
+                theme={workspace.theme}
+                activeTab={workspace.activeTab}
+                onTabChange={workspace.setActiveTab}
+                onThemeToggle={workspace.onThemeToggle}
+                onGoHome={workspace.onGoHome}
+                onSignOut={workspace.onSignOut}
+            />
 
-            {error ? <p className={styles.warning}>{error}</p> : null}
+            <div className={styles.workspace}>
 
-            <div className={styles.grid}>
-                <article className={styles.card}>
-                    <h3>Account</h3>
-                    <p>Basisinformatie en accountinstellingen.</p>
-                </article>
 
-                <article className={styles.card}>
-                    <h3>Clubs ontdekken</h3>
-                    <p>
-                        TODO(team): lijst van clubs laden + knop om join request te sturen.
-                    </p>
-                </article>
+                {workspace.error ? <p className={styles.warning}>{workspace.error}</p> : null}
 
-                <article className={styles.card}>
-                    <h3>Mijn aanvragen</h3>
-                    <p>
-                        TODO(team): status tonen van join/clubregistratie requests van de user.
-                    </p>
-                </article>
-
-                {isPlayer ? (
-                    <article className={styles.card}>
-                        <h3>Player Zone</h3>
-                        <p>
-                            TODO(team): spelersfunctionaliteit (matches, ranking, beschikbaarheid).
-                        </p>
-                    </article>
+                {workspace.activeTab === "overview" ? (
+                    <OverviewTab
+                        myClubs={workspace.myClubs}
+                        myRequests={workspace.myRequests}
+                        pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
+                        clubCreationRequests={workspace.clubCreationRequests}
+                    />
                 ) : null}
 
-                {isClubManager ? (
-                    <article className={styles.card}>
-                        <h3>Club Manager Zone</h3>
-                        <p>
-                            TODO(team): join requests voor de club accepteren/verwerpen.
-                        </p>
-                    </article>
+                {workspace.activeTab === "search" ? (
+                    <SearchTab
+                        searchTerm={workspace.searchTerm}
+                        onSearchChange={workspace.setSearchTerm}
+                        discoverLoading={workspace.discoverLoading}
+                        discoverError={workspace.discoverError}
+                        filteredDiscoverClubs={workspace.filteredDiscoverClubs}
+                        myClubIds={workspace.myClubIds}
+                        pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
+                    />
                 ) : null}
 
-                {isAdmin ? (
-                    <article className={styles.card}>
-                        <h3>Admin Zone</h3>
-                        <p>
-                            TODO(team): club-registraties reviewen en admins beheren.
-                        </p>
-                    </article>
+                {workspace.activeTab === "requests" ? <RequestsTab myRequests={workspace.myRequests} /> : null}
+
+                {workspace.activeTab === "createClub" ? (
+                    <CreateClubTab
+                        clubRequestForm={workspace.clubRequestForm}
+                        clubRequestSubmitting={workspace.clubRequestSubmitting}
+                        clubRequestMessage={workspace.clubRequestMessage}
+                        clubCreationRequests={workspace.clubCreationRequests}
+                        onFieldChange={workspace.onClubRequestFieldChange}
+                        onSubmit={workspace.onClubRequestSubmit}
+                    />
                 ) : null}
             </div>
         </section>

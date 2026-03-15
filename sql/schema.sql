@@ -452,3 +452,104 @@ CREATE TRIGGER trg_check_teams_no_common_players
     FOR EACH ROW
 EXECUTE FUNCTION check_teams_no_common_players();
 
+/*
+ =====
+ DEMO DATA (FOR LIVE SHOWCASE)
+ =====
+ */
+
+INSERT INTO sport_type (name, minimum_number_of_players_on_a_team, maximum_number_of_players_per_team)
+SELECT 'Tennis Singles', 1, 1
+WHERE NOT EXISTS (
+    SELECT 1 FROM sport_type WHERE name = 'Tennis Singles'
+);
+
+INSERT INTO ladder_rating_function (name)
+SELECT 'ELO Demo'
+WHERE NOT EXISTS (
+    SELECT 1 FROM ladder_rating_function WHERE name = 'ELO Demo'
+);
+
+INSERT INTO club (name)
+SELECT 'NetRank Club'
+WHERE NOT EXISTS (
+    SELECT 1 FROM club WHERE name = 'NetRank Club'
+);
+
+-- Keep demo data deterministic on every startup/deploy run.
+DELETE FROM ladder_team
+WHERE ladder_id IN (
+    SELECT l.id
+    FROM ladder l
+    WHERE l.club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1)
+);
+
+DELETE FROM ladder
+WHERE club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1);
+
+DELETE FROM team
+WHERE club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1);
+
+INSERT INTO team (club_id, name, sport_type_id)
+SELECT
+    (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1),
+    x.team_name,
+    (SELECT id FROM sport_type WHERE name = 'Tennis Singles' ORDER BY id LIMIT 1)
+FROM (
+    VALUES
+        ('Thomas'),
+        ('Lars'),
+        ('Noah'),
+        ('Milan'),
+        ('Tom'),
+        ('Ben')
+) AS x(team_name)
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM team t
+    WHERE t.club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1)
+      AND t.name = x.team_name
+);
+
+INSERT INTO ladder (club_id, name, description, sport_type_id, ladder_rating_function_id)
+SELECT
+    (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1),
+    x.name,
+    x.description,
+    (SELECT id FROM sport_type WHERE name = 'Tennis Singles' ORDER BY id LIMIT 1),
+    (SELECT id FROM ladder_rating_function WHERE name = 'ELO Demo' ORDER BY id LIMIT 1)
+FROM (
+    VALUES
+        ('Men''s Singles', 'Senior singles ranking.'),
+        ('U14 Singles', 'Youth under-14 singles ranking.')
+) AS x(name, description)
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM ladder l
+    WHERE l.club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1)
+      AND l.name = x.name
+);
+
+INSERT INTO ladder_team (ladder_id, team_id, rank, rating, matches_played)
+SELECT
+    (SELECT id FROM ladder WHERE club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1) AND name = x.ladder_name ORDER BY id LIMIT 1),
+    (SELECT id FROM team WHERE club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1) AND name = x.team_name ORDER BY id LIMIT 1),
+    x.rank,
+    x.rating,
+    x.matches_played
+FROM (
+    VALUES
+        ('Men''s Singles', 'Thomas', 1, 1290, 14),
+        ('Men''s Singles', 'Lars', 2, 1245, 13),
+        ('Men''s Singles', 'Noah', 3, 1205, 12),
+        ('Men''s Singles', 'Milan', 4, 1170, 11),
+        ('U14 Singles', 'Tom', 1, 1150, 10),
+        ('U14 Singles', 'Ben', 2, 1120, 9),
+        ('U14 Singles', 'Noah', 3, 1085, 8),
+        ('U14 Singles', 'Milan', 4, 1050, 7)
+) AS x(ladder_name, team_name, rank, rating, matches_played)
+ON CONFLICT (ladder_id, team_id)
+DO UPDATE SET
+    rank = EXCLUDED.rank,
+    rating = EXCLUDED.rating,
+    matches_played = EXCLUDED.matches_played;

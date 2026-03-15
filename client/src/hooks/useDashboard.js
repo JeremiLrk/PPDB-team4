@@ -5,8 +5,7 @@ const mockDashboardData = {
     clubs: [],
     pending_requests: {
         my_requests: [],
-        join_requests_to_review: [],
-        club_creation_to_review: [],
+        my_club_creation_requests: [],
     },
 };
 
