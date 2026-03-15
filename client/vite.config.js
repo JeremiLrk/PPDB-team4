@@ -11,6 +11,11 @@ const __dirname = path.dirname(__filename);
 export default defineConfig(
     {
         plugins: [react(), tailwindcss()],
+        test: {
+            globals: true,
+            environment: "jsdom",
+            setupFiles: "./tests/setupTests.js",
+        },
         server: {
             proxy: {
                 "/api": {
@@ -26,4 +31,3 @@ export default defineConfig(
         }
     }
 );
-
