@@ -77,3 +77,18 @@ def _init_db(app: Flask):
             seeds_file="server/seeds/page_text_score.json",
             unique_fields=["page", "key", "language"],
         )
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_dashboard.json",
+            unique_fields=["page", "key", "language"],
+        )
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_landing.json",
+            unique_fields=["page", "key", "language"],
+        )
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_club_home.json",
+            unique_fields=["page", "key", "language"],
+        )

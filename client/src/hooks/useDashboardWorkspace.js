@@ -46,7 +46,7 @@ function normalizePendingJoinRequestClubIds(myRequests) {
     );
 }
 
-export function useDashboardWorkspace(setUser) {
+export function useDashboardWorkspace(setUser, texts = {}) {
     const navigate = useNavigate();
     const { dashboardData, loading, error } = useDashboard();
     const {
@@ -118,7 +118,10 @@ export function useDashboardWorkspace(setUser) {
 
         const trimmedName = clubRequestForm.name.trim();
         if (!trimmedName) {
-            setClubRequestMessage({ type: "error", text: "Club name is required." });
+            setClubRequestMessage({
+                type: "error",
+                text: texts.club_name_required || "Club name is required.",
+            });
             return;
         }
 
@@ -148,7 +151,11 @@ export function useDashboardWorkspace(setUser) {
             }
 
             if (!response.ok) {
-                throw new Error(responseBody?.message || "Could not submit your club request right now.");
+                throw new Error(
+                    responseBody?.message ||
+                        texts.could_not_submit_club_request ||
+                        "Could not submit your club request right now."
+                );
             }
 
             const requestRecord = {
@@ -162,7 +169,10 @@ export function useDashboardWorkspace(setUser) {
 
             setClubCreationRequests((previous) => [requestRecord, ...previous]);
             setClubRequestForm(EMPTY_CLUB_REQUEST_FORM);
-            setClubRequestMessage({ type: "success", text: "Club request submitted." });
+            setClubRequestMessage({
+                type: "success",
+                text: texts.club_request_submitted || "Club request submitted.",
+            });
         } catch {
             // Temporary optimistic fallback while backend endpoint is still being merged.
             const fallbackRequest = {

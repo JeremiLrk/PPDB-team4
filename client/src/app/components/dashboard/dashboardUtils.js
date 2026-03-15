@@ -1,11 +1,13 @@
 import styles from "@/style/Dashboard.module.css";
 
-export const DASHBOARD_TABS = [
-    { id: "overview", label: "Overview" },
-    { id: "search", label: "Search Clubs" },
-    { id: "requests", label: "My Requests" },
-    { id: "createClub", label: "Add your own club" },
-];
+export function getDashboardTabs(texts) {
+    return [
+        { id: "overview", label: texts.tab_overview || "Overview" },
+        { id: "search", label: texts.tab_search || "Search Clubs" },
+        { id: "requests", label: texts.tab_requests || "My Requests" },
+        { id: "createClub", label: texts.tab_create_club || "Add your own club" },
+    ];
+}
 
 export function statusClass(status) {
     const value = (status || "pending").toLowerCase();
@@ -15,10 +17,10 @@ export function statusClass(status) {
     return styles.statusPending;
 }
 
-export function statusLabel(status) {
+export function statusLabel(status, texts = {}) {
     const value = (status || "pending").toLowerCase();
-    if (value === "approved") return "Approved";
-    if (value === "rejected") return "Rejected";
-    if (value === "cancelled") return "Cancelled";
-    return "Pending";
+    if (value === "approved") return texts.status_approved || "Approved";
+    if (value === "rejected") return texts.status_rejected || "Rejected";
+    if (value === "cancelled") return texts.status_cancelled || "Cancelled";
+    return texts.status_pending || "Pending";
 }

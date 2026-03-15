@@ -2,12 +2,16 @@ import styles from "@/style/Dashboard.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/app/components/dashboard/DashboardSidebar.jsx";
 import { CreateClubTab, OverviewTab, RequestsTab, SearchTab } from "@/app/components/dashboard/DashboardTabs.jsx";
+import { useLangContext } from "@/context/useLangContext.js";
+import { usePageTexts } from "@/hooks/usePageTexts.js";
 
 function Dashboard({ currentUser, setUser }) {
-    const workspace = useDashboardWorkspace(setUser);
+    const { lang } = useLangContext();
+    const dashboardTexts = usePageTexts("dashboard", lang);
+    const workspace = useDashboardWorkspace(setUser, dashboardTexts);
 
     if (workspace.loading) {
-        return <div className={styles.loading}>Dashboard laden...</div>;
+        return <div className={styles.loading}>{dashboardTexts.loading_dashboard || "Loading dashboard..."}</div>;
     }
 
     return (
@@ -16,6 +20,7 @@ function Dashboard({ currentUser, setUser }) {
                 currentUser={currentUser}
                 theme={workspace.theme}
                 activeTab={workspace.activeTab}
+                texts={dashboardTexts}
                 onTabChange={workspace.setActiveTab}
                 onThemeToggle={workspace.onThemeToggle}
                 onGoHome={workspace.onGoHome}
@@ -33,6 +38,7 @@ function Dashboard({ currentUser, setUser }) {
                         myRequests={workspace.myRequests}
                         pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
                         clubCreationRequests={workspace.clubCreationRequests}
+                        texts={dashboardTexts}
                     />
                 ) : null}
 
@@ -45,10 +51,13 @@ function Dashboard({ currentUser, setUser }) {
                         filteredDiscoverClubs={workspace.filteredDiscoverClubs}
                         myClubIds={workspace.myClubIds}
                         pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
+                        texts={dashboardTexts}
                     />
                 ) : null}
 
-                {workspace.activeTab === "requests" ? <RequestsTab myRequests={workspace.myRequests} /> : null}
+                {workspace.activeTab === "requests" ? (
+                    <RequestsTab myRequests={workspace.myRequests} texts={dashboardTexts} />
+                ) : null}
 
                 {workspace.activeTab === "createClub" ? (
                     <CreateClubTab
@@ -58,6 +67,7 @@ function Dashboard({ currentUser, setUser }) {
                         clubCreationRequests={workspace.clubCreationRequests}
                         onFieldChange={workspace.onClubRequestFieldChange}
                         onSubmit={workspace.onClubRequestSubmit}
+                        texts={dashboardTexts}
                     />
                 ) : null}
             </div>
