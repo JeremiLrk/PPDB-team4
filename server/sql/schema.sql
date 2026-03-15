@@ -395,6 +395,18 @@ CREATE TABLE IF NOT EXISTS ladder (
         PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS page_text (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    page VARCHAR(50),       -- 'home', 'about', 'contact'
+    key VARCHAR(100),       -- 'hero_title', 'hero_subtitle', 'btn_signup'
+    language VARCHAR(5),    -- 'uk', 'en', 'de'
+    value TEXT,             -- the text itself
+    CONSTRAINT unique_page_key_lang
+        UNIQUE (page, key, language),
+
+    CONSTRAINT pk_page_text
+        PRIMARY KEY (id)
+);
 
 CREATE TABLE IF NOT EXISTS ladder_team (
     ladder_id BIGINT NOT NULL,
