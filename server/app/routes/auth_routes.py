@@ -8,6 +8,8 @@ from server.app.services.auth_service import register_user, login_user, verify_u
 load_dotenv()
 
 resend.api_key = os.environ["RESEND_API_KEY"]
+FRONTEND_URL = os.environ["FRONTEND_URL"].rstrip("/")
+MAIL_FROM = os.environ["MAIL_FROM"]
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api")
 
@@ -132,10 +134,10 @@ def forgot_password():
         token = generate_reset_token(email)
 
         params: resend.Emails.SendParams = {
-            "from": "NetRank <onboarding@resend.dev>",
+            "from": MAIL_FROM,
             "to": [email],
             "subject": "Password reset request",
-            "html": f'<a href="http://localhost:5173/reset-password/{token}">Reset Password</a>',
+            "html": f'<a href="{FRONTEND_URL}/reset-password/{token}">Reset Password</a>',
         }
 
         resend.Emails.send(params)
