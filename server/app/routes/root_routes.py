@@ -4,4 +4,4 @@ root_bp = Blueprint("root", __name__)
 
 @root_bp.get("/")
 def root():
-    return {"message": "API running"}
+    return {"message": "API running"}, 200

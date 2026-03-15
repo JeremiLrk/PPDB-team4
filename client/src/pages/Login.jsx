@@ -1,15 +1,19 @@
 import { Link } from "react-router-dom"
 import { useLogin } from "@/hooks/useLogin.js"
 import styles from "@/style/Login.module.css"
+import { useLangContext } from "@/context/useLangContext.js"
+import { usePageTexts } from "@/hooks/usePageTexts.js"
 
 const Login = ({ setUser }) => {
+    const { lang } = useLangContext()
+    const au_texts = usePageTexts("authorization", lang)
     const { email, setEmail, password, setPassword, handleSubmit } =
         useLogin(setUser)
 
     return (
         <div className={styles.loginContainer}>
             <div className={styles.loginCard}>
-                <h1 className={styles.loginTitle}>Login</h1>
+                <h1 className={styles.loginTitle}>{au_texts.log_in}</h1>
 
                 <form className={styles.loginForm} onSubmit={handleSubmit}>
                     <div className={styles.loginFormGroup}>
@@ -17,12 +21,12 @@ const Login = ({ setUser }) => {
                             htmlFor="login-email"
                             className={styles.loginLabel}
                         >
-                            Email
+                            {au_texts.email}
                         </label>
                         <input
                             id="login-email"
                             type="email"
-                            placeholder="Enter your email"
+                            placeholder={au_texts.placeholder_email}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className={styles.loginInput}
@@ -34,12 +38,12 @@ const Login = ({ setUser }) => {
                             htmlFor="login-password"
                             className={styles.loginLabel}
                         >
-                            Password
+                            {au_texts.password}
                         </label>
                         <input
                             id="login-password"
                             type="password"
-                            placeholder="Enter your password"
+                            placeholder={au_texts.placeholder_password}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className={styles.loginInput}
@@ -47,23 +51,23 @@ const Login = ({ setUser }) => {
                     </div>
 
                     <button type="submit" className={styles.loginButton}>
-                        Login
+                        {au_texts.log_in}
                     </button>
                 </form>
 
                 <p className={styles.loginText}>
-                    Don't have an account?{" "}
+                    {au_texts.no_account}{" "}
                     <Link to="/register" className={styles.loginLink}>
-                        Register
+                        {au_texts.register}
                     </Link>
                 </p>
 
                 <Link to="/forgot-password" className={styles.loginLink}>
-                    Forgot Password?
+                    {au_texts.forgot_password}
                 </Link>
 
                 <Link to="/" className={styles.guestLink}>
-                    Continue as guest
+                    {au_texts.as_guest}
                 </Link>
             </div>
         </div>

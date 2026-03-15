@@ -5,14 +5,20 @@ import Register from "@/pages/Register.jsx"
 import ForgotPassword from "@/pages/ForgotPassword.jsx"
 import Ladder from "@/pages/Ladder.jsx"
 import NotFound from "@/pages/NotFound.jsx"
-import ResetPassword from "../pages/ResetPassword"
+import ResetPassword from "@/pages/ResetPassword.jsx"
+import { useCurrentUserContext } from "@/context/useCurrentUserContext.js"
 
-export default function AppRoutes({ currentUser, setUser }) {
+export default function AppRoutes() {
+    const { setCurrentUser } = useCurrentUserContext()
+
     return (
         <Routes>
-            <Route path="/" element={<Home currentUser={currentUser} />} />
-            <Route path="/login" element={<Login setUser={setUser} />} />
-            <Route path="/register" element={<Register setUser={setUser} />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login setUser={setCurrentUser} />} />
+            <Route
+                path="/register"
+                element={<Register setUser={setCurrentUser} />}
+            />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/ladder" element={<Ladder />} />

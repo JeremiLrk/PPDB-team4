@@ -2,19 +2,23 @@ import styles from "@/style/ResetPassword.module.css"
 import { useState } from "react"
 import { toast } from "react-hot-toast"
 import { useParams, useNavigate } from "react-router-dom"
+import { useLangContext } from "@/context/useLangContext.js"
+import { usePageTexts } from "@/hooks/usePageTexts.js"
 
 const ResetPassword = () => {
     const { token } = useParams()
     const [newPassword, setNewPassword] = useState("")
     const [repeatPassword, setRepeatPassword] = useState("")
     const navigate = useNavigate()
+    const { lang } = useLangContext()
+    const au_texts = usePageTexts("authorization", lang)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
 
         try {
             if (newPassword !== repeatPassword) {
-                toast.error("Passwords do not match")
+                toast.error(au_texts.passwords_do_not_match)
                 return
             }
 
@@ -27,33 +31,33 @@ const ResetPassword = () => {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data?.message || "Password reset failed")
+                throw new Error(data?.message || au_texts.reset_failed)
             }
 
-            toast.success("Password has been reset.")
+            toast.success(au_texts.password_reset_success)
             navigate("/login")
         } catch (err) {
-            console.error(err.message || "Password reset failed")
-            toast.error(err.message || "Password reset failed")
+            console.error(err.message || au_texts.reset_failed)
+            toast.error(err.message || au_texts.reset_failed)
         }
     }
 
     return (
         <div className={styles.resetContainer}>
             <div className={styles.resetCard}>
-                <h1 className={styles.resetTitle}>Reset your password</h1>
+                <h1 className={styles.resetTitle}>{au_texts.reset_title}</h1>
                 <form className={styles.resetForm} onSubmit={handleSubmit}>
                     <div className={styles.resetFormGroup}>
                         <label
                             htmlFor="new-password"
                             className={styles.resetLabel}
                         >
-                            New password
+                            {au_texts.new_password}
                         </label>
                         <input
                             id="new-password"
                             type="password"
-                            placeholder="Enter your new password"
+                            placeholder={au_texts.placeholder_new_password}
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             className={styles.resetInput}
@@ -66,12 +70,12 @@ const ResetPassword = () => {
                             htmlFor="repeat-password"
                             className={styles.resetLabel}
                         >
-                            Repeat password
+                            {au_texts.repeat_password}
                         </label>
                         <input
                             id="repeat-password"
                             type="password"
-                            placeholder="Repeat your new password"
+                            placeholder={au_texts.placeholder_repeat_password}
                             value={repeatPassword}
                             onChange={(e) => setRepeatPassword(e.target.value)}
                             className={styles.resetInput}
@@ -80,7 +84,7 @@ const ResetPassword = () => {
                     </div>
 
                     <button type="submit" className={styles.resetButton}>
-                        Reset Password
+                        {au_texts.reset_password}
                     </button>
                 </form>
             </div>

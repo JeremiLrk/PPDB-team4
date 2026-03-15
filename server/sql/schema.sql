@@ -388,7 +388,19 @@ CREATE TABLE IF NOT EXISTS ladder (
         PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS page_text (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    page VARCHAR(50),       -- 'home', 'about', 'contact'
+    key VARCHAR(100),       -- 'hero_title', 'hero_subtitle', 'btn_signup'
+    language VARCHAR(5),    -- 'uk', 'en', 'de'
+    value TEXT,             -- the text itself
 
+    CONSTRAINT unique_page_key_lang
+        UNIQUE (page, key, language),
+
+    CONSTRAINT pk_page_text
+        PRIMARY KEY (id)
+);
 
 /*
  =====
@@ -424,4 +436,3 @@ CREATE TRIGGER trg_check_teams_no_common_players
     BEFORE INSERT OR UPDATE ON match_proposal
     FOR EACH ROW
 EXECUTE FUNCTION check_teams_no_common_players();
-

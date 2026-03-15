@@ -3,10 +3,18 @@ import Badge from "./Badge"
 import styles from "@/style/Header.module.css"
 import { useState } from "react"
 import { toast } from "react-hot-toast"
+import { usePageTexts } from "@/hooks/usePageTexts.js"
+import { useLangContext } from "@/context/useLangContext.js"
+import { useCurrentUserContext } from "@/context/useCurrentUserContext.js"
 
-export default function Header({ status, user, setUser }) {
+export default function Header({ status }) {
     const navigate = useNavigate()
     const [menuOpen, setMenuOpen] = useState(false)
+    const { lang, setLang } = useLangContext()
+    const { currentUser, setCurrentUser } = useCurrentUserContext()
+
+    const base_texts = usePageTexts("base", lang)
+    const au_texts = usePageTexts("authorization", lang)
 
     const handleLogout = async () => {
         try {
@@ -22,7 +30,7 @@ export default function Header({ status, user, setUser }) {
                 throw new Error(data?.message || "Logout failed")
             }
 
-            setUser(null)
+            setCurrentUser(null)
 
             toast.success("Logout successful")
 
@@ -42,23 +50,26 @@ export default function Header({ status, user, setUser }) {
                 </div>
 
                 {/* Center: Title */}
-                <h1 className={styles.headerTitle}>NetRank</h1>
+                <h1 className={styles.headerTitle}>{base_texts.net_rank}</h1>
 
                 {/* Right: Auth Buttons / User Menu */}
                 <div className={styles.headerRight}>
-                    {!user ? (
+                    <button onClick={() => setLang("nl")}>NL</button>
+                    <button onClick={() => setLang("en")}>EN</button>
+
+                    {!currentUser ? (
                         <>
                             <button
                                 onClick={() => navigate("/login")}
                                 className={styles.headerButton}
                             >
-                                Login
+                                {au_texts.log_in}
                             </button>
                             <button
                                 onClick={() => navigate("/register")}
                                 className={styles.headerPrimaryButton}
                             >
-                                Register
+                                {au_texts.register}
                             </button>
                         </>
                     ) : (
@@ -68,7 +79,10 @@ export default function Header({ status, user, setUser }) {
                             onMouseLeave={() => setMenuOpen(false)}
                         >
                             <button className={styles.userButton}>
-                                {user.firstName + " " + user.lastName || "User"}{" "}
+                                {(currentUser?.firstName &&
+                                    currentUser?.lastName &&
+                                    `${currentUser.firstName} ${currentUser.lastName}`) ||
+                                    au_texts.user}{" "}
                                 ▾
                             </button>
 
@@ -85,7 +99,7 @@ export default function Header({ status, user, setUser }) {
                                                     console.log("Go to profile")
                                                 }
                                             >
-                                                Profile
+                                                {au_texts.profile}
                                             </button>
                                         </li>
                                         <li>
@@ -95,7 +109,7 @@ export default function Header({ status, user, setUser }) {
                                                 }
                                                 onClick={handleLogout}
                                             >
-                                                Logout
+                                                {au_texts.log_out}
                                             </button>
                                         </li>
                                     </ul>

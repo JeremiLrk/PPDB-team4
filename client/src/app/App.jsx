@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react"
-import { Toaster } from "react-hot-toast"
 import Background_Glow from "@/app/components/Background_Glow.jsx"
 import Header from "@/app/components/Header.jsx"
 import AppRoutes from "@/app/AppRoutes.jsx"
+import { useLang } from "@/hooks/useLang.js"
+import { LangContext } from "@/context/useLangContext.js"
+import { CurrentUserContext } from "@/context/useCurrentUserContext.js"
+import { Toaster } from "react-hot-toast"
 
 function App() {
     const [status, setStatus] = useState({ state: "loading", msg: "" })
-
+    const [lang, setLang] = useLang("en")
     const [currentUser, setCurrentUser] = useState(null)
 
     useEffect(() => {
@@ -78,28 +81,30 @@ function App() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100">
-            <Toaster
-                position="top-center"
-                toastOptions={{
-                    duration: 3500,
-                    success: { duration: 2500 },
-                    style: {
-                        borderRadius: "10px",
-                        background: "#0f172a",
-                        color: "#e2e8f0",
-                        border: "1px solid #334155",
-                    },
-                }}
-            />
-            <Background_Glow />
-            <Header
-                status={status}
-                user={currentUser}
-                setUser={setCurrentUser}
-            />
-            <main className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-6">
-                <AppRoutes currentUser={currentUser} setUser={setCurrentUser} />
-            </main>
+            <CurrentUserContext.Provider
+                value={{ currentUser, setCurrentUser }}
+            >
+                <LangContext.Provider value={{ lang, setLang }}>
+                    <Toaster
+                        position="top-center"
+                        toastOptions={{
+                            duration: 3500,
+                            success: { duration: 2500 },
+                            style: {
+                                borderRadius: "10px",
+                                background: "#0f172a",
+                                color: "#e2e8f0",
+                                border: "1px solid #334155",
+                            },
+                        }}
+                    />
+                    <Background_Glow />
+                    <Header status={status} />
+                    <main className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-6">
+                        <AppRoutes />
+                    </main>
+                </LangContext.Provider>
+            </CurrentUserContext.Provider>
         </div>
     )
 }

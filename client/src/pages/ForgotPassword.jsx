@@ -2,9 +2,13 @@ import { Link } from "react-router-dom"
 import styles from "@/style/ForgotPassword.module.css"
 import { useState } from "react"
 import { toast } from "react-hot-toast"
+import { useLangContext } from "@/context/useLangContext.js"
+import { usePageTexts } from "@/hooks/usePageTexts.js"
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState("")
+    const { lang } = useLangContext()
+    const au_texts = usePageTexts("authorization", lang)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -18,22 +22,22 @@ const ForgotPassword = () => {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data?.message || "Password reset failed")
+                throw new Error(data?.message || au_texts.reset_failed)
             }
 
-            toast.success("Check your inbox for the password reset link.")
+            toast.success(au_texts.reset_link_sent)
         } catch (err) {
-            console.error(err.message || "Password reset failed")
-            toast.error(err.message || "Password reset failed")
+            console.error(err.message || au_texts.reset_failed)
+            toast.error(err.message || au_texts.reset_failed)
         }
     }
 
     return (
         <div className={styles.forgotContainer}>
             <div className={styles.forgotCard}>
-                <h1 className={styles.forgotTitle}>Forgot your password</h1>
+                <h1 className={styles.forgotTitle}>{au_texts.forgot_title}</h1>
                 <p className={styles.forgotSubtitle}>
-                    Enter your email and we&apos;ll send you a reset link.
+                    {au_texts.forgot_subtitle}
                 </p>
 
                 <form className={styles.forgotForm} onSubmit={handleSubmit}>
@@ -47,7 +51,7 @@ const ForgotPassword = () => {
                         <input
                             id="forgot-email"
                             type="email"
-                            placeholder="Enter your email"
+                            placeholder={au_texts.placeholder_email}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className={styles.forgotInput}
@@ -55,14 +59,14 @@ const ForgotPassword = () => {
                     </div>
 
                     <button type="submit" className={styles.forgotButton}>
-                        Send reset link
+                        {au_texts.send_reset_link}
                     </button>
                 </form>
 
                 <p className={styles.forgotText}>
-                    Remembered your password?{" "}
+                    {au_texts.remembered_password}{" "}
                     <Link to="/login" className={styles.forgotLink}>
-                        Back to login
+                        {au_texts.back_to_login}
                     </Link>
                 </p>
             </div>

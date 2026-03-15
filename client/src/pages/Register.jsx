@@ -1,8 +1,15 @@
 import { Link } from "react-router-dom"
 import { useRegister } from "@/hooks/useRegister.js"
 import styles from "@/style/Register.module.css"
+import { useCurrentUserContext } from "@/context/useCurrentUserContext.js"
+import { useLangContext } from "@/context/useLangContext.js"
+import { usePageTexts } from "@/hooks/usePageTexts.js"
 
-const Register = ({ setUser }) => {
+const Register = () => {
+    const { lang } = useLangContext()
+    const au_texts = usePageTexts("authorization", lang)
+
+    const { setCurrentUser } = useCurrentUserContext()
     const {
         email,
         setEmail,
@@ -15,12 +22,12 @@ const Register = ({ setUser }) => {
         dateOfBirth,
         setDateOfBirth,
         handleSubmit,
-    } = useRegister(setUser)
+    } = useRegister(setCurrentUser)
 
     return (
         <div className={styles.registerContainer}>
             <div className={styles.registerCard}>
-                <h1 className={styles.registerTitle}>Register</h1>
+                <h1 className={styles.registerTitle}>{au_texts.register}</h1>
 
                 <form className={styles.registerForm} onSubmit={handleSubmit}>
                     <div className={styles.nameFieldsRow}>
@@ -29,12 +36,12 @@ const Register = ({ setUser }) => {
                                 htmlFor="register-firstname"
                                 className={styles.registerLabel}
                             >
-                                First Name
+                                {au_texts.first_name}
                             </label>
                             <input
                                 id="register-firstname"
                                 type="text"
-                                placeholder="Enter your first name"
+                                placeholder={au_texts.placeholder_first_name}
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
                                 className={styles.registerInput}
@@ -46,12 +53,12 @@ const Register = ({ setUser }) => {
                                 htmlFor="register-lastname"
                                 className={styles.registerLabel}
                             >
-                                Last Name
+                                {au_texts.last_name}
                             </label>
                             <input
                                 id="register-lastname"
                                 type="text"
-                                placeholder="Enter your last name"
+                                placeholder={au_texts.placeholder_last_name}
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
                                 className={styles.registerInput}
@@ -64,7 +71,7 @@ const Register = ({ setUser }) => {
                             htmlFor="register-dateofbirth"
                             className={styles.registerLabel}
                         >
-                            Date of Birth
+                            {au_texts.date_of_birth}
                         </label>
                         <input
                             id="register-dateofbirth"
@@ -80,12 +87,12 @@ const Register = ({ setUser }) => {
                             htmlFor="register-email"
                             className={styles.registerLabel}
                         >
-                            Email
+                            {au_texts.email}
                         </label>
                         <input
                             id="register-email"
                             type="email"
-                            placeholder="Enter your email"
+                            placeholder={au_texts.placeholder_email}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className={styles.registerInput}
@@ -97,12 +104,12 @@ const Register = ({ setUser }) => {
                             htmlFor="register-password"
                             className={styles.registerLabel}
                         >
-                            Password
+                            {au_texts.password}
                         </label>
                         <input
                             id="register-password"
                             type="password"
-                            placeholder="Enter your password"
+                            placeholder={au_texts.placeholder_password}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className={styles.registerInput}
@@ -110,19 +117,19 @@ const Register = ({ setUser }) => {
                     </div>
 
                     <button type="submit" className={styles.registerButton}>
-                        Create account
+                        {au_texts.create_account}
                     </button>
                 </form>
 
                 <p className={styles.registerText}>
-                    Already have an account?{" "}
+                    {au_texts.has_account}{" "}
                     <Link to="/login" className={styles.registerLink}>
-                        Log in
+                        {au_texts.log_in}
                     </Link>
                 </p>
 
                 <Link to="/" className={styles.guestLink}>
-                    Continue as guest
+                    {au_texts.as_guest}
                 </Link>
             </div>
         </div>
