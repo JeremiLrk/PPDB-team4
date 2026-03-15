@@ -1,0 +1,58 @@
+.container {
+    width: 100%;
+    max-width: 72rem;
+}
+
+.title {
+    margin: 0;
+    font-size: 1.875rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.subtitle {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #94a3b8;
+}
+
+.info {
+    margin-top: 1.5rem;
+}
+
+.error {
+    margin-top: 1.5rem;
+    color: #fca5a5;
+}
+
+.grid {
+    margin-top: 2rem;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.clubButton {
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+    padding: 1rem 1.25rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.clubButton:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.clubName {
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}

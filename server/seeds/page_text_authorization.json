@@ -1,0 +1,411 @@
+[
+    {
+        "page": "authorization",
+        "key": "log_in",
+        "language": "en",
+        "value": "Log in"
+    },
+    {
+        "page": "authorization",
+        "key": "log_in",
+        "language": "nl",
+        "value": "Inloggen"
+    },
+    {
+        "page": "authorization",
+        "key": "register",
+        "language": "en",
+        "value": "Register"
+    },
+    {
+        "page": "authorization",
+        "key": "register",
+        "language": "nl",
+        "value": "Registreren"
+    },
+    {
+        "page": "authorization",
+        "key": "email",
+        "language": "en",
+        "value": "Email"
+    },
+    {
+        "page": "authorization",
+        "key": "email",
+        "language": "nl",
+        "value": "E-mail"
+    },
+    {
+        "page": "authorization",
+        "key": "password",
+        "language": "en",
+        "value": "Password"
+    },
+    {
+        "page": "authorization",
+        "key": "password",
+        "language": "nl",
+        "value": "Wachtwoord"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_email",
+        "language": "en",
+        "value": "Enter your email"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_email",
+        "language": "nl",
+        "value": "Vul je e-mailadres in"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_password",
+        "language": "en",
+        "value": "Enter your password"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_password",
+        "language": "nl",
+        "value": "Voer uw wachtwoord in"
+    },
+    {
+        "page": "authorization",
+        "key": "no_account",
+        "language": "en",
+        "value": "Don't have an account?"
+    },
+    {
+        "page": "authorization",
+        "key": "no_account",
+        "language": "nl",
+        "value": "Heb je nog geen account?"
+    },
+    {
+        "page": "authorization",
+        "key": "has_account",
+        "language": "en",
+        "value": "Already have an account?"
+    },
+    {
+        "page": "authorization",
+        "key": "has_account",
+        "language": "nl",
+        "value": "Heb je al een account?"
+    },
+    {
+        "page": "authorization",
+        "key": "as_guest",
+        "language": "en",
+        "value": "Continue as guest"
+    },
+    {
+        "page": "authorization",
+        "key": "as_guest",
+        "language": "nl",
+        "value": "Doorgaan als gast"
+    },
+    {
+        "page": "authorization",
+        "key": "create_account",
+        "language": "en",
+        "value": "Create account"
+    },
+    {
+        "page": "authorization",
+        "key": "create_account",
+        "language": "nl",
+        "value": "Account aanmaken"
+    },
+    {
+        "page": "authorization",
+        "key": "forgot_password",
+        "language": "en",
+        "value": "Forgot Password?"
+    },
+    {
+        "page": "authorization",
+        "key": "forgot_password",
+        "language": "nl",
+        "value": "Wachtwoord vergeten?"
+    },
+    {
+        "page": "authorization",
+        "key": "first_name",
+        "language": "en",
+        "value": "First Name"
+    },
+    {
+        "page": "authorization",
+        "key": "first_name",
+        "language": "nl",
+        "value": "Voornaam"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_first_name",
+        "language": "en",
+        "value": "Enter your first name"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_first_name",
+        "language": "nl",
+        "value": "Vul je voornaam in"
+    },
+    {
+        "page": "authorization",
+        "key": "last_name",
+        "language": "en",
+        "value": "Last Name"
+    },
+    {
+        "page": "authorization",
+        "key": "last_name",
+        "language": "nl",
+        "value": "Achternaam"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_last_name",
+        "language": "en",
+        "value": "Enter your last name"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_last_name",
+        "language": "nl",
+        "value": "Vul je achternaam in"
+    },
+    {
+        "page": "authorization",
+        "key": "date_of_birth",
+        "language": "en",
+        "value": "Date of Birth"
+    },
+    {
+        "page": "authorization",
+        "key": "date_of_birth",
+        "language": "nl",
+        "value": "Geboortedatum"
+    },
+    {
+        "page": "authorization",
+        "key": "forgot_title",
+        "language": "en",
+        "value": "Forgot your password"
+    },
+    {
+        "page": "authorization",
+        "key": "forgot_title",
+        "language": "nl",
+        "value": "Wachtwoord vergeten"
+    },
+    {
+        "page": "authorization",
+        "key": "forgot_subtitle",
+        "language": "en",
+        "value": "Enter your email and we'll send you a reset link."
+    },
+    {
+        "page": "authorization",
+        "key": "forgot_subtitle",
+        "language": "nl",
+        "value": "Voer je e-mailadres in en we sturen je een resetlink."
+    },
+    {
+        "page": "authorization",
+        "key": "send_reset_link",
+        "language": "en",
+        "value": "Send reset link"
+    },
+    {
+        "page": "authorization",
+        "key": "send_reset_link",
+        "language": "nl",
+        "value": "Verstuur resetlink"
+    },
+    {
+        "page": "authorization",
+        "key": "remembered_password",
+        "language": "en",
+        "value": "Remembered your password?"
+    },
+    {
+        "page": "authorization",
+        "key": "remembered_password",
+        "language": "nl",
+        "value": "Weet je je wachtwoord weer?"
+    },
+    {
+        "page": "authorization",
+        "key": "back_to_login",
+        "language": "en",
+        "value": "Back to login"
+    },
+    {
+        "page": "authorization",
+        "key": "back_to_login",
+        "language": "nl",
+        "value": "Terug naar inloggen"
+    },
+    {
+        "page": "authorization",
+        "key": "reset_link_sent",
+        "language": "en",
+        "value": "Check your inbox for the password reset link."
+    },
+    {
+        "page": "authorization",
+        "key": "reset_link_sent",
+        "language": "nl",
+        "value": "Controleer je inbox voor de wachtwoordresetlink."
+    },
+    {
+        "page": "authorization",
+        "key": "reset_failed",
+        "language": "en",
+        "value": "Password reset failed"
+    },
+    {
+        "page": "authorization",
+        "key": "reset_failed",
+        "language": "nl",
+        "value": "Wachtwoord reset mislukt"
+    },
+    {
+        "page": "authorization",
+        "key": "reset_title",
+        "language": "en",
+        "value": "Reset your password"
+    },
+    {
+        "page": "authorization",
+        "key": "reset_title",
+        "language": "nl",
+        "value": "Stel je wachtwoord opnieuw in"
+    },
+    {
+        "page": "authorization",
+        "key": "new_password",
+        "language": "en",
+        "value": "New password"
+    },
+    {
+        "page": "authorization",
+        "key": "new_password",
+        "language": "nl",
+        "value": "Nieuw wachtwoord"
+    },
+    {
+        "page": "authorization",
+        "key": "repeat_password",
+        "language": "en",
+        "value": "Repeat password"
+    },
+    {
+        "page": "authorization",
+        "key": "repeat_password",
+        "language": "nl",
+        "value": "Herhaal wachtwoord"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_new_password",
+        "language": "en",
+        "value": "Enter your new password"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_new_password",
+        "language": "nl",
+        "value": "Vul je nieuwe wachtwoord in"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_repeat_password",
+        "language": "en",
+        "value": "Repeat your new password"
+    },
+    {
+        "page": "authorization",
+        "key": "placeholder_repeat_password",
+        "language": "nl",
+        "value": "Herhaal je nieuwe wachtwoord"
+    },
+    {
+        "page": "authorization",
+        "key": "reset_password",
+        "language": "en",
+        "value": "Reset Password"
+    },
+    {
+        "page": "authorization",
+        "key": "reset_password",
+        "language": "nl",
+        "value": "Wachtwoord resetten"
+    },
+    {
+        "page": "authorization",
+        "key": "passwords_do_not_match",
+        "language": "en",
+        "value": "Passwords do not match"
+    },
+    {
+        "page": "authorization",
+        "key": "passwords_do_not_match",
+        "language": "nl",
+        "value": "Wachtwoorden komen niet overeen"
+    },
+    {
+        "page": "authorization",
+        "key": "password_reset_success",
+        "language": "en",
+        "value": "Password has been reset."
+    },
+    {
+        "page": "authorization",
+        "key": "password_reset_success",
+        "language": "nl",
+        "value": "Het wachtwoord is opnieuw ingesteld."
+    },
+
+    {
+        "page": "authorization",
+        "key": "user",
+        "language": "en",
+        "value": "User"
+    },
+    {
+        "page": "authorization",
+        "key": "user",
+        "language": "nl",
+        "value": "Gebruiker"
+    },
+    {
+        "page": "authorization",
+        "key": "profile",
+        "language": "en",
+        "value": "Profile"
+    },
+    {
+        "page": "authorization",
+        "key": "profile",
+        "language": "nl",
+        "value": "Profiel"
+    },
+    {
+        "page": "authorization",
+        "key": "log_out",
+        "language": "en",
+        "value": "Log out"
+    },
+    {
+        "page": "authorization",
+        "key": "log_out",
+        "language": "nl",
+        "value": "Uitloggen"
+    }
+]

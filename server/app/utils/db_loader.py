@@ -1,8 +1,7 @@
 import psycopg
 from server.config import config_data
 
-def load_sql():
-    sql_file_path = 'sql/schema.sql'
+def load_sql(sql_file_path: str):
     try:
         with open(sql_file_path, 'r') as f:
             sql_script = f.read()

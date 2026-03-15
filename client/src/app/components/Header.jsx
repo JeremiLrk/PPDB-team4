@@ -1,75 +1,127 @@
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { notify } from "@/hooks/useNotify.js";
 import Badge from "./Badge";
 import styles from "@/style/Header.module.css";
-import {useState} from "react";
+import { usePageTexts } from "@/hooks/usePageTexts.js";
+import { useLangContext } from "@/context/useLangContext.js";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext.js";
 
-export default function Header({ status, user, setUser }) {
+export default function Header({ status }) {
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
+    const dropdownRef = useRef(null);
+    const { lang, setLang } = useLangContext();
+    const { currentUser, setCurrentUser } = useCurrentUserContext();
+
+    const baseTexts = usePageTexts("base", lang);
+    const authTexts = usePageTexts("authorization", lang);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setMenuOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    async function handleLogout() {
+        try {
+            const response = await fetch("/api/logout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.message || "Logout failed");
+            }
+
+            setCurrentUser(null);
+            notify.success("Logout successful");
+            navigate("/");
+        } catch (err) {
+            console.error(err?.message || "Logout failed");
+            notify.error(err?.message || "Logout failed");
+        }
+    }
+
+    const userLabel =
+        (currentUser?.firstName &&
+            currentUser?.lastName &&
+            `${currentUser.firstName} ${currentUser.lastName}`) ||
+        authTexts.user ||
+        "User";
 
     return (
         <header className={styles.header}>
             <div className={styles.headerInner}>
-                {/* Left: Database Status */}
-                <div><Badge status={status} /></div>
+                <div>
+                    <Badge status={status} />
+                </div>
 
-                {/* Center: Title */}
-                <h1 className={styles.headerTitle}>NetRank</h1>
+                <h1 className={styles.headerTitle}>
+                    <button onClick={() => navigate("/")}>
+                        {baseTexts.net_rank || "NetRank"}
+                    </button>
+                </h1>
 
-                {/* Right: Auth Buttons / User Menu */}
                 <div className={styles.headerRight}>
-                    {!user ? (
+                    <button onClick={() => setLang("nl")}>NL</button>
+                    <button onClick={() => setLang("en")}>EN</button>
+
+                    {!currentUser ? (
                         <>
                             <button
                                 onClick={() => navigate("/login")}
                                 className={styles.headerButton}
                             >
-                                Login
+                                {authTexts.log_in || "Log in"}
                             </button>
                             <button
                                 onClick={() => navigate("/register")}
                                 className={styles.headerPrimaryButton}
                             >
-                                Register
+                                {authTexts.register || "Register"}
                             </button>
                         </>
                     ) : (
-                        <div className="relative"
-                             onMouseEnter={() => setMenuOpen(true)}
-                             onMouseLeave={() => setMenuOpen(false)}
-                        >
-                            <button className={styles.userButton}>
-                                {user.name || "User"} ▾
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                className={styles.userButton}
+                                onClick={() => setMenuOpen((prev) => !prev)}
+                            >
+                                {userLabel} ▾
                             </button>
 
-                            {/* Dropdown Menu */}
                             {menuOpen && (
-                                <div className="absolute right-0 mt-2 bg-white text-black rounded shadow-lg z-50">
+                                <div className="absolute right-0 mt-2 z-50 rounded bg-white text-black shadow-lg">
                                     <ul className="flex flex-col p-2">
                                         <li>
                                             <button
                                                 className={styles.userDropdownItem}
-                                                onClick={() => console.log("Go to profile")}
+                                                onMouseDown={() => navigate("/dashboard")}
                                             >
-                                                Profile
+                                                Dashboard
                                             </button>
                                         </li>
                                         <li>
                                             <button
                                                 className={styles.userDropdownItem}
-                                                onClick={() => {
-                                                    localStorage.removeItem("currentUser");
-                                                    setUser(null);
-                                                    navigate("/");
-                                                }}
+                                                onMouseDown={handleLogout}
                                             >
-                                                Logout
+                                                {authTexts.log_out || "Log out"}
                                             </button>
                                         </li>
                                     </ul>
                                 </div>
-                                )
-                            }
+                            )}
                         </div>
                     )}
                 </div>

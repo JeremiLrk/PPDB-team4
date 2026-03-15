@@ -1,23 +1,14 @@
+import "@testing-library/jest-dom/vitest";
+import { test } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { vi } from "vitest";
 
-import App from "../src/App.jsx";
+import App from "../src/app/App.jsx";
+import { mockApi } from "./testApiMock.js";
 
-function mockHealthyBackend() {
-  globalThis.fetch = vi.fn(async (url) => {
-    if (url === "/api/health") {
-      return {
-        ok: true,
-        json: async () => ({ db_connected: true }),
-      };
-    }
-    throw new Error(`Unexpected fetch call in test: ${String(url)}`);
-  });
-}
-
+// Verifies unknown URLs render the 404 page.
 test("unknown route shows 404 page", async () => {
-  mockHealthyBackend();
+  mockApi();
 
   render(
     <MemoryRouter initialEntries={["/doesn't exist"]}>
@@ -29,4 +20,3 @@ test("unknown route shows 404 page", async () => {
     await screen.findByRole("heading", { name: "404 - Page Not Found" })
   ).toBeInTheDocument();
 });
-

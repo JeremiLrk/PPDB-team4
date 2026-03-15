@@ -1,18 +1,25 @@
-from werkzeug.security import generate_password_hash, check_password_hash
-from server.app.models.user import User, db
+import os
 import jwt
 import datetime
+from dotenv import load_dotenv
 from server.config import SECRET_KEY
+from itsdangerous import URLSafeTimedSerializer
+from werkzeug.security import generate_password_hash, check_password_hash
+from server.app.models.user import User, db
 
-def register_user(email, password):
+load_dotenv()
+
+PW_RESET_SALT = os.environ["PW_RESET_SALT"]
+
+def register_user(email, password, firstName, lastName, dateOfBirth):
     if len(password) < 6:
-        raise ValueError("Password too short")
+        raise ValueError("Password is too short.")
 
     user = User.query.filter_by(email=email).first()
     if user:
-        raise ValueError("User already exists")
+        raise ValueError("User already exists.")
 
-    new_user = User(email=email, password_hash=generate_password_hash(password))
+    new_user = User(email=email, password_hash=generate_password_hash(password), first_name=firstName, last_name=lastName, date_of_birth=dateOfBirth)
     db.session.add(new_user)
     db.session.commit()
     return new_user
@@ -29,3 +36,45 @@ def login_user(email, password):
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token, user
+
+def verify_user(token):
+    if not token:
+        return None
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+    user_id = payload.get("user_id")
+    if not user_id:
+        return None
+
+    return User.query.filter_by(id=user_id).first()
+
+def generate_reset_token(email):
+    serializer = URLSafeTimedSerializer(SECRET_KEY)
+    return serializer.dumps(email, salt=PW_RESET_SALT)
+
+def verify_reset_token(token, expiration=900):
+    serializer = URLSafeTimedSerializer(SECRET_KEY)
+    try:
+        email = serializer.loads(token, salt=PW_RESET_SALT, max_age=expiration)
+        return email
+    except:
+        return None
+    
+def update_password(email, password):
+    if len(password) < 6:
+        raise ValueError("Password is too short.")
+    
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        raise ValueError("User not found.")
+    
+    user.password_hash = generate_password_hash(password)
+    db.session.commit()
+    return user

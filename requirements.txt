@@ -7,3 +7,6 @@ PyJWT
 werkzeug
 pytest
 sqlalchemy
+python-dotenv
+resend
+itsdangerous

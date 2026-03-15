@@ -1,70 +1,77 @@
-import React from "react"
-import {useNavigate, Link } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
+import { useLadder } from "@/hooks/useLadder"
 
-const Ladder = () => {
+function Ladder() {
+    const { clubId, ladderId } = useParams()
     const navigate = useNavigate()
 
-    // Temporary mock data
-    const ladders = [
-        {
-        name: "Men's Tennis",
-        description: "Competitive men's singles ladder.",
-        players: 24,
-        },
-        {
-        name: "Women's Tennis",
-        description: "Women's competitive ranking ladder.",
-        players: 18,
-        },
-        {
-        name: "Padel",
-        description: "Club padel ranking system.",
-        players: 32,
-        },
-        {
-        name: "Juniors",
-        description: "Under 18 development ladder.",
-        players: 12,
-        },
-    ]
+    const { players, loading } = useLadder(clubId, ladderId)
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 px-6 py-16">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-4xl">
 
             {/* Header */}
-            <div className="mb-12">
-            <h1 className="text-4xl font-semibold tracking-tight">
-                Available Ladders
-            </h1>
-            <p className="mt-2 text-slate-400 text-sm">
-                Choose a ladder and start competing.
-            </p>
+            <div className="mb-10 flex items-center justify-between">
+                <h1 className="text-3xl font-semibold">
+                    Ladder Rankings
+                </h1>
+
+            <button
+                onClick={() => navigate(`/clubs/${clubId}`)}
+                className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition"
+            >
+                <span className="text-lg"></span>
+                Back to club
+            </button>
             </div>
 
-            {/* Ladder Grid */}
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {ladders.map((ladder) => (
-                <div
-                key={ladder.name}
-                className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur hover:bg-white/10 transition cursor-pointer"
-                onClick={() => navigate(`/ladders/${ladder.name.toLowerCase().replace(/\s+/g, "-")}`)}>
-                <h2 className="text-xl font-semibold">
-                    {ladder.name}
-                </h2>
+            {/* Ladder */}
+            <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
 
-                <p className="mt-3 text-sm text-slate-400">
-                    {ladder.description}
-                </p>
+                {loading && (
+                    <p className="p-6 text-slate-400">Loading ladder...</p>
+                )}
 
-                <div className="mt-6 text-xs text-slate-500">
-                    {ladder.players} players
-                </div>
-                </div>
-            ))}
+                {!loading && players.length === 0 && (
+                    <p className="p-6 text-slate-400">No players in this ladder yet.</p>
+                )}
+
+                {!loading && players.length > 0 && (
+                    <table className="w-full">
+                        <thead className="border-b border-white/10 text-slate-400 text-sm">
+                            <tr>
+                                <th className="p-4 text-left">Rank</th>
+                                <th className="p-4 text-left">Player</th>
+                                <th className="p-4 text-left">Rating</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {players.map((player, index) => (
+                                <tr
+                                    key={player.id}
+                                    className="border-b border-white/5 hover:bg-white/5 transition"
+                                >
+                                    <td className="p-4 font-semibold">
+                                        #{index + 1}
+                                    </td>
+
+                                    <td className="p-4">
+                                        {player.name}
+                                    </td>
+
+                                    <td className="p-4">
+                                        {player.rating}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+
+                    </table>
+                )}
+
             </div>
 
-        </div>
         </div>
     )
 }
