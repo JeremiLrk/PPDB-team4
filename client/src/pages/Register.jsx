@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import { useRegister } from "@/hooks/useRegister.js"
 import styles from "@/style/Register.module.css"
-import { useCurrentUserContext } from "@/context/useCurrentUserContext.js"
+import { useCurrentUserContext } from "@/context/useCurrentUserContext"
 import { useLangContext } from "@/context/useLangContext.js"
 import { usePageTexts } from "@/hooks/usePageTexts.js"
 

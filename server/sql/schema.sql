@@ -151,7 +151,22 @@ CREATE TABLE IF NOT EXISTS club_owner_club (
     CONSTRAINT pk_club_owner_club
         PRIMARY KEY (club_owner_id, club_id)
 );
+CREATE TABLE IF NOT EXISTS club_join_request (
+    club_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    date DATETIME NOT NULL,
 
+    CONSTRAINT fk_club_id
+        FOREIGN KEY (club_id)
+        REFERENCES club(id),
+
+    CONSTRAINT fk_user_id
+        FOREIGN KEY (user_id)
+        REFERENCES account(id),
+
+    CONSTRAINT pk_club_id_user_id
+        PRIMARY KEY (user_id, club_id)
+);
 /*
  =====
  TEAMS

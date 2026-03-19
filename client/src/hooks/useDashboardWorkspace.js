@@ -112,6 +112,20 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         const { name, value } = event.target;
         setClubRequestForm((previous) => ({ ...previous, [name]: value }));
     }
+    async function clubJoinrequest(clubId) {
+        const res = await fetch("/api/club/join-request", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ club_id: clubId })
+        });
+
+        if (!res.ok) {
+            throw new Error("Request failed");
+        }
+    }
 
     async function onClubRequestSubmit(event) {
         event.preventDefault();
@@ -210,6 +224,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         clubRequestForm,
         clubRequestSubmitting,
         clubRequestMessage,
+        clubJoinrequest,
         onThemeToggle,
         onGoHome,
         onSignOut,

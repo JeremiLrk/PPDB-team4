@@ -5,7 +5,7 @@ import Badge from "./Badge";
 import styles from "@/style/Header.module.css";
 import { usePageTexts } from "@/hooks/usePageTexts.js";
 import { useLangContext } from "@/context/useLangContext.js";
-import { useCurrentUserContext } from "@/context/useCurrentUserContext.js";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 
 export default function Header({ status }) {
     const navigate = useNavigate();

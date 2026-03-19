@@ -17,7 +17,6 @@ function Dashboard({ currentUser, setUser }) {
     return (
         <section className={`${styles.shell} ${workspace.theme === "light" ? styles.light : ""}`}>
             <DashboardSidebar
-                currentUser={currentUser}
                 theme={workspace.theme}
                 activeTab={workspace.activeTab}
                 texts={dashboardTexts}
@@ -51,12 +50,16 @@ function Dashboard({ currentUser, setUser }) {
                         filteredDiscoverClubs={workspace.filteredDiscoverClubs}
                         myClubIds={workspace.myClubIds}
                         pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
+                        clubJoinrequest={workspace.clubJoinrequest}
                         texts={dashboardTexts}
                     />
                 ) : null}
 
                 {workspace.activeTab === "requests" ? (
-                    <RequestsTab myRequests={workspace.myRequests} texts={dashboardTexts} />
+                    <RequestsTab 
+                        myRequests={workspace.myRequests} 
+                        texts={dashboardTexts} 
+                        />
                 ) : null}
 
                 {workspace.activeTab === "createClub" ? (

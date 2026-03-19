@@ -63,6 +63,7 @@ export function SearchTab({
     filteredDiscoverClubs,
     myClubIds,
     pendingJoinRequestClubIds,
+    clubJoinrequest,
     texts,
 }) {
     return (
@@ -112,9 +113,12 @@ export function SearchTab({
                                         ) : null}
 
                                         {!isJoined && !hasPendingRequest ? (
-                                            <button className={styles.primaryButton} type="button" disabled>
-                                                {texts?.request_to_join || "Request to Join"}
-                                            </button>
+                                                <button
+                                                    className={styles.primaryButton}
+                                                    type="button"
+                                                    onClick={() => {clubJoinrequest(clubId);this.disabled=true}}>
+                                                    {texts?.request_to_join || "Request to Join"}
+                                                </button>
                                         ) : null}
                                     </div>
                                 </div>
@@ -127,7 +131,10 @@ export function SearchTab({
     );
 }
 
-export function RequestsTab({ myRequests, texts }) {
+export function RequestsTab({ 
+    myRequests, 
+    texts
+}) {
     return (
         <article className={`${styles.panel} ${styles.contentFade}`}>
             <div className={styles.panelTopRow}>
