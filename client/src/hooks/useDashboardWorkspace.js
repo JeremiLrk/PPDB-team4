@@ -150,7 +150,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         };
 
         try {
-            const response = await fetch("/api/me/club-registration-requests", {
+            const response = await fetch("/api/club/add-club", {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -173,7 +173,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
             }
 
             const requestRecord = {
-                id: responseBody?.request?.id || `club-request-${Date.now()}`,
+                id: responseBody?.club?.id || `club-request-${Date.now()}`,
                 name: responseBody?.request?.name || payload.name,
                 city: responseBody?.request?.city || payload.city,
                 sport: responseBody?.request?.sport || payload.sport,

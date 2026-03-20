@@ -64,6 +64,7 @@ function Dashboard({ currentUser, setUser }) {
 
                 {workspace.activeTab === "createClub" ? (
                     <CreateClubTab
+                        clubCreaterequest={workspace.clubCreaterequest}
                         clubRequestForm={workspace.clubRequestForm}
                         clubRequestSubmitting={workspace.clubRequestSubmitting}
                         clubRequestMessage={workspace.clubRequestMessage}
