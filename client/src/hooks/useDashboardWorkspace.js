@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard.js";
 import useClubs from "@/hooks/useClubs.js";
+import { notify } from "@/hooks/useNotify.js";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 
 const DEFAULT_THEME = "dark";
 const THEME_STORAGE_KEY = "dashboard_theme";
@@ -49,6 +51,7 @@ function normalizePendingJoinRequestClubIds(myRequests) {
 export function useDashboardWorkspace(setUser, texts = {}) {
     const navigate = useNavigate();
     const { dashboardData, loading, error } = useDashboard();
+    const { currentUser, setCurrentUser } = useCurrentUserContext();
     const {
         clubs: discoverClubs,
         loading: discoverLoading,
@@ -102,10 +105,29 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         navigate("/");
     }
 
-    function onSignOut() {
+    async function onSignOut() {
         localStorage.removeItem("currentUser");
         setUser?.(null);
         navigate("/");
+        try {
+            const response = await fetch("/api/logout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.message || "Logout failed");
+            }
+
+            setCurrentUser(null);
+            notify.success("Logout successful");
+            navigate("/");
+        } catch (err) {
+            console.error(err?.message || "Logout failed");
+            notify.error(err?.message || "Logout failed");
+        }
     }
 
     function onClubRequestFieldChange(event) {
