@@ -26,7 +26,6 @@ def create_app():
     app.config["SECRET_KEY"] = SECRET_KEY
 
     db.init_app(app)    
-        
     _register_blueprints(app)
     _init_db(app)
 

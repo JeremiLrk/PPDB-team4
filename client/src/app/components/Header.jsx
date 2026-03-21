@@ -99,22 +99,61 @@ export default function Header({ status }) {
                             >
                                 {userLabel} ▾
                             </button>
-
                             {menuOpen && (
-                                <div className="absolute right-0 mt-2 z-50 rounded bg-white text-black shadow-lg">
-                                    <ul className="flex flex-col p-2">
-                                        <li>
+                                <div 
+                                    className="absolute right-0 mt-2 z-50 shadow-2xl"
+                                    style={{ 
+                                        minWidth: '180px',
+                                        /* Deep Indigo/Blue transparent background */
+                                        backgroundColor: 'rgba(30, 27, 75, 0.85)', 
+                                        backdropFilter: 'blur(12px)',
+                                        borderRadius: '12px',
+                                        /* Bright Indigo border to catch the glow */
+                                        border: '1px solid rgba(129, 140, 248, 0.3)',
+                                        padding: '6px',
+                                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.1)'
+                                    }}
+                                >
+                                    <ul className="flex flex-col m-0 p-0 list-none">
+                                        <li style={{ marginBottom: '2px' }}>
                                             <button
                                                 className={styles.userDropdownItem}
                                                 onMouseDown={() => navigate("/dashboard")}
+                                                style={{ 
+                                                    width: '100%', 
+                                                    textAlign: 'left', 
+                                                    padding: '12px 16px',
+                                                    fontSize: '14px',
+                                                    fontWeight: '500',
+                                                    color: '#e0e7ff', // Light indigo text
+                                                    borderRadius: '8px',
+                                                    display: 'block',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    transition: 'background 0.2s'
+                                                }}
                                             >
                                                 Dashboard
                                             </button>
                                         </li>
-                                        <li>
+                                        <li style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '4px', paddingTop: '4px' }}>
                                             <button
                                                 className={styles.userDropdownItem}
                                                 onMouseDown={handleLogout}
+                                                style={{ 
+                                                    width: '100%', 
+                                                    textAlign: 'left', 
+                                                    padding: '12px 16px',
+                                                    fontSize: '14px',
+                                                    fontWeight: '600',
+                                                    color: '#fda4af', // Soft rose/red for logout
+                                                    borderRadius: '8px',
+                                                    display: 'block',
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer'
+                                                }}
                                             >
                                                 {authTexts.log_out || "Log out"}
                                             </button>

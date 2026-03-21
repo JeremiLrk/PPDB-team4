@@ -142,47 +142,47 @@ def set_join():
     
     return jsonify({"status": True}), 200
 
-@dashboard_bp.post("/club/join-request/respond")
+
+@dashboard_bp.post("/club/join-request/decide")
 def decide_request():
-    user_id = _get_current_user_id_from_cookie()
-    if not user_id:
+    owner_id = _get_current_user_id_from_cookie()
+    if not owner_id:
         return jsonify({"message": "Unauthorized"}), 401
 
     data = request.get_json()
-    request_id = data.get("request_id")
-    decision = data.get("status") # 'approved' or 'rejected'
+    club_id = data.get("club_id")
+    player_id = data.get("user_id")
+    decision = data.get("status")
 
-    if not request_id or not decision:
-        return jsonify({"message": "Missing request_id or status"}), 400
+    if not club_id or not player_id or not decision:
+        return jsonify({"message": "Missing identifiers or status"}), 400
 
-    join_req = ClubJoinRequest.query.get(request_id)
+    join_req = ClubJoinRequest.query.filter_by(club_id=club_id, user_id=player_id).first()
     if not join_req:
         return jsonify({"message": "Join request not found"}), 404
 
-    # Security Check
+    # Security
     is_owner = ClubOwnerClub.query.filter_by(
-        club_owner_id=user_id, 
-        club_id=join_req.club_id
+        club_owner_id=owner_id, 
+        club_id=club_id
     ).first()
     
     if not is_owner:
         return jsonify({"message": "You do not have permission to manage this club"}), 403
 
     if decision == "approved":
-        existing_player = Player.query.filter_by(id=join_req.user_id).first()
+        existing_player = Player.query.filter_by(id=player_id).first()
         if not existing_player:
-            new_player = Player(id=join_req.user_id)
+            new_player = Player(id=player_id)
             db.session.add(new_player)
+            db.session.flush() 
         
-        club_link = ClubPlayer(club_id=join_req.club_id, player_id=join_req.user_id)
+        club_link = ClubPlayer(club_id=club_id, player_id=player_id)
         db.session.add(club_link)
-        
-        db.session.delete(join_req)
-    
-    else:
-        db.session.delete(join_req)
 
+    db.session.delete(join_req)
     db.session.commit()
+    
     return jsonify({"status": True, "message": f"Request {decision}"}), 200
 
 @dashboard_bp.post("/club/add-club")
@@ -220,7 +220,18 @@ def add_club():
                 club_owner_id=club_owner.id,
                 club_id=club.id
             )
+        
             db.session.add(club_owner_club)
+            db.session.flush()
+
+            existing_player = Player.query.filter_by(id=user_id).first()
+            if not existing_player:
+                new_player = Player(id=user_id)
+                db.session.add(new_player)
+                db.session.flush()
+            
+            club_link = ClubPlayer(club_id=club.id, player_id=user_id)
+            db.session.add(club_link)
 
             db.session.commit()
 

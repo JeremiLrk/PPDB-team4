@@ -182,6 +182,7 @@ export function CreateClubTab({
     onSubmit,
     texts,
     incomingJoinRequests,
+    decideJoinrequest
 }) {
     return (
         <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
@@ -317,22 +318,32 @@ export function CreateClubTab({
                                         </p>
                                     </div>
                                     <div className={styles.actionRow} style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                                        <button 
-                                            className={styles.submitButton} 
-                                            disabled 
-                                            type="button"
-                                            >
-                                            {texts?.approve || "Approve"}
-                                        </button>
-                                        <button 
-                                            className={styles.submitButton} 
-                                            disabled 
-                                            type="button"
-                                            style={{ filter: 'grayscale(1) brightness(0.7)' }} // Quick way to make it look "secondary" using existing styles
-                                            >
-                                            {texts?.reject || "Reject"}
-                                        </button>
-                                    </div>
+                                    <button 
+                                        className={styles.submitButton} 
+                                        type="button"
+                                        onClick={(e) => {
+                                            // Find all buttons in this specific div and disable them
+                                            const row = e.currentTarget.closest(`.${styles.actionRow}`);
+                                            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                                            
+                                            decideJoinrequest(req.club_id, req.user_id, "approved");
+                                        }}>
+                                        {texts?.approve || "Approve"}
+                                    </button>
+                                    
+                                    <button 
+                                        className={styles.submitButton} 
+                                        type="button"
+                                        style={{ filter: 'grayscale(1) brightness(0.7)' }}
+                                        onClick={(e) => {
+                                            const row = e.currentTarget.closest(`.${styles.actionRow}`);
+                                            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                                            
+                                            decideJoinrequest(req.club_id, req.user_id, "rejected");
+                                        }}>
+                                        {texts?.reject || "Reject"}
+                                    </button>
+                                </div>
                                 </li>
                             ))}
                         </ul>

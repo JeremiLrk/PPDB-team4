@@ -25,6 +25,7 @@ class ClubJoinRequest(db.Model):
     def serialize(self):
         return {
             "club_id": self.club_id,
+            "user_id": self.user_id,
             "club_name": self.club.name,  
             "requested_at": self.date, 
             "status": "pending"  

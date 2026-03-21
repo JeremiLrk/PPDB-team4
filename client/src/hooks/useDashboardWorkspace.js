@@ -126,6 +126,25 @@ export function useDashboardWorkspace(setUser, texts = {}) {
             throw new Error("Request failed");
         }
     }
+    async function decideJoinrequest(clubId, userId, status) {
+        console.log("Sending to API:", { club_id: clubId, user_id: userId, status: status });
+        const res = await fetch("/api/club/join-request/decide", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ 
+                club_id: clubId,
+                user_id: userId,
+                status: status
+            })
+        });
+
+        if (!res.ok) {
+            throw new Error("Request failed");
+        }
+    }
     async function fetchJoinRequests() {
         const res = await fetch("/api/club/join-request", {
             method: "GET",
@@ -249,6 +268,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         clubRequestSubmitting,
         clubRequestMessage,
         incomingJoinRequests,
+        decideJoinrequest,
         clubJoinrequest,
         onThemeToggle,
         onGoHome,
