@@ -19,7 +19,7 @@ export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, cl
                                     <div>
                                         <p className={styles.primaryText}>{club?.name || `Club #${clubId}`}</p>
                                         <p className={styles.secondaryText}>
-                                            (club?.membership_status || texts?.member_status || "member").toString()
+                                            {(club?.membership_status || texts?.member_status || "member").toString()}
                                         </p>
                                     </div>
                                     <Link className={styles.linkButton} to={`/clubs/${clubId}`}>
@@ -116,7 +116,7 @@ export function SearchTab({
                                                 <button
                                                     className={styles.primaryButton}
                                                     type="button"
-                                                    onClick={() => {clubJoinrequest(clubId);this.disabled=true}}>
+                                                    onClick={(e) => {clubJoinrequest(clubId);e.currentTarget.disabled = true;}}>
                                                     {texts?.request_to_join || "Request to Join"}
                                                 </button>
                                         ) : null}
@@ -181,9 +181,11 @@ export function CreateClubTab({
     onFieldChange,
     onSubmit,
     texts,
+    incomingJoinRequests,
 }) {
     return (
         <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
+            {/* Left Column: The Form */}
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>{texts?.request_your_club || "Request Your Own Club"}</h3>
                 <form className={styles.form} onSubmit={onSubmit}>
@@ -254,51 +256,88 @@ export function CreateClubTab({
                 </form>
 
                 {clubRequestMessage.text ? (
-                    <p
-                        className={`${styles.notice} ${
-                            clubRequestMessage.type === "error"
-                                ? styles.noticeError
-                                : clubRequestMessage.type === "success"
-                                  ? styles.noticeSuccess
-                                  : styles.noticeInfo
-                        }`}
-                    >
+                    <p className={`${styles.notice} ${clubRequestMessage.type === "error" ? styles.noticeError : styles.noticeSuccess}`}>
                         {clubRequestMessage.text}
                     </p>
                 ) : null}
             </article>
 
-            <article className={styles.panel}>
-                <div className={styles.panelTopRow}>
-                    <h3 className={styles.panelTitle}>
-                        {texts?.my_club_registration_requests || "My Club Registration Requests"}
-                    </h3>
-                    <span className={styles.counter}>{clubCreationRequests.length}</span>
-                </div>
+            {/* Right Column: Both types of requests */}
+            <div className={styles.requestsSidebar}>
+                <article className={styles.panel}>
+                    <div className={styles.panelTopRow}>
+                        <h3 className={styles.panelTitle}>
+                            {texts?.my_club_registration_requests || "My Club Registration Requests"}
+                        </h3>
+                        <span className={styles.counter}>{clubCreationRequests.length}</span>
+                    </div>
 
-                {clubCreationRequests.length === 0 ? (
-                    <p className={styles.muted}>
-                        {texts?.no_club_registration_requests_yet || "No club registration requests yet."}
-                    </p>
-                ) : (
-                    <ul className={styles.list}>
-                        {clubCreationRequests.map((request) => (
-                            <li className={styles.listItem} key={request.id}>
-                                <div>
-                                    <p className={styles.primaryText}>{request.name || texts?.new_club || "New Club"}</p>
-                                    <p className={styles.secondaryText}>
-                                        {request.city || texts?.unknown_city || "Unknown city"}
-                                        {request.sport ? ` • ${request.sport}` : ""}
-                                    </p>
-                                </div>
-                                <span className={`${styles.statusPill} ${statusClass(request.status)}`}>
-                                    {statusLabel(request.status, texts)}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
+                    {clubCreationRequests.length === 0 ? (
+                        <p className={styles.muted}>
+                            {texts?.no_club_registration_requests_yet || "No club registration requests yet."}
+                        </p>
+                    ) : (
+                        <ul className={styles.list}>
+                            {clubCreationRequests.map((request) => (
+                                <li className={styles.listItem} key={request.id}>
+                                    <div>
+                                        <p className={styles.primaryText}>{request.name || texts?.new_club || "New Club"}</p>
+                                        <p className={styles.secondaryText}>
+                                            {request.city || texts?.unknown_city || "Unknown city"}
+                                            {request.sport ? ` • ${request.sport}` : ""}
+                                        </p>
+                                    </div>
+                                    <span className={`${styles.statusPill} ${statusClass(request.status)}`}>
+                                        {statusLabel(request.status, texts)}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </article>
+
+                {incomingJoinRequests.length > 0 && (
+                    <article className={styles.panel}>
+                        <div className={styles.panelTopRow}>
+                            <h3 className={styles.panelTitle}>
+                                {texts?.incoming_join_requests || "Incoming Join Requests"}
+                            </h3>
+                            <span className={styles.counter}>{incomingJoinRequests.length}</span>
+                        </div>
+
+                        <ul className={styles.list}>
+                            {incomingJoinRequests.map((req, index) => (
+                                <li className={styles.listItem} key={index}>
+                                    <div>
+                                        <p className={styles.primaryText}>
+                                            Request from <strong>{req.user_name}</strong> for your club: <strong>{req.club_name}</strong>!
+                                        </p>
+                                        <p className={styles.secondaryText}>
+                                            {new Date(req.requested_at).toLocaleDateString()}
+                                        </p>
+                                    </div>
+                                    <div className={styles.actionRow} style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                        <button 
+                                            className={styles.approveButton} 
+                                            disabled 
+                                            title="Functionality coming soon"
+                                        >
+                                            Approve
+                                        </button>
+                                        <button 
+                                            className={styles.rejectButton} 
+                                            disabled 
+                                            title="Functionality coming soon"
+                                        >
+                                            Reject
+                                        </button>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    </article>
                 )}
-            </article>
+            </div>
         </section>
     );
 }

@@ -126,6 +126,30 @@ export function useDashboardWorkspace(setUser, texts = {}) {
             throw new Error("Request failed");
         }
     }
+    async function fetchJoinRequests() {
+        const res = await fetch("/api/club/join-request", {
+            method: "GET",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (!res.ok) {
+            throw new Error("Failed to fetch join requests");
+        }
+
+        return await res.json();
+    }
+    const [incomingJoinRequests, setIncomingJoinRequests] = useState([]);
+
+    useEffect(() => {
+        fetchJoinRequests()
+            .then(data => {
+                setIncomingJoinRequests(data.requests || []);
+            })
+            .catch(err => console.error("Not an owner or fetch failed", err));
+    }, []);
 
     async function onClubRequestSubmit(event) {
         event.preventDefault();
@@ -224,6 +248,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         clubRequestForm,
         clubRequestSubmitting,
         clubRequestMessage,
+        incomingJoinRequests,
         clubJoinrequest,
         onThemeToggle,
         onGoHome,

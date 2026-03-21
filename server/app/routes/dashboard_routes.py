@@ -6,6 +6,8 @@ from server.app.models.club_join_request import ClubJoinRequest
 from server.app.models.club import Club
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
+from server.app.models.player import Player
+from server.app.models.club_player import ClubPlayer
 from server.app.models import db
 from server.config import SECRET_KEY
 from datetime import datetime
@@ -34,29 +36,83 @@ def get_my_dashboard():
     user = User.query.filter_by(id=user_id).first()
     if not user:
         return jsonify({"message": "User not found"}), 404
-    
+
+    clubs_map = {}
+
     club_owner = ClubOwner.query.filter_by(id=user_id).first()
 
-    clubs = []
     if club_owner:
-        owned_links = ClubOwnerClub.query.filter_by(club_owner_id=club_owner.id).all()
-        club_ids = [link.club_id for link in owned_links]
+        owned_links = ClubOwnerClub.query.filter_by(
+            club_owner_id=club_owner.id
+        ).all()
 
-        if club_ids:
-            clubs = Club.query.filter(Club.id.in_(club_ids)).all()
+        owned_ids = [link.club_id for link in owned_links]
+
+        if owned_ids:
+            owned_clubs = Club.query.filter(Club.id.in_(owned_ids)).all()
+
+            for club in owned_clubs:
+                clubs_map[club.id] = {
+                    **club.serialize(),
+                    "membership_status": "owner"
+                }
+
+    member_links = ClubPlayer.query.filter_by(player_id=user_id).all()
+    member_ids = [link.club_id for link in member_links]
+
+    if member_ids:
+        member_clubs = Club.query.filter(Club.id.in_(member_ids)).all()
+
+        for club in member_clubs:
+            if club.id not in clubs_map:
+                clubs_map[club.id] = {
+                    **club.serialize(),
+                    "membership_status": "member"
+                }
 
     join_requests = ClubJoinRequest.query.filter_by(user_id=user_id).all()
-    return jsonify(
-        {
-            "user": {"id": user.id, "email": user.email},
-            "roles": [getattr(user, "role", "user")],
-            "clubs": [club.serialize() for club in clubs],
-            "pending_requests": {
-                "my_requests": [request.serialize() for request in join_requests],
-                "my_club_creation_requests": [],
-            },
-        }
-    ), 200
+
+    return jsonify({
+        "user": {"id": user.id, "email": user.email},
+        "roles": [getattr(user, "role", "user")],
+        "clubs": list(clubs_map.values()),
+        "pending_requests": {
+            "my_requests": [r.serialize() for r in join_requests],
+            "my_club_creation_requests": [],
+        },
+    }), 200
+
+@dashboard_bp.get("/club/join-request")
+def get_join_requests_for_owner():
+    user_id = _get_current_user_id_from_cookie()
+    if not user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    club_owner = ClubOwner.query.filter_by(id=user_id).first()
+    if not club_owner:
+        return jsonify({"message": "Not a club owner"}), 403
+
+    owner_links = ClubOwnerClub.query.filter_by(club_owner_id=club_owner.id).all()
+    club_ids = [link.club_id for link in owner_links]
+
+    if not club_ids:
+        return jsonify({"requests": []}), 200
+
+    results = (
+        db.session.query(ClubJoinRequest, User.first_name)
+        .join(User, ClubJoinRequest.user_id == User.id)
+        .filter(ClubJoinRequest.club_id.in_(club_ids))
+        .all()
+    )
+
+    data = []
+    for request_obj, first_name in results:
+        serialized = request_obj.serialize()
+        serialized["user_name"] = first_name
+        data.append(serialized)
+
+    return jsonify({"requests": data}), 200
+
 
 @dashboard_bp.post("/club/join-request")
 def set_join():
@@ -85,7 +141,6 @@ def set_join():
     db.session.commit()
     
     return jsonify({"status": True}), 200
-
 
 @dashboard_bp.post("/club/add-club")
 def add_club():

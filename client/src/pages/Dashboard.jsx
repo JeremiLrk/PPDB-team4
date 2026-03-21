@@ -72,6 +72,7 @@ function Dashboard({ currentUser, setUser }) {
                         onFieldChange={workspace.onClubRequestFieldChange}
                         onSubmit={workspace.onClubRequestSubmit}
                         texts={dashboardTexts}
+                        incomingJoinRequests={workspace.incomingJoinRequests}
                     />
                 ) : null}
             </div>
