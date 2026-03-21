@@ -310,26 +310,27 @@ export function CreateClubTab({
                                 <li className={styles.listItem} key={index}>
                                     <div>
                                         <p className={styles.primaryText}>
-                                            Request from <strong>{req.user_name}</strong> for your club: <strong>{req.club_name}</strong>!
+                                            Request from <strong>{req.user_name}</strong> to join your club: <strong>{req.club_name}</strong>!
                                         </p>
                                         <p className={styles.secondaryText}>
                                             {new Date(req.requested_at).toLocaleDateString()}
                                         </p>
                                     </div>
-                                    <div className={styles.actionRow} style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                    <div className={styles.actionRow} style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
                                         <button 
-                                            className={styles.approveButton} 
+                                            className={styles.submitButton} 
                                             disabled 
-                                            title="Functionality coming soon"
-                                        >
-                                            Approve
+                                            type="button"
+                                            >
+                                            {texts?.approve || "Approve"}
                                         </button>
                                         <button 
-                                            className={styles.rejectButton} 
+                                            className={styles.submitButton} 
                                             disabled 
-                                            title="Functionality coming soon"
-                                        >
-                                            Reject
+                                            type="button"
+                                            style={{ filter: 'grayscale(1) brightness(0.7)' }} // Quick way to make it look "secondary" using existing styles
+                                            >
+                                            {texts?.reject || "Reject"}
                                         </button>
                                     </div>
                                 </li>

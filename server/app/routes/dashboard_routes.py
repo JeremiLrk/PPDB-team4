@@ -142,6 +142,49 @@ def set_join():
     
     return jsonify({"status": True}), 200
 
+@dashboard_bp.post("/club/join-request/respond")
+def decide_request():
+    user_id = _get_current_user_id_from_cookie()
+    if not user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    data = request.get_json()
+    request_id = data.get("request_id")
+    decision = data.get("status") # 'approved' or 'rejected'
+
+    if not request_id or not decision:
+        return jsonify({"message": "Missing request_id or status"}), 400
+
+    join_req = ClubJoinRequest.query.get(request_id)
+    if not join_req:
+        return jsonify({"message": "Join request not found"}), 404
+
+    # Security Check
+    is_owner = ClubOwnerClub.query.filter_by(
+        club_owner_id=user_id, 
+        club_id=join_req.club_id
+    ).first()
+    
+    if not is_owner:
+        return jsonify({"message": "You do not have permission to manage this club"}), 403
+
+    if decision == "approved":
+        existing_player = Player.query.filter_by(id=join_req.user_id).first()
+        if not existing_player:
+            new_player = Player(id=join_req.user_id)
+            db.session.add(new_player)
+        
+        club_link = ClubPlayer(club_id=join_req.club_id, player_id=join_req.user_id)
+        db.session.add(club_link)
+        
+        db.session.delete(join_req)
+    
+    else:
+        db.session.delete(join_req)
+
+    db.session.commit()
+    return jsonify({"status": True, "message": f"Request {decision}"}), 200
+
 @dashboard_bp.post("/club/add-club")
 def add_club():
     user_id = _get_current_user_id_from_cookie()
