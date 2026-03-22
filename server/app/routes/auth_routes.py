@@ -3,7 +3,7 @@ import resend
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, make_response
 from server.app.models.user import User
-from server.app.services.auth_service import register_user, login_user, verify_user, generate_reset_token, verify_reset_token, update_password
+from server.app.services.auth_service import register_user, login_user, verify_user, generate_reset_token, verify_reset_token, update_password, generate_verification_token, verify_email_token, mark_user_as_verified
 
 load_dotenv()
 
@@ -28,31 +28,20 @@ def signup():
     try:
         register_user(email, password, firstName, lastName, dateOfBirth)
 
-        token, user = login_user(email, password)
-        response = make_response(
-            jsonify(
-                {
-                    "message": "Registered successfully.",
-                    "user": {
-                        "id": user.id,
-                        "email": user.email,
-                        "firstName": user.first_name,
-                        "lastName": user.last_name,
-                    },
-                }
-            ),
-            201,
-        )
-        response.set_cookie(
-            "access_token",
-            token,
-            httponly=True,
-            secure=True,
-            samesite="Lax"
-        )
-        return response
+        token = generate_verification_token(email)
+        params: resend.Emails.SendParams = {
+            "from": MAIL_FROM,
+            "to": [email],
+            "subject": "Verify your account",
+            "html": f'<a href="{FRONTEND_URL}/verify-email/{token}">Verify your account</a>',
+        }
+        resend.Emails.send(params)
+
+        return jsonify({"message": "Registered successfully. Check your email to verify your account."}), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
+    except Exception:
+        return jsonify({"message": "Could not send verification email. Please try again later."}), 500
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
@@ -63,7 +52,11 @@ def login():
     if not email or not password:
         return jsonify({"message": "Email and password are required."}), 400
 
-    result = login_user(email, password)
+    try:
+        result = login_user(email, password)
+    except PermissionError as e:
+        return jsonify({"message": str(e)}), 403
+
     if not result:
         return jsonify({"message": "Invalid credentials."}), 401
 
@@ -145,6 +138,21 @@ def forgot_password():
     response = make_response(jsonify({"message": "Check your inbox for the password reset link."}), 200)
     
     return response
+
+
+@auth_bp.route("/verify-email/<token>", methods=["GET"])
+def verify_email(token):
+    email = verify_email_token(token)
+
+    if not email:
+        return jsonify({"message": "Token is invalid or expired."}), 400
+
+    try:
+        mark_user_as_verified(email)
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+
+    return jsonify({"message": "Email verified successfully."}), 200
 
 @auth_bp.route("/reset-password/<token>", methods=["POST"])
 def reset_password(token):
