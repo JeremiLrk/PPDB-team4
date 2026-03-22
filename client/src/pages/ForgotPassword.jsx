@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import styles from "@/style/ForgotPassword.module.css"
 import { useState } from "react"
-import { toast } from "react-hot-toast"
+import { notify } from "@/hooks/useNotify.js"
 import { useLangContext } from "@/context/useLangContext.js"
 import { usePageTexts } from "@/hooks/usePageTexts.js"
 
@@ -25,10 +25,10 @@ const ForgotPassword = () => {
                 throw new Error(data?.message || au_texts.reset_failed)
             }
 
-            toast.success(au_texts.reset_link_sent)
+            notify.success(au_texts.reset_link_sent)
         } catch (err) {
             console.error(err.message || au_texts.reset_failed)
-            toast.error(err.message || au_texts.reset_failed)
+            notify.error(err.message || au_texts.reset_failed)
         }
     }
 

@@ -1,0 +1,14 @@
+[
+  {"page":"club_home","key":"loading_ladders","language":"en","value":"Loading ladders..."},
+  {"page":"club_home","key":"loading_ladders","language":"nl","value":"Ladders laden..."},
+  {"page":"club_home","key":"loading_club","language":"en","value":"Loading club..."},
+  {"page":"club_home","key":"loading_club","language":"nl","value":"Club laden..."},
+  {"page":"club_home","key":"error_loading_club","language":"en","value":"Error loading club"},
+  {"page":"club_home","key":"error_loading_club","language":"nl","value":"Fout bij laden van club"},
+  {"page":"club_home","key":"tagline","language":"en","value":"Compete. Challenge. Climb the ladder."},
+  {"page":"club_home","key":"tagline","language":"nl","value":"Speel. Challenge. Klim op de ladder."},
+  {"page":"club_home","key":"subtagline","language":"en","value":"The competitive ranking system for tennis and padel clubs."},
+  {"page":"club_home","key":"subtagline","language":"nl","value":"Het competitieve rankingsysteem voor tennis- en padelclubs."},
+  {"page":"club_home","key":"log_in","language":"en","value":"Log in"},
+  {"page":"club_home","key":"log_in","language":"nl","value":"Inloggen"}
+]

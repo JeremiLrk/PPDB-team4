@@ -1,6 +1,6 @@
 import styles from "@/style/ResetPassword.module.css"
 import { useState } from "react"
-import { toast } from "react-hot-toast"
+import { notify } from "@/hooks/useNotify.js"
 import { useParams, useNavigate } from "react-router-dom"
 import { useLangContext } from "@/context/useLangContext.js"
 import { usePageTexts } from "@/hooks/usePageTexts.js"
@@ -18,7 +18,7 @@ const ResetPassword = () => {
 
         try {
             if (newPassword !== repeatPassword) {
-                toast.error(au_texts.passwords_do_not_match)
+                notify.error(au_texts.passwords_do_not_match)
                 return
             }
 
@@ -34,11 +34,11 @@ const ResetPassword = () => {
                 throw new Error(data?.message || au_texts.reset_failed)
             }
 
-            toast.success(au_texts.password_reset_success)
+            notify.success(au_texts.password_reset_success)
             navigate("/login")
         } catch (err) {
             console.error(err.message || au_texts.reset_failed)
-            toast.error(err.message || au_texts.reset_failed)
+            notify.error(err.message || au_texts.reset_failed)
         }
     }
 

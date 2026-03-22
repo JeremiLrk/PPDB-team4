@@ -1,121 +1,103 @@
+import "@testing-library/jest-dom/vitest";
+import { test } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { vi } from "vitest";
 
-import App from "../src/App.jsx";
+import App from "../src/app/App.jsx";
+import { mockApi } from "./testApiMock.js";
 
-function mockHealthyBackend() {
-  globalThis.fetch = vi.fn(async (url) => {
-    if (url === "/api/health") {
-      return {
-        ok: true,
-        json: async () => ({ db_connected: true }),
-      };
-    }
-    throw new Error(`Unexpected fetch call in test: ${String(url)}`);
-  });
-}
+// Verifies header Log in button navigates to the login page.
+test("header Log in button navigates to /login", async () => {
+    mockApi();
+    const user = userEvent.setup();
 
-test("header Login button navigates to /login", async () => {
-  mockHealthyBackend();
-  const user = userEvent.setup();
+    render(
+        <MemoryRouter initialEntries={["/"]}>
+            <App />
+        </MemoryRouter>
+    );
 
-  render(
-    <MemoryRouter initialEntries={["/"]}>
-      <App />
-    </MemoryRouter>
-  );
+    const banner = screen.getByRole("banner");
+    await user.click(within(banner).getByRole("button", { name: "Log in" }));
 
-  const banner = screen.getByRole("banner");
-  await user.click(within(banner).getByRole("button", { name: "Login" }));
-
-  expect(await screen.findByRole("heading", { name: "Login" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Log in" })).toBeInTheDocument();
 });
 
+// Verifies header Register button navigates to the register page.
 test("header Register button navigates to /register", async () => {
-  mockHealthyBackend();
-  const user = userEvent.setup();
+    mockApi();
+    const user = userEvent.setup();
 
-  render(
-    <MemoryRouter initialEntries={["/"]}>
-      <App />
-    </MemoryRouter>
-  );
+    render(
+        <MemoryRouter initialEntries={["/"]}>
+            <App />
+        </MemoryRouter>
+    );
 
-  const banner = screen.getByRole("banner");
-  await user.click(within(banner).getByRole("button", { name: "Register" }));
+    const banner = screen.getByRole("banner");
+    await user.click(within(banner).getByRole("button", { name: "Register" }));
 
-  expect(
-    await screen.findByRole("heading", { name: "Register" })
-  ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Register" })).toBeInTheDocument();
 });
 
-test("home 'Join the Ladder' button navigates to Register page", async () => {
-  mockHealthyBackend();
-  const user = userEvent.setup();
+// Verifies landing Explore clubs button opens the clubs overview page.
+test("landing Explore clubs button navigates to /clubs", async () => {
+    mockApi();
+    const user = userEvent.setup();
 
-  render(
-    <MemoryRouter initialEntries={["/"]}>
-      <App />
-    </MemoryRouter>
-  );
+    render(
+        <MemoryRouter initialEntries={["/"]}>
+            <App />
+        </MemoryRouter>
+    );
 
-  await user.click(screen.getByRole("button", { name: "Join the Ladder" }));
+    await user.click(screen.getByRole("button", { name: "Explore clubs" }));
 
-  expect(
-    await screen.findByRole("heading", { name: "Register" })
-  ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "All Clubs" })).toBeInTheDocument();
 });
 
-test("home ladder buttons navigate to Ladder page", async () => {
-  mockHealthyBackend();
-  const user = userEvent.setup();
+// Verifies dashboard button redirects anonymous users to login.
+test("landing Open dashboard sends anonymous user to /login", async () => {
+    mockApi({ me: null });
+    const user = userEvent.setup();
 
-  render(
-    <MemoryRouter initialEntries={["/"]}>
-      <App />
-    </MemoryRouter>
-  );
+    render(
+        <MemoryRouter initialEntries={["/"]}>
+            <App />
+        </MemoryRouter>
+    );
 
-  await user.click(screen.getByRole("button", { name: "Men’s Tennis" }));
-
-  expect(
-    await screen.findByRole("heading", { name: "Available Ladders" })
-  ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Open dashboard" }));
+    expect(await screen.findByRole("heading", { name: "Log in" })).toBeInTheDocument();
 });
 
-test("register 'Continue as guest' navigates back to home", async () => {
-  mockHealthyBackend();
-  const user = userEvent.setup();
+// Verifies register page guest link returns to landing page.
+test("register Continue as guest navigates back to landing", async () => {
+    mockApi();
+    const user = userEvent.setup();
 
-  render(
-    <MemoryRouter initialEntries={["/register"]}>
-      <App />
-    </MemoryRouter>
-  );
+    render(
+        <MemoryRouter initialEntries={["/register"]}>
+            <App />
+        </MemoryRouter>
+    );
 
-  await user.click(screen.getByRole("link", { name: "Continue as guest" }));
-
-  expect(
-    await screen.findByText("Compete. Challenge. Climb the ladder.")
-  ).toBeInTheDocument();
+    await user.click(await screen.findByRole("link", { name: "Continue as guest" }));
+    expect(await screen.findByRole("heading", { name: "How NetRank works" })).toBeInTheDocument();
 });
 
-test("login 'Continue as guest' navigates back to home", async () => {
-  mockHealthyBackend();
-  const user = userEvent.setup();
+// Verifies login page guest link returns to landing page.
+test("login Continue as guest navigates back to landing", async () => {
+    mockApi();
+    const user = userEvent.setup();
 
-  render(
-    <MemoryRouter initialEntries={["/login"]}>
-      <App />
-    </MemoryRouter>
-  );
+    render(
+        <MemoryRouter initialEntries={["/login"]}>
+            <App />
+        </MemoryRouter>
+    );
 
-  await user.click(screen.getByRole("link", { name: "Continue as guest" }));
-
-  expect(
-    await screen.findByText("Compete. Challenge. Climb the ladder.")
-  ).toBeInTheDocument();
+    await user.click(await screen.findByRole("link", { name: "Continue as guest" }));
+    expect(await screen.findByRole("heading", { name: "How NetRank works" })).toBeInTheDocument();
 });
-

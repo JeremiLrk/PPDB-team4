@@ -14,8 +14,10 @@
 .ladderContainerText{
     @apply text-xl font-semibold mb-6;
 }
-.ladderCard{
-    @apply relative mx-auto w-full max-w-6xl px-6 py-20;
+.ladderCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 .ladderButton{
     @apply text-left rounded-xl border border-white/10 px-4 py-3 hover:bg-white/10 transition;

@@ -7,7 +7,6 @@ import AppRoutes from "@/app/AppRoutes.jsx"
 import { useLang } from "@/hooks/useLang.js"
 import { LangContext } from "@/context/useLangContext.js"
 import { CurrentUserContext } from "@/context/useCurrentUserContext.js"
-import { Toaster } from "react-hot-toast"
 
 function App() {
     const location = useLocation()
@@ -64,7 +63,7 @@ function App() {
                 if (alive) {
                     setStatus({ state: "ok", msg: "Database connected" })
                 }
-            } catch (e) {
+            } catch (error) {
                 if (alive) {
                     setStatus({
                         state: "err",
@@ -94,22 +93,9 @@ function App() {
                 value={{ currentUser, setCurrentUser }}
             >
                 <LangContext.Provider value={{ lang, setLang }}>
-                    <Toaster
-                        position="top-center"
-                        toastOptions={{
-                            duration: 3500,
-                            success: { duration: 2500 },
-                            style: {
-                                borderRadius: "10px",
-                                background: "#0f172a",
-                                color: "#e2e8f0",
-                                border: "1px solid #334155",
-                            },
-                        }}
-                    />
-                    <Background_Glow />
-                    <Header status={status} />
-                    <main className="relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-6">
+                    {!isDashboardRoute ? <Background_Glow /> : null}
+                    {!isDashboardRoute ? <Header status={status} /> : null}
+                    <main className={mainClass}>
                         <AppRoutes />
                     </main>
                 </LangContext.Provider>

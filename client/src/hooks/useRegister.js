@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { toast } from "react-hot-toast"
+import { notify } from "@/hooks/useNotify.js"
 
 export function useRegister(setUser) {
     const [email, setEmail] = useState("")
@@ -35,12 +35,12 @@ export function useRegister(setUser) {
 
             setUser(data.user)
 
-            toast.success("Registration successful")
+            notify.success("Registration successful")
 
             navigate("/")
         } catch (err) {
             console.error(err.message || "Registration failed")
-            toast.error(err.message || "Registration failed")
+            notify.error(err.message || "Registration failed")
         }
     }
 

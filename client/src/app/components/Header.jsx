@@ -1,58 +1,77 @@
-import { useNavigate } from "react-router-dom"
-import Badge from "./Badge"
-import styles from "@/style/Header.module.css"
-import { useState } from "react"
-import { toast } from "react-hot-toast"
-import { usePageTexts } from "@/hooks/usePageTexts.js"
-import { useLangContext } from "@/context/useLangContext.js"
-import { useCurrentUserContext } from "@/context/useCurrentUserContext.js"
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { notify } from "@/hooks/useNotify.js";
+import Badge from "./Badge";
+import styles from "@/style/Header.module.css";
+import { usePageTexts } from "@/hooks/usePageTexts.js";
+import { useLangContext } from "@/context/useLangContext.js";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext.js";
 
 export default function Header({ status }) {
-    const navigate = useNavigate()
-    const [menuOpen, setMenuOpen] = useState(false)
-    const { lang, setLang } = useLangContext()
-    const { currentUser, setCurrentUser } = useCurrentUserContext()
+    const navigate = useNavigate();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const dropdownRef = useRef(null);
+    const { lang, setLang } = useLangContext();
+    const { currentUser, setCurrentUser } = useCurrentUserContext();
 
-    const base_texts = usePageTexts("base", lang)
-    const au_texts = usePageTexts("authorization", lang)
+    const baseTexts = usePageTexts("base", lang);
+    const authTexts = usePageTexts("authorization", lang);
 
-    const handleLogout = async () => {
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setMenuOpen(false);
+            }
+        }
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    async function handleLogout() {
         try {
             const response = await fetch("/api/logout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
-            })
+            });
 
-            const data = await response.json()
-
+            const data = await response.json();
             if (!response.ok) {
-                throw new Error(data?.message || "Logout failed")
+                throw new Error(data?.message || "Logout failed");
             }
 
-            setCurrentUser(null)
-
-            toast.success("Logout successful")
-
-            navigate("/")
+            setCurrentUser(null);
+            notify.success("Logout successful");
+            navigate("/");
         } catch (err) {
-            console.error(err.message || "Logout failed")
-            toast.error(err.message || "Logout failed")
+            console.error(err?.message || "Logout failed");
+            notify.error(err?.message || "Logout failed");
         }
     }
+
+    const userLabel =
+        (currentUser?.firstName &&
+            currentUser?.lastName &&
+            `${currentUser.firstName} ${currentUser.lastName}`) ||
+        authTexts.user ||
+        "User";
 
     return (
         <header className={styles.header}>
             <div className={styles.headerInner}>
-                {/* Left: Database Status */}
                 <div>
                     <Badge status={status} />
                 </div>
 
-                {/* Center: Title */}
-                <h1 className={styles.headerTitle}>{base_texts.net_rank}</h1>
+                <h1 className={styles.headerTitle}>
+                    <button onClick={() => navigate("/")}>
+                        {baseTexts.net_rank || "NetRank"}
+                    </button>
+                </h1>
 
-                {/* Right: Auth Buttons / User Menu */}
                 <div className={styles.headerRight}>
                     <button onClick={() => setLang("nl")}>NL</button>
                     <button onClick={() => setLang("en")}>EN</button>
@@ -63,53 +82,41 @@ export default function Header({ status }) {
                                 onClick={() => navigate("/login")}
                                 className={styles.headerButton}
                             >
-                                {au_texts.log_in}
+                                {authTexts.log_in || "Log in"}
                             </button>
                             <button
                                 onClick={() => navigate("/register")}
                                 className={styles.headerPrimaryButton}
                             >
-                                {au_texts.register}
+                                {authTexts.register || "Register"}
                             </button>
                         </>
                     ) : (
-                        <div
-                            className="relative pb-2"
-                            onMouseEnter={() => setMenuOpen(true)}
-                            onMouseLeave={() => setMenuOpen(false)}
-                        >
-                            <button className={styles.userButton}>
-                                {(currentUser?.firstName &&
-                                    currentUser?.lastName &&
-                                    `${currentUser.firstName} ${currentUser.lastName}`) ||
-                                    au_texts.user}{" "}
-                                ▾
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                className={styles.userButton}
+                                onClick={() => setMenuOpen((prev) => !prev)}
+                            >
+                                {userLabel} ▾
                             </button>
 
-                            {/* Dropdown Menu */}
                             {menuOpen && (
-                                <div className="absolute right-0 mt-2 bg-white text-black rounded shadow-lg z-50">
+                                <div className="absolute right-0 mt-2 z-50 rounded bg-white text-black shadow-lg">
                                     <ul className="flex flex-col p-2">
                                         <li>
                                             <button
-                                                className={
-                                                    styles.userDropdownItem
-                                                }
-                                                onClick={() =>
-                                                    console.log("Go to profile")
-                                                }
+                                                className={styles.userDropdownItem}
+                                                onMouseDown={() => navigate("/dashboard")}
                                             >
-                                                {au_texts.profile}
+                                                Dashboard
                                             </button>
                                         </li>
                                         <li>
                                             <button
-                                                className={
-                                                    styles.userDropdownItem
-                                                }
-                                                onClick={handleLogout}
+                                                className={styles.userDropdownItem}
+                                                onMouseDown={handleLogout}
                                             >
-                                                {au_texts.log_out}
+                                                {authTexts.log_out || "Log out"}
                                             </button>
                                         </li>
                                     </ul>
@@ -120,5 +127,5 @@ export default function Header({ status }) {
                 </div>
             </div>
         </header>
-    )
+    );
 }

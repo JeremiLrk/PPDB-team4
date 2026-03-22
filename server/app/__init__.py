@@ -1,76 +1,94 @@
 from flask import Flask
+
+from server.config import SECRET_KEY, config_data
 from server.extensions import db
-from server.config import config_data, SECRET_KEY
-from server.app.models.user import db, User
 from server.app.routes.auth_routes import auth_bp
+from server.app.routes.clubs_routes import clubs_bp
+from server.app.routes.dashboard_routes import dashboard_bp
 from server.app.routes.health_routes import api
 from server.app.routes.root_routes import root_bp
+from server.app.routes.ladder_routes import ladder_bp
+from server.app.routes.ladders_routes import ladders_bp
+from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
+from server.app.utils.seed_table import seed_table
+from server.app.models.PageText import PageText
+
 
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql+psycopg://{config_data['db_username']}:{config_data['db_password']}@{config_data['db_host']}:{config_data['db_port']}/{config_data['db_name']}"
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = SECRET_KEY
+    app.config["SQLALCHEMY_DATABASE_URI"] = (
+        f"postgresql+psycopg://{config_data['db_username']}:{config_data['db_password']}"
+        f"@{config_data['db_host']}:{config_data['db_port']}/{config_data['db_name']}"
+    )
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SECRET_KEY"] = SECRET_KEY
 
     db.init_app(app)
 
     _register_blueprints(app)
     _init_db(app)
 
+    @app.get("/")
+    def root():
+        return {"message": "API running"}, 200
+
     return app
 
-def _register_blueprints(app: Flask):
-    from server.app.routes.texts_routes import texts
-    from server.app.routes.auth_routes import auth_bp
-    from server.app.routes.health_routes import api
-    from server.app.routes.root_routes import root_bp
 
+def _register_blueprints(app: Flask):
     app.register_blueprint(root_bp)
     app.register_blueprint(api)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(ladders_bp)
+    app.register_blueprint(ladder_bp)
+    app.register_blueprint(clubs_bp)
+    app.register_blueprint(dashboard_bp)
     app.register_blueprint(texts)
 
 
 def _init_db(app: Flask):
-    from server.app.utils.db_loader import load_sql
-    from server.app.utils.seed_table import seed_table
-    from server.app.models.PageText import PageText
-
     with app.app_context():
-
-        # --- reset schema ---
-        sql_file_path = "server/sql/schema.sql"
-        load_sql(sql_file_path)
+        load_sql("server/sql/schema.sql")
         db.create_all()
 
-        # --- seed data ---
         seed_table(
             model=PageText,
             seeds_file="server/seeds/page_text_base.json",
-            unique_fields=["page", "key", "language"]
+            unique_fields=["page", "key", "language"],
         )
-
         seed_table(
             model=PageText,
             seeds_file="server/seeds/page_text_home.json",
-            unique_fields=["page", "key", "language"]
+            unique_fields=["page", "key", "language"],
         )
-
         seed_table(
             model=PageText,
             seeds_file="server/seeds/page_text_authorization.json",
-            unique_fields=["page", "key", "language"]
+            unique_fields=["page", "key", "language"],
         )
-
         seed_table(
             model=PageText,
             seeds_file="server/seeds/page_text_ladder.json",
-            unique_fields=["page", "key", "language"]
+            unique_fields=["page", "key", "language"],
         )
-
         seed_table(
             model=PageText,
             seeds_file="server/seeds/page_text_score.json",
-            unique_fields=["page", "key", "language"]
+            unique_fields=["page", "key", "language"],
+        )
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_dashboard.json",
+            unique_fields=["page", "key", "language"],
+        )
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_landing.json",
+            unique_fields=["page", "key", "language"],
+        )
+        seed_table(
+            model=PageText,
+            seeds_file="server/seeds/page_text_club_home.json",
+            unique_fields=["page", "key", "language"],
         )
