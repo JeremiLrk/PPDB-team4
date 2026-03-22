@@ -10,6 +10,9 @@ from server.app.models.player import Player
 from server.app.models.club_player import ClubPlayer
 from server.app.models import db
 from server.config import SECRET_KEY
+from server.app.services.club_notifications import send_join_request_confirmation_to_player
+from server.app.services.club_notifications import send_join_request_notification_to_owner
+from server.app.services.club_notifications import send_join_request_decision_to_player
 from datetime import datetime
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api")
@@ -124,8 +127,13 @@ def set_join():
     if not user:
         return jsonify({"message": "User not found"}), 404
     
-    club_id = request.get_json()["club_id"]
+    data = request.get_json() or {}
+    club_id = data.get("club_id")
     if not club_id:
+        return jsonify({"message": "Club not found"}), 404
+
+    club = Club.query.filter_by(id=club_id).first()
+    if not club:
         return jsonify({"message": "Club not found"}), 404
     
     if ClubJoinRequest.query.filter_by(club_id=club_id, user_id=user_id).first():
@@ -139,6 +147,30 @@ def set_join():
 
     db.session.add(join_request)
     db.session.commit()
+
+    player_name = user.first_name or user.email
+    send_join_request_confirmation_to_player(
+        player_email=user.email,
+        player_name=player_name,
+        club_name=club.name,
+        club_id=club.id,
+    )
+
+    owner_rows = (
+        db.session.query(User.email, User.first_name)
+        .join(ClubOwner, ClubOwner.id == User.id)
+        .join(ClubOwnerClub, ClubOwnerClub.club_owner_id == ClubOwner.id)
+        .filter(ClubOwnerClub.club_id == club.id)
+        .all()
+    )
+    for owner_email, owner_first_name in owner_rows:
+        send_join_request_notification_to_owner(
+            owner_email=owner_email,
+            owner_name=owner_first_name or owner_email,
+            player_name=player_name,
+            club_name=club.name,
+            club_id=club.id,
+        )
     
     return jsonify({"status": True}), 200
 
@@ -161,6 +193,14 @@ def decide_request():
     if not join_req:
         return jsonify({"message": "Join request not found"}), 404
 
+    player_user = User.query.filter_by(id=player_id).first()
+    if not player_user:
+        return jsonify({"message": "User not found"}), 404
+
+    club = Club.query.filter_by(id=club_id).first()
+    if not club:
+        return jsonify({"message": "Club not found"}), 404
+
     # Security
     is_owner = ClubOwnerClub.query.filter_by(
         club_owner_id=owner_id, 
@@ -182,6 +222,14 @@ def decide_request():
 
     db.session.delete(join_req)
     db.session.commit()
+
+    send_join_request_decision_to_player(
+        player_email=player_user.email,
+        player_name=player_user.first_name or player_user.email,
+        club_name=club.name,
+        decision=decision,
+        club_id=club.id,
+    )
     
     return jsonify({"status": True, "message": f"Request {decision}"}), 200
 
