@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react"
+import { useLocation } from "react-router-dom"
+import { Toaster } from "react-hot-toast"
 import Background_Glow from "@/app/components/Background_Glow.jsx"
 import Header from "@/app/components/Header.jsx"
 import AppRoutes from "@/app/AppRoutes.jsx"
@@ -8,6 +10,8 @@ import { CurrentUserContext } from "@/context/useCurrentUserContext.js"
 import { Toaster } from "react-hot-toast"
 
 function App() {
+    const location = useLocation()
+    const isDashboardRoute = location.pathname.startsWith("/dashboard")
     const [status, setStatus] = useState({ state: "loading", msg: "" })
     const [lang, setLang] = useLang("en")
     const [currentUser, setCurrentUser] = useState(null)
@@ -33,7 +37,7 @@ function App() {
                 setCurrentUser(data?.user ?? null)
             } catch (err) {
                 if (alive) {
-                    console.error("Auth failed:", err)
+                    console.error("Auth check failed:", err)
                     setCurrentUser(null)
                 }
             }
@@ -48,39 +52,44 @@ function App() {
     useEffect(() => {
         let alive = true
 
-        async function check() {
+        async function checkHealth() {
             try {
-                // API + DB status from health endpoint
-                const h = await fetch("/api/health")
-                const data = await h.json()
-                if (!h.ok || !data?.db_connected) {
+                const response = await fetch("/api/health")
+                const data = await response.json()
+
+                if (!response.ok || !data?.db_connected) {
                     throw new Error(data?.msg || "Database not reachable")
                 }
 
                 if (alive) {
-                    setStatus({
-                        state: "ok",
-                        msg: "Database connected",
-                    })
+                    setStatus({ state: "ok", msg: "Database connected" })
                 }
             } catch (e) {
                 if (alive) {
                     setStatus({
                         state: "err",
-                        msg: e?.message || "Connection error",
+                        msg: error?.message || "Connection error",
                     })
                 }
             }
         }
 
-        check()
+        checkHealth()
         return () => {
             alive = false
         }
     }, [])
 
+    const wrapperClass = isDashboardRoute
+        ? "min-h-screen"
+        : "min-h-screen bg-slate-950 text-slate-100"
+    const mainClass = isDashboardRoute
+        ? "relative z-10 min-h-screen p-0"
+        : "relative z-10 flex min-h-[calc(100vh-80px)] items-center justify-center px-6 py-5"
+
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100">
+        <div className={wrapperClass}>
+            <Toaster position="top-center" />
             <CurrentUserContext.Provider
                 value={{ currentUser, setCurrentUser }}
             >
