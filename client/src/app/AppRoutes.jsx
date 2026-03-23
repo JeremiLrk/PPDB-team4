@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard.jsx";
 import NotFound from "@/pages/NotFound.jsx";
 import ForgotPassword from "@/pages/ForgotPassword.jsx";
 import ResetPassword from "@/pages/ResetPassword.jsx";
+import ClubSettings from "@/pages/ClubSettings.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -31,6 +32,11 @@ export default function AppRoutes() {
             <Route path="/dashboard" element={
                     <ProtectedRoute>
                         <Dashboard />
+                    </ProtectedRoute>
+                }/>
+            <Route path="/clubs/:clubId/settings" element={
+                    <ProtectedRoute>
+                        <ClubSettings />
                     </ProtectedRoute>
                 }/>
             <Route path="*" element={<NotFound />} />

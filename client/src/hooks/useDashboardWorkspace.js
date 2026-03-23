@@ -66,6 +66,8 @@ export function useDashboardWorkspace(setUser, texts = {}) {
     const [clubRequestSubmitting, setClubRequestSubmitting] = useState(false);
     const [clubRequestMessage, setClubRequestMessage] = useState({ type: "", text: "" });
 
+    const [isClubOwner, setIsClubOwner] = useState(false);
+
     const myClubs = useMemo(() => normalizeClubs(dashboardData), [dashboardData]);
     const myRequests = useMemo(() => normalizeRequests(dashboardData), [dashboardData]);
 
@@ -103,6 +105,10 @@ export function useDashboardWorkspace(setUser, texts = {}) {
 
     function onGoHome() {
         navigate("/");
+    }
+
+    function onGoSettings(ClubId) {
+        navigate(`/clubs/${ClubId}/settings`)
     }
 
     async function onSignOut() {
@@ -179,7 +185,11 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         if (!res.ok) {
             throw new Error("Failed to fetch join requests");
         }
-
+        if (res.status === 200) {
+            setIsClubOwner(true);
+        } else {
+            setIsClubOwner(false);
+        }
         return await res.json();
     }
     const [incomingJoinRequests, setIncomingJoinRequests] = useState([]);
@@ -290,6 +300,8 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         clubRequestSubmitting,
         clubRequestMessage,
         incomingJoinRequests,
+        isClubOwner,
+        onGoSettings,
         decideJoinrequest,
         clubJoinrequest,
         onThemeToggle,

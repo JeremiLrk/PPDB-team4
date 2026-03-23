@@ -182,7 +182,8 @@ export function CreateClubTab({
     onSubmit,
     texts,
     incomingJoinRequests,
-    decideJoinrequest
+    decideJoinrequest,
+    isClubOwner
 }) {
     return (
         <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
@@ -296,8 +297,66 @@ export function CreateClubTab({
                         </ul>
                     )}
                 </article>
+            </div>
+        </section>
+    );
+}
 
-                {incomingJoinRequests.length > 0 && (
+export function ManageClubsTab({ 
+    myClubs, 
+    incomingJoinRequests, 
+    decideJoinrequest, 
+    isClubOwner, 
+    onGoSettings,
+    texts 
+}) {
+    const ownedClubs = myClubs.filter(club => club.membership_status === "owner");
+
+    if (!isClubOwner && ownedClubs.length === 0) {
+        return (
+            <div className={styles.panel} style={{ textAlign: 'center', padding: '40px' }}>
+                <h3 className={styles.panelTitle}>{texts?.manage_clubs_title || "Club Administration"}</h3>
+                <p className={styles.muted}>
+                    {texts?.no_clubs_owned || "You don't own any clubs yet."}
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className={`${styles.tabContent} ${styles.contentFade}`}>
+            <h2 className={styles.panelTitle}>{texts?.manage_clubs_title || "Club Administration"}</h2>
+            
+            <div className={styles.twoColumnLayout}>
+                <section className={styles.mainColumn}>
+                    <article className={styles.panel}>
+                        <h3 className={styles.panelTitle}>{texts?.your_clubs || "Your Owned Clubs"}</h3>
+                        
+                        {ownedClubs.length === 0 ? (
+                            <p className={styles.muted}>You haven't been assigned as an owner to any clubs yet.</p>
+                        ) : (
+                            <ul className={styles.list}>
+                                {ownedClubs.map(club => (
+                                    <li key={club.id} className={styles.listItem}>
+                                        <div>
+                                            <p className={styles.primaryText}>{club.name}</p>
+                                            <p className={styles.secondaryText}>
+                                                {club.city} - {club.sport}
+                                            </p>
+                                        </div>
+                                        <button 
+                                        onClick={() => onGoSettings(club.id)}
+                                        className={styles.linkButton}>
+                                            Settings
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </article>
+                </section>
+
+                <aside className={styles.requestsSidebar}>
                     <article className={styles.panel}>
                         <div className={styles.panelTopRow}>
                             <h3 className={styles.panelTitle}>
@@ -306,50 +365,39 @@ export function CreateClubTab({
                             <span className={styles.counter}>{incomingJoinRequests.length}</span>
                         </div>
 
-                        <ul className={styles.list}>
-                            {incomingJoinRequests.map((req, index) => (
-                                <li className={styles.listItem} key={index}>
-                                    <div>
-                                        <p className={styles.primaryText}>
-                                            Request from <strong>{req.user_name}</strong> to join your club: <strong>{req.club_name}</strong>!
-                                        </p>
-                                        <p className={styles.secondaryText}>
-                                            {new Date(req.requested_at).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                    <div className={styles.actionRow} style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                                    <button 
-                                        className={styles.submitButton} 
-                                        type="button"
-                                        onClick={(e) => {
-                                            // Find all buttons in this specific div and disable them
-                                            const row = e.currentTarget.closest(`.${styles.actionRow}`);
-                                            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                                            
-                                            decideJoinrequest(req.club_id, req.user_id, "approved");
-                                        }}>
-                                        {texts?.approve || "Approve"}
-                                    </button>
-                                    
-                                    <button 
-                                        className={styles.submitButton} 
-                                        type="button"
-                                        style={{ filter: 'grayscale(1) brightness(0.7)' }}
-                                        onClick={(e) => {
-                                            const row = e.currentTarget.closest(`.${styles.actionRow}`);
-                                            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                                            
-                                            decideJoinrequest(req.club_id, req.user_id, "rejected");
-                                        }}>
-                                        {texts?.reject || "Reject"}
-                                    </button>
-                                </div>
-                                </li>
-                            ))}
-                        </ul>
+                        {incomingJoinRequests.length === 0 ? (
+                            <p className={styles.muted}>No pending join requests.</p>
+                        ) : (
+                            <ul className={styles.list}>
+                                {incomingJoinRequests.map((req, index) => (
+                                    <li className={styles.listItem} key={index}>
+                                        <div>
+                                            <p className={styles.primaryText}>
+                                                <strong>{req.user_name}</strong> wants to join <strong>{req.club_name}</strong>
+                                            </p>
+                                        </div>
+                                        <div className={styles.actionRow} style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                            <button 
+                                                className={styles.submitButton}
+                                                onClick={() => decideJoinrequest(req.club_id, req.user_id, "approved")}
+                                            >
+                                                Approve
+                                            </button>
+                                            <button 
+                                                className={styles.submitButton}
+                                                style={{ filter: 'grayscale(1) brightness(0.7)' }}
+                                                onClick={() => decideJoinrequest(req.club_id, req.user_id, "rejected")}
+                                            >
+                                                Reject
+                                            </button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </article>
-                )}
+                </aside>
             </div>
-        </section>
+        </div>
     );
 }

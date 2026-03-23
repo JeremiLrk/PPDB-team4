@@ -1,7 +1,7 @@
 import styles from "@/style/Dashboard.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/app/components/dashboard/DashboardSidebar.jsx";
-import { CreateClubTab, OverviewTab, RequestsTab, SearchTab } from "@/app/components/dashboard/DashboardTabs.jsx";
+import { CreateClubTab, OverviewTab, RequestsTab, SearchTab, ManageClubsTab } from "@/app/components/dashboard/DashboardTabs.jsx";
 import { useLangContext } from "@/context/useLangContext.js";
 import { usePageTexts } from "@/hooks/usePageTexts.js";
 
@@ -19,6 +19,7 @@ function Dashboard({ currentUser, setUser }) {
             <DashboardSidebar
                 theme={workspace.theme}
                 activeTab={workspace.activeTab}
+                isClubOwner={workspace.isClubOwner}
                 texts={dashboardTexts}
                 onTabChange={workspace.setActiveTab}
                 onThemeToggle={workspace.onThemeToggle}
@@ -74,6 +75,18 @@ function Dashboard({ currentUser, setUser }) {
                         texts={dashboardTexts}
                         incomingJoinRequests={workspace.incomingJoinRequests}
                         decideJoinrequest={workspace.decideJoinrequest}
+                        isClubOwner={workspace.isClubOwner}
+                    />
+                ) : null}
+
+                {workspace.activeTab === "manageClubs" ? (
+                    <ManageClubsTab
+                        myClubs={workspace.myClubs}
+                        incomingJoinRequests={workspace.incomingJoinRequests}
+                        decideJoinrequest={workspace.decideJoinrequest}
+                        isClubOwner={workspace.isClubOwner}
+                        onGoSettings={workspace.onGoSettings}
+                        texts={dashboardTexts}
                     />
                 ) : null}
             </div>
