@@ -1,0 +1,105 @@
+from server.extensions import db
+
+class AccountRole(db.Model):
+    __tablename__ = "account_role"
+
+    id   = db.Column(db.BigInteger, primary_key=True)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+
+    accounts = db.relationship("Account", back_populates="account_role")
+
+
+class Account(db.Model):
+    __tablename__ = "account"
+
+    id            = db.Column(db.BigInteger, primary_key=True)
+    first_name    = db.Column(db.String(32))
+    last_name     = db.Column(db.String(32))
+    date_of_birth = db.Column(db.Date)
+    email         = db.Column(db.String(254), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+
+    account_role_id = db.Column(db.BigInteger, db.ForeignKey("account_role.id", ondelete="CASCADE"), nullable=False)
+
+    account_role  = db.relationship("AccountRole", back_populates="accounts")
+    administrator = db.relationship("Administrator", back_populates="account", uselist=False)
+    player        = db.relationship("Player",        back_populates="account", uselist=False)
+    team_manager  = db.relationship("TeamManager",   back_populates="account", uselist=False)
+
+    @property
+    def resolved_role(self):
+        """Returns the model with the highest level of inheritance."""
+        if self.team_manager and self.team_manager.club_owner:
+            return self.team_manager.club_owner
+        if self.team_manager:
+            return self.team_manager
+        if self.administrator:
+            return self.administrator
+        if self.player:
+            return self.player
+        return self
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "email": self.email,
+            "firstName": self.first_name,
+            "lastName": self.last_name
+        }
+
+class Administrator(db.Model):
+    __tablename__ = "administrator"
+    __table_args__ = (
+        db.CheckConstraint("access_level >= 0", name="chk_positive_access_level"),
+    )
+
+    id           = db.Column(db.BigInteger, db.ForeignKey("account.id", ondelete="CASCADE"), primary_key=True)
+    access_level = db.Column(db.Integer, nullable=False)
+
+    account = db.relationship("Account", back_populates="administrator")
+
+    def to_dict(self):
+        base = self.team_manager.account.to_dict()
+        base["role"] = "administrator"
+        return base
+
+
+class Player(db.Model):
+    __tablename__ = "player"
+
+    id = db.Column(db.BigInteger, db.ForeignKey("account.id", ondelete="CASCADE"), primary_key=True)
+
+    account = db.relationship("Account", back_populates="player")
+    teams   = db.relationship("Team", secondary="player_team", back_populates="players")
+
+    def to_dict(self):
+        base = self.team_manager.account.to_dict()
+        base["role"] = "player"
+        return base
+
+class TeamManager(db.Model):
+    __tablename__ = "team_manager"
+
+    id = db.Column(db.BigInteger, db.ForeignKey("account.id", ondelete="CASCADE"), primary_key=True)
+
+    account    = db.relationship("Account",   back_populates="team_manager")
+    teams      = db.relationship("Team",      secondary="team_manager_team", back_populates="managers")
+    club_owner = db.relationship("ClubOwner", back_populates="team_manager", uselist=False)
+
+    def to_dict(self):
+        base = self.account.to_dict()
+        base["role"] = "team_manager"
+        return base
+
+
+class ClubOwner(db.Model):
+    __tablename__ = "club_owner"
+
+    id = db.Column(db.BigInteger, db.ForeignKey("team_manager.id", ondelete="CASCADE"), primary_key=True)
+
+    team_manager = db.relationship("TeamManager", back_populates="club_owner")
+
+    def to_dict(self):
+        base = self.team_manager.account.to_dict()
+        base["role"] = "club_owner"
+        return base

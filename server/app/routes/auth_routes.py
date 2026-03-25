@@ -2,8 +2,10 @@ import os
 import resend
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, make_response
-from server.app.models.user import User
-from server.app.services.auth_service import register_user, login_user, verify_user, generate_reset_token, verify_reset_token, update_password
+
+from server.app.decorators.login_required import login_required
+from server.app.models.account import Account
+from server.app.services.auth_service import register_user, login_user, generate_reset_token, verify_reset_token, update_password
 
 load_dotenv()
 
@@ -18,27 +20,22 @@ def signup():
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
-    firstName = data.get("firstName")
-    lastName = data.get("lastName")
-    dateOfBirth = data.get("dateOfBirth")
+    first_name = data.get("firstName")
+    last_name = data.get("lastName")
+    date_of_birth = data.get("dateOfBirth")
 
-    if not email or not password or not firstName or not lastName or not dateOfBirth:
+    if not email or not password or not first_name or not last_name or not date_of_birth:
         return jsonify({"message": "Missing credentials."}), 400
 
     try:
-        register_user(email, password, firstName, lastName, dateOfBirth)
+        register_user(email, password, first_name, last_name, date_of_birth)
 
         token, user = login_user(email, password)
         response = make_response(
             jsonify(
                 {
                     "message": "Registered successfully.",
-                    "user": {
-                        "id": user.id,
-                        "email": user.email,
-                        "firstName": user.first_name,
-                        "lastName": user.last_name,
-                    },
+                    "user": user.to_dict(),
                 }
             ),
             201,
@@ -72,12 +69,7 @@ def login():
         jsonify(
             {
                 "message": "Login successful.",
-                "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "firstName": user.first_name,
-                    "lastName": user.last_name,
-                },
+                "user": user.to_dict()
             }
         ),
         200,
@@ -86,6 +78,7 @@ def login():
     return response
 
 @auth_bp.route("/logout", methods=["POST"])
+@login_required
 def logout():
     response = make_response(jsonify({"message": "Successfully logged out."}), 200)
     response.set_cookie(
@@ -99,26 +92,9 @@ def logout():
     return response
 
 @auth_bp.route("/me", methods=["GET"])
-def me():
-    token = request.cookies.get("access_token")
-    user = verify_user(token)
-
-    if not user:
-        return jsonify({"message": "Unauthorized."}), 401
-
-    return (
-        jsonify(
-            {
-                "user": {
-                    "id": user.id,
-                    "email": user.email,
-                    "firstName": user.first_name,
-                    "lastName": user.last_name,
-                }
-            }
-        ),
-        200,
-    )
+@login_required
+def me(user):
+    return jsonify({"user": user.to_dict()}), 200
 
 @auth_bp.route("/forgot-password", methods=["POST"])
 def forgot_password():
@@ -128,7 +104,7 @@ def forgot_password():
     if not email:
         return jsonify({"message": "Email is required."}), 400
 
-    user = User.query.filter_by(email=email).first()
+    user = Account.query.filter_by(email=email).first()
 
     if user:
         token = generate_reset_token(email)
