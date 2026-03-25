@@ -288,3 +288,41 @@ def add_club():
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": str(e)}), 500
+    
+@dashboard_bp.post("/club/delete")
+def delete_club():
+    owner_id = _get_current_user_id_from_cookie()
+    if not owner_id:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    data = request.get_json()
+    club_id = data.get("club_id")
+
+    if not club_id:
+        return jsonify({"message": "Missing identifiers or status"}), 400
+    
+    club_to_delete = Club.query.get(club_id)
+        
+    if not club_to_delete:
+        return jsonify({"message": "Club not found"}), 404
+    
+    is_owner = ClubOwnerClub.query.filter_by(
+        club_owner_id=owner_id, 
+        club_id=club_id
+    ).first()
+    
+    if not is_owner:
+        return jsonify({"message": "You do not have permission to manage this club"}), 403
+    
+    try:
+        db.session.delete(club_to_delete)
+        db.session.commit()
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Club '{club_to_delete.name}' has been deleted."
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "An error occurred while deleting the club", "error": str(e)}), 500

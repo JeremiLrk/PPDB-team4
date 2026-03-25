@@ -61,8 +61,8 @@ CREATE TABLE IF NOT EXISTS account (
     account_role_id BIGINT NOT NULL,
 
     CONSTRAINT fk_account_role
-        FOREIGN KEY (id)
-        REFERENCES account_role_id(id)
+        FOREIGN KEY (account_role_id)
+        REFERENCES account_role(id)
         ON DELETE CASCADE,
 
     CONSTRAINT pk_account
@@ -134,10 +134,6 @@ CREATE TABLE IF NOT EXISTS club (
     sport VARCHAR(64),
     city VARCHAR(128) NOT NULL,
 
-    CONSTRAINT fk_sport_id
-        FOREIGN KEY (sport_id)
-        REFERENCES sport_type(id),
-
     CONSTRAINT pk_club
         PRIMARY KEY (id)
     );
@@ -166,11 +162,13 @@ CREATE TABLE IF NOT EXISTS club_join_request (
 
     CONSTRAINT fk_club_id
         FOREIGN KEY (club_id)
-        REFERENCES club(id),
+        REFERENCES club(id)
+        ON DELETE CASCADE,
 
     CONSTRAINT fk_user_id
         FOREIGN KEY (user_id)
-        REFERENCES account(id),
+        REFERENCES account(id)
+        ON DELETE CASCADE,
 
     CONSTRAINT pk_club_id_user_id
         PRIMARY KEY (user_id, club_id)
@@ -182,11 +180,13 @@ CREATE TABLE IF NOT EXISTS club_player (
 
     CONSTRAINT fk_club_id
         FOREIGN KEY (club_id)
-        REFERENCES club(id),
+        REFERENCES club(id)
+        ON DELETE CASCADE,
 
     CONSTRAINT fk_player_id
         FOREIGN KEY (player_id)
-        REFERENCES player(id),
+        REFERENCES player(id)
+        ON DELETE CASCADE,
 
     CONSTRAINT pk_club_player
         PRIMARY KEY (club_id, player_id)

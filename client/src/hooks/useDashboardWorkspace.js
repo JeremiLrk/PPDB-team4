@@ -155,7 +155,6 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         }
     }
     async function decideJoinrequest(clubId, userId, status) {
-        console.log("Sending to API:", { club_id: clubId, user_id: userId, status: status });
         const res = await fetch("/api/club/join-request/decide", {
             method: "POST",
             credentials: "include",
