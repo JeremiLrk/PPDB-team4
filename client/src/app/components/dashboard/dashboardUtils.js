@@ -1,26 +1,30 @@
-import styles from "@/style/Dashboard.module.css";
+import styles from "@/style/Dashboard.module.css"
 
 export function getDashboardTabs(texts) {
     return [
         { id: "overview", label: texts.tab_overview || "Overview" },
+        { id: "availability", label: texts.tab_availability || "Availability" },
         { id: "search", label: texts.tab_search || "Search Clubs" },
         { id: "requests", label: texts.tab_requests || "My Requests" },
-        { id: "createClub", label: texts.tab_create_club || "Add your own club" },
-    ];
+        {
+            id: "createClub",
+            label: texts.tab_create_club || "Add your own club",
+        },
+    ]
 }
 
 export function statusClass(status) {
-    const value = (status || "pending").toLowerCase();
-    if (value === "approved") return styles.statusApproved;
-    if (value === "rejected") return styles.statusRejected;
-    if (value === "cancelled") return styles.statusCancelled;
-    return styles.statusPending;
+    const value = (status || "pending").toLowerCase()
+    if (value === "approved") return styles.statusApproved
+    if (value === "rejected") return styles.statusRejected
+    if (value === "cancelled") return styles.statusCancelled
+    return styles.statusPending
 }
 
 export function statusLabel(status, texts = {}) {
-    const value = (status || "pending").toLowerCase();
-    if (value === "approved") return texts.status_approved || "Approved";
-    if (value === "rejected") return texts.status_rejected || "Rejected";
-    if (value === "cancelled") return texts.status_cancelled || "Cancelled";
-    return texts.status_pending || "Pending";
+    const value = (status || "pending").toLowerCase()
+    if (value === "approved") return texts.status_approved || "Approved"
+    if (value === "rejected") return texts.status_rejected || "Rejected"
+    if (value === "cancelled") return texts.status_cancelled || "Cancelled"
+    return texts.status_pending || "Pending"
 }
