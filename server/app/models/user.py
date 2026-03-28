@@ -1,5 +1,10 @@
-from server.extensions import db
+from server.extensions import db 
 
+class AccountRole(db.Model):
+    __tablename__ = "account_role"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
 
 class User(db.Model):
     __tablename__ = "account"
@@ -11,3 +16,7 @@ class User(db.Model):
 
     email = db.Column(db.String(254), nullable=False, unique=True, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+
+    role = db.Column(db.String(20), nullable=False, default="user")
+    
+    account_role_id = db.Column(db.Integer, db.ForeignKey('account_role.id'), nullable=False, default=1)

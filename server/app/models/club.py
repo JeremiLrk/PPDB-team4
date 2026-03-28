@@ -1,6 +1,5 @@
 from server.app.models.user import db
 
-# 1. Create the association table using the correct table name ('account.id') and type (Integer)
 club_owner_club = db.Table(
     'club_owner_club',
     db.Column('club_owner_id', db.Integer, db.ForeignKey('account.id'), primary_key=True),
