@@ -11,7 +11,6 @@ import NotFound from "@/pages/NotFound.jsx";
 import ForgotPassword from "@/pages/ForgotPassword.jsx";
 import ResetPassword from "@/pages/ResetPassword.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.js";
-import Admin from "@/pages/Admin.jsx";
 
 export default function AppRoutes() {
     const { currentUser, setCurrentUser } = useCurrentUserContext();
@@ -38,7 +37,6 @@ export default function AppRoutes() {
                     )
                 }
             />
-            <Route path="/admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
         </Routes>
     );

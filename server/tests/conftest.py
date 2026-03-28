@@ -1,13 +1,7 @@
 import uuid
 import pytest
-<<<<<<< HEAD
 from server.app import create_app
 from server.extensions import db
-=======
-from flask import Flask
-from flask.testing import FlaskClient
-from server.app import User, Administrator, db
->>>>>>> e275562 (beetje vanalles)
 
 @pytest.fixture
 def app():
