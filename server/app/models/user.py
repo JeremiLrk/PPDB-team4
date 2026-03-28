@@ -11,4 +11,3 @@ class User(db.Model):
 
     email = db.Column(db.String(254), nullable=False, unique=True, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default="user")
