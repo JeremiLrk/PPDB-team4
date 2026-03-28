@@ -1,5 +1,7 @@
 from flask import Flask
 
+from server.app.routes.sport_type_routes import sport_type_bp
+from server.app.routes.team_routes import team_bp
 from server.config import SECRET_KEY, config_data
 from server.extensions import db
 from server.app.routes.auth_routes import auth_bp
@@ -12,7 +14,8 @@ from server.app.routes.ladders_routes import ladders_bp
 from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
-from server.app.models.PageText import PageText
+from server.app.models.page_text import PageText
+from server.seeds.seed_teams_and_users import seed_teams_and_users
 
 
 def create_app():
@@ -45,6 +48,8 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(clubs_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(texts)
+    app.register_blueprint(team_bp)
+    app.register_blueprint(sport_type_bp)
 
 
 def _init_db(app: Flask):
@@ -92,3 +97,5 @@ def _init_db(app: Flask):
             seeds_file="server/seeds/page_text_club_home.json",
             unique_fields=["page", "key", "language"],
         )
+
+        seed_teams_and_users()

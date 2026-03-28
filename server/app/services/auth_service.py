@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from server.config import SECRET_KEY
 from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
-from server.app.models.account import Account
+from server.app.models.account import Account, AccountRole
 from server.extensions import db
 
 load_dotenv()
@@ -20,7 +20,22 @@ def register_user(email, password, first_name, last_name, date_of_birth):
     if user:
         raise ValueError("User already exists.")
 
-    new_user = Account(email=email, password_hash=generate_password_hash(password), first_name=first_name, last_name=last_name, date_of_birth=date_of_birth)
+    user_role = AccountRole.query.filter_by(name="user").first()
+
+    if not user_role:
+        user_role = AccountRole(name="user")
+        db.session.add(user_role)
+        db.session.flush()
+
+    new_user = Account(
+        email=email,
+        password_hash=generate_password_hash(password),
+        first_name=first_name,
+        last_name=last_name,
+        date_of_birth=date_of_birth,
+        account_role_id=user_role.id,
+    )
+
     db.session.add(new_user)
     db.session.commit()
     return new_user
@@ -30,9 +45,13 @@ def login_user(email, password):
     if not user or not check_password_hash(user.password_hash, password):
         return None
 
+
+    resolved = user.resolved_role
+    role_name = type(resolved).__name__.lower()
+
     payload = {
         "user_id": user.id,
-        "role": user.role,
+        "role": role_name,
         "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
@@ -66,16 +85,16 @@ def verify_reset_token(token, expiration=900):
         return email
     except:
         return None
-    
+
 def update_password(email, password):
     if len(password) < 6:
         raise ValueError("Password is too short.")
-    
+
     user = Account.query.filter_by(email=email).first()
 
     if not user:
         raise ValueError("User not found.")
-    
+
     user.password_hash = generate_password_hash(password)
     db.session.commit()
     return user

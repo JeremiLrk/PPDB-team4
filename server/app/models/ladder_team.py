@@ -1,4 +1,5 @@
-from server.app.models import db
+from server.extensions import db
+
 
 class LadderTeam(db.Model):
     __tablename__ = "ladder_team"

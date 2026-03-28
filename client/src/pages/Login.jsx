@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { useLogin } from "@/hooks/useLogin.js"
-import styles from "@/style/Login.module.css"
+import au_styles from "@/style/Authorization.module.css"
 import { useLangContext } from "@/context/useLangContext.js"
 import { usePageTexts } from "@/hooks/usePageTexts.js"
 
@@ -11,15 +11,15 @@ const Login = ({ setUser }) => {
         useLogin(setUser)
 
     return (
-        <div className={styles.loginContainer}>
-            <div className={styles.loginCard}>
-                <h1 className={styles.loginTitle}>{au_texts.log_in}</h1>
+        <div className={au_styles.container}>
+            <div className={au_styles.card}>
+                <h1 className={au_styles.headerTitle}>{au_texts.log_in}</h1>
 
-                <form className={styles.loginForm} onSubmit={handleSubmit}>
-                    <div className={styles.loginFormGroup}>
+                <form className={au_styles.form} onSubmit={handleSubmit}>
+                    <div className={au_styles.formGroup}>
                         <label
                             htmlFor="login-email"
-                            className={styles.loginLabel}
+                            className={au_styles.formLabel}
                         >
                             {au_texts.email}
                         </label>
@@ -29,14 +29,14 @@ const Login = ({ setUser }) => {
                             placeholder={au_texts.placeholder_email}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className={styles.loginInput}
+                            className={au_styles.formInput}
                         />
                     </div>
 
-                    <div className={styles.loginFormGroup}>
+                    <div className={au_styles.formGroup}>
                         <label
                             htmlFor="login-password"
-                            className={styles.loginLabel}
+                            className={au_styles.formLabel}
                         >
                             {au_texts.password}
                         </label>
@@ -46,27 +46,27 @@ const Login = ({ setUser }) => {
                             placeholder={au_texts.placeholder_password}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className={styles.loginInput}
+                            className={au_styles.formInput}
                         />
                     </div>
 
-                    <button type="submit" className={styles.loginButton}>
+                    <button type="submit" className={au_styles.formButton}>
                         {au_texts.log_in}
                     </button>
                 </form>
 
-                <p className={styles.loginText}>
+                <p className={au_styles.footerText}>
                     {au_texts.no_account}{" "}
-                    <Link to="/register" className={styles.loginLink}>
+                    <Link to="/register" className={au_styles.footerLink}>
                         {au_texts.register}
                     </Link>
                 </p>
 
-                <Link to="/forgot-password" className={styles.loginLink}>
+                <Link to="/forgot-password" className={au_styles.footerLink}>
                     {au_texts.forgot_password}
                 </Link>
 
-                <Link to="/" className={styles.guestLink}>
+                <Link to="/" className={au_styles.footerLinkGuest}>
                     {au_texts.as_guest}
                 </Link>
             </div>

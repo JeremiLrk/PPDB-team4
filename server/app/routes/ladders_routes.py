@@ -3,7 +3,7 @@ from server.app.services.ladders_service import get_all_club_ladders
 from server.app.models.team import Team
 from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
-from server.app.models import db
+from server.extensions import db
 
 ladders_bp = Blueprint("ladders", __name__, url_prefix="/api")
 

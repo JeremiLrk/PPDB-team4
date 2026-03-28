@@ -93,7 +93,7 @@ def logout():
 
 @auth_bp.route("/me", methods=["GET"])
 @login_required
-def me(user):
+def me(user: Account):
     return jsonify({"user": user.to_dict()}), 200
 
 @auth_bp.route("/forgot-password", methods=["POST"])

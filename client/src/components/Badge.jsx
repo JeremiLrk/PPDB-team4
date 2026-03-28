@@ -1,4 +1,3 @@
-
 export default function Badge({ status }) {
     const badge =
         status.state === "loading"

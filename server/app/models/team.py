@@ -41,3 +41,11 @@ class Team(db.Model):
     sport_type   = db.relationship("SportType", back_populates="teams")
     players      = db.relationship("Player", secondary=player_team, back_populates="teams")
     managers     = db.relationship("TeamManager", secondary=team_manager_team, back_populates="teams")
+
+    def to_dict(self):
+      return {
+        "id":          self.id,
+        "name":        self.name,
+        "clubId":      self.club_id,
+        "sportTypeId": self.sport_type_id,
+      }

@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 import jwt
 
-from server.app.models.user import User
+from server.app.models.account import Account
 from server.config import SECRET_KEY
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api")
@@ -25,9 +25,9 @@ def get_my_dashboard():
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
 
-    user = User.query.filter_by(id=user_id).first()
+    user = Account.query.filter_by(id=user_id).first()
     if not user:
-        return jsonify({"message": "User not found"}), 404
+        return jsonify({"message": "Account not found"}), 404
 
     # TODO(team): replace this placeholder payload with real membership/request table queries.
     return jsonify(

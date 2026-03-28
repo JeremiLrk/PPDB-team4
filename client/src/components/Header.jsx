@@ -72,6 +72,21 @@ export default function Header({ status }) {
                     </button>
                 </h1>
 
+                <nav className={styles.headerNav}>
+                    <button
+                        onClick={() => navigate("/clubs")}
+                        className={styles.navLink}
+                    >
+                        {baseTexts.clubs || "Clubs"}
+                    </button>
+                    <button
+                        onClick={() => navigate("/teams")}
+                        className={styles.navLink}
+                    >
+                        {baseTexts.teams || "Teams"}
+                    </button>
+                </nav>
+
                 <div className={styles.headerRight}>
                     <button onClick={() => setLang("nl")}>NL</button>
                     <button onClick={() => setLang("en")}>EN</button>

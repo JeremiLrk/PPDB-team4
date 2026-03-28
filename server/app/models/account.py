@@ -1,4 +1,5 @@
 from server.extensions import db
+from server.app.models.club import club_owner_club
 
 class AccountRole(db.Model):
     __tablename__ = "account_role"
@@ -98,6 +99,7 @@ class ClubOwner(db.Model):
     id = db.Column(db.BigInteger, db.ForeignKey("team_manager.id", ondelete="CASCADE"), primary_key=True)
 
     team_manager = db.relationship("TeamManager", back_populates="club_owner")
+    clubs        = db.relationship("Club", secondary=club_owner_club, back_populates="owners")
 
     def to_dict(self):
         base = self.team_manager.account.to_dict()

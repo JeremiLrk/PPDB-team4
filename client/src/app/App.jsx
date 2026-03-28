@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import Background_Glow from "@/app/components/Background_Glow.jsx";
-import Header from "@/app/components/Header.jsx";
+import Background_Glow from "@/components/Background_Glow.jsx";
+import Header from "@/components/Header.jsx";
 import AppRoutes from "@/app/AppRoutes.jsx";
 import { useLang } from "@/hooks/useLang.js";
 import { LangContext } from "@/context/useLangContext.js";
 import { CurrentUserContext } from "@/context/useCurrentUserContext.js";
+
 
 function App() {
     const location = useLocation();

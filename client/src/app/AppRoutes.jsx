@@ -11,6 +11,8 @@ import NotFound from "@/pages/NotFound.jsx";
 import ForgotPassword from "@/pages/ForgotPassword.jsx";
 import ResetPassword from "@/pages/ResetPassword.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.js";
+import Teams from "@/pages/Teams.jsx";
+import TeamDetail from "@/pages/TeamDetail.jsx";
 
 export default function AppRoutes() {
     const { currentUser, setCurrentUser } = useCurrentUserContext();
@@ -27,6 +29,8 @@ export default function AppRoutes() {
             <Route path="/register" element={<Register setUser={setCurrentUser} />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/teams" element={<Teams />} />
+            <Route path="/teams/:teamId" element={<TeamDetail />} />
             <Route
                 path="/dashboard"
                 element={
