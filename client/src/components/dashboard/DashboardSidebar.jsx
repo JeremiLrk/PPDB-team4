@@ -1,6 +1,6 @@
 import styles from "@/style/Dashboard.module.css";
-import { getDashboardTabs } from "@/app/components/dashboard/dashboardUtils.js";
-import { HomeIcon, SignOutIcon, ThemeIcon } from "@/app/components/dashboard/DashboardIcons.jsx";
+import { getDashboardTabs } from "@/components/dashboard/dashboardUtils.js";
+import { HomeIcon, SignOutIcon, ThemeIcon } from "@/components/dashboard/DashboardIcons.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 
 export default function DashboardSidebar({

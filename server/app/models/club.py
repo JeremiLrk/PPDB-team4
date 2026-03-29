@@ -1,4 +1,4 @@
-from server.app.models.user import db
+from server.extensions import db
 from server.app.models.club_owner_club import ClubOwnerClub
 
 class Club(db.Model):
@@ -7,9 +7,9 @@ class Club(db.Model):
     id = db.Column(db.BigInteger, primary_key=True) 
     name = db.Column(db.String(64), nullable=False)
 
-    # # 2. Point the relationship to your actual 'User' class
+    # # 2. Point the relationship to your actual 'Account' class
     # managers = db.relationship(
-    #     'User', 
+    #     'Account', 
     #     secondary=ClubOwnerClub, 
     #     lazy='subquery',
     #     backref=db.backref('managed_clubs', lazy=True)
@@ -17,6 +17,8 @@ class Club(db.Model):
     description = db.Column(db.String(512), nullable=False)
     sport = db.Column(db.String(64))
     city = db.Column(db.String(128))
+    owners = db.relationship("ClubOwner", secondary=ClubOwnerClub, back_populates="clubs")
+    teams  = db.relationship("Team", back_populates="club")
 
     def serialize(self):
         return {

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from server.app.models.PageText import PageText
+from server.app.models.page_text import PageText
 
 texts = Blueprint("texts", __name__, url_prefix="/api/texts")
 

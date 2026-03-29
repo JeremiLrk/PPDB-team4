@@ -4,6 +4,7 @@ import { useDashboard } from "@/hooks/useDashboard.js";
 import useClubs from "@/hooks/useClubs.js";
 import { notify } from "@/hooks/useNotify.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
+import { useTeams } from "@/hooks/useTeams.js";
 
 const DEFAULT_THEME = "dark";
 const THEME_STORAGE_KEY = "dashboard_theme";
@@ -88,6 +89,19 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         if (!term) return discoverClubs;
         return discoverClubs.filter((club) => (club?.name || "").toLowerCase().includes(term));
     }, [discoverClubs, searchTerm]);
+
+    // My teams (managed by current account)
+    const {
+        teams: myTeams,
+        total: myTeamsTotal,
+        loading: myTeamsLoading,
+        error: myTeamsError,
+        sort: myTeamsSort,
+        pageSize: myTeamsPageSize,
+        hasMore: myTeamsHasMore,
+        load: loadMyTeams,
+        loadMore: loadMoreMyTeams,
+    } = useTeams({ pageSize: 12, sort: "name", endpoint: "/api/teams/my-all" });
 
     // Persist dashboard-specific theme preference between sessions.
     useEffect(() => {
@@ -241,8 +255,8 @@ export function useDashboardWorkspace(setUser, texts = {}) {
             if (!response.ok) {
                 throw new Error(
                     responseBody?.message ||
-                        texts.could_not_submit_club_request ||
-                        "Could not submit your club request right now."
+                    texts.could_not_submit_club_request ||
+                    "Could not submit your club request right now."
                 );
             }
 
@@ -308,5 +322,14 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         onSignOut,
         onClubRequestFieldChange,
         onClubRequestSubmit,
+        myTeams,
+        myTeamsTotal,
+        myTeamsLoading,
+        myTeamsError,
+        myTeamsSort,
+        myTeamsPageSize,
+        myTeamsHasMore,
+        loadMyTeams,
+        loadMoreMyTeams,
     };
 }

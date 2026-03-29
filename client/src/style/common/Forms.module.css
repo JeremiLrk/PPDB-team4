@@ -1,0 +1,361 @@
+/*  Trigger button  */
+
+.trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.42rem 0.78rem;
+    border-radius: 0.66rem;
+    border: 1px solid var(--action-border);
+    background: var(--action-bg);
+    color: var(--action-text);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.18s ease, border-color 0.2s ease,
+                box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.trigger:hover {
+    border-color: var(--action-hover-border);
+    background: var(--action-hover-bg);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(20, 184, 166, 0.18);
+}
+
+.triggerOpen {
+    border-color: var(--action-hover-border);
+    background: var(--action-hover-bg);
+    box-shadow: 0 10px 20px rgba(20, 184, 166, 0.18);
+}
+
+
+/*  Wrapper  */
+
+.wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+
+/*  Dropdown panel  */
+
+.panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 288px;
+    z-index: 200;
+
+    border: 1px solid var(--surface-border);
+    border-radius: 1rem;
+    background: var(--surface-bg-soft);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45),
+                0 0 0 1px rgba(56, 189, 248, 0.06);
+
+    opacity: 0;
+    transform: translateY(-50%) translateX(-50%) scale(1);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.panelOpen {
+    opacity: 1;
+    transform: translateY(-50%) translateX(-50%) scale(1);
+    pointer-events: auto;
+}
+
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.72rem 0.9rem;
+    border-bottom: 1px solid var(--muted-border);
+}
+
+.panelTitle {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.closeBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 0.44rem;
+    border: 1px solid transparent;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.closeBtn:hover {
+    background: var(--danger-bg);
+    border-color: var(--danger-border);
+    color: var(--danger-text);
+}
+
+.panelBody {
+    padding: 0.88rem 0.9rem;
+    display: grid;
+    gap: 0.68rem;
+}
+
+
+/*  Form layout  */
+
+/*
+   .form, .formRow, .formActions — з Dashboard.module.css (відсутні у Forms).
+*/
+
+.form {
+    display: grid;
+    gap: 0.72rem;
+    margin-top: 0.8rem;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+}
+
+.formActions {
+    display: flex;
+    justify-content: flex-start;
+}
+
+
+/*  Form fields  */
+
+/*
+   Пріоритет Dashboard.module.css:
+     border-radius: 0.72rem  (Forms мав 0.6rem)
+     padding:       0.62rem 0.75rem  (Forms мав 0.55rem 0.68rem)
+     font-size:     0.94rem  (Forms мав 0.88rem)
+*/
+
+.formLabel {
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.formInput,
+.formSelect,
+.formTextarea,
+.searchInput {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-radius: 0.72rem;
+    padding: 0.62rem 0.75rem;
+    font-size: 0.94rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease;
+}
+
+.searchInput {
+    margin-bottom: 0.8rem;
+}
+
+.formTextarea {
+    resize: vertical;
+}
+
+.formInput:focus,
+.formSelect:focus,
+.formTextarea:focus,
+.searchInput:focus {
+    outline: none;
+    border-color: var(--nav-active-border);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.18);
+    transform: translateY(-1px);
+}
+
+.formSelect {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.65rem center;
+    padding-right: 2rem;
+    cursor: pointer;
+}
+
+
+/*  Submit buttons  */
+
+/*
+   .submitButton — повноширинний варіант з Dashboard (CreateClubTab).
+   .submitBtn    — варіант з Forms (CreateTeamButton), зберігає width: 100%
+                   але flex-центрування для спіннера.
+   Обидва нормалізовані до однакових border-radius / font / transition.
+*/
+
+.submitButton,
+.submitBtn {
+    border-radius: 0.66rem;
+    border: 1px solid var(--action-border);
+    background: var(--action-bg);
+    color: var(--action-text);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.2s ease,
+                box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.submitButton {
+    padding: 0.42rem 0.72rem;
+}
+
+.submitBtn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.58rem;
+    margin-top: 0.1rem;
+}
+
+.submitButton:hover,
+.submitBtn:hover:not(:disabled) {
+    border-color: var(--action-hover-border);
+    background: var(--action-hover-bg);
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 10px 20px rgba(20, 184, 166, 0.18);
+}
+
+.submitButton:disabled,
+.submitBtn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+
+/*  Feedback: notice / warning / error  */
+
+/*
+   .notice* — з Dashboard.module.css (інлайн-повідомлення у CreateClubTab).
+   .warning  — з Dashboard.module.css (глобальна помилка у TeamsTab/SearchTab).
+   .error    — з Forms.module.css (локальна помилка у CreateTeamButton).
+   Нормалізовано: однакові border-radius та padding-подібні значення.
+*/
+
+.warning {
+    margin: 0;
+    border: 1px solid var(--danger-border);
+    border-radius: 0.72rem;
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    padding: 0.62rem 0.75rem;
+}
+
+.notice {
+    margin: 0.8rem 0 0;
+    border: 1px solid;
+    border-radius: 0.72rem;
+    padding: 0.62rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.noticeSuccess {
+    border-color: rgba(34, 197, 94, 0.42);
+    background: rgba(20, 83, 45, 0.25);
+    color: #bbf7d0;
+}
+
+.noticeInfo {
+    border-color: rgba(14, 165, 233, 0.42);
+    background: rgba(14, 116, 144, 0.2);
+    color: #bae6fd;
+}
+
+.noticeError {
+    border-color: rgba(239, 68, 68, 0.42);
+    background: rgba(127, 29, 29, 0.26);
+    color: #fecaca;
+}
+
+.error {
+    font-size: 0.8rem;
+    border: 1px solid var(--danger-border);
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    border-radius: 0.72rem;
+    padding: 0.52rem 0.65rem;
+    line-height: 1.4;
+}
+
+
+/*  Success state  */
+
+.successBody {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 0;
+    color: #34d399;
+    animation: fadeUp 0.3s ease;
+}
+
+.successLabel {
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-heading);
+    margin: 0;
+}
+
+
+/*  Info  */
+
+.info {
+    margin-top: 1.5rem;
+}
+
+
+/*  Spinner  */
+
+.spinner {
+    animation: spin 0.7s linear infinite;
+    color: var(--action-text);
+}
+
+
+/*  Animations  */
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+
+/*  Responsive  */
+
+@media (max-width: 640px) {
+    .formRow {
+        grid-template-columns: 1fr;
+    }
+}

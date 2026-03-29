@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import styles from "@/style/ForgotPassword.module.css"
+import au_styles from "@/style/Authorization.module.css"
 import { useState } from "react"
 import { notify } from "@/hooks/useNotify.js"
 import { useLangContext } from "@/context/useLangContext.js"
@@ -33,18 +33,18 @@ const ForgotPassword = () => {
     }
 
     return (
-        <div className={styles.forgotContainer}>
-            <div className={styles.forgotCard}>
-                <h1 className={styles.forgotTitle}>{au_texts.forgot_title}</h1>
-                <p className={styles.forgotSubtitle}>
+        <div className={au_styles.forgotContainer}>
+            <div className={au_styles.forgotCard}>
+                <h1 className={au_styles.forgotTitle}>{au_texts.forgot_title}</h1>
+                <p className={au_styles.forgotSubtitle}>
                     {au_texts.forgot_subtitle}
                 </p>
 
-                <form className={styles.forgotForm} onSubmit={handleSubmit}>
-                    <div className={styles.forgotFormGroup}>
+                <form className={au_styles.forgotForm} onSubmit={handleSubmit}>
+                    <div className={au_styles.forgotFormGroup}>
                         <label
                             htmlFor="forgot-email"
-                            className={styles.forgotLabel}
+                            className={au_styles.forgotLabel}
                         >
                             Email
                         </label>
@@ -54,18 +54,18 @@ const ForgotPassword = () => {
                             placeholder={au_texts.placeholder_email}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className={styles.forgotInput}
+                            className={au_styles.forgotInput}
                         />
                     </div>
 
-                    <button type="submit" className={styles.forgotButton}>
+                    <button type="submit" className={au_styles.forgotButton}>
                         {au_texts.send_reset_link}
                     </button>
                 </form>
 
-                <p className={styles.forgotText}>
+                <p className={au_styles.forgotText}>
                     {au_texts.remembered_password}{" "}
-                    <Link to="/login" className={styles.forgotLink}>
+                    <Link to="/login" className={au_styles.forgotLink}>
                         {au_texts.back_to_login}
                     </Link>
                 </p>

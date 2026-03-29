@@ -1,7 +1,7 @@
 import styles from "@/style/Dashboard.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
-import DashboardSidebar from "@/app/components/dashboard/DashboardSidebar.jsx";
-import { CreateClubTab, OverviewTab, RequestsTab, SearchTab, ManageClubsTab } from "@/app/components/dashboard/DashboardTabs.jsx";
+import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
+import { CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab } from "@/components/dashboard/DashboardTabs.jsx";
 import { useLangContext } from "@/context/useLangContext.js";
 import { usePageTexts } from "@/hooks/usePageTexts.js";
 
@@ -61,6 +61,22 @@ function Dashboard({ currentUser, setUser }) {
                         myRequests={workspace.myRequests} 
                         texts={dashboardTexts} 
                         />
+                ) : null}
+
+                {workspace.activeTab === "teams" ? (
+                    <TeamsTab
+                        teams={workspace.myTeams}
+                        total={workspace.myTeamsTotal}
+                        loading={workspace.myTeamsLoading}
+                        error={workspace.myTeamsError}
+                        sort={workspace.myTeamsSort}
+                        pageSize={workspace.myTeamsPageSize}
+                        hasMore={workspace.myTeamsHasMore}
+                        onLoad={workspace.loadMyTeams}
+                        onLoadMore={workspace.loadMoreMyTeams}
+                        texts={dashboardTexts}
+                        currentUser={currentUser}
+                    />
                 ) : null}
 
                 {workspace.activeTab === "createClub" ? (

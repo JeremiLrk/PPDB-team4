@@ -1,6 +1,20 @@
-import { Link } from "react-router-dom";
-import styles from "@/style/Dashboard.module.css";
-import { statusClass, statusLabel } from "@/app/components/dashboard/dashboardUtils.js";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import commonStyles from "@/style/common/Common.module.css";
+import dashStyles from "@/style/Dashboard.module.css";
+
+import TeamCard from "@/components/dashboard/TeamCard.jsx";
+import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js";
+import CreateTeamButton from "@/components/team/CreateTeamButton.jsx";
+
+
+// We combine both modules into one proxy object,
+// so as not to rewrite every styles.* in the template.
+// Dashboard-specific classes (shell, sidebar, …) only cover what
+// is not in Common, so there are no collisions.
+const styles = { ...commonStyles, ...dashStyles };
+
+//  Overview Tab 
 
 export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, clubCreationRequests, texts }) {
     return (
@@ -54,6 +68,8 @@ export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, cl
         </div>
     );
 }
+
+//  Search Tab 
 
 export function SearchTab({
     searchTerm,
@@ -172,6 +188,8 @@ export function RequestsTab({
         </article>
     );
 }
+
+//  Create Club Tab 
 
 export function CreateClubTab({
     clubRequestForm,
@@ -413,3 +431,103 @@ export function ManageClubsTab({
         </div>
     );
 }
+//  Teams Tab 
+
+const SORT_OPTIONS      = [{ value: "id", label: "By ID" }, { value: "name", label: "By Name" }];
+const PAGE_SIZE_OPTIONS = [6, 12, 24];
+
+export function TeamsTab({
+                             teams, total, loading, error,
+                             sort, pageSize, hasMore,
+                             onLoad, onLoadMore,
+                             texts,
+                             currentUser,
+                         }) {
+    const navigate = useNavigate();
+
+    useEffect(() => { void onLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    function handleTeamCreated() {
+        void onLoad({ sort, pageSize });
+    }
+
+    return (
+        <article className={`${styles.panel} ${styles.contentFade}`} style={{ display: "grid", gap: "1rem" }}>
+
+            {/* Header row */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
+                <h3 className={styles.panelTitle} style={{ margin: 0 }}>
+                    {texts?.my_teams || "My Teams"}
+                    {total !== null && (
+                        <span className={styles.counter} style={{ marginLeft: "0.6rem" }}>{total}</span>
+                    )}
+                </h3>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                    <select
+                        className={styles.searchInput}
+                        style={{ width: "auto", marginBottom: 0 }}
+                        value={sort}
+                        onChange={e => void onLoad({ sort: e.target.value, pageSize })}
+                        disabled={loading}
+                    >
+                        {SORT_OPTIONS.map(o => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                    </select>
+
+                    <select
+                        className={styles.searchInput}
+                        style={{ width: "auto", marginBottom: 0 }}
+                        value={pageSize}
+                        onChange={e => void onLoad({ sort, pageSize: Number(e.target.value) })}
+                        disabled={loading}
+                    >
+                        {PAGE_SIZE_OPTIONS.map(n => (
+                            <option key={n} value={n}>{n} per load</option>
+                        ))}
+                    </select>
+
+                    <CreateTeamButton onCreated={handleTeamCreated} />
+                </div>
+            </div>
+
+            {/* Error */}
+            {error && <p className={styles.warning}>{error}</p>}
+
+            {/* Empty state */}
+            {!loading && !error && teams.length === 0 && (
+                <p className={styles.muted}>
+                    {texts?.no_teams_yet || "You are not a member of any team yet."}
+                </p>
+            )}
+
+            {/* Teams list */}
+            {teams.length > 0 && (
+                <ul className={styles.list} style={{ margin: 0, padding: 0 }}>
+                    {teams.map(team => (
+                        <TeamCard key={team.id} team={team} texts={texts} currentUser={currentUser} />
+                    ))}
+                </ul>
+            )}
+
+            {/* Loading */}
+            {loading && (
+                <p className={styles.muted}>{texts?.loading_teams || "Loading teams…"}</p>
+            )}
+
+            {/* Load more */}
+            {!loading && hasMore && teams.length > 0 && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span className={styles.muted} style={{ fontSize: "0.82rem" }}>
+                        {texts?.showing || "Showing"} {teams.length}{total !== null ? ` / ${total}` : ""}
+                    </span>
+                    <button className={styles.primaryButton} onClick={() => void onLoadMore()}>
+                        {texts?.load_more || "Load more"}
+                    </button>
+                </div>
+            )}
+        </article>
+    );
+}
+ 
