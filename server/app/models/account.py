@@ -41,11 +41,37 @@ class Account(db.Model):
         return self
 
     def to_dict(self):
+        resolved = self.resolved_role
+
+        if isinstance(resolved, Administrator):
+            role = "administrator"
+        elif isinstance(resolved, ClubOwner):
+            role = "club_owner"
+        elif isinstance(resolved, TeamManager):
+            role = "team_manager"
+        elif isinstance(resolved, Player):
+            role = "player"
+        else:
+            role = "user"
+
+        # IDs of teams the user manages (as TeamManager or ClubOwner)
+        managed_team_ids = []
+        if self.team_manager:
+            managed_team_ids = [t.id for t in self.team_manager.teams]
+
+        # IDs of clubs the user owns (only for ClubOwner)
+        club_ids = []
+        if isinstance(resolved, ClubOwner):
+            club_ids = [c.id for c in resolved.clubs]
+
         return {
-            "id": self.id,
-            "email": self.email,
-            "firstName": self.first_name,
-            "lastName": self.last_name
+            "id":             self.id,
+            "email":          self.email,
+            "firstName":      self.first_name,
+            "lastName":       self.last_name,
+            "role":           role,
+            "managedTeamIds": managed_team_ids,
+            "clubIds":        club_ids,
         }
 
 class Administrator(db.Model):
@@ -60,9 +86,7 @@ class Administrator(db.Model):
     account = db.relationship("Account", back_populates="administrator")
 
     def to_dict(self):
-        base = self.team_manager.account.to_dict()
-        base["role"] = "administrator"
-        return base
+        return self.account.to_dict()
 
 
 class Player(db.Model):
@@ -74,9 +98,7 @@ class Player(db.Model):
     teams   = db.relationship("Team", secondary="player_team", back_populates="players")
 
     def to_dict(self):
-        base = self.team_manager.account.to_dict()
-        base["role"] = "player"
-        return base
+        return self.account.to_dict()
 
 class TeamManager(db.Model):
     __tablename__ = "team_manager"
@@ -88,9 +110,7 @@ class TeamManager(db.Model):
     club_owner = db.relationship("ClubOwner", back_populates="team_manager", uselist=False)
 
     def to_dict(self):
-        base = self.account.to_dict()
-        base["role"] = "team_manager"
-        return base
+        return self.account.to_dict()
 
 
 class ClubOwner(db.Model):
@@ -102,6 +122,4 @@ class ClubOwner(db.Model):
     clubs        = db.relationship("Club", secondary=club_owner_club, back_populates="owners")
 
     def to_dict(self):
-        base = self.team_manager.account.to_dict()
-        base["role"] = "club_owner"
-        return base
+        return self.account.to_dict()

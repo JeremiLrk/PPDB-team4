@@ -7,7 +7,16 @@ export function useTeamPlayers(teamId) {
     const [loading, setLoading] = useState(false);
     const [error,   setError]   = useState(null);
 
-    console.log("useTeamPlayers start", teamId);
+    const addPlayerLocally = useCallback((player) => {
+        setPlayers(prev => {
+            // захист від дублювання
+            if (prev.some(p => p.id === player.id)) return prev;
+            return [player, ...prev];
+        });
+
+        setTotal(prev => (prev ?? 0) + 1);
+    }, []);
+
     const load = useCallback(async () => {
         if (!teamId) return;
         setLoading(true);
@@ -25,9 +34,15 @@ export function useTeamPlayers(teamId) {
         }
     }, [teamId]);
 
-    console.log("useTeamPlayers end", teamId);
 
     useEffect(() => { void load(); }, [load]);
 
-    return { players, total, loading, error, reload: load };
+    return {
+        players,
+        total,
+        loading,
+        error,
+        reload: load,
+        addPlayerLocally,
+    };
 }

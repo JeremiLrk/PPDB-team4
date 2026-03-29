@@ -13,6 +13,7 @@ import ResetPassword from "@/pages/ResetPassword.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.js";
 import Teams from "@/pages/Teams.jsx";
 import TeamDetail from "@/pages/TeamDetail.jsx";
+import TeamSettings from "@/pages/TeamSettings.jsx";
 
 export default function AppRoutes() {
     const { currentUser, setCurrentUser } = useCurrentUserContext();
@@ -31,6 +32,7 @@ export default function AppRoutes() {
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/:teamId" element={<TeamDetail />} />
+            <Route path="/teams/:teamId/settings" element={<TeamSettings />} />
             <Route
                 path="/dashboard"
                 element={
