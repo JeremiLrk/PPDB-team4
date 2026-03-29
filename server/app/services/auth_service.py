@@ -1,10 +1,15 @@
 import os
 import jwt
 import datetime
+from pathlib import Path
+from dotenv import load_dotenv
 from server.config import SECRET_KEY
 from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
 from server.app.models.user import User, db
+
+env_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 PW_RESET_SALT = os.environ["PW_RESET_SALT"]
 EMAIL_VERIFICATION_SALT = os.environ.get("EMAIL_VERIFICATION_SALT", "email-verify-salt")
