@@ -3,7 +3,7 @@ from server.app.models.club import Club
 from server.app.services.auth_service import verify_user
 from server.app.models.ladder import Ladder
 from server.extensions import db
-from server.app.models.user import User
+from server.app.models.account import Account
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
 from server.app.models.club_player import ClubPlayer
@@ -29,10 +29,10 @@ def get_club(club_id: int):
 def check_if_manager(club_id: int):
     # 1. Get the token from the cookie
     token = request.cookies.get("access_token")
-    user = verify_user(token)
+    account = verify_user(token)
 
-    # 2. If no valid user is found, they definitely aren't a manager
-    if not user:
+    # 2. If no valid account is found, they definitely aren't a manager
+    if not account:
         return jsonify({"is_manager": False}), 401
 
     # 3. Find the club in the database
@@ -40,7 +40,7 @@ def check_if_manager(club_id: int):
     if not club:
         return jsonify({"message": "Club not found"}), 404
 
-    clubowner = ClubOwner.query.filter_by(id=user.id).first()
+    clubowner = ClubOwner.query.filter_by(id=account.id).first()
     if not clubowner:
         return jsonify({"message": "Unauthorized"}), 401
     
@@ -54,9 +54,9 @@ def check_if_manager(club_id: int):
 def create_club():
     # 1. Kijk wie de club probeert aan te maken (net als bij je is_manager route)
     token = request.cookies.get("access_token")
-    user = verify_user(token)
+    account = verify_user(token)
 
-    if not user:
+    if not account:
         return jsonify({"message": "Je moet ingelogd zijn om een club te maken"}), 401
 
     # 2. Haal de naam van de club uit de request van de frontend
@@ -71,7 +71,7 @@ def create_club():
 
     # 4. De Magie: Voeg de maker direct toe als manager! 
     # SQLAlchemy snapt dit dankzij onze club_owner_club tabel fix.
-    new_club.managers.append(user)
+    new_club.managers.append(account)
 
     # 5. Opslaan in de database
     db.session.add(new_club)
@@ -94,7 +94,7 @@ def add_club_manager(club_id: int):
 
     # 2. Zoek de nieuwe manager op via email
     data = request.get_json()
-    new_manager = User.query.filter_by(email=data.get("email")).first()
+    new_manager = Account.query.filter_by(email=data.get("email")).first()
 
     if not new_manager:
         return jsonify({"message": "Gebruiker niet gevonden"}), 404
@@ -167,19 +167,19 @@ def get_club_members(club_id: int):
 
     # Main query: members excluding owners
     members = (
-        db.session.query(User)
-        .join(ClubPlayer, ClubPlayer.player_id == User.id)
+        db.session.query(Account)
+        .join(ClubPlayer, ClubPlayer.player_id == Account.id)
         .filter(ClubPlayer.club_id == club_id)
-        .filter(~User.id.in_(owner_user_ids))
+        .filter(~Account.id.in_(owner_user_ids))
         .all()
     )
 
     result = [
         {
-            "id": user.id,
-            "email": user.email,
+            "id": account.id,
+            "email": account.email,
         }
-        for user in members
+        for account in members
     ]
 
     return jsonify({"members": result}), 200
@@ -195,7 +195,7 @@ def remove_member(club_id: int, user_id: int):
     if not club:
         return jsonify({"message": "Club not found"}), 404
 
-    # Check current user is an owner of this club
+    # Check current account is an owner of this club
     club_owner = ClubOwner.query.filter_by(id=current_user_id).first()
     if not club_owner:
         return jsonify({"message": "Unauthorized"}), 401
@@ -243,7 +243,7 @@ def create_ladder(club_id: int):
     if not club:
         return jsonify({"message": "Club not found"}), 404
 
-    # Check user is owner
+    # Check account is owner
     club_owner = ClubOwner.query.filter_by(id=user_id).first()
     if not club_owner:
         return jsonify({"message": "Unauthorized"}), 401

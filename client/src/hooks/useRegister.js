@@ -33,7 +33,7 @@ export function useRegister(setUser) {
                 throw new Error(data?.message || "Registration failed")
             }
 
-            setUser(data.user)
+            setUser(data.account)
 
             notify.success("Registration successful")
 

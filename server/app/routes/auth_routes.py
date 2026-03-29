@@ -30,12 +30,12 @@ def signup():
     try:
         register_user(email, password, first_name, last_name, date_of_birth)
 
-        token, user = login_user(email, password)
+        token, account = login_user(email, password)
         response = make_response(
             jsonify(
                 {
                     "message": "Registered successfully.",
-                    "user": user.to_dict(),
+                    "account": account.to_dict(),
                 }
             ),
             201,
@@ -64,12 +64,12 @@ def login():
     if not result:
         return jsonify({"message": "Invalid credentials."}), 401
 
-    token, user = result
+    token, account = result
     response = make_response(
         jsonify(
             {
                 "message": "Login successful.",
-                "user": user.to_dict()
+                "account": account.to_dict()
             }
         ),
         200,
@@ -93,8 +93,8 @@ def logout():
 
 @auth_bp.route("/me", methods=["GET"])
 @login_required
-def me(user: Account):
-    return jsonify({"user": user.to_dict()}), 200
+def me(account: Account):
+    return jsonify({"account": account.to_dict()}), 200
 
 @auth_bp.route("/forgot-password", methods=["POST"])
 def forgot_password():
@@ -104,9 +104,9 @@ def forgot_password():
     if not email:
         return jsonify({"message": "Email is required."}), 400
 
-    user = Account.query.filter_by(email=email).first()
+    account = Account.query.filter_by(email=email).first()
 
-    if user:
+    if account:
         token = generate_reset_token(email)
 
         params: resend.Emails.SendParams = {

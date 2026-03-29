@@ -10,7 +10,7 @@ import { mockApi } from "./testApiMock.js";
 // Verifies header Log in button navigates to the login page.
 test("header Log in button navigates to /login", async () => {
     mockApi();
-    const user = userEvent.setup();
+    const account = userEvent.setup();
 
     render(
         <MemoryRouter initialEntries={["/"]}>
@@ -19,7 +19,7 @@ test("header Log in button navigates to /login", async () => {
     );
 
     const banner = screen.getByRole("banner");
-    await user.click(within(banner).getByRole("button", { name: "Log in" }));
+    await account.click(within(banner).getByRole("button", { name: "Log in" }));
 
     expect(await screen.findByRole("heading", { name: "Log in" })).toBeInTheDocument();
 });
@@ -27,7 +27,7 @@ test("header Log in button navigates to /login", async () => {
 // Verifies header Register button navigates to the register page.
 test("header Register button navigates to /register", async () => {
     mockApi();
-    const user = userEvent.setup();
+    const account = userEvent.setup();
 
     render(
         <MemoryRouter initialEntries={["/"]}>
@@ -36,7 +36,7 @@ test("header Register button navigates to /register", async () => {
     );
 
     const banner = screen.getByRole("banner");
-    await user.click(within(banner).getByRole("button", { name: "Register" }));
+    await account.click(within(banner).getByRole("button", { name: "Register" }));
 
     expect(await screen.findByRole("heading", { name: "Register" })).toBeInTheDocument();
 });
@@ -44,7 +44,7 @@ test("header Register button navigates to /register", async () => {
 // Verifies landing Explore clubs button opens the clubs overview page.
 test("landing Explore clubs button navigates to /clubs", async () => {
     mockApi();
-    const user = userEvent.setup();
+    const account = userEvent.setup();
 
     render(
         <MemoryRouter initialEntries={["/"]}>
@@ -52,15 +52,15 @@ test("landing Explore clubs button navigates to /clubs", async () => {
         </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: "Explore clubs" }));
+    await account.click(screen.getByRole("button", { name: "Explore clubs" }));
 
     expect(await screen.findByRole("heading", { name: "All Clubs" })).toBeInTheDocument();
 });
 
 // Verifies dashboard button redirects anonymous users to login.
-test("landing Open dashboard sends anonymous user to /login", async () => {
+test("landing Open dashboard sends anonymous account to /login", async () => {
     mockApi({ me: null });
-    const user = userEvent.setup();
+    const account = userEvent.setup();
 
     render(
         <MemoryRouter initialEntries={["/"]}>
@@ -68,14 +68,14 @@ test("landing Open dashboard sends anonymous user to /login", async () => {
         </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: "Open dashboard" }));
+    await account.click(screen.getByRole("button", { name: "Open dashboard" }));
     expect(await screen.findByRole("heading", { name: "Log in" })).toBeInTheDocument();
 });
 
 // Verifies register page guest link returns to landing page.
 test("register Continue as guest navigates back to landing", async () => {
     mockApi();
-    const user = userEvent.setup();
+    const account = userEvent.setup();
 
     render(
         <MemoryRouter initialEntries={["/register"]}>
@@ -83,14 +83,14 @@ test("register Continue as guest navigates back to landing", async () => {
         </MemoryRouter>
     );
 
-    await user.click(await screen.findByRole("link", { name: "Continue as guest" }));
+    await account.click(await screen.findByRole("link", { name: "Continue as guest" }));
     expect(await screen.findByRole("heading", { name: "How NetRank works" })).toBeInTheDocument();
 });
 
 // Verifies login page guest link returns to landing page.
 test("login Continue as guest navigates back to landing", async () => {
     mockApi();
-    const user = userEvent.setup();
+    const account = userEvent.setup();
 
     render(
         <MemoryRouter initialEntries={["/login"]}>
@@ -98,6 +98,6 @@ test("login Continue as guest navigates back to landing", async () => {
         </MemoryRouter>
     );
 
-    await user.click(await screen.findByRole("link", { name: "Continue as guest" }));
+    await account.click(await screen.findByRole("link", { name: "Continue as guest" }));
     expect(await screen.findByRole("heading", { name: "How NetRank works" })).toBeInTheDocument();
 });

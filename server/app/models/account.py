@@ -1,13 +1,6 @@
 from server.extensions import db
 from server.app.models.club import club_owner_club
-
-class AccountRole(db.Model):
-    __tablename__ = "account_role"
-
-    id   = db.Column(db.BigInteger, primary_key=True)
-    name = db.Column(db.String(64), nullable=False, unique=True)
-
-    accounts = db.relationship("Account", back_populates="account_role")
+from server.app.models.account_role import AccountRole
 
 
 class Account(db.Model):
@@ -54,12 +47,12 @@ class Account(db.Model):
         else:
             role = "user"
 
-        # IDs of teams the user manages (as TeamManager or ClubOwner)
+        # IDs of teams the account manages (as TeamManager or ClubOwner)
         managed_team_ids = []
         if self.team_manager:
             managed_team_ids = [t.id for t in self.team_manager.teams]
 
-        # IDs of clubs the user owns (only for ClubOwner)
+        # IDs of clubs the account owns (only for ClubOwner)
         club_ids = []
         if isinstance(resolved, ClubOwner):
             club_ids = [c.id for c in resolved.clubs]

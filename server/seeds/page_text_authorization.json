@@ -374,13 +374,13 @@
 
     {
         "page": "authorization",
-        "key": "user",
+        "key": "account",
         "language": "en",
-        "value": "User"
+        "value": "Account"
     },
     {
         "page": "authorization",
-        "key": "user",
+        "key": "account",
         "language": "nl",
         "value": "Gebruiker"
     },

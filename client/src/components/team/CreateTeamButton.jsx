@@ -108,7 +108,7 @@ export default function CreateTeamButton({ clubs = [], onCreated }) {
                                 />
                             </Field>
 
-                            {/* Club — only shown if user has clubs */}
+                            {/* Club — only shown if account has clubs */}
                             {clubs.length > 0 && (
                                 <Field label="Club (optional)">
                                     <select

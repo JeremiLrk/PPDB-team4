@@ -9,9 +9,9 @@ def role_required(*roles):
   def decorator(f):
     @wraps(f)
     @login_required
-    def decorated(user, *args, **kwargs):
-      if user.__class__.__name__.lower() not in roles:
+    def decorated(account, *args, **kwargs):
+      if account.__class__.__name__.lower() not in roles:
         return jsonify({"message": "Forbidden."}), 403
-      return f(user, *args, **kwargs)
+      return f(account, *args, **kwargs)
     return decorated
   return decorator

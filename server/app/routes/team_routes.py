@@ -260,10 +260,10 @@ def get_teams_by_club(club_id: int):
 
 @team_bp.route("/my", methods=["GET"])
 @login_required
-def get_my_teams(user: Account):
+def get_my_teams(account: Account):
   """
   GET /api/teams/my?from=0&to=20&sort=name
-  Returns the teams managed by the current user.
+  Returns the teams managed by the current account.
   Administrator sees all teams.
   ClubOwner sees the teams of his clubs + the teams he manages as a manager.
   TeamManager sees the teams he manages.
@@ -273,7 +273,7 @@ def get_my_teams(user: Account):
   if err:
     return err
 
-  resolved = user.resolved_role
+  resolved = account.resolved_role
 
   if isinstance(resolved, Administrator):
     base_query = Team.query
@@ -317,7 +317,7 @@ def get_my_teams(user: Account):
 
 @team_bp.route("/my-all", methods=["GET"])
 @login_required
-def get_my_all_teams(user: Account):
+def get_my_all_teams(account: Account):
   """
   GET /api/teams/my-all?from=0&to=20&sort=name
 
@@ -335,7 +335,7 @@ def get_my_all_teams(user: Account):
   if err:
     return err
 
-  resolved = user.resolved_role
+  resolved = account.resolved_role
 
   if isinstance(resolved, Administrator):
     total = Team.query.count()
@@ -363,9 +363,9 @@ def get_my_all_teams(user: Account):
     for t in resolved.teams:
       team_ids.add(t.id)
 
-  # Include teams where user is a Player (all non-admin roles may also be players)
-  if hasattr(user, "player") and user.player is not None:
-    for t in user.player.teams:
+  # Include teams where account is a Player (all non-admin roles may also be players)
+  if hasattr(account, "player") and account.player is not None:
+    for t in account.player.teams:
       team_ids.add(t.id)
 
   if not team_ids:
@@ -392,7 +392,7 @@ def get_my_all_teams(user: Account):
 
 @team_bp.route("", methods=["POST"])
 @login_required
-def create_team(user: Account):
+def create_team(account: Account):
   data = request.get_json(silent=True)
   if not data:
     return jsonify({"message": "No JSON body provided."}), 400
@@ -404,17 +404,17 @@ def create_team(user: Account):
   club_id       = data.get("clubId")
   sport_type_id = data.get("sportTypeId")
 
-  resolved = user.resolved_role
+  resolved = account.resolved_role
 
   if isinstance(resolved, Administrator):
     acting_manager = None
   elif isinstance(resolved, (ClubOwner, TeamManager)):
-    acting_manager = user.team_manager
+    acting_manager = account.team_manager
   else:
-    err = promote_to_team_manager(user)
+    err = promote_to_team_manager(account)
     if err:
       return err
-    acting_manager = user.team_manager  # after refresh - no longer None
+    acting_manager = account.team_manager  # after refresh - no longer None
     if acting_manager is None:
       return jsonify({"message": "Failed to initialize team manager."}), 500
 
@@ -441,12 +441,12 @@ def create_team(user: Account):
 
 @team_bp.route("/<int:team_id>/managers", methods=["POST"])
 @login_required
-def add_manager_to_team(user: Account, team_id: int):
+def add_manager_to_team(account: Account, team_id: int):
   team, err = _get_team_or_404(team_id)
   if err:
     return err
 
-  if not _can_edit_team(user.resolved_role, team):
+  if not _can_edit_team(account.resolved_role, team):
     return jsonify({"message": "Forbidden."}), 403
 
   data = request.get_json(silent=True)
@@ -477,12 +477,12 @@ def add_manager_to_team(user: Account, team_id: int):
 
 @team_bp.route("/<int:team_id>/players", methods=["POST"])
 @login_required
-def add_player_to_team(user: Account, team_id: int):
+def add_player_to_team(account: Account, team_id: int):
   team, err = _get_team_or_404(team_id)
   if err:
     return err
 
-  if not _can_edit_team(user.resolved_role, team):
+  if not _can_edit_team(account.resolved_role, team):
     return jsonify({"message": "Forbidden."}), 403
 
   data = request.get_json(silent=True)
@@ -517,12 +517,12 @@ def add_player_to_team(user: Account, team_id: int):
 
 @team_bp.route("/<int:team_id>/managers/<int:account_id>", methods=["DELETE"])
 @login_required
-def remove_manager_from_team(user: Account, team_id: int, account_id: int):
+def remove_manager_from_team(account: Account, team_id: int, account_id: int):
   team, err = _get_team_or_404(team_id)
   if err:
     return err
 
-  if not _can_edit_team(user.resolved_role, team):
+  if not _can_edit_team(account.resolved_role, team):
     return jsonify({"message": "Forbidden."}), 403
 
   target, err = _resolve_target(account_id)
@@ -545,12 +545,12 @@ def remove_manager_from_team(user: Account, team_id: int, account_id: int):
 
 @team_bp.route("/<int:team_id>/players/<int:account_id>", methods=["DELETE"])
 @login_required
-def remove_player_from_team(user: Account, team_id: int, account_id: int):
+def remove_player_from_team(account: Account, team_id: int, account_id: int):
   team, err = _get_team_or_404(team_id)
   if err:
     return err
 
-  if not _can_edit_team(user.resolved_role, team):
+  if not _can_edit_team(account.resolved_role, team):
     return jsonify({"message": "Forbidden."}), 403
 
   target, err = _resolve_target(account_id)
@@ -570,12 +570,12 @@ def remove_player_from_team(user: Account, team_id: int, account_id: int):
 
 @team_bp.route("/<int:team_id>", methods=["DELETE"])
 @login_required
-def delete_team(user: Account, team_id: int):
+def delete_team(account: Account, team_id: int):
   team, err = _get_team_or_404(team_id)
   if err:
     return err
 
-  if not _can_edit_team(user.resolved_role, team):
+  if not _can_edit_team(account.resolved_role, team):
     return jsonify({"message": "Forbidden."}), 403
 
   db.session.delete(team)
@@ -587,12 +587,12 @@ def delete_team(user: Account, team_id: int):
 
 @team_bp.route("/<int:team_id>", methods=["PATCH"])
 @login_required
-def rename_team(user: Account, team_id: int):
+def rename_team(account: Account, team_id: int):
   team, err = _get_team_or_404(team_id)
   if err:
     return err
 
-  if not _can_edit_team(user.resolved_role, team):
+  if not _can_edit_team(account.resolved_role, team):
     return jsonify({"message": "Forbidden."}), 403
 
   data = request.get_json(silent=True)
@@ -661,7 +661,7 @@ def get_team_players(team_id: int):
 
 @team_bp.route("/<int:team_id>/players/search", methods=["GET"])
 @login_required
-def search_accounts_not_in_team(user: Account, team_id: int):
+def search_accounts_not_in_team(account: Account, team_id: int):
   """
   GET /api/teams/<team_id>/players/search?q=<string>
   Searches for accounts that are NOT already players of this team.
@@ -686,7 +686,7 @@ def search_accounts_not_in_team(user: Account, team_id: int):
   if err:
     return err
 
-  if not _can_edit_team(user.resolved_role, team):
+  if not _can_edit_team(account.resolved_role, team):
     return jsonify({"message": "Forbidden."}), 403
 
   q = request.args.get("q", "").strip()

@@ -16,14 +16,14 @@ def register_user(email, password, first_name, last_name, date_of_birth):
     if len(password) < 6:
         raise ValueError("Password is too short.")
 
-    user = Account.query.filter_by(email=email).first()
-    if user:
-        raise ValueError("User already exists.")
+    account = Account.query.filter_by(email=email).first()
+    if account:
+        raise ValueError("Account already exists.")
 
     user_role = AccountRole.query.filter_by(name="user").first()
 
     if not user_role:
-        user_role = AccountRole(name="user")
+        user_role = AccountRole(name="account")
         db.session.add(user_role)
         db.session.flush()
 
@@ -41,21 +41,21 @@ def register_user(email, password, first_name, last_name, date_of_birth):
     return new_user
 
 def login_user(email, password):
-    user = Account.query.filter_by(email=email).first()
-    if not user or not check_password_hash(user.password_hash, password):
+    account = Account.query.filter_by(email=email).first()
+    if not account or not check_password_hash(account.password_hash, password):
         return None
 
 
-    resolved = user.resolved_role
+    resolved = account.resolved_role
     role_name = type(resolved).__name__.lower()
 
     payload = {
-        "user_id": user.id,
+        "user_id": account.id,
         "role": role_name,
         "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-    return token, user
+    return token, account
 
 def verify_user(token):
     if not token:
@@ -90,11 +90,11 @@ def update_password(email, password):
     if len(password) < 6:
         raise ValueError("Password is too short.")
 
-    user = Account.query.filter_by(email=email).first()
+    account = Account.query.filter_by(email=email).first()
 
-    if not user:
-        raise ValueError("User not found.")
+    if not account:
+        raise ValueError("Account not found.")
 
-    user.password_hash = generate_password_hash(password)
+    account.password_hash = generate_password_hash(password)
     db.session.commit()
-    return user
+    return account

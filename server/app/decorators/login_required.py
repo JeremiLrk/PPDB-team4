@@ -8,8 +8,8 @@ def login_required(f):
   @wraps(f)
   def decorated(*args, **kwargs):
     token = request.cookies.get("access_token")
-    user = verify_user(token)
-    if not user:
+    account = verify_user(token)
+    if not account:
       return jsonify({"message": "Unauthorized."}), 401
-    return f(user, *args, **kwargs)
+    return f(account, *args, **kwargs)
   return decorated

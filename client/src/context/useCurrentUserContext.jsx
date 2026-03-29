@@ -14,7 +14,7 @@ export function CurrentUserProvider({ children }) {
                 if (!res.ok) throw new Error();
                 return res.json();
             })
-            .then(data => setCurrentUser(data.user))
+            .then(data => setCurrentUser(data.account))
             .catch(() => setCurrentUser(null))
             .finally(() => setLoadingUser(false));
     }, []);

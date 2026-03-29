@@ -56,8 +56,8 @@ export default function Header({ status }) {
         (currentUser?.firstName &&
             currentUser?.lastName &&
             `${currentUser.firstName} ${currentUser.lastName}`) ||
-        authTexts.user ||
-        "User";
+        authTexts.account ||
+        "Account";
 
     return (
         <header className={styles.header}>

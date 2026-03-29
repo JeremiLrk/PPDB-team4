@@ -38,7 +38,7 @@
     @apply rounded-xl bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400 transition;
 }
 
-/* User dropdown */
+/* Account dropdown */
 .userButton {
     @apply rounded-full border border-white/20 px-3 py-2 text-sm hover:bg-white/10 transition;
 }

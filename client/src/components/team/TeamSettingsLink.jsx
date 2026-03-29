@@ -10,20 +10,20 @@ import styles   from "@/style/TeamSettingsLink.module.css";
  *
  * Логіка дзеркалює _can_edit_team() на сервері та canManageTeam() у TeamSettings.
  */
-export function canManageTeam(user, team) {
-    if (!user || !team) return false;
-    const role = user.role;
+export function canManageTeam(account, team) {
+    if (!account || !team) return false;
+    const role = account.role;
 
     if (role === "administrator") return true;
 
     if (role === "club_owner") {
-        const ownsClub    = team.clubId && user.clubIds?.includes(team.clubId);
-        const managesTeam = user.managedTeamIds?.includes(team.id);
+        const ownsClub    = team.clubId && account.clubIds?.includes(team.clubId);
+        const managesTeam = account.managedTeamIds?.includes(team.id);
         return ownsClub || managesTeam;
     }
 
     if (role === "team_manager") {
-        return user.managedTeamIds?.includes(team.id);
+        return account.managedTeamIds?.includes(team.id);
     }
 
     return false;
