@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import commonStyles from "@/style/common/Common.module.css";
-import dashStyles from "@/style/Dashboard.module.css";
+import dashStyles from "@/style/ClubSettings.module.css";
 
 import TeamCard from "@/components/dashboard/TeamCard.jsx";
 import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js";

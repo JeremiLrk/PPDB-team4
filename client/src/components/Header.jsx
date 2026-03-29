@@ -31,6 +31,8 @@ export default function Header({ status }) {
     }, []);
 
     async function handleLogout() {
+        localStorage.removeItem("currentUser");
+        setCurrentUser(null);
         try {
             const response = await fetch("/api/logout", {
                 method: "POST",
