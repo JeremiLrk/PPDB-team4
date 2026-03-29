@@ -17,7 +17,7 @@ class Club(db.Model):
     description = db.Column(db.String(512), nullable=False)
     sport = db.Column(db.String(64))
     city = db.Column(db.String(128))
-    owners = db.relationship("ClubOwner", secondary=ClubOwnerClub, back_populates="clubs")
+    owners = db.relationship("ClubOwner", secondary=ClubOwnerClub.__tablename__, back_populates="clubs")
     teams  = db.relationship("Team", back_populates="club")
 
     def serialize(self):

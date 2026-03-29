@@ -1,6 +1,9 @@
 from flask import jsonify
 
-from server.app.models.account import AccountRole, Account, TeamManager, Player
+from server.app.models.account import Account
+from server.app.models.account_role import AccountRole 
+from server.app.models.player import Player
+from server.app.models.account import TeamManager
 from server.extensions import db
 
 

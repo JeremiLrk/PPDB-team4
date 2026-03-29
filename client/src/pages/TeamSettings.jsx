@@ -2,7 +2,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import { useTeam }from "@/hooks/useTeam.js";
 import { useTeamPlayers } from "@/hooks/useTeamPlayers.js";
-import { useCurrentUserContext }from "@/context/useCurrentUserContext.js";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 import AddPlayerButton from "@/components/team/AddPlayerButton.jsx";
 import PlayerCard from "@/components/team/PlayerCard.jsx";
 import RenameTeamButton from "@/components/team/RenameTeamButton.jsx";

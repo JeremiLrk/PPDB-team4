@@ -5,7 +5,7 @@ import commonStyles from "@/style/common/Common.module.css";
 import {useTeamPlayers} from "@/hooks/useTeamPlayers.js";
 import PlayerCard from "@/components/team/PlayerCard.jsx";
 import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
-import { useCurrentUserContext } from "@/context/useCurrentUserContext.js";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 
 export default function TeamDetail() {
     const { teamId } = useParams();

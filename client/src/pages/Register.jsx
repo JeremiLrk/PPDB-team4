@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom"
 import { useRegister } from "@/hooks/useRegister.js"
-import styles from "@/style/Register.module.css"
 import au_styles from "@/style/Authorization.module.css"
 import { useCurrentUserContext } from "@/context/useCurrentUserContext"
 import { useLangContext } from "@/context/useLangContext.js"

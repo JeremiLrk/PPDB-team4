@@ -10,7 +10,9 @@ import datetime
 from werkzeug.security import generate_password_hash
 from server.extensions import db
 from server.app.models.sport_type import SportType
-from server.app.models.account import Account, AccountRole, TeamManager, Player
+from server.app.models.account import Account, TeamManager
+from server.app.models.account_role import AccountRole
+from server.app.models.player import Player
 from server.app.models.team import Team
 
 TAG = "[seed:teams_and_users]"

@@ -1,7 +1,6 @@
 from server.extensions import db
-from server.app.models.club import club_owner_club
-from server.app.models.account_role import AccountRole
-
+from server.app.models.club_owner import ClubOwner
+from server.app.models.player import Player
 
 class Account(db.Model):
     __tablename__ = "account"
@@ -81,18 +80,6 @@ class Administrator(db.Model):
     def to_dict(self):
         return self.account.to_dict()
 
-
-class Player(db.Model):
-    __tablename__ = "player"
-
-    id = db.Column(db.BigInteger, db.ForeignKey("account.id", ondelete="CASCADE"), primary_key=True)
-
-    account = db.relationship("Account", back_populates="player")
-    teams   = db.relationship("Team", secondary="player_team", back_populates="players")
-
-    def to_dict(self):
-        return self.account.to_dict()
-
 class TeamManager(db.Model):
     __tablename__ = "team_manager"
 
@@ -101,18 +88,6 @@ class TeamManager(db.Model):
     account    = db.relationship("Account",   back_populates="team_manager")
     teams      = db.relationship("Team",      secondary="team_manager_team", back_populates="managers")
     club_owner = db.relationship("ClubOwner", back_populates="team_manager", uselist=False)
-
-    def to_dict(self):
-        return self.account.to_dict()
-
-
-class ClubOwner(db.Model):
-    __tablename__ = "club_owner"
-
-    id = db.Column(db.BigInteger, db.ForeignKey("team_manager.id", ondelete="CASCADE"), primary_key=True)
-
-    team_manager = db.relationship("TeamManager", back_populates="club_owner")
-    clubs        = db.relationship("Club", secondary=club_owner_club, back_populates="owners")
 
     def to_dict(self):
         return self.account.to_dict()

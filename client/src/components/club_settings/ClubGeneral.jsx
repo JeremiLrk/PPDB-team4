@@ -1,4 +1,4 @@
-import styles from "@/style/Dashboard.module.css";
+import styles from "@/style/ClubSettings.module.css";
 
 export function ClubGeneral({
     formData,

@@ -2,16 +2,17 @@ import styles from "@/style/ClubSettings.module.css";
 import { useParams } from "react-router-dom";
 import { useClubSettings } from "@/hooks/useClubSettings";
 
-import ClubSidebar from "@/app/components/club_settings/ClubSidebar";
-import ClubOverview from "@/app/components/club_settings/ClubOverview";
-import ClubGeneral from "@/app/components/club_settings/ClubGeneral";
-import ClubLadders from "@/app/components/club_settings/ClubLadders";
-import ClubMembers from "@/app/components/club_settings/ClubMembers";
+import ClubSidebar from "@/components/club_settings/ClubSidebar.jsx";
+import ClubOverview from "@/components/club_settings/ClubOverview.jsx";
+import ClubGeneral from "@/components/club_settings/ClubGeneral.jsx";
+import ClubLadders from "@/components/club_settings/ClubLadders.jsx";
+import ClubMembers from "@/components/club_settings/ClubMembers.jsx";
 
 
 function ClubSettings() {
     const { clubId } = useParams();
     const settings = useClubSettings(clubId);
+    console.log("Rendering ClubGeneral with formData:", settings.formData);
 
     if (settings.loading) {
         return <div className={styles.loading}>Loading club...</div>;

@@ -2,7 +2,10 @@ from flask import Blueprint, request, jsonify
 from sqlalchemy import func
 from server.app.utils.promote import promote_to_team_manager, promote_to_player
 from server.extensions import db
-from server.app.models.account import Account, TeamManager, ClubOwner, Administrator, AccountRole, Player
+from server.app.models.club_owner import ClubOwner
+from server.app.models.account_role import AccountRole
+from server.app.models.player import Player
+from server.app.models.account import Account, TeamManager, Administrator
 from server.app.models.team import Team, team_manager_team, player_team
 from server.app.decorators.login_required import login_required
 

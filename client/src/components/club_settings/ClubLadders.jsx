@@ -1,5 +1,5 @@
 import { useState } from "react";
-import styles from "@/style/Dashboard.module.css";
+import styles from "@/style/ClubSettings.module.css";
 
 export function ClubLadders({ ladders = [], onCreate }) {
     const [form, setForm] = useState({
