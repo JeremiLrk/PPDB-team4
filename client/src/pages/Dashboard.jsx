@@ -71,6 +71,7 @@ function Dashboard({ currentUser, setUser }) {
                         onLoad={workspace.loadMyTeams}
                         onLoadMore={workspace.loadMoreMyTeams}
                         texts={dashboardTexts}
+                        currentUser={currentUser}
                     />
                 ) : null}
 

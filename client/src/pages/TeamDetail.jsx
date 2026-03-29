@@ -4,10 +4,13 @@ import styles from "@/style/TeamDetail.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import {useTeamPlayers} from "@/hooks/useTeamPlayers.js";
 import PlayerCard from "@/components/team/PlayerCard.jsx";
+import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext.js";
 
 export default function TeamDetail() {
     const { teamId } = useParams();
     const navigate   = useNavigate();
+    const { currentUser } = useCurrentUserContext();
     const { team, loading, error } = useTeam(teamId);
     const { players, loading: playersLoading, error: playersError, total, reload} = useTeamPlayers(teamId);
 
@@ -25,7 +28,7 @@ export default function TeamDetail() {
             <div className={styles.state}>
                 <p className={styles.error}>{error}</p>
                 <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                    ← Back to teams
+                    &lt;- Back to teams
                 </button>
             </div>
         );
@@ -38,19 +41,22 @@ export default function TeamDetail() {
 
             {/* Back */}
             <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                ← All Teams
+                &lt;- All Teams
             </button>
 
             {/* Hero */}
             <div className={styles.hero}>
                 <div className={styles.heroAccent} />
-                <div className={styles.heroBody}>
-                    <h1 className={styles.name}>{team.name}</h1>
-                    <div className={styles.tags}>
-                        <Tag label={team.clubId     ? `Club #${team.clubId}`        : "Independent"} muted={!team.clubId} />
-                        <Tag label={team.sportTypeId ? `Sport #${team.sportTypeId}` : "No sport"}    muted={!team.sportTypeId} />
-                        <Tag label={`ID: ${team.id}`} muted />
+                <div className={styles.heroBody} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.75rem" }}>
+                    <div>
+                        <h1 className={styles.name}>{team.name}</h1>
+                        <div className={styles.tags}>
+                            <Tag label={team.clubId     ? `Club #${team.clubId}`        : "Independent"} muted={!team.clubId} />
+                            <Tag label={team.sportTypeId ? `Sport #${team.sportTypeId}` : "No sport"}    muted={!team.sportTypeId} />
+                            <Tag label={`ID: ${team.id}`} muted />
+                        </div>
                     </div>
+                    <TeamSettingsLink currentUser={currentUser} team={team} size={22} />
                 </div>
             </div>
 

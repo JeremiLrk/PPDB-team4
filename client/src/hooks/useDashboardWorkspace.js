@@ -96,7 +96,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         hasMore: myTeamsHasMore,
         load: loadMyTeams,
         loadMore: loadMoreMyTeams,
-    } = useTeams({ pageSize: 12, sort: "name", endpoint: "/api/teams/my" });
+    } = useTeams({ pageSize: 12, sort: "name", endpoint: "/api/teams/my-all" });
 
     // Persist dashboard-specific theme preference between sessions.
     useEffect(() => {

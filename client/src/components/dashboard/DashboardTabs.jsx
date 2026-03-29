@@ -326,6 +326,7 @@ export function TeamsTab({
                              sort, pageSize, hasMore,
                              onLoad, onLoadMore,
                              texts,
+                             currentUser,
                          }) {
     const navigate = useNavigate();
 
@@ -382,7 +383,7 @@ export function TeamsTab({
             {/* Empty state */}
             {!loading && !error && teams.length === 0 && (
                 <p className={styles.muted}>
-                    {texts?.no_teams_yet || "You are not managing any teams yet."}
+                    {texts?.no_teams_yet || "You are not a member of any team yet."}
                 </p>
             )}
 
@@ -390,7 +391,7 @@ export function TeamsTab({
             {teams.length > 0 && (
                 <ul className={styles.list} style={{ margin: 0, padding: 0 }}>
                     {teams.map(team => (
-                        <TeamCard key={team.id} team={team} texts={texts} />
+                        <TeamCard key={team.id} team={team} texts={texts} currentUser={currentUser} />
                     ))}
                 </ul>
             )}

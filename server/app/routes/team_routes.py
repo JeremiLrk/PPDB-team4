@@ -313,6 +313,81 @@ def get_my_teams(user: Account):
     "teams": [t.to_dict() for t in teams],
   }), 200
 
+#  GET ALL TEAMS THE CURRENT USER IS INVOLVED IN (manager / club owner / player)
+
+@team_bp.route("/my-all", methods=["GET"])
+@login_required
+def get_my_all_teams(user: Account):
+  """
+  GET /api/teams/my-all?from=0&to=20&sort=name
+
+  Returns every team the current user is involved in — as a manager,
+  club owner, or simply a player.  Duplicates are possible by design
+  (e.g. a ClubOwner who is also listed as a player in the same team).
+
+  Administrator sees all teams.
+  ClubOwner  -> club's teams  + directly managed teams + teams as player
+  TeamManager -> managed teams + teams as player
+  Player      -> teams as player only
+  Others      -> empty list
+  """
+  offset, limit, sort_col, err = _parse_pagination(request.args)
+  if err:
+    return err
+
+  resolved = user.resolved_role
+
+  if isinstance(resolved, Administrator):
+    total = Team.query.count()
+    teams = Team.query.order_by(sort_col).offset(offset).limit(limit).all()
+
+    return jsonify({
+      "total": total,
+      "from":  offset,
+      "to":    offset + len(teams),
+      "teams": [t.to_dict() for t in teams],
+    }), 200
+
+  # Collect team IDs from each relationship
+  team_ids: set[int] = set()
+
+  if isinstance(resolved, ClubOwner):
+    for club in resolved.clubs:
+      for t in club.teams:
+        team_ids.add(t.id)
+    if resolved.team_manager:
+      for t in resolved.team_manager.teams:
+        team_ids.add(t.id)
+
+  elif isinstance(resolved, TeamManager):
+    for t in resolved.teams:
+      team_ids.add(t.id)
+
+  # Include teams where user is a Player (all non-admin roles may also be players)
+  if hasattr(user, "player") and user.player is not None:
+    for t in user.player.teams:
+      team_ids.add(t.id)
+
+  if not team_ids:
+    return jsonify({
+      "total": 0,
+      "from":  offset,
+      "to":    offset,
+      "teams": [],
+    }), 200
+
+  base_query = Team.query.filter(Team.id.in_(team_ids))
+  total = base_query.count()
+  teams = base_query.order_by(sort_col).offset(offset).limit(limit).all()
+
+  return jsonify({
+    "total": total,
+    "from":  offset,
+    "to":    offset + len(teams),
+    "teams": [t.to_dict() for t in teams],
+  }), 200
+
+
 #  CREATE TEAM
 
 @team_bp.route("", methods=["POST"])

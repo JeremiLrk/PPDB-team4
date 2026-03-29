@@ -4,36 +4,10 @@ import { useTeamPlayers }               from "@/hooks/useTeamPlayers.js";
 import { useCurrentUserContext }        from "@/context/useCurrentUserContext.js";
 import AddPlayerButton                  from "@/components/team/AddPlayerButton.jsx";
 import PlayerCard                       from "@/components/team/PlayerCard.jsx";
+import GearIcon                         from "@/components/icon/GearIcon.jsx";
+import { canManageTeam }                from "@/components/team/TeamSettingsLink.jsx";
 import styles       from "@/style/TeamSettings.module.css";
 import commonStyles from "@/style/common/Common.module.css";
-
-/* access guard
-   Mirrors the server-side _can_edit_team() logic on the client:
-     - Administrator             → always allowed
-     - ClubOwner of team's club  → allowed
-     - TeamManager of this team  → allowed
-   */
-function canManageTeam(user, team) {
-    if (!user || !team) return false;
-    const role = user.role;
-    console.log(user)
-
-    if (role === "administrator") return true;
-
-    if (role === "club_owner") {
-        // owns the club this team belongs to, OR manages the team directly
-        const ownsClub      = team.clubId && user.clubIds?.includes(team.clubId);
-        const managesTeam   = user.managedTeamIds?.includes(team.id);
-        return ownsClub || managesTeam;
-    }
-
-    if (role === "team_manager") {
-        console.log(user.managedTeamIds)
-        return user.managedTeamIds?.includes(team.id);
-    }
-
-    return false;
-}
 
 export default function TeamSettings() {
     const { teamId }    = useParams();
@@ -60,7 +34,7 @@ export default function TeamSettings() {
             <div className={styles.state}>
                 <p className={styles.error}>{teamError}</p>
                 <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                    ← Back to teams
+                    &lt;- Back to teams
                 </button>
             </div>
         );
@@ -115,7 +89,7 @@ export default function TeamSettings() {
                                 <Tag label={`ID: ${team.id}`} muted />
                             </div>
                         </div>
-                        <span className={styles.settingsIcon} aria-hidden="true">⚙</span>
+                        <GearIcon size={32} title="Team settings" className={styles.settingsIcon} />
                     </div>
                 </div>
             </div>
