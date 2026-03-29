@@ -2,8 +2,7 @@ import uuid
 from flask import Flask
 from flask.testing import FlaskClient
 
-from server.app.models.user import User
-from server.extensions import db
+from server.app.models.account import Account
 
 def _unique_email() -> str:
     return f"test-{uuid.uuid4()}@example.com"
@@ -17,7 +16,7 @@ def test_signup_success(client: FlaskClient, app: Flask):
     assert response.get_json()["message"] == "Registered successfully."
 
     with app.app_context():
-        user = User.query.filter_by(email=email).first()
+        user = Account.query.filter_by(email=email).first()
 
         assert user is not None
         assert user.email == email
@@ -49,9 +48,18 @@ def test_signup_existing_user(client: FlaskClient, app: Flask):
     email = _unique_email()
 
     with app.app_context():
-        existing_user = User(email=email, password_hash="hashedpassword")
-        db.session.add(existing_user)
-        db.session.commit()
+        # Create baseline user through the same API flow to keep required fields consistent.
+        response = client.post(
+            "/api/signup",
+            json={
+                "email": email,
+                "password": "password123",
+                "firstName": "Existing",
+                "lastName": "User",
+                "dateOfBirth": "2000-01-01",
+            },
+        )
+        assert response.status_code == 201
 
     payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "User", "dateOfBirth": "2000-01-01"}
     response = client.post("/api/signup", json=payload)

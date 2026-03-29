@@ -7,10 +7,14 @@ Seeding order:
 """
 
 import datetime
+from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 from server.extensions import db
 from server.app.models.sport_type import SportType
-from server.app.models.account import Account, AccountRole, TeamManager, Player
+from server.app.models.account import Account, AccountRole, TeamManager, Player, ClubOwner
+from server.app.models.club import Club
+from server.app.models.ladder import Ladder
+from server.app.models.ladder_team import LadderTeam
 from server.app.models.team import Team
 
 TAG = "[seed:teams_and_users]"
@@ -93,6 +97,104 @@ def _make_team(name: str, sport: SportType, club_id=None) -> tuple:
   db.session.add(team)
   db.session.flush()
   return team, True
+
+
+def _get_or_create_club(name: str) -> tuple:
+  """Returns (club, created: bool)."""
+  existing = Club.query.filter_by(name=name).first()
+  if existing:
+    return existing, False
+  club = Club(name=name)
+  db.session.add(club)
+  db.session.flush()
+  return club, True
+
+
+def _make_club_owner(team_manager: TeamManager) -> tuple:
+  """Returns (club_owner, created: bool)."""
+  if team_manager.club_owner:
+    return team_manager.club_owner, False
+  owner = ClubOwner(id=team_manager.id)
+  db.session.add(owner)
+  db.session.flush()
+  return owner, True
+
+
+def _ensure_default_ladder_rating_function() -> int:
+  """
+  Ensures there is at least one ladder rating function row and returns its id.
+  Uses SQL directly because there is no ORM model for this table.
+  """
+  existing_id = db.session.execute(
+    text("SELECT id FROM ladder_rating_function ORDER BY id ASC LIMIT 1")
+  ).scalar()
+  if existing_id:
+    return int(existing_id)
+
+  created_id = db.session.execute(
+    text("INSERT INTO ladder_rating_function (name) VALUES (:name) RETURNING id"),
+    {"name": "ELO"},
+  ).scalar_one()
+  return int(created_id)
+
+
+def _get_or_create_ladder(
+  club_id: int,
+  name: str,
+  description: str,
+  sport_type_id: int,
+  ladder_rating_function_id: int,
+) -> tuple:
+  """Returns (ladder, created: bool)."""
+  existing = Ladder.query.filter_by(club_id=club_id, name=name).first()
+  if existing:
+    return existing, False
+
+  ladder = Ladder(
+    club_id=club_id,
+    name=name,
+    description=description,
+    sport_type_id=sport_type_id,
+    ruleset_id=None,
+    ladder_rating_function_id=ladder_rating_function_id,
+  )
+  db.session.add(ladder)
+  db.session.flush()
+  return ladder, True
+
+
+def _get_or_create_ladder_team(
+  ladder_id: int,
+  team_id: int,
+  rank: int,
+  rating: int,
+  matches_played: int,
+) -> tuple:
+  """Returns (ladder_team, created: bool)."""
+  existing = LadderTeam.query.filter_by(ladder_id=ladder_id, team_id=team_id).first()
+  if existing:
+    updated = False
+    if existing.rank != rank:
+      existing.rank = rank
+      updated = True
+    if existing.rating != rating:
+      existing.rating = rating
+      updated = True
+    if existing.matches_played != matches_played:
+      existing.matches_played = matches_played
+      updated = True
+    return existing, updated
+
+  row = LadderTeam(
+    ladder_id=ladder_id,
+    team_id=team_id,
+    rank=rank,
+    rating=rating,
+    matches_played=matches_played,
+  )
+  db.session.add(row)
+  db.session.flush()
+  return row, True
 
 
 #  Main seed 
@@ -325,6 +427,125 @@ def seed_teams_and_users():
 
   print(f"{TAG} [5/5] Players OK — created: {plr_created}, skipped: {plr_skipped}")
 
+  #  Demo club + ladders
+  print(f"{TAG} [6/6] Seeding demo club data...")
+  try:
+    demo_acc, demo_acc_created = _make_account(
+      first="Nora",
+      last="Clubowner",
+      email="nora.clubowner@netrank.demo",
+      role=role_manager,
+    )
+    if demo_acc_created:
+      print(f"{TAG}   demo account created (id={demo_acc.id}, email={demo_acc.email})")
+    else:
+      print(f"{TAG}   demo account already exists (id={demo_acc.id}), skipping")
+
+    demo_tm, demo_tm_created = _make_manager(demo_acc)
+    if demo_tm_created:
+      print(f"{TAG}   demo team_manager created (id={demo_tm.id})")
+    else:
+      print(f"{TAG}   demo team_manager already exists (id={demo_tm.id}), skipping")
+
+    demo_owner, demo_owner_created = _make_club_owner(demo_tm)
+    if demo_owner_created:
+      print(f"{TAG}   demo club_owner created (id={demo_owner.id})")
+    else:
+      print(f"{TAG}   demo club_owner already exists (id={demo_owner.id}), skipping")
+
+    demo_club, demo_club_created = _get_or_create_club("NetRank Club")
+    if demo_club_created:
+      print(f"{TAG}   demo club created (id={demo_club.id}, name='{demo_club.name}')")
+    else:
+      print(f"{TAG}   demo club already exists (id={demo_club.id}), skipping")
+
+    if demo_club not in demo_owner.clubs:
+      demo_owner.clubs.append(demo_club)
+      print(f"{TAG}   linked owner {demo_owner.id} -> club {demo_club.id}")
+    else:
+      print(f"{TAG}   owner {demo_owner.id} already linked to club {demo_club.id}, skipping")
+
+    men_team, men_team_created = _make_team("NetRank Aces", tennis, club_id=demo_club.id)
+    if men_team_created:
+      print(f"{TAG}   team '{men_team.name}' created in demo club")
+    else:
+      print(f"{TAG}   team '{men_team.name}' already exists in demo club, skipping")
+
+    junior_team, junior_team_created = _make_team("NetRank Juniors", tennis, club_id=demo_club.id)
+    if junior_team_created:
+      print(f"{TAG}   team '{junior_team.name}' created in demo club")
+    else:
+      print(f"{TAG}   team '{junior_team.name}' already exists in demo club, skipping")
+
+    if men_team not in demo_tm.teams:
+      demo_tm.teams.append(men_team)
+      print(f"{TAG}   manager {demo_tm.id} assigned to '{men_team.name}'")
+    if junior_team not in demo_tm.teams:
+      demo_tm.teams.append(junior_team)
+      print(f"{TAG}   manager {demo_tm.id} assigned to '{junior_team.name}'")
+
+    rating_fn_id = _ensure_default_ladder_rating_function()
+    men_ladder, men_ladder_created = _get_or_create_ladder(
+      club_id=demo_club.id,
+      name="Men's Singles",
+      description="Demo ladder for men's singles",
+      sport_type_id=tennis.id,
+      ladder_rating_function_id=rating_fn_id,
+    )
+    if men_ladder_created:
+      print(f"{TAG}   ladder '{men_ladder.name}' created")
+    else:
+      print(f"{TAG}   ladder '{men_ladder.name}' already exists, skipping")
+
+    junior_ladder, junior_ladder_created = _get_or_create_ladder(
+      club_id=demo_club.id,
+      name="U14 Singles",
+      description="Demo ladder for U14 singles",
+      sport_type_id=tennis.id,
+      ladder_rating_function_id=rating_fn_id,
+    )
+    if junior_ladder_created:
+      print(f"{TAG}   ladder '{junior_ladder.name}' created")
+    else:
+      print(f"{TAG}   ladder '{junior_ladder.name}' already exists, skipping")
+
+    _get_or_create_ladder_team(
+      ladder_id=men_ladder.id,
+      team_id=men_team.id,
+      rank=1,
+      rating=1260,
+      matches_played=15,
+    )
+    _get_or_create_ladder_team(
+      ladder_id=men_ladder.id,
+      team_id=junior_team.id,
+      rank=2,
+      rating=1180,
+      matches_played=12,
+    )
+    _get_or_create_ladder_team(
+      ladder_id=junior_ladder.id,
+      team_id=junior_team.id,
+      rank=1,
+      rating=1215,
+      matches_played=10,
+    )
+    _get_or_create_ladder_team(
+      ladder_id=junior_ladder.id,
+      team_id=men_team.id,
+      rank=2,
+      rating=1100,
+      matches_played=8,
+    )
+    print(f"{TAG}   demo ladder standings upserted")
+
+  except Exception as e:
+    print(f"{TAG} ERROR seeding demo club data: {e}")
+    db.session.rollback()
+    raise
+
+  print(f"{TAG} [6/6] Demo club data OK")
+
   #  Commit
   print(f"{TAG} Committing to database...")
   try:
@@ -338,4 +559,4 @@ def seed_teams_and_users():
   print(f"{TAG}    teams:    created={teams_created}, skipped={teams_skipped}")
   print(f"{TAG}    managers: created={mgr_created},  skipped={mgr_skipped}")
   print(f"{TAG}    players:  created={plr_created},  skipped={plr_skipped}")
-  print(f"{TAG} ")
+  print(f"{TAG} ") 
