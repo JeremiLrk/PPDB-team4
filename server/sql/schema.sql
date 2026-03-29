@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS account (
     date_of_birth DATE,
     email VARCHAR(254) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'user',
 
     account_role_id BIGINT NOT NULL,
 
@@ -144,7 +145,7 @@ CREATE TABLE IF NOT EXISTS club_owner_club (
 
     CONSTRAINT fk_co_club_owner
         FOREIGN KEY (club_owner_id)
-        REFERENCES club_owner(id)
+        REFERENCES account(id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_co_club
@@ -503,11 +504,23 @@ CREATE TRIGGER trg_check_teams_no_common_players
     FOR EACH ROW
 EXECUTE FUNCTION check_teams_no_common_players();
 
+INSERT INTO sport_type (id, name) VALUES (1, 'Tennis'), (2, 'Padel')
+ON CONFLICT (id) DO NOTHING;
+
+-- Ook voor de rating functie (id 1)
+INSERT INTO ladder_rating_function (id, name) VALUES (1, 'ELO Demo')
+ON CONFLICT (id) DO NOTHING;
+
 /*
  =====
  DEMO DATA (FOR LIVE SHOWCASE)
  =====
  */
+
+ -- Voeg de standaard 'user' rol toe als deze nog niet bestaat
+INSERT INTO account_role (name) 
+SELECT 'user' 
+WHERE NOT EXISTS (SELECT 1 FROM account_role WHERE name = 'user');
 
 INSERT INTO sport_type (name, minimum_number_of_players_on_a_team, maximum_number_of_players_per_team)
 SELECT 'Tennis Singles', 1, 1

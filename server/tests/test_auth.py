@@ -5,6 +5,7 @@ from flask.testing import FlaskClient
 from server.app.models.user import User
 from server.extensions import db
 
+
 def _unique_email() -> str:
     return f"test-{uuid.uuid4()}@example.com"
 
@@ -141,3 +142,67 @@ def test_me_unauthorized(client: FlaskClient):
 
     assert response.status_code == 401
     assert response.get_json()["message"] == "Unauthorized."
+# --- Add these to the bottom of your test file ---
+
+def test_is_manager_true(client: FlaskClient, app: Flask):
+    # 1. Create and log in a user (the cookie will be saved in the client)
+    email = _unique_email()
+    client.post("/api/signup", json={
+        "email": email, "password": "password123", 
+        "firstName": "Manager", "lastName": "User", "dateOfBirth": "2000-01-01"
+    })
+
+    # 2. Create a club and assign this user as a manager in the database
+    with app.app_context():
+        user = User.query.filter_by(email=email).first()
+        club = Club(name="The Cool Club")
+        club.managers.append(user) # Links the user to the club via our many-to-many relationship
+        db.session.add(club)
+        db.session.commit()
+        club_id = club.id
+
+    # 3. Ask the API if the logged-in user is a manager
+    response = client.get(f"/api/clubs/{club_id}/is_manager")
+
+    # 4. Assert they get a 200 OK and is_manager is true
+    assert response.status_code == 200
+    assert response.get_json()["is_manager"] is True
+
+
+def test_is_manager_false(client: FlaskClient, app: Flask):
+    # 1. Create and log in a user
+    email = _unique_email()
+    client.post("/api/signup", json={
+        "email": email, "password": "password123", 
+        "firstName": "Regular", "lastName": "User", "dateOfBirth": "2000-01-01"
+    })
+
+    # 2. Create a club, but DO NOT assign the user as a manager
+    with app.app_context():
+        club = Club(name="Another Club")
+        db.session.add(club)
+        db.session.commit()
+        club_id = club.id
+
+    # 3. Ask the API if the logged-in user is a manager
+    response = client.get(f"/api/clubs/{club_id}/is_manager")
+
+    # 4. Assert they get a 200 OK and is_manager is false
+    assert response.status_code == 200
+    assert response.get_json()["is_manager"] is False
+
+
+def test_is_manager_unauthorized(client: FlaskClient, app: Flask):
+    # 1. Create a club (no user logged in)
+    with app.app_context():
+        club = Club(name="No Login Club")
+        db.session.add(club)
+        db.session.commit()
+        club_id = club.id
+
+    # 2. Try to hit the endpoint without a cookie
+    response = client.get(f"/api/clubs/{club_id}/is_manager")
+
+    # 3. Assert they get a 401 Unauthorized and is_manager is false
+    assert response.status_code == 401
+    assert response.get_json()["is_manager"] is False

@@ -3,10 +3,10 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-PROJECT_DIR="$HOME/WebstormProjects/PPDB-team4"
+PROJECT_DIR="$HOME/Documents/PPDB/PPDB-team4"
 BACKEND_DIR="$PROJECT_DIR/server"
 FRONTEND_DIR="$PROJECT_DIR/client"
-VENV_DIR="$PROJECT_DIR/venv"
+VENV_DIR="$PROJECT_DIR/.venv"
 PYTHON_BIN="python3.11"
 
 REBUILD=false

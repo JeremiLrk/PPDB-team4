@@ -164,3 +164,4 @@ def reset_password(token):
         return jsonify({"message": "Password updated successfully."}), 200
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
+    

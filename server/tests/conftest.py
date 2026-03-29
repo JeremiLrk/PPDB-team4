@@ -1,3 +1,4 @@
+import uuid
 import pytest
 from server.app import create_app
 from server.extensions import db
