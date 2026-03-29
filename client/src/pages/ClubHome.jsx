@@ -79,7 +79,7 @@ function ClubHome() {
                         {isManager && (
                             <div className="mt-4">
                                 <button
-                                    onClick={() => navigate(`/clubs/${clubId}/manage`)}
+                                    onClick={() => navigate(`/clubs/${clubId}/settings`)}
                                     className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-4 py-1.5 text-sm font-semibold text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 transition"
                                 >
                                     ⚙️ {clubHomeTexts.manage_club || "Club Beheren"}

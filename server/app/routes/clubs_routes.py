@@ -1,18 +1,12 @@
 from flask import Blueprint, jsonify, request
 from server.app.models.club import Club
 from server.app.services.auth_service import verify_user
-from server.app.models.user import db
 from server.app.models.ladder import Ladder
-# Define the Blueprint EXACTLY ONCE
-from flask import Blueprint, jsonify
-from flask import request
-from server.app.models import db
-from server.app.models.club import Club
+from server.extensions import db
 from server.app.models.user import User
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
 from server.app.models.club_player import ClubPlayer
-from server.app.models.ladder import Ladder
 from server.app.routes.dashboard_routes import _get_current_user_id_from_cookie
 
 clubs_bp = Blueprint("clubs", __name__, url_prefix="/api")
@@ -28,7 +22,8 @@ def get_club(club_id: int):
     club = Club.query.filter_by(id=club_id).first()
     if not club:
         return jsonify({"message": "Club not found"}), 404
-    return jsonify({"club": {"id": club.id, "name": club.name}}), 200
+    
+    return jsonify({"club": {"id": club.id, "name": club.name, "description": club.description, "sport": club.sport, "city": club.city}}), 200
 
 @clubs_bp.get("/clubs/<int:club_id>/is_manager")
 def check_if_manager(club_id: int):
@@ -45,11 +40,15 @@ def check_if_manager(club_id: int):
     if not club:
         return jsonify({"message": "Club not found"}), 404
 
-    # 4. Check if the logged-in user is in the club's list of managers
-    is_manager = any(manager.id == user.id for manager in club.managers)
+    clubowner = ClubOwner.query.filter_by(id=user.id).first()
+    if not clubowner:
+        return jsonify({"message": "Unauthorized"}), 401
+    
+    owner_check = ClubOwnerClub.query.filter_by(club_owner_id=clubowner.id, club_id=club_id).first()
+    if not owner_check:
+        return jsonify({"message": "Forbidden"}), 403
 
-    # 5. Send the result back to React
-    return jsonify({"is_manager": is_manager}), 200
+    return jsonify({"is_manager": True}), 200
 
 @clubs_bp.post("/clubs")
 def create_club():
@@ -82,6 +81,7 @@ def create_club():
         "message": "Club succesvol aangemaakt!", 
         "club": {"id": new_club.id, "name": new_club.name}
     }), 201
+
 @clubs_bp.post("/clubs/<int:club_id>/managers")
 def add_club_manager(club_id: int):
     # 1. Check of de huidige gebruiker zelf manager is (beveiliging!)
@@ -107,29 +107,6 @@ def add_club_manager(club_id: int):
     
     return jsonify({"message": "Gebruiker is al manager"}), 400
 
-@clubs_bp.post("/clubs/<int:club_id>/ladders")
-def create_ladder(club_id: int):
-    token = request.cookies.get("access_token")
-    user = verify_user(token)
-    club = Club.query.get_or_404(club_id)
-
-    if not user or user not in club.managers:
-        return jsonify({"message": "Niet geautoriseerd"}), 403
-
-    data = request.get_json()
-    
-    new_ladder = Ladder(
-        club_id=club_id,
-        name=data.get("name"),
-        description=data.get("description"),
-        sport_type_id=data.get("sport_type_id"), # Pak de sport uit de frontend
-        ladder_rating_function_id=1 
-    )
-
-    db.session.add(new_ladder)
-    db.session.commit()
-
-    return jsonify({"message": "Ladder succesvol gestart!", "id": new_ladder.id}), 201
 @clubs_bp.get("/clubs/<int:club_id>/ladders")
 def get_club_ladders(club_id: int):
     # Haal alle ladders op die bij deze specifieke club horen
@@ -140,8 +117,6 @@ def get_club_ladders(club_id: int):
         {"id": l.id, "name": l.name, "description": l.description} 
         for l in ladders
     ]), 200
-
-    return jsonify({"club": {"id": club.id, "name": club.name, "description": club.description, "sport": club.sport, "city": club.city}}), 200
 
 @clubs_bp.put("/clubs/<int:club_id>")
 def update_club(club_id: int):

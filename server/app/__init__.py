@@ -13,6 +13,7 @@ from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
 from server.app.models.PageText import PageText
+from server.app.models.account_role import AccountRole
 from sqlalchemy import text
 
 
@@ -26,6 +27,14 @@ def create_app():
     app.config["SECRET_KEY"] = SECRET_KEY
 
     db.init_app(app)    
+
+    with app.app_context():
+        print("Dropping all tables including dependencies...")
+        db.session.execute(text("DROP SCHEMA public CASCADE"))
+        db.session.execute(text("CREATE SCHEMA public"))
+        db.session.execute(text("GRANT ALL ON SCHEMA public TO public"))  # restore rights
+        db.session.commit()
+        print("Database schema reset complete.")
 
     _register_blueprints(app)
     _init_db(app)
@@ -92,4 +101,9 @@ def _init_db(app: Flask):
             model=PageText,
             seeds_file="server/seeds/page_text_club_home.json",
             unique_fields=["page", "key", "language"],
+        )
+        seed_table(
+            model=AccountRole,
+            seeds_file="server/seeds/account_role.json",
+            unique_fields=[],
         )

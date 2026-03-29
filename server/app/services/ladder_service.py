@@ -1,6 +1,6 @@
 from server.app.models.team import Team
 from server.app.models.ladder_team import LadderTeam
-from server.app.models import db
+from server.extensions import db
 
 def get_all_players_ladder(ladder_id: int):
     return (

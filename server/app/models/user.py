@@ -1,10 +1,5 @@
 from server.extensions import db 
-
-class AccountRole(db.Model):
-    __tablename__ = "account_role"
-    
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
+from server.app.models.account_role import AccountRole
 
 class User(db.Model):
     __tablename__ = "account"

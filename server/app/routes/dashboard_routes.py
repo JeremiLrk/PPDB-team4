@@ -8,12 +8,12 @@ from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
 from server.app.models.player import Player
 from server.app.models.club_player import ClubPlayer
-from server.app.models import db
+from server.extensions import db
 from server.config import SECRET_KEY
 from server.app.services.club_notifications import send_join_request_confirmation_to_player
 from server.app.services.club_notifications import send_join_request_notification_to_owner
 from server.app.services.club_notifications import send_join_request_decision_to_player
-from datetime import datetime
+from datetime import datetime, timezone
 
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api")
 
@@ -142,7 +142,7 @@ def set_join():
     join_request = ClubJoinRequest(
         club_id=club_id,
         user_id=user_id,
-        date=datetime.now()
+        date = datetime.now(timezone.utc)
     )
 
     db.session.add(join_request)

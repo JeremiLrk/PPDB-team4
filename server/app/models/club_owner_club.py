@@ -1,4 +1,4 @@
-from server.app.models import db
+from server.extensions import db
 
 class ClubOwnerClub(db.Model):
     __tablename__ = "club_owner_club"

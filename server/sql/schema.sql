@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS club_owner_club (
 CREATE TABLE IF NOT EXISTS club_join_request (
     club_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
-    date DATETIME NOT NULL,
+    date TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT fk_club_id
         FOREIGN KEY (club_id)
