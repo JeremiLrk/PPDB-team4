@@ -1,11 +1,15 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useTeam } from "@/hooks/useTeam.js";
 import styles from "@/style/TeamDetail.module.css";
+import commonStyles from "@/style/common/Common.module.css";
+import {useTeamPlayers} from "@/hooks/useTeamPlayers.js";
+import PlayerCard from "@/components/team/PlayerCard.jsx";
 
 export default function TeamDetail() {
     const { teamId } = useParams();
     const navigate   = useNavigate();
     const { team, loading, error } = useTeam(teamId);
+    const { players, loading: playersLoading, error: playersError, total, reload} = useTeamPlayers(teamId);
 
     if (loading) {
         return (
@@ -57,9 +61,47 @@ export default function TeamDetail() {
                 <InfoCard label="Team ID" value={`#${team.id}`} />
             </div>
 
+            {/* Players */}
+            <div className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>Players</h2>
+                    {total !== null && (
+                        <span className={commonStyles.counter}>{total}</span>
+                    )}
+                </div>
+
+                {playersLoading && (
+                    <div className={styles.inlineState}>
+                        <div className={styles.spinner} />
+                        <span>Loading players…</span>
+                    </div>
+                )}
+
+                {!playersLoading && playersError && (
+                    <div className={styles.inlineState}>
+                        <p className={styles.error}>{playersError}</p>
+                        <button className={styles.retryBtn} onClick={reload}>Retry</button>
+                    </div>
+                )}
+
+                {!playersLoading && !playersError && players.length === 0 && (
+                    <p className={commonStyles.muted}>No players in this team yet.</p>
+                )}
+
+                {!playersLoading && !playersError && players.length > 0 && (
+                    <ul className={commonStyles.list}>
+                        {players.map(player => (
+                            <PlayerCard key={player.playerId ?? player.id} player={player} />
+                        ))}
+                    </ul>
+                )}
+            </div>
+
         </section>
     );
 }
+
+/*  Local sub-components  */
 
 function Tag({ label, muted }) {
     return (

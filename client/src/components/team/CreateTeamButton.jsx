@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import styles from "@/style/Forms.module.css";
+import styles from "@/style/common/Forms.module.css";
 
 import { useCreateTeam } from "@/hooks/useCreateTeam.js";
 import { useSportTypes } from "@/hooks/useSportTypes.js";

@@ -1,8 +1,18 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import styles from "@/style/Dashboard.module.css";
-import { statusClass, statusLabel } from "@/components/dashboard/dashboardUtils.js";
-import CreateTeamButton from "@/components/forms/team/CreateTeamButton.jsx";
+import commonStyles from "@/style/common/Common.module.css";
+import dashStyles from "@/style/Dashboard.module.css";
+
+import TeamCard from "@/components/dashboard/TeamCard.jsx";
+import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js";
+import CreateTeamButton from "@/components/team/CreateTeamButton.jsx";
+
+
+// We combine both modules into one proxy object,
+// so as not to rewrite every styles.* in the template.
+// Dashboard-specific classes (shell, sidebar, …) only cover what
+// is not in Common, so there are no collisions.
+const styles = { ...commonStyles, ...dashStyles };
 
 //  Overview Tab 
 
@@ -380,23 +390,7 @@ export function TeamsTab({
             {teams.length > 0 && (
                 <ul className={styles.list} style={{ margin: 0, padding: 0 }}>
                     {teams.map(team => (
-                        <li key={team.id} className={styles.listItem}>
-                            <div>
-                                <p className={styles.primaryText}>{team.name}</p>
-                                <p className={styles.secondaryText}>
-                                    {team.clubId
-                                        ? `Club #${team.clubId}`
-                                        : texts?.independent_team || "Independent"}
-                                    {team.sportTypeId ? ` · Sport #${team.sportTypeId}` : ""}
-                                </p>
-                            </div>
-                            <button
-                                className={styles.linkButton}
-                                onClick={() => navigate(`/teams/${team.id}`)}
-                            >
-                                {texts?.open || "Open"}
-                            </button>
-                        </li>
+                        <TeamCard key={team.id} team={team} texts={texts} />
                     ))}
                 </ul>
             )}

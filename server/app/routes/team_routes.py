@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify
-
+from sqlalchemy import func
 from server.app.utils.promote import promote_to_team_manager, promote_to_player
 from server.extensions import db
-from server.app.models.account import Account, TeamManager, ClubOwner, Administrator, AccountRole
-from server.app.models.team import Team, team_manager_team
+from server.app.models.account import Account, TeamManager, ClubOwner, Administrator, AccountRole, Player
+from server.app.models.team import Team, team_manager_team, player_team
 from server.app.decorators.login_required import login_required
 
 team_bp = Blueprint("team", __name__, url_prefix="/api/teams")
@@ -109,6 +109,71 @@ def _parse_pagination(args):
     return None, None, None, (jsonify({"message": "'sort' must be 'id' or 'name'."}), 422)
 
   return offset, limit, sort_col, None
+
+
+def _search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
+  """
+  Fuzzy account search by query string q.
+
+  Match rules (evaluated in order — first match wins per account):
+    1. Exact match on id    (q is a valid integer)         → similarity 1.0
+    2. Exact match on email (case-insensitive)              → similarity 1.0
+    3. Trigram similarity on first_name OR last_name >= 0.9
+       (uses pg_trgm via SQLAlchemy func.similarity)
+
+  Accounts whose Player.id is in exclude_player_ids are excluded.
+  Returns a list of (Account, similarity_score) sorted desc by score, then id.
+  """
+
+
+  q = q.strip()
+  if not q:
+    return []
+
+  # --- candidate subquery via pg_trgm similarity on names ---
+  sim_first = func.similarity(Account.first_name, q)
+  sim_last  = func.similarity(Account.last_name,  q)
+  best_sim  = func.greatest(sim_first, sim_last)
+
+  # Base query — join Player to get player_id (may be NULL for non-players)
+  base = (
+    db.session.query(Account, best_sim.label("score"))
+    .outerjoin(Player, Player.id == Account.id)
+    .filter(
+      # exclude already-in-team players
+      ~Account.id.in_(exclude_player_ids)
+    )
+  )
+
+  # Attempt exact id match
+  try:
+    target_id = int(q)
+    id_match = base.filter(Account.id == target_id).first()
+    if id_match:
+      account, _ = id_match
+      return [account]
+  except ValueError:
+    pass
+
+  # Attempt exact email match (case-insensitive)
+  email_match = base.filter(func.lower(Account.email) == q.lower()).first()
+  if email_match:
+    account, _ = email_match
+    return [account]
+
+  # Trigram fuzzy search on names — requires pg_trgm extension
+  SIMILARITY_THRESHOLD = 0.9
+
+  results = (
+    base
+    .filter(best_sim >= SIMILARITY_THRESHOLD)
+    .order_by(best_sim.desc(), Account.id.asc())
+    .limit(50)
+    .all()
+  )
+
+  return [account for account, score in results]
+
 
 #  GET TEAM BY ID
 
@@ -462,4 +527,105 @@ def rename_team(user: Account, team_id: int):
   return jsonify({
     "message": "Team renamed successfully.",
     "team": team.to_dict()
+  }), 200
+
+
+#  GET TEAM PLAYERS 
+
+@team_bp.route("/<int:team_id>/players", methods=["GET"])
+def get_team_players(team_id: int):
+  """
+  GET /api/teams/<team_id>/players
+  Returns all players of the team.
+  Requires the caller to be able to edit the team (Administrator, ClubOwner, TeamManager).
+
+  Response:
+    200  { "teamId": int, "total": int, "players": [ Account.to_dict() + { "playerId": int } ] }
+    403  { "message": "Forbidden." }
+    404  { "message": "Team not found." }
+  """
+  team, err = _get_team_or_404(team_id)
+  if err:
+    return err
+
+  players = (
+    db.session.query(Account)
+    .join(Player, Player.id == Account.id)
+    .join(player_team, player_team.c.player_id == Player.id)
+    .filter(player_team.c.team_id == team_id)
+    .order_by(Account.last_name.asc(), Account.first_name.asc(), Account.id.asc())
+    .all()
+  )
+
+  def _player_dict(account: Account) -> dict:
+    d = account.to_dict()
+    d["playerId"] = account.player.id  # same as account.id, explicit for client clarity
+    return d
+
+  return jsonify({
+    "teamId":  team_id,
+    "total":   len(players),
+    "players": [_player_dict(a) for a in players],
+  }), 200
+
+
+#  SEARCH ACCOUNTS NOT IN TEAM 
+
+@team_bp.route("/<int:team_id>/players/search", methods=["GET"])
+def search_accounts_not_in_team(user: Account, team_id: int):
+  """
+  GET /api/teams/<team_id>/players/search?q=<string>
+  Searches for accounts that are NOT already players of this team.
+
+  Match priority (first match that applies wins per account):
+    1. Exact id match        (q is a pure integer)           score=1.0
+    2. Exact email match     (case-insensitive)              score=1.0
+    3. Trigram similarity on first_name OR last_name >= 0.9  score=0.9..1.0
+       Requires PostgreSQL extension:  CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+  Query params:
+    q  — required, search string (min 1 char after strip)
+
+  Response:
+    200  {
+           "teamId": int,
+           "q": str,
+           "results": [
+             { ...Account.to_dict(), "score": float },
+             ...
+           ]
+         }
+    400  { "message": "Query parameter 'q' is required." }
+    403  { "message": "Forbidden." }
+    404  { "message": "Team not found." }
+  """
+  team, err = _get_team_or_404(team_id)
+  if err:
+    return err
+
+  if not _can_edit_team(user.resolved_role, team):
+    return jsonify({"message": "Forbidden."}), 403
+
+  q = request.args.get("q", "").strip()
+  if not q:
+    return jsonify({"message": "Query parameter 'q' is required."}), 400
+
+  # Collect the account IDs of players already in this team
+  existing_rows = db.session.execute(
+    db.select(player_team.c.player_id).where(player_team.c.team_id == team_id)
+  ).fetchall()
+  exclude_ids = {row.player_id for row in existing_rows}
+
+  matches = _search_accounts(q, exclude_ids)
+
+  results = []
+  for m in matches:
+    d = m["account"].to_dict()
+    d["score"] = m["score"]
+    results.append(d)
+
+  return jsonify({
+    "teamId":  team_id,
+    "q":       q,
+    "results": results,
   }), 200

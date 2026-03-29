@@ -1,4 +1,4 @@
-import styles from "@/style/Forms.module.css"
+import styles from "@/style/common/Forms.module.css"
 
 export function Spinner() {
     return (
