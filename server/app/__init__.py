@@ -13,6 +13,7 @@ from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
 from server.app.models.PageText import PageText
+from sqlalchemy import text
 
 
 def create_app():
@@ -24,7 +25,7 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = SECRET_KEY
 
-    db.init_app(app)
+    db.init_app(app)    
 
     _register_blueprints(app)
     _init_db(app)

@@ -1,9 +1,9 @@
 import styles from "@/style/Dashboard.module.css";
 import { getDashboardTabs } from "@/app/components/dashboard/dashboardUtils.js";
 import { HomeIcon, SignOutIcon, ThemeIcon } from "@/app/components/dashboard/DashboardIcons.jsx";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 
 export default function DashboardSidebar({
-    currentUser,
     theme,
     activeTab,
     texts,
@@ -12,17 +12,18 @@ export default function DashboardSidebar({
     onGoHome,
     onSignOut,
 }) {
+    const { currentUser, loadingUser } = useCurrentUserContext();
     const tabs = getDashboardTabs(texts || {});
 
     return (
         <aside className={styles.sidebar}>
             <div className={styles.brand}>NetRank</div>
 
-            <div className={styles.userPanel}>
-                <p className={styles.userLabel}>{texts?.signed_in_as || "Signed in as"}</p>
-                <p className={styles.userValue}>{currentUser?.email || texts?.unknown_user || "unknown"}</p>
-            </div>
-
+            <p className={styles.userValue}>
+                {loadingUser
+                    ? "Loading..."
+                    : currentUser?.email || texts?.unknown_user || "unknown"}
+            </p>
             <nav className={styles.nav} aria-label={texts?.dashboard_tabs_aria || "Dashboard tabs"}>
                 {tabs.map((tab) => (
                     <button

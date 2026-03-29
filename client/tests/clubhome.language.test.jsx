@@ -11,8 +11,8 @@ test("club home renders Dutch localized labels", async () => {
     localStorage.setItem("app_lang", "nl");
 
     mockApi({
-        club: { id: 1, name: "NetRank Club" },
-        clubs: [{ id: 1, name: "NetRank Club" }],
+        club: { id: 1, name: "NetRank Club", description: "Mock data club", sport: "Padel", city: "Antwerp" },
+        clubs: [{ id: 1, name: "NetRank Club", description: "Mock data club", sport: "Padel", city: "Antwerp" }],
         topPlayers: [{ id: 1, name: "Thomas", rating: 1290 }],
     });
 

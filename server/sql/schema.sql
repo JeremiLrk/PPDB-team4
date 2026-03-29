@@ -114,9 +114,9 @@ CREATE TABLE IF NOT EXISTS team_manager (
 CREATE TABLE IF NOT EXISTS club_owner (
     id BIGINT,
 
-    CONSTRAINT fk_club_owner_team_manager
+    CONSTRAINT fk_club_owner_account
         FOREIGN KEY (id)
-        REFERENCES team_manager(id)
+        REFERENCES account(id)
         ON DELETE CASCADE,
 
     CONSTRAINT pk_club_owner
@@ -127,9 +127,13 @@ CREATE TABLE IF NOT EXISTS club_owner (
  CLUBS
  =====
  */
+
 CREATE TABLE IF NOT EXISTS club (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(64) NOT NULL,
+    description VARCHAR(512) NOT NULL,
+    sport VARCHAR(64),
+    city VARCHAR(128) NOT NULL,
 
     CONSTRAINT pk_club
         PRIMARY KEY (id)
@@ -152,7 +156,42 @@ CREATE TABLE IF NOT EXISTS club_owner_club (
     CONSTRAINT pk_club_owner_club
         PRIMARY KEY (club_owner_id, club_id)
 );
+CREATE TABLE IF NOT EXISTS club_join_request (
+    club_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    date DATETIME NOT NULL,
 
+    CONSTRAINT fk_club_id
+        FOREIGN KEY (club_id)
+        REFERENCES club(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_user_id
+        FOREIGN KEY (user_id)
+        REFERENCES account(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT pk_club_id_user_id
+        PRIMARY KEY (user_id, club_id)
+);
+
+CREATE TABLE IF NOT EXISTS club_player (
+    club_id BIGINT NOT NULL,
+    player_id BIGINT NOT NULL,
+
+    CONSTRAINT fk_club_id
+        FOREIGN KEY (club_id)
+        REFERENCES club(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_player_id
+        FOREIGN KEY (player_id)
+        REFERENCES player(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT pk_club_player
+        PRIMARY KEY (club_id, player_id)
+);
 /*
  =====
  TEAMS

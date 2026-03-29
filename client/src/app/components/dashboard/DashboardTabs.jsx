@@ -19,7 +19,7 @@ export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, cl
                                     <div>
                                         <p className={styles.primaryText}>{club?.name || `Club #${clubId}`}</p>
                                         <p className={styles.secondaryText}>
-                                            (club?.membership_status || texts?.member_status || "member").toString()
+                                            {(club?.membership_status || texts?.member_status || "member").toString()}
                                         </p>
                                     </div>
                                     <Link className={styles.linkButton} to={`/clubs/${clubId}`}>
@@ -63,6 +63,7 @@ export function SearchTab({
     filteredDiscoverClubs,
     myClubIds,
     pendingJoinRequestClubIds,
+    clubJoinrequest,
     texts,
 }) {
     return (
@@ -112,9 +113,12 @@ export function SearchTab({
                                         ) : null}
 
                                         {!isJoined && !hasPendingRequest ? (
-                                            <button className={styles.primaryButton} type="button" disabled>
-                                                {texts?.request_to_join || "Request to Join"}
-                                            </button>
+                                                <button
+                                                    className={styles.primaryButton}
+                                                    type="button"
+                                                    onClick={(e) => {clubJoinrequest(clubId);e.currentTarget.disabled = true;}}>
+                                                    {texts?.request_to_join || "Request to Join"}
+                                                </button>
                                         ) : null}
                                     </div>
                                 </div>
@@ -127,7 +131,10 @@ export function SearchTab({
     );
 }
 
-export function RequestsTab({ myRequests, texts }) {
+export function RequestsTab({ 
+    myRequests, 
+    texts
+}) {
     return (
         <article className={`${styles.panel} ${styles.contentFade}`}>
             <div className={styles.panelTopRow}>
@@ -174,9 +181,13 @@ export function CreateClubTab({
     onFieldChange,
     onSubmit,
     texts,
+    incomingJoinRequests,
+    decideJoinrequest,
+    isClubOwner
 }) {
     return (
         <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
+            {/* Left Column: The Form */}
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>{texts?.request_your_club || "Request Your Own Club"}</h3>
                 <form className={styles.form} onSubmit={onSubmit}>
@@ -247,51 +258,158 @@ export function CreateClubTab({
                 </form>
 
                 {clubRequestMessage.text ? (
-                    <p
-                        className={`${styles.notice} ${
-                            clubRequestMessage.type === "error"
-                                ? styles.noticeError
-                                : clubRequestMessage.type === "success"
-                                  ? styles.noticeSuccess
-                                  : styles.noticeInfo
-                        }`}
-                    >
+                    <p className={`${styles.notice} ${clubRequestMessage.type === "error" ? styles.noticeError : styles.noticeSuccess}`}>
                         {clubRequestMessage.text}
                     </p>
                 ) : null}
             </article>
 
-            <article className={styles.panel}>
-                <div className={styles.panelTopRow}>
-                    <h3 className={styles.panelTitle}>
-                        {texts?.my_club_registration_requests || "My Club Registration Requests"}
-                    </h3>
-                    <span className={styles.counter}>{clubCreationRequests.length}</span>
-                </div>
+            {/* Right Column: Both types of requests */}
+            <div className={styles.requestsSidebar}>
+                <article className={styles.panel}>
+                    <div className={styles.panelTopRow}>
+                        <h3 className={styles.panelTitle}>
+                            {texts?.my_club_registration_requests || "My Club Registration Requests"}
+                        </h3>
+                        <span className={styles.counter}>{clubCreationRequests.length}</span>
+                    </div>
 
-                {clubCreationRequests.length === 0 ? (
-                    <p className={styles.muted}>
-                        {texts?.no_club_registration_requests_yet || "No club registration requests yet."}
-                    </p>
-                ) : (
-                    <ul className={styles.list}>
-                        {clubCreationRequests.map((request) => (
-                            <li className={styles.listItem} key={request.id}>
-                                <div>
-                                    <p className={styles.primaryText}>{request.name || texts?.new_club || "New Club"}</p>
-                                    <p className={styles.secondaryText}>
-                                        {request.city || texts?.unknown_city || "Unknown city"}
-                                        {request.sport ? ` • ${request.sport}` : ""}
-                                    </p>
-                                </div>
-                                <span className={`${styles.statusPill} ${statusClass(request.status)}`}>
-                                    {statusLabel(request.status, texts)}
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </article>
+                    {clubCreationRequests.length === 0 ? (
+                        <p className={styles.muted}>
+                            {texts?.no_club_registration_requests_yet || "No club registration requests yet."}
+                        </p>
+                    ) : (
+                        <ul className={styles.list}>
+                            {clubCreationRequests.map((request) => (
+                                <li className={styles.listItem} key={request.id}>
+                                    <div>
+                                        <p className={styles.primaryText}>{request.name || texts?.new_club || "New Club"}</p>
+                                        <p className={styles.secondaryText}>
+                                            {request.city || texts?.unknown_city || "Unknown city"}
+                                            {request.sport ? ` • ${request.sport}` : ""}
+                                        </p>
+                                    </div>
+                                    <span className={`${styles.statusPill} ${statusClass(request.status)}`}>
+                                        {statusLabel(request.status, texts)}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </article>
+            </div>
         </section>
+    );
+}
+
+export function ManageClubsTab({ 
+    myClubs, 
+    incomingJoinRequests, 
+    decideJoinrequest, 
+    isClubOwner, 
+    onGoSettings,
+    texts 
+}) {
+    const ownedClubs = myClubs.filter(club => club.membership_status === "owner");
+
+    if (!isClubOwner && ownedClubs.length === 0) {
+        return (
+            <div className={styles.panel} style={{ textAlign: 'center', padding: '40px' }}>
+                <h3 className={styles.panelTitle}>{texts?.manage_clubs_title || "Club Administration"}</h3>
+                <p className={styles.muted}>
+                    {texts?.no_clubs_owned || "You don't own any clubs yet."}
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className={`${styles.tabContent} ${styles.contentFade}`}>
+            <h2 className={styles.panelTitle}>{texts?.manage_clubs_title || "Club Administration"}</h2>
+            
+            <div className={styles.twoColumnLayout}>
+                <section className={styles.mainColumn}>
+                    <article className={styles.panel}>
+                        <h3 className={styles.panelTitle}>{texts?.your_clubs || "Your Owned Clubs"}</h3>
+                        
+                        {ownedClubs.length === 0 ? (
+                            <p className={styles.muted}>You haven't been assigned as an owner to any clubs yet.</p>
+                        ) : (
+                            <ul className={styles.list}>
+                                {ownedClubs.map(club => (
+                                    <li key={club.id} className={styles.listItem}>
+                                        <div>
+                                            <p className={styles.primaryText}>{club.name}</p>
+                                            <p className={styles.secondaryText}>
+                                                {club.city} - {club.sport}
+                                            </p>
+                                        </div>
+                                        <button 
+                                        onClick={() => onGoSettings(club.id)}
+                                        className={styles.linkButton}>
+                                            Settings
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </article>
+                </section>
+
+                <aside className={styles.requestsSidebar}>
+                    <article className={styles.panel}>
+                        <div className={styles.panelTopRow}>
+                            <h3 className={styles.panelTitle}>
+                                {texts?.incoming_join_requests || "Incoming Join Requests"}
+                            </h3>
+                            <span className={styles.counter}>{incomingJoinRequests.length}</span>
+                        </div>
+
+                        {incomingJoinRequests.length === 0 ? (
+                            <p className={styles.muted}>No pending join requests.</p>
+                        ) : (
+                            <ul className={styles.list}>
+                                {incomingJoinRequests.map((req, index) => (
+                                    <li className={styles.listItem} key={index}>
+                                        <div>
+                                            <p className={styles.primaryText}>
+                                                <strong>{req.user_name}</strong> wants to join <strong>{req.club_name}</strong>
+                                            </p>
+                                        </div>
+                                        <div className={styles.actionRow} style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                            <button 
+                                            className={styles.submitButton} 
+                                            type="button"
+                                            onClick={(e) => {
+                                                // Find all buttons in this specific div and disable them
+                                                const row = e.currentTarget.closest(`.${styles.actionRow}`);
+                                                row.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                                                
+                                                decideJoinrequest(req.club_id, req.user_id, "approved");
+                                            }}>
+                                            {texts?.approve || "Approve"}
+                                        </button>
+                                        
+                                        <button 
+                                            className={styles.submitButton} 
+                                            type="button"
+                                            style={{ filter: 'grayscale(1) brightness(0.7)' }}
+                                            onClick={(e) => {
+                                                const row = e.currentTarget.closest(`.${styles.actionRow}`);
+                                                row.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                                                
+                                                decideJoinrequest(req.club_id, req.user_id, "rejected");
+                                            }}>
+                                            {texts?.reject || "Reject"}
+                                        </button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </article>
+                </aside>
+            </div>
+        </div>
     );
 }

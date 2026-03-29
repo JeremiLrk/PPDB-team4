@@ -1,7 +1,7 @@
 import styles from "@/style/Dashboard.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/app/components/dashboard/DashboardSidebar.jsx";
-import { CreateClubTab, OverviewTab, RequestsTab, SearchTab } from "@/app/components/dashboard/DashboardTabs.jsx";
+import { CreateClubTab, OverviewTab, RequestsTab, SearchTab, ManageClubsTab } from "@/app/components/dashboard/DashboardTabs.jsx";
 import { useLangContext } from "@/context/useLangContext.js";
 import { usePageTexts } from "@/hooks/usePageTexts.js";
 
@@ -17,9 +17,9 @@ function Dashboard({ currentUser, setUser }) {
     return (
         <section className={`${styles.shell} ${workspace.theme === "light" ? styles.light : ""}`}>
             <DashboardSidebar
-                currentUser={currentUser}
                 theme={workspace.theme}
                 activeTab={workspace.activeTab}
+                isClubOwner={workspace.isClubOwner}
                 texts={dashboardTexts}
                 onTabChange={workspace.setActiveTab}
                 onThemeToggle={workspace.onThemeToggle}
@@ -51,22 +51,41 @@ function Dashboard({ currentUser, setUser }) {
                         filteredDiscoverClubs={workspace.filteredDiscoverClubs}
                         myClubIds={workspace.myClubIds}
                         pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
+                        clubJoinrequest={workspace.clubJoinrequest}
                         texts={dashboardTexts}
                     />
                 ) : null}
 
                 {workspace.activeTab === "requests" ? (
-                    <RequestsTab myRequests={workspace.myRequests} texts={dashboardTexts} />
+                    <RequestsTab 
+                        myRequests={workspace.myRequests} 
+                        texts={dashboardTexts} 
+                        />
                 ) : null}
 
                 {workspace.activeTab === "createClub" ? (
                     <CreateClubTab
+                        clubCreaterequest={workspace.clubCreaterequest}
                         clubRequestForm={workspace.clubRequestForm}
                         clubRequestSubmitting={workspace.clubRequestSubmitting}
                         clubRequestMessage={workspace.clubRequestMessage}
                         clubCreationRequests={workspace.clubCreationRequests}
                         onFieldChange={workspace.onClubRequestFieldChange}
                         onSubmit={workspace.onClubRequestSubmit}
+                        texts={dashboardTexts}
+                        incomingJoinRequests={workspace.incomingJoinRequests}
+                        decideJoinrequest={workspace.decideJoinrequest}
+                        isClubOwner={workspace.isClubOwner}
+                    />
+                ) : null}
+
+                {workspace.activeTab === "manageClubs" ? (
+                    <ManageClubsTab
+                        myClubs={workspace.myClubs}
+                        incomingJoinRequests={workspace.incomingJoinRequests}
+                        decideJoinrequest={workspace.decideJoinrequest}
+                        isClubOwner={workspace.isClubOwner}
+                        onGoSettings={workspace.onGoSettings}
                         texts={dashboardTexts}
                     />
                 ) : null}

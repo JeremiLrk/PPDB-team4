@@ -10,8 +10,9 @@ import Dashboard from "@/pages/Dashboard.jsx";
 import NotFound from "@/pages/NotFound.jsx";
 import ForgotPassword from "@/pages/ForgotPassword.jsx";
 import ResetPassword from "@/pages/ResetPassword.jsx";
-import { useCurrentUserContext } from "@/context/useCurrentUserContext.js";
-import ClubManage from "@/pages/ClubManage";
+import ClubSettings from "@/pages/ClubSettings.jsx";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function AppRoutes() {
     const { currentUser, setCurrentUser } = useCurrentUserContext();
@@ -28,17 +29,16 @@ export default function AppRoutes() {
             <Route path="/register" element={<Register setUser={setCurrentUser} />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/clubs/:clubId/manage" element={<ClubManage />} />
-            <Route
-                path="/dashboard"
-                element={
-                    currentUser ? (
-                        <Dashboard currentUser={currentUser} setUser={setCurrentUser} />
-                    ) : (
-                        <Navigate to="/login" replace />
-                    )
-                }
-            />
+            <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                        <Dashboard />
+                    </ProtectedRoute>
+                }/>
+            <Route path="/clubs/:clubId/settings" element={
+                    <ProtectedRoute>
+                        <ClubSettings />
+                    </ProtectedRoute>
+                }/>
             <Route path="*" element={<NotFound />} />
         </Routes>
     );

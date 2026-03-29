@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard.js";
 import useClubs from "@/hooks/useClubs.js";
+import { notify } from "@/hooks/useNotify.js";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 
 const DEFAULT_THEME = "dark";
 const THEME_STORAGE_KEY = "dashboard_theme";
@@ -49,6 +51,7 @@ function normalizePendingJoinRequestClubIds(myRequests) {
 export function useDashboardWorkspace(setUser, texts = {}) {
     const navigate = useNavigate();
     const { dashboardData, loading, error } = useDashboard();
+    const { currentUser, setCurrentUser } = useCurrentUserContext();
     const {
         clubs: discoverClubs,
         loading: discoverLoading,
@@ -62,6 +65,8 @@ export function useDashboardWorkspace(setUser, texts = {}) {
     const [clubRequestForm, setClubRequestForm] = useState(EMPTY_CLUB_REQUEST_FORM);
     const [clubRequestSubmitting, setClubRequestSubmitting] = useState(false);
     const [clubRequestMessage, setClubRequestMessage] = useState({ type: "", text: "" });
+
+    const [isClubOwner, setIsClubOwner] = useState(false);
 
     const myClubs = useMemo(() => normalizeClubs(dashboardData), [dashboardData]);
     const myRequests = useMemo(() => normalizeRequests(dashboardData), [dashboardData]);
@@ -102,16 +107,99 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         navigate("/");
     }
 
-    function onSignOut() {
+    function onGoSettings(ClubId) {
+        navigate(`/clubs/${ClubId}/settings`)
+    }
+
+    async function onSignOut() {
         localStorage.removeItem("currentUser");
         setUser?.(null);
         navigate("/");
+        try {
+            const response = await fetch("/api/logout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.message || "Logout failed");
+            }
+
+            setCurrentUser(null);
+            notify.success("Logout successful");
+            navigate("/");
+        } catch (err) {
+            console.error(err?.message || "Logout failed");
+            notify.error(err?.message || "Logout failed");
+        }
     }
 
     function onClubRequestFieldChange(event) {
         const { name, value } = event.target;
         setClubRequestForm((previous) => ({ ...previous, [name]: value }));
     }
+    async function clubJoinrequest(clubId) {
+        const res = await fetch("/api/club/join-request", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ club_id: clubId })
+        });
+
+        if (!res.ok) {
+            throw new Error("Request failed");
+        }
+    }
+    async function decideJoinrequest(clubId, userId, status) {
+        const res = await fetch("/api/club/join-request/decide", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ 
+                club_id: clubId,
+                user_id: userId,
+                status: status
+            })
+        });
+
+        if (!res.ok) {
+            throw new Error("Request failed");
+        }
+    }
+    async function fetchJoinRequests() {
+        const res = await fetch("/api/club/join-request", {
+            method: "GET",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (!res.ok) {
+            throw new Error("Failed to fetch join requests");
+        }
+        if (res.status === 200) {
+            setIsClubOwner(true);
+        } else {
+            setIsClubOwner(false);
+        }
+        return await res.json();
+    }
+    const [incomingJoinRequests, setIncomingJoinRequests] = useState([]);
+
+    useEffect(() => {
+        fetchJoinRequests()
+            .then(data => {
+                setIncomingJoinRequests(data.requests || []);
+            })
+            .catch(err => console.error("Not an owner or fetch failed", err));
+    }, []);
 
     async function onClubRequestSubmit(event) {
         event.preventDefault();
@@ -136,7 +224,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         };
 
         try {
-            const response = await fetch("/api/me/club-registration-requests", {
+            const response = await fetch("/api/club/add-club", {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -159,7 +247,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
             }
 
             const requestRecord = {
-                id: responseBody?.request?.id || `club-request-${Date.now()}`,
+                id: responseBody?.club?.id || `club-request-${Date.now()}`,
                 name: responseBody?.request?.name || payload.name,
                 city: responseBody?.request?.city || payload.city,
                 sport: responseBody?.request?.sport || payload.sport,
@@ -210,6 +298,11 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         clubRequestForm,
         clubRequestSubmitting,
         clubRequestMessage,
+        incomingJoinRequests,
+        isClubOwner,
+        onGoSettings,
+        decideJoinrequest,
+        clubJoinrequest,
         onThemeToggle,
         onGoHome,
         onSignOut,

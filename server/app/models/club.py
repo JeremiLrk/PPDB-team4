@@ -19,3 +19,15 @@ class Club(db.Model):
         lazy='subquery',
         backref=db.backref('managed_clubs', lazy=True)
     )
+    description = db.Column(db.String(512), nullable=False)
+    sport = db.Column(db.String(64))
+    city = db.Column(db.String(128))
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "name": self.name,  
+            "description": self.description, 
+            "sport": self.sport,
+            "city": self.city
+        }

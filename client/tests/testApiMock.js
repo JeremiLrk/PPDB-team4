@@ -85,8 +85,8 @@ export function mockApi(options = {}) {
     const {
         me = null,
         dashboardData = { roles: ["user"], clubs: [], pending_requests: { my_requests: [], my_club_creation_requests: [] } },
-        clubs = [{ id: 1, name: "NetRank Club" }],
-        club = { id: 1, name: "NetRank Club" },
+        clubs = [{ id: 1, name: "NetRank Club", description: "Mock data club", sport: "Padel", city: "Antwerp" }],
+        club = { id: 1, name: "NetRank Club", description: "Mock data club", sport: "Padel", city: "Antwerp" },
         ladders = [{ id: 11, name: "Men's Singles" }, { id: 12, name: "U14 Singles" }],
         topPlayers = [{ id: 1, name: "Thomas", rating: 1290 }],
     } = options;

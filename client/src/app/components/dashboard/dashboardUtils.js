@@ -6,6 +6,7 @@ export function getDashboardTabs(texts) {
         { id: "search", label: texts.tab_search || "Search Clubs" },
         { id: "requests", label: texts.tab_requests || "My Requests" },
         { id: "createClub", label: texts.tab_create_club || "Add your own club" },
+        { id: "manageClubs", label: texts.tab_manage_club || "Manage your clubs"},
     ];
 }
 

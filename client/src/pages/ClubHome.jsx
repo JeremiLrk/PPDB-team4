@@ -91,13 +91,13 @@ function ClubHome() {
 
                 <img src={background} alt="Tennis match" className="mt-6 w-full rounded-2xl" />
 
-                <p className="mt-6 text-lg text-slate-300/70">
-                    {clubHomeTexts.tagline || "Compete. Challenge. Climb the ladder."}
-                </p>
-
-                <p className="mt-2 text-sm text-slate-400">
-                    {clubHomeTexts.subtagline || "The competitive ranking system for tennis and padel clubs."}
-                </p>
+                <div className="mt-2 text-sm text-slate-400">
+                    {clubLoading && <span>{clubHomeTexts.loading_club || "Loading club..."}</span>}
+                    {clubError && <span>{clubHomeTexts.error_loading_club || "Error loading club"}</span>}
+                    {!clubLoading && club && (
+                        <p className="text-2xl tracking-tight">{club.description}</p>
+                    )}
+                </div>
 
                 <div className="mt-10 flex justify-center gap-4">
                     <button
