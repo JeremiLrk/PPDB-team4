@@ -1,4 +1,4 @@
-import styles from "@/style/Dashboard.module.css";
+import styles from "@/style/common/Common.module.css";
 
 export function getDashboardTabs(texts) {
     return [

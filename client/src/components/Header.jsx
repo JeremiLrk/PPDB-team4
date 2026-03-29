@@ -31,6 +31,9 @@ export default function Header({ status }) {
     }, []);
 
     async function handleLogout() {
+        setMenuOpen(false);
+        setCurrentUser(null);
+        localStorage.removeItem("currentUser");
         try {
             const response = await fetch("/api/logout", {
                 method: "POST",
@@ -38,17 +41,22 @@ export default function Header({ status }) {
                 credentials: "include",
             });
 
-            const data = await response.json();
+            let data = {};
+            try {
+                data = await response.json();
+            } catch {
+                data = {};
+            }
             if (!response.ok) {
                 throw new Error(data?.message || "Logout failed");
             }
 
-            setCurrentUser(null);
             notify.success("Logout successful");
             navigate("/");
         } catch (err) {
-            console.error(err?.message || "Logout failed");
-            notify.error(err?.message || "Logout failed");
+            // Local logout already happened; backend failure should not keep user stuck.
+            console.error(err?.message || "Logout request failed");
+            navigate("/");
         }
     }
 
@@ -62,34 +70,33 @@ export default function Header({ status }) {
     return (
         <header className={styles.header}>
             <div className={styles.headerInner}>
-                <div>
+                <div className={styles.headerLeft}>
                     <Badge status={status} />
+                    <nav className={styles.headerNav}>
+                        <button
+                            onClick={() => navigate("/clubs")}
+                            className={styles.navLink}
+                        >
+                            {baseTexts.clubs || "Clubs"}
+                        </button>
+                        <button
+                            onClick={() => navigate("/teams")}
+                            className={styles.navLink}
+                        >
+                            {baseTexts.teams || "Teams"}
+                        </button>
+                    </nav>
                 </div>
 
                 <h1 className={styles.headerTitle}>
-                    <button onClick={() => navigate("/")}>
+                    <button className={styles.brandButton} onClick={() => navigate("/")}>
                         {baseTexts.net_rank || "NetRank"}
                     </button>
                 </h1>
 
-                <nav className={styles.headerNav}>
-                    <button
-                        onClick={() => navigate("/clubs")}
-                        className={styles.navLink}
-                    >
-                        {baseTexts.clubs || "Clubs"}
-                    </button>
-                    <button
-                        onClick={() => navigate("/teams")}
-                        className={styles.navLink}
-                    >
-                        {baseTexts.teams || "Teams"}
-                    </button>
-                </nav>
-
                 <div className={styles.headerRight}>
-                    <button onClick={() => setLang("nl")}>NL</button>
-                    <button onClick={() => setLang("en")}>EN</button>
+                    <button className={styles.langButton} onClick={() => setLang("nl")}>NL</button>
+                    <button className={styles.langButton} onClick={() => setLang("en")}>EN</button>
 
                     {!currentUser ? (
                         <>
@@ -107,7 +114,7 @@ export default function Header({ status }) {
                             </button>
                         </>
                     ) : (
-                        <div className="relative" ref={dropdownRef}>
+                        <div className={styles.userMenu} ref={dropdownRef}>
                             <button
                                 className={styles.userButton}
                                 onClick={() => setMenuOpen((prev) => !prev)}
@@ -116,12 +123,15 @@ export default function Header({ status }) {
                             </button>
 
                             {menuOpen && (
-                                <div className="absolute right-0 mt-2 z-50 rounded bg-white text-black shadow-lg">
-                                    <ul className="flex flex-col p-2">
+                                <div className={styles.userDropdown}>
+                                    <ul className={styles.userDropdownList}>
                                         <li>
                                             <button
                                                 className={styles.userDropdownItem}
-                                                onMouseDown={() => navigate("/dashboard")}
+                                                onClick={() => {
+                                                    setMenuOpen(false);
+                                                    navigate("/dashboard");
+                                                }}
                                             >
                                                 Dashboard
                                             </button>
@@ -129,7 +139,7 @@ export default function Header({ status }) {
                                         <li>
                                             <button
                                                 className={styles.userDropdownItem}
-                                                onMouseDown={handleLogout}
+                                                onClick={handleLogout}
                                             >
                                                 {authTexts.log_out || "Log out"}
                                             </button>

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import formStyles from "@/style/common/Forms.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import dashStyles from "@/style/Dashboard.module.css";
 
@@ -12,7 +13,7 @@ import CreateTeamButton from "@/components/team/CreateTeamButton.jsx";
 // so as not to rewrite every styles.* in the template.
 // Dashboard-specific classes (shell, sidebar, …) only cover what
 // is not in Common, so there are no collisions.
-const styles = { ...commonStyles, ...dashStyles };
+const styles = { ...formStyles, ...commonStyles, ...dashStyles };
 
 //  Overview Tab 
 

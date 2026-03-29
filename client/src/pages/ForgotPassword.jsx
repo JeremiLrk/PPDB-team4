@@ -33,18 +33,18 @@ const ForgotPassword = () => {
     }
 
     return (
-        <div className={au_styles.forgotContainer}>
-            <div className={au_styles.forgotCard}>
-                <h1 className={au_styles.forgotTitle}>{au_texts.forgot_title}</h1>
-                <p className={au_styles.forgotSubtitle}>
+        <div className={au_styles.container}>
+            <div className={au_styles.card}>
+                <h1 className={au_styles.headerTitle}>{au_texts.forgot_title}</h1>
+                <p className={au_styles.headerSubtitle}>
                     {au_texts.forgot_subtitle}
                 </p>
 
-                <form className={au_styles.forgotForm} onSubmit={handleSubmit}>
-                    <div className={au_styles.forgotFormGroup}>
+                <form className={au_styles.form} onSubmit={handleSubmit}>
+                    <div className={au_styles.formGroup}>
                         <label
                             htmlFor="forgot-email"
-                            className={au_styles.forgotLabel}
+                            className={au_styles.formLabel}
                         >
                             Email
                         </label>
@@ -54,18 +54,18 @@ const ForgotPassword = () => {
                             placeholder={au_texts.placeholder_email}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className={au_styles.forgotInput}
+                            className={au_styles.formInput}
                         />
                     </div>
 
-                    <button type="submit" className={au_styles.forgotButton}>
+                    <button type="submit" className={au_styles.formButton}>
                         {au_texts.send_reset_link}
                     </button>
                 </form>
 
-                <p className={au_styles.forgotText}>
+                <p className={au_styles.footerText}>
                     {au_texts.remembered_password}{" "}
-                    <Link to="/login" className={au_styles.forgotLink}>
+                    <Link to="/login" className={au_styles.footerLink}>
                         {au_texts.back_to_login}
                     </Link>
                 </p>
