@@ -121,6 +121,31 @@ CREATE TABLE IF NOT EXISTS club_owner (
     CONSTRAINT pk_club_owner
         PRIMARY KEY (id)
 );
+
+/*
+=====
+AVAILABILITY
+=====
+*/
+
+CREATE TABLE IF NOT EXISTS availability_block (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    user_id BIGINT NOT NULL,
+    start_at TIMESTAMP NOT NULL,
+    end_at TIMESTAMP NOT NULL,
+
+    CONSTRAINT fk_availability_block_user
+        FOREIGN KEY (user_id)
+        REFERENCES account(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT pk_availability_block
+        PRIMARY KEY (id),
+
+    CONSTRAINT check_availability_block_start_before_end
+        CHECK (start_at < end_at)
+);
+
 /*
  =====
  CLUBS

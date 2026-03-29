@@ -1,122 +1,857 @@
 [
-  {"page":"dashboard","key":"loading_dashboard","language":"en","value":"Loading dashboard..."},
-  {"page":"dashboard","key":"loading_dashboard","language":"nl","value":"Dashboard laden..."},
+    {
+        "page": "dashboard",
+        "key": "loading_dashboard",
+        "language": "en",
+        "value": "Loading dashboard..."
+    },
+    {
+        "page": "dashboard",
+        "key": "loading_dashboard",
+        "language": "nl",
+        "value": "Dashboard laden..."
+    },
 
-  {"page":"dashboard","key":"signed_in_as","language":"en","value":"Signed in as"},
-  {"page":"dashboard","key":"signed_in_as","language":"nl","value":"Ingelogd als"},
-  {"page":"dashboard","key":"unknown_user","language":"en","value":"unknown"},
-  {"page":"dashboard","key":"unknown_user","language":"nl","value":"onbekend"},
+    {
+        "page": "dashboard",
+        "key": "signed_in_as",
+        "language": "en",
+        "value": "Signed in as"
+    },
+    {
+        "page": "dashboard",
+        "key": "signed_in_as",
+        "language": "nl",
+        "value": "Ingelogd als"
+    },
+    {
+        "page": "dashboard",
+        "key": "unknown_user",
+        "language": "en",
+        "value": "unknown"
+    },
+    {
+        "page": "dashboard",
+        "key": "unknown_user",
+        "language": "nl",
+        "value": "onbekend"
+    },
 
-  {"page":"dashboard","key":"dashboard_tabs_aria","language":"en","value":"Dashboard tabs"},
-  {"page":"dashboard","key":"dashboard_tabs_aria","language":"nl","value":"Dashboard tabbladen"},
-  {"page":"dashboard","key":"tab_overview","language":"en","value":"Overview"},
-  {"page":"dashboard","key":"tab_overview","language":"nl","value":"Overzicht"},
-  {"page":"dashboard","key":"tab_search","language":"en","value":"Search Clubs"},
-  {"page":"dashboard","key":"tab_search","language":"nl","value":"Zoek clubs"},
-  {"page":"dashboard","key":"tab_requests","language":"en","value":"My Requests"},
-  {"page":"dashboard","key":"tab_requests","language":"nl","value":"Mijn aanvragen"},
-  {"page":"dashboard","key":"tab_create_club","language":"en","value":"Add your own club"},
-  {"page":"dashboard","key":"tab_create_club","language":"nl","value":"Voeg je eigen club toe"},
+    {
+        "page": "dashboard",
+        "key": "dashboard_tabs_aria",
+        "language": "en",
+        "value": "Dashboard tabs"
+    },
+    {
+        "page": "dashboard",
+        "key": "dashboard_tabs_aria",
+        "language": "nl",
+        "value": "Dashboard tabbladen"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_overview",
+        "language": "en",
+        "value": "Overview"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_overview",
+        "language": "nl",
+        "value": "Overzicht"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_availability",
+        "language": "en",
+        "value": "Availability Calendar"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_availability",
+        "language": "nl",
+        "value": "Beschikbaarheidskalender"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_search",
+        "language": "en",
+        "value": "Search Clubs"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_search",
+        "language": "nl",
+        "value": "Zoek clubs"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_requests",
+        "language": "en",
+        "value": "My Requests"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_requests",
+        "language": "nl",
+        "value": "Mijn aanvragen"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_create_club",
+        "language": "en",
+        "value": "Add your own club"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_create_club",
+        "language": "nl",
+        "value": "Voeg je eigen club toe"
+    },
 
-  {"page":"dashboard","key":"switch_to_light_mode","language":"en","value":"Switch to light mode"},
-  {"page":"dashboard","key":"switch_to_light_mode","language":"nl","value":"Wissel naar lichte modus"},
-  {"page":"dashboard","key":"switch_to_dark_mode","language":"en","value":"Switch to dark mode"},
-  {"page":"dashboard","key":"switch_to_dark_mode","language":"nl","value":"Wissel naar donkere modus"},
-  {"page":"dashboard","key":"light_mode","language":"en","value":"Light mode"},
-  {"page":"dashboard","key":"light_mode","language":"nl","value":"Lichte modus"},
-  {"page":"dashboard","key":"dark_mode","language":"en","value":"Dark mode"},
-  {"page":"dashboard","key":"dark_mode","language":"nl","value":"Donkere modus"},
-  {"page":"dashboard","key":"go_to_home","language":"en","value":"Go to home"},
-  {"page":"dashboard","key":"go_to_home","language":"nl","value":"Ga naar home"},
-  {"page":"dashboard","key":"home","language":"en","value":"Home"},
-  {"page":"dashboard","key":"home","language":"nl","value":"Home"},
-  {"page":"dashboard","key":"sign_out","language":"en","value":"Sign out"},
-  {"page":"dashboard","key":"sign_out","language":"nl","value":"Uitloggen"},
+    {
+        "page": "dashboard",
+        "key": "switch_to_light_mode",
+        "language": "en",
+        "value": "Switch to light mode"
+    },
+    {
+        "page": "dashboard",
+        "key": "switch_to_light_mode",
+        "language": "nl",
+        "value": "Wissel naar lichte modus"
+    },
+    {
+        "page": "dashboard",
+        "key": "switch_to_dark_mode",
+        "language": "en",
+        "value": "Switch to dark mode"
+    },
+    {
+        "page": "dashboard",
+        "key": "switch_to_dark_mode",
+        "language": "nl",
+        "value": "Wissel naar donkere modus"
+    },
+    {
+        "page": "dashboard",
+        "key": "light_mode",
+        "language": "en",
+        "value": "Light mode"
+    },
+    {
+        "page": "dashboard",
+        "key": "light_mode",
+        "language": "nl",
+        "value": "Lichte modus"
+    },
+    {
+        "page": "dashboard",
+        "key": "dark_mode",
+        "language": "en",
+        "value": "Dark mode"
+    },
+    {
+        "page": "dashboard",
+        "key": "dark_mode",
+        "language": "nl",
+        "value": "Donkere modus"
+    },
+    {
+        "page": "dashboard",
+        "key": "go_to_home",
+        "language": "en",
+        "value": "Go to home"
+    },
+    {
+        "page": "dashboard",
+        "key": "go_to_home",
+        "language": "nl",
+        "value": "Ga naar home"
+    },
+    { "page": "dashboard", "key": "home", "language": "en", "value": "Home" },
+    { "page": "dashboard", "key": "home", "language": "nl", "value": "Home" },
+    {
+        "page": "dashboard",
+        "key": "sign_out",
+        "language": "en",
+        "value": "Sign out"
+    },
+    {
+        "page": "dashboard",
+        "key": "sign_out",
+        "language": "nl",
+        "value": "Uitloggen"
+    },
 
-  {"page":"dashboard","key":"my_clubs","language":"en","value":"My Clubs"},
-  {"page":"dashboard","key":"my_clubs","language":"nl","value":"Mijn clubs"},
-  {"page":"dashboard","key":"no_clubs_yet","language":"en","value":"You are not a member of any club yet."},
-  {"page":"dashboard","key":"no_clubs_yet","language":"nl","value":"Je bent nog geen lid van een club."},
-  {"page":"dashboard","key":"member_status","language":"en","value":"member"},
-  {"page":"dashboard","key":"member_status","language":"nl","value":"lid"},
-  {"page":"dashboard","key":"open","language":"en","value":"Open"},
-  {"page":"dashboard","key":"open","language":"nl","value":"Open"},
+    {
+        "page": "dashboard",
+        "key": "my_clubs",
+        "language": "en",
+        "value": "My Clubs"
+    },
+    {
+        "page": "dashboard",
+        "key": "my_clubs",
+        "language": "nl",
+        "value": "Mijn clubs"
+    },
+    {
+        "page": "dashboard",
+        "key": "no_clubs_yet",
+        "language": "en",
+        "value": "You are not a member of any club yet."
+    },
+    {
+        "page": "dashboard",
+        "key": "no_clubs_yet",
+        "language": "nl",
+        "value": "Je bent nog geen lid van een club."
+    },
+    {
+        "page": "dashboard",
+        "key": "member_status",
+        "language": "en",
+        "value": "member"
+    },
+    {
+        "page": "dashboard",
+        "key": "member_status",
+        "language": "nl",
+        "value": "lid"
+    },
+    { "page": "dashboard", "key": "open", "language": "en", "value": "Open" },
+    { "page": "dashboard", "key": "open", "language": "nl", "value": "Open" },
 
-  {"page":"dashboard","key":"quick_highlights","language":"en","value":"Quick Highlights"},
-  {"page":"dashboard","key":"quick_highlights","language":"nl","value":"Snelle highlights"},
-  {"page":"dashboard","key":"join_requests","language":"en","value":"Join requests"},
-  {"page":"dashboard","key":"join_requests","language":"nl","value":"Aanvragen"},
-  {"page":"dashboard","key":"pending_join_requests","language":"en","value":"Pending join requests"},
-  {"page":"dashboard","key":"pending_join_requests","language":"nl","value":"Openstaande aanvragen"},
-  {"page":"dashboard","key":"club_registration_requests","language":"en","value":"Club registration requests"},
-  {"page":"dashboard","key":"club_registration_requests","language":"nl","value":"Clubregistratie-aanvragen"},
+    {
+        "page": "dashboard",
+        "key": "quick_highlights",
+        "language": "en",
+        "value": "Quick Highlights"
+    },
+    {
+        "page": "dashboard",
+        "key": "quick_highlights",
+        "language": "nl",
+        "value": "Snelle highlights"
+    },
+    {
+        "page": "dashboard",
+        "key": "join_requests",
+        "language": "en",
+        "value": "Join requests"
+    },
+    {
+        "page": "dashboard",
+        "key": "join_requests",
+        "language": "nl",
+        "value": "Aanvragen"
+    },
+    {
+        "page": "dashboard",
+        "key": "pending_join_requests",
+        "language": "en",
+        "value": "Pending join requests"
+    },
+    {
+        "page": "dashboard",
+        "key": "pending_join_requests",
+        "language": "nl",
+        "value": "Openstaande aanvragen"
+    },
+    {
+        "page": "dashboard",
+        "key": "club_registration_requests",
+        "language": "en",
+        "value": "Club registration requests"
+    },
+    {
+        "page": "dashboard",
+        "key": "club_registration_requests",
+        "language": "nl",
+        "value": "Clubregistratie-aanvragen"
+    },
 
-  {"page":"dashboard","key":"search_clubs","language":"en","value":"Search Clubs"},
-  {"page":"dashboard","key":"search_clubs","language":"nl","value":"Zoek clubs"},
-  {"page":"dashboard","key":"search_by_name","language":"en","value":"Search by club name"},
-  {"page":"dashboard","key":"search_by_name","language":"nl","value":"Zoek op clubnaam"},
-  {"page":"dashboard","key":"loading_clubs","language":"en","value":"Loading clubs..."},
-  {"page":"dashboard","key":"loading_clubs","language":"nl","value":"Clubs laden..."},
-  {"page":"dashboard","key":"no_clubs_found","language":"en","value":"No clubs found."},
-  {"page":"dashboard","key":"no_clubs_found","language":"nl","value":"Geen clubs gevonden."},
-  {"page":"dashboard","key":"joined","language":"en","value":"Joined"},
-  {"page":"dashboard","key":"joined","language":"nl","value":"Lid"},
-  {"page":"dashboard","key":"request_to_join","language":"en","value":"Request to Join"},
-  {"page":"dashboard","key":"request_to_join","language":"nl","value":"Aanvraag om lid te worden"},
+    {
+        "page": "dashboard",
+        "key": "search_clubs",
+        "language": "en",
+        "value": "Search Clubs"
+    },
+    {
+        "page": "dashboard",
+        "key": "search_clubs",
+        "language": "nl",
+        "value": "Zoek clubs"
+    },
+    {
+        "page": "dashboard",
+        "key": "search_by_name",
+        "language": "en",
+        "value": "Search by club name"
+    },
+    {
+        "page": "dashboard",
+        "key": "search_by_name",
+        "language": "nl",
+        "value": "Zoek op clubnaam"
+    },
+    {
+        "page": "dashboard",
+        "key": "loading_clubs",
+        "language": "en",
+        "value": "Loading clubs..."
+    },
+    {
+        "page": "dashboard",
+        "key": "loading_clubs",
+        "language": "nl",
+        "value": "Clubs laden..."
+    },
+    {
+        "page": "dashboard",
+        "key": "no_clubs_found",
+        "language": "en",
+        "value": "No clubs found."
+    },
+    {
+        "page": "dashboard",
+        "key": "no_clubs_found",
+        "language": "nl",
+        "value": "Geen clubs gevonden."
+    },
+    {
+        "page": "dashboard",
+        "key": "joined",
+        "language": "en",
+        "value": "Joined"
+    },
+    { "page": "dashboard", "key": "joined", "language": "nl", "value": "Lid" },
+    {
+        "page": "dashboard",
+        "key": "request_to_join",
+        "language": "en",
+        "value": "Request to Join"
+    },
+    {
+        "page": "dashboard",
+        "key": "request_to_join",
+        "language": "nl",
+        "value": "Aanvraag om lid te worden"
+    },
 
-  {"page":"dashboard","key":"my_join_requests","language":"en","value":"My Join Requests"},
-  {"page":"dashboard","key":"my_join_requests","language":"nl","value":"Mijn aanvragen"},
-  {"page":"dashboard","key":"no_join_requests_yet","language":"en","value":"No join requests yet."},
-  {"page":"dashboard","key":"no_join_requests_yet","language":"nl","value":"Nog geen aanvragen."},
-  {"page":"dashboard","key":"unknown_club","language":"en","value":"Unknown club"},
-  {"page":"dashboard","key":"unknown_club","language":"nl","value":"Onbekende club"},
-  {"page":"dashboard","key":"requested_prefix","language":"en","value":"Requested"},
-  {"page":"dashboard","key":"requested_prefix","language":"nl","value":"Aangevraagd"},
+    {
+        "page": "dashboard",
+        "key": "my_join_requests",
+        "language": "en",
+        "value": "My Join Requests"
+    },
+    {
+        "page": "dashboard",
+        "key": "my_join_requests",
+        "language": "nl",
+        "value": "Mijn aanvragen"
+    },
+    {
+        "page": "dashboard",
+        "key": "no_join_requests_yet",
+        "language": "en",
+        "value": "No join requests yet."
+    },
+    {
+        "page": "dashboard",
+        "key": "no_join_requests_yet",
+        "language": "nl",
+        "value": "Nog geen aanvragen."
+    },
+    {
+        "page": "dashboard",
+        "key": "unknown_club",
+        "language": "en",
+        "value": "Unknown club"
+    },
+    {
+        "page": "dashboard",
+        "key": "unknown_club",
+        "language": "nl",
+        "value": "Onbekende club"
+    },
+    {
+        "page": "dashboard",
+        "key": "requested_prefix",
+        "language": "en",
+        "value": "Requested"
+    },
+    {
+        "page": "dashboard",
+        "key": "requested_prefix",
+        "language": "nl",
+        "value": "Aangevraagd"
+    },
 
-  {"page":"dashboard","key":"request_your_club","language":"en","value":"Request Your Own Club"},
-  {"page":"dashboard","key":"request_your_club","language":"nl","value":"Vraag je eigen club aan"},
-  {"page":"dashboard","key":"club_name","language":"en","value":"Club Name"},
-  {"page":"dashboard","key":"club_name","language":"nl","value":"Clubnaam"},
-  {"page":"dashboard","key":"club_name_placeholder","language":"en","value":"What is your club's name?"},
-  {"page":"dashboard","key":"club_name_placeholder","language":"nl","value":"Wat is de naam van je club?"},
-  {"page":"dashboard","key":"city","language":"en","value":"City"},
-  {"page":"dashboard","key":"city","language":"nl","value":"Stad"},
-  {"page":"dashboard","key":"city_placeholder","language":"en","value":"City where your club is based"},
-  {"page":"dashboard","key":"city_placeholder","language":"nl","value":"Stad waar je club gevestigd is"},
-  {"page":"dashboard","key":"main_sport","language":"en","value":"Main Sport"},
-  {"page":"dashboard","key":"main_sport","language":"nl","value":"Hoofdsport"},
-  {"page":"dashboard","key":"main_sport_placeholder","language":"en","value":"Padel"},
-  {"page":"dashboard","key":"main_sport_placeholder","language":"nl","value":"Padel"},
-  {"page":"dashboard","key":"description","language":"en","value":"Description"},
-  {"page":"dashboard","key":"description","language":"nl","value":"Beschrijving"},
-  {"page":"dashboard","key":"description_placeholder","language":"en","value":"Tell us what your club is about and why you want to use our platform"},
-  {"page":"dashboard","key":"description_placeholder","language":"nl","value":"Vertel ons over je club en waarom je ons platform wilt gebruiken"},
-  {"page":"dashboard","key":"submitting","language":"en","value":"Submitting..."},
-  {"page":"dashboard","key":"submitting","language":"nl","value":"Verzenden..."},
-  {"page":"dashboard","key":"submit_club_request","language":"en","value":"Submit Club Request"},
-  {"page":"dashboard","key":"submit_club_request","language":"nl","value":"Verstuur clubaanvraag"},
-  {"page":"dashboard","key":"my_club_registration_requests","language":"en","value":"My Club Registration Requests"},
-  {"page":"dashboard","key":"my_club_registration_requests","language":"nl","value":"Mijn clubregistratie-aanvragen"},
-  {"page":"dashboard","key":"no_club_registration_requests_yet","language":"en","value":"No club registration requests yet."},
-  {"page":"dashboard","key":"no_club_registration_requests_yet","language":"nl","value":"Nog geen clubregistratie-aanvragen."},
-  {"page":"dashboard","key":"new_club","language":"en","value":"New Club"},
-  {"page":"dashboard","key":"new_club","language":"nl","value":"Nieuwe club"},
-  {"page":"dashboard","key":"unknown_city","language":"en","value":"Unknown city"},
-  {"page":"dashboard","key":"unknown_city","language":"nl","value":"Onbekende stad"},
+    {
+        "page": "dashboard",
+        "key": "availability_title",
+        "language": "en",
+        "value": "My Availability"
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_title",
+        "language": "nl",
+        "value": "Mijn beschikbaarheid"
+    },
+    { "page": "dashboard", "key": "date", "language": "en", "value": "Date" },
+    { "page": "dashboard", "key": "date", "language": "nl", "value": "Datum" },
+    {
+        "page": "dashboard",
+        "key": "start_time",
+        "language": "en",
+        "value": "Start time"
+    },
+    {
+        "page": "dashboard",
+        "key": "start_time",
+        "language": "nl",
+        "value": "Starttijd"
+    },
+    {
+        "page": "dashboard",
+        "key": "end_time",
+        "language": "en",
+        "value": "End time"
+    },
+    {
+        "page": "dashboard",
+        "key": "end_time",
+        "language": "nl",
+        "value": "Eindtijd"
+    },
+    {
+        "page": "dashboard",
+        "key": "adding",
+        "language": "en",
+        "value": "Adding..."
+    },
+    {
+        "page": "dashboard",
+        "key": "adding",
+        "language": "nl",
+        "value": "Toevoegen..."
+    },
+    {
+        "page": "dashboard",
+        "key": "add_availability_block",
+        "language": "en",
+        "value": "Add availability block"
+    },
+    {
+        "page": "dashboard",
+        "key": "add_availability_block",
+        "language": "nl",
+        "value": "Beschikbaarheidsblok toevoegen"
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_blocks",
+        "language": "en",
+        "value": "Your blocks"
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_blocks",
+        "language": "nl",
+        "value": "Jouw blokken"
+    },
+    {
+        "page": "dashboard",
+        "key": "loading",
+        "language": "en",
+        "value": "Loading..."
+    },
+    {
+        "page": "dashboard",
+        "key": "loading",
+        "language": "nl",
+        "value": "Laden..."
+    },
+    {
+        "page": "dashboard",
+        "key": "no_availability_blocks",
+        "language": "en",
+        "value": "No availability blocks yet."
+    },
+    {
+        "page": "dashboard",
+        "key": "no_availability_blocks",
+        "language": "nl",
+        "value": "Nog geen beschikbaarheidsblokken."
+    },
+    {
+        "page": "dashboard",
+        "key": "delete",
+        "language": "en",
+        "value": "Delete"
+    },
+    {
+        "page": "dashboard",
+        "key": "delete",
+        "language": "nl",
+        "value": "Verwijderen"
+    },
 
-  {"page":"dashboard","key":"status_pending","language":"en","value":"Pending"},
-  {"page":"dashboard","key":"status_pending","language":"nl","value":"In behandeling"},
-  {"page":"dashboard","key":"status_approved","language":"en","value":"Approved"},
-  {"page":"dashboard","key":"status_approved","language":"nl","value":"Goedgekeurd"},
-  {"page":"dashboard","key":"status_rejected","language":"en","value":"Rejected"},
-  {"page":"dashboard","key":"status_rejected","language":"nl","value":"Geweigerd"},
-  {"page":"dashboard","key":"status_cancelled","language":"en","value":"Cancelled"},
-  {"page":"dashboard","key":"status_cancelled","language":"nl","value":"Geannuleerd"},
+    {
+        "page": "dashboard",
+        "key": "could_not_load_availability",
+        "language": "en",
+        "value": "Could not load availability."
+    },
+    {
+        "page": "dashboard",
+        "key": "could_not_load_availability",
+        "language": "nl",
+        "value": "Kon beschikbaarheid niet laden."
+    },
+    {
+        "page": "dashboard",
+        "key": "fill_all_availability_fields",
+        "language": "en",
+        "value": "Please fill all availability fields."
+    },
+    {
+        "page": "dashboard",
+        "key": "fill_all_availability_fields",
+        "language": "nl",
+        "value": "Vul alle beschikbaarheidsvelden in."
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_future_only",
+        "language": "en",
+        "value": "Start time must be in the future."
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_future_only",
+        "language": "nl",
+        "value": "Starttijd moet in de toekomst liggen."
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_start_before_end",
+        "language": "en",
+        "value": "Start time must be before end time."
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_start_before_end",
+        "language": "nl",
+        "value": "Starttijd moet voor eindtijd liggen."
+    },
+    {
+        "page": "dashboard",
+        "key": "could_not_add_availability",
+        "language": "en",
+        "value": "Could not add availability."
+    },
+    {
+        "page": "dashboard",
+        "key": "could_not_add_availability",
+        "language": "nl",
+        "value": "Kon beschikbaarheid niet toevoegen."
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_added",
+        "language": "en",
+        "value": "Availability block added."
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_added",
+        "language": "nl",
+        "value": "Beschikbaarheidsblok toegevoegd."
+    },
+    {
+        "page": "dashboard",
+        "key": "could_not_delete_availability",
+        "language": "en",
+        "value": "Could not delete availability."
+    },
+    {
+        "page": "dashboard",
+        "key": "could_not_delete_availability",
+        "language": "nl",
+        "value": "Kon beschikbaarheid niet verwijderen."
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_deleted",
+        "language": "en",
+        "value": "Availability block deleted."
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_deleted",
+        "language": "nl",
+        "value": "Beschikbaarheidsblok verwijderd."
+    },
 
-  {"page":"dashboard","key":"club_name_required","language":"en","value":"Club name is required."},
-  {"page":"dashboard","key":"club_name_required","language":"nl","value":"Clubnaam is verplicht."},
-  {"page":"dashboard","key":"could_not_submit_club_request","language":"en","value":"Could not submit your club request right now."},
-  {"page":"dashboard","key":"could_not_submit_club_request","language":"nl","value":"Je clubaanvraag kon nu niet verzonden worden."},
-  {"page":"dashboard","key":"club_request_submitted","language":"en","value":"Club request submitted."},
-  {"page":"dashboard","key":"club_request_submitted","language":"nl","value":"Clubaanvraag verzonden."}
+    {
+        "page": "dashboard",
+        "key": "request_your_club",
+        "language": "en",
+        "value": "Request Your Own Club"
+    },
+    {
+        "page": "dashboard",
+        "key": "request_your_club",
+        "language": "nl",
+        "value": "Vraag je eigen club aan"
+    },
+    {
+        "page": "dashboard",
+        "key": "club_name",
+        "language": "en",
+        "value": "Club Name"
+    },
+    {
+        "page": "dashboard",
+        "key": "club_name",
+        "language": "nl",
+        "value": "Clubnaam"
+    },
+    {
+        "page": "dashboard",
+        "key": "club_name_placeholder",
+        "language": "en",
+        "value": "What is your club's name?"
+    },
+    {
+        "page": "dashboard",
+        "key": "club_name_placeholder",
+        "language": "nl",
+        "value": "Wat is de naam van je club?"
+    },
+    { "page": "dashboard", "key": "city", "language": "en", "value": "City" },
+    { "page": "dashboard", "key": "city", "language": "nl", "value": "Stad" },
+    {
+        "page": "dashboard",
+        "key": "city_placeholder",
+        "language": "en",
+        "value": "City where your club is based"
+    },
+    {
+        "page": "dashboard",
+        "key": "city_placeholder",
+        "language": "nl",
+        "value": "Stad waar je club gevestigd is"
+    },
+    {
+        "page": "dashboard",
+        "key": "main_sport",
+        "language": "en",
+        "value": "Main Sport"
+    },
+    {
+        "page": "dashboard",
+        "key": "main_sport",
+        "language": "nl",
+        "value": "Hoofdsport"
+    },
+    {
+        "page": "dashboard",
+        "key": "main_sport_placeholder",
+        "language": "en",
+        "value": "Padel"
+    },
+    {
+        "page": "dashboard",
+        "key": "main_sport_placeholder",
+        "language": "nl",
+        "value": "Padel"
+    },
+    {
+        "page": "dashboard",
+        "key": "description",
+        "language": "en",
+        "value": "Description"
+    },
+    {
+        "page": "dashboard",
+        "key": "description",
+        "language": "nl",
+        "value": "Beschrijving"
+    },
+    {
+        "page": "dashboard",
+        "key": "description_placeholder",
+        "language": "en",
+        "value": "Tell us what your club is about and why you want to use our platform"
+    },
+    {
+        "page": "dashboard",
+        "key": "description_placeholder",
+        "language": "nl",
+        "value": "Vertel ons over je club en waarom je ons platform wilt gebruiken"
+    },
+    {
+        "page": "dashboard",
+        "key": "submitting",
+        "language": "en",
+        "value": "Submitting..."
+    },
+    {
+        "page": "dashboard",
+        "key": "submitting",
+        "language": "nl",
+        "value": "Verzenden..."
+    },
+    {
+        "page": "dashboard",
+        "key": "submit_club_request",
+        "language": "en",
+        "value": "Submit Club Request"
+    },
+    {
+        "page": "dashboard",
+        "key": "submit_club_request",
+        "language": "nl",
+        "value": "Verstuur clubaanvraag"
+    },
+    {
+        "page": "dashboard",
+        "key": "my_club_registration_requests",
+        "language": "en",
+        "value": "My Club Registration Requests"
+    },
+    {
+        "page": "dashboard",
+        "key": "my_club_registration_requests",
+        "language": "nl",
+        "value": "Mijn clubregistratie-aanvragen"
+    },
+    {
+        "page": "dashboard",
+        "key": "no_club_registration_requests_yet",
+        "language": "en",
+        "value": "No club registration requests yet."
+    },
+    {
+        "page": "dashboard",
+        "key": "no_club_registration_requests_yet",
+        "language": "nl",
+        "value": "Nog geen clubregistratie-aanvragen."
+    },
+    {
+        "page": "dashboard",
+        "key": "new_club",
+        "language": "en",
+        "value": "New Club"
+    },
+    {
+        "page": "dashboard",
+        "key": "new_club",
+        "language": "nl",
+        "value": "Nieuwe club"
+    },
+    {
+        "page": "dashboard",
+        "key": "unknown_city",
+        "language": "en",
+        "value": "Unknown city"
+    },
+    {
+        "page": "dashboard",
+        "key": "unknown_city",
+        "language": "nl",
+        "value": "Onbekende stad"
+    },
+
+    {
+        "page": "dashboard",
+        "key": "status_pending",
+        "language": "en",
+        "value": "Pending"
+    },
+    {
+        "page": "dashboard",
+        "key": "status_pending",
+        "language": "nl",
+        "value": "In behandeling"
+    },
+    {
+        "page": "dashboard",
+        "key": "status_approved",
+        "language": "en",
+        "value": "Approved"
+    },
+    {
+        "page": "dashboard",
+        "key": "status_approved",
+        "language": "nl",
+        "value": "Goedgekeurd"
+    },
+    {
+        "page": "dashboard",
+        "key": "status_rejected",
+        "language": "en",
+        "value": "Rejected"
+    },
+    {
+        "page": "dashboard",
+        "key": "status_rejected",
+        "language": "nl",
+        "value": "Geweigerd"
+    },
+    {
+        "page": "dashboard",
+        "key": "status_cancelled",
+        "language": "en",
+        "value": "Cancelled"
+    },
+    {
+        "page": "dashboard",
+        "key": "status_cancelled",
+        "language": "nl",
+        "value": "Geannuleerd"
+    },
+
+    {
+        "page": "dashboard",
+        "key": "club_name_required",
+        "language": "en",
+        "value": "Club name is required."
+    },
+    {
+        "page": "dashboard",
+        "key": "club_name_required",
+        "language": "nl",
+        "value": "Clubnaam is verplicht."
+    },
+    {
+        "page": "dashboard",
+        "key": "could_not_submit_club_request",
+        "language": "en",
+        "value": "Could not submit your club request right now."
+    },
+    {
+        "page": "dashboard",
+        "key": "could_not_submit_club_request",
+        "language": "nl",
+        "value": "Je clubaanvraag kon nu niet verzonden worden."
+    },
+    {
+        "page": "dashboard",
+        "key": "club_request_submitted",
+        "language": "en",
+        "value": "Club request submitted."
+    },
+    {
+        "page": "dashboard",
+        "key": "club_request_submitted",
+        "language": "nl",
+        "value": "Clubaanvraag verzonden."
+    }
 ]

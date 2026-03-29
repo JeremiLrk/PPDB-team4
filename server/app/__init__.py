@@ -3,6 +3,7 @@ from flask import Flask
 from server.config import SECRET_KEY, config_data
 from server.extensions import db
 from server.app.routes.auth_routes import auth_bp
+from server.app.routes.availability_routes import availability_bp
 from server.app.routes.clubs_routes import clubs_bp
 from server.app.routes.dashboard_routes import dashboard_bp
 from server.app.routes.health_routes import api
@@ -40,6 +41,7 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(root_bp)
     app.register_blueprint(api)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(availability_bp)
     app.register_blueprint(ladders_bp)
     app.register_blueprint(ladder_bp)
     app.register_blueprint(clubs_bp)
