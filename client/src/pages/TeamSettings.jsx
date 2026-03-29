@@ -1,12 +1,14 @@
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { useTeam }                      from "@/hooks/useTeam.js";
-import { useTeamPlayers }               from "@/hooks/useTeamPlayers.js";
-import { useCurrentUserContext }        from "@/context/useCurrentUserContext.js";
-import AddPlayerButton                  from "@/components/team/AddPlayerButton.jsx";
-import PlayerCard                       from "@/components/team/PlayerCard.jsx";
-import GearIcon                         from "@/components/icon/GearIcon.jsx";
-import { canManageTeam }                from "@/components/team/TeamSettingsLink.jsx";
-import styles       from "@/style/TeamSettings.module.css";
+import { useState } from "react";
+import { useTeam }from "@/hooks/useTeam.js";
+import { useTeamPlayers } from "@/hooks/useTeamPlayers.js";
+import { useCurrentUserContext }from "@/context/useCurrentUserContext.js";
+import AddPlayerButton from "@/components/team/AddPlayerButton.jsx";
+import PlayerCard from "@/components/team/PlayerCard.jsx";
+import RenameTeamButton from "@/components/team/RenameTeamButton.jsx";
+import GearIcon from "@/components/icon/GearIcon.jsx";
+import { canManageTeam }from "@/components/team/TeamSettingsLink.jsx";
+import styles from "@/style/TeamSettings.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 
 export default function TeamSettings() {
@@ -17,6 +19,10 @@ export default function TeamSettings() {
     const { team,    loading: teamLoading,    error: teamError    } = useTeam(teamId);
     const { players, loading: playersLoading, error: playersError,
             total,   reload: reloadPlayers, addPlayerLocally} = useTeamPlayers(teamId);
+
+    // Local display name — updated optimistically after rename
+    const [displayName, setDisplayName] = useState(null);
+    const teamName = displayName ?? team?.name ?? "";
 
     /* loading */
     if (teamLoading) {
@@ -57,7 +63,7 @@ export default function TeamSettings() {
             <div className={styles.state}>
                 <p className={styles.error}>Access denied. You do not have permission to manage this team.</p>
                 <button className={styles.backBtn} onClick={() => navigate(`/teams/${teamId}`)}>
-                    ← Back to team
+                    &lt;- Back to team
                 </button>
             </div>
         );
@@ -70,7 +76,7 @@ export default function TeamSettings() {
             {/* Navigation */}
             <div className={styles.breadcrumbs}>
                 <button className={styles.backBtn} onClick={() => navigate(`/teams/${teamId}`)}>
-                    ← {team.name}
+                    &lt;- {teamName}
                 </button>
                 <span className={styles.breadcrumbSep}>/</span>
                 <span className={styles.breadcrumbCurrent}>Settings</span>
@@ -82,7 +88,14 @@ export default function TeamSettings() {
                 <div className={styles.heroBody}>
                     <div className={styles.heroTop}>
                         <div>
-                            <h1 className={styles.name}>{team.name}</h1>
+                            <div className={styles.nameRow}>
+                                <h1 className={styles.name}>{teamName}</h1>
+                                <RenameTeamButton
+                                    teamId={teamId}
+                                    currentName={teamName}
+                                    onRenamed={t => setDisplayName(t.name)}
+                                />
+                            </div>
                             <div className={styles.tags}>
                                 <Tag label="Settings" accent />
                                 <Tag label={team.clubId ? `Club #${team.clubId}` : "Independent"} muted={!team.clubId} />
@@ -131,7 +144,12 @@ export default function TeamSettings() {
                 {!playersLoading && !playersError && players.length > 0 && (
                     <ul className={commonStyles.list}>
                         {players.map(player => (
-                            <PlayerCard key={player.playerId ?? player.id} player={player} />
+                            <PlayerCard
+                                key={player.playerId ?? player.id}
+                                player={player}
+                                teamId={teamId}
+                                onDeleted={reloadPlayers}
+                            />
                         ))}
                     </ul>
                 )}
