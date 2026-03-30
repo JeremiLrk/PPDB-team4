@@ -101,3 +101,88 @@ test("login Continue as guest navigates back to landing", async () => {
     await account.click(await screen.findByRole("link", { name: "Continue as guest" }));
     expect(await screen.findByRole("heading", { name: "How NetRank works" })).toBeInTheDocument();
 });
+
+// Verifies header Teams button opens the teams list page.
+test("header Teams button navigates to /teams", async () => {
+    mockApi();
+    const user = userEvent.setup();
+
+    render(
+        <MemoryRouter initialEntries={["/"]}>
+            <App />
+        </MemoryRouter>
+    );
+
+    const banner = screen.getByRole("banner");
+    await user.click(within(banner).getByRole("button", { name: "Teams" }));
+
+    expect(await screen.findByRole("heading", { name: "Teams" })).toBeInTheDocument();
+});
+
+// Verifies selecting a team from the teams list opens team detail.
+test("teams list card click navigates to /teams/:teamId", async () => {
+    mockApi({
+        teams: [{ id: 201, name: "NetRank Aces", clubId: 1, sportTypeId: 4 }],
+    });
+    const user = userEvent.setup();
+
+    render(
+        <MemoryRouter initialEntries={["/teams"]}>
+            <App />
+        </MemoryRouter>
+    );
+
+    await user.click(await screen.findByRole("button", { name: /NetRank Aces/i }));
+    expect(await screen.findByRole("heading", { name: "NetRank Aces" })).toBeInTheDocument();
+});
+
+// Verifies managed team detail page can navigate to team settings via gear button.
+test("team detail settings gear navigates to /teams/:teamId/settings", async () => {
+    mockApi({
+        me: {
+            id: 7,
+            email: "manager@netrank.com",
+            role: "team_manager",
+            managedTeamIds: [201],
+            clubIds: [],
+        },
+        teams: [{ id: 201, name: "NetRank Aces", clubId: 1, sportTypeId: 4 }],
+    });
+    const user = userEvent.setup();
+
+    render(
+        <MemoryRouter initialEntries={["/teams/201"]}>
+            <App />
+        </MemoryRouter>
+    );
+
+    await user.click(await screen.findByRole("button", { name: "Settings for NetRank Aces" }));
+    expect(await screen.findByRole("button", { name: /<- NetRank Aces/i })).toBeInTheDocument();
+});
+
+// Verifies dashboard Teams tab "Open" action navigates to team detail.
+test("dashboard teams tab open button navigates to /teams/:teamId", async () => {
+    mockApi({
+        me: {
+            id: 9,
+            email: "demo@netrank.com",
+            role: "user",
+            managedTeamIds: [],
+            clubIds: [],
+        },
+        teams: [{ id: 201, name: "NetRank Aces", clubId: 1, sportTypeId: 4 }],
+    });
+    const user = userEvent.setup();
+
+    render(
+        <MemoryRouter initialEntries={["/"]}>
+            <App />
+        </MemoryRouter>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Open dashboard" }));
+    await user.click(await screen.findByRole("button", { name: "My Teams" }));
+    await user.click(await screen.findByRole("button", { name: "Open" }));
+
+    expect(await screen.findByRole("heading", { name: "NetRank Aces" })).toBeInTheDocument();
+});

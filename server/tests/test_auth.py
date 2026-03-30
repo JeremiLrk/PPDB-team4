@@ -53,9 +53,18 @@ def test_signup_existing_user(client: FlaskClient, app: Flask):
     email = _unique_email()
 
     with app.app_context():
-        existing_user = Account(email=email, password_hash="hashedpassword")
-        db.session.add(existing_user)
-        db.session.commit()
+        # Create baseline user through the same API flow to keep required fields consistent.
+        response = client.post(
+            "/api/signup",
+            json={
+                "email": email,
+                "password": "password123",
+                "firstName": "Existing",
+                "lastName": "User",
+                "dateOfBirth": "2000-01-01",
+            },
+        )
+        assert response.status_code == 201
 
     payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"}
     response = client.post("/api/signup", json=payload)

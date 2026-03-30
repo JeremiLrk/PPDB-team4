@@ -1,4 +1,5 @@
 import styles from "@/style/Dashboard.module.css";
+import formStyles from "@/style/common/Forms.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
 import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab, ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
@@ -34,9 +35,9 @@ function Dashboard({ currentUser, setUser }) {
             />
 
             <div className={styles.workspace}>
-                {workspace.error ? (
-                    <p className={styles.warning}>{workspace.error}</p>
-                ) : null}
+
+
+                {workspace.error ? <p className={formStyles.warning}>{workspace.error}</p> : null}
 
                 {workspace.activeTab === "overview" ? (
                     <OverviewTab

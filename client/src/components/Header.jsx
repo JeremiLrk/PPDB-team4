@@ -31,8 +31,9 @@ export default function Header({ status }) {
     }, []);
 
     async function handleLogout() {
-        localStorage.removeItem("currentUser");
+        setMenuOpen(false);
         setCurrentUser(null);
+        localStorage.removeItem("currentUser");
         try {
             const response = await fetch("/api/logout", {
                 method: "POST",
@@ -40,17 +41,22 @@ export default function Header({ status }) {
                 credentials: "include",
             });
 
-            const data = await response.json();
+            let data = {};
+            try {
+                data = await response.json();
+            } catch {
+                data = {};
+            }
             if (!response.ok) {
                 throw new Error(data?.message || "Logout failed");
             }
 
-            setCurrentUser(null);
             notify.success("Logout successful");
             navigate("/");
         } catch (err) {
-            console.error(err?.message || "Logout failed");
-            notify.error(err?.message || "Logout failed");
+            // Local logout already happened; backend failure should not keep user stuck.
+            console.error(err?.message || "Logout request failed");
+            navigate("/");
         }
     }
 
@@ -64,34 +70,33 @@ export default function Header({ status }) {
     return (
         <header className={styles.header}>
             <div className={styles.headerInner}>
-                <div>
+                <div className={styles.headerLeft}>
                     <Badge status={status} />
+                    <nav className={styles.headerNav}>
+                        <button
+                            onClick={() => navigate("/clubs")}
+                            className={styles.navLink}
+                        >
+                            {baseTexts.clubs || "Clubs"}
+                        </button>
+                        <button
+                            onClick={() => navigate("/teams")}
+                            className={styles.navLink}
+                        >
+                            {baseTexts.teams || "Teams"}
+                        </button>
+                    </nav>
                 </div>
 
                 <h1 className={styles.headerTitle}>
-                    <button onClick={() => navigate("/")}>
+                    <button className={styles.brandButton} onClick={() => navigate("/")}>
                         {baseTexts.net_rank || "NetRank"}
                     </button>
                 </h1>
 
-                <nav className={styles.headerNav}>
-                    <button
-                        onClick={() => navigate("/clubs")}
-                        className={styles.navLink}
-                    >
-                        {baseTexts.clubs || "Clubs"}
-                    </button>
-                    <button
-                        onClick={() => navigate("/teams")}
-                        className={styles.navLink}
-                    >
-                        {baseTexts.teams || "Teams"}
-                    </button>
-                </nav>
-
                 <div className={styles.headerRight}>
-                    <button onClick={() => setLang("nl")}>NL</button>
-                    <button onClick={() => setLang("en")}>EN</button>
+                    <button className={styles.langButton} onClick={() => setLang("nl")}>NL</button>
+                    <button className={styles.langButton} onClick={() => setLang("en")}>EN</button>
 
                     {!currentUser ? (
                         <>
@@ -109,7 +114,7 @@ export default function Header({ status }) {
                             </button>
                         </>
                     ) : (
-                        <div className="relative" ref={dropdownRef}>
+                        <div className={styles.userMenu} ref={dropdownRef}>
                             <button
                                 className={styles.userButton}
                                 onClick={() => setMenuOpen((prev) => !prev)}
@@ -117,65 +122,30 @@ export default function Header({ status }) {
                                 {userLabel} ▾
                             </button>
                             {menuOpen && (
-                            <div 
-                                className="absolute right-0 mt-2 z-50 shadow-2xl"
-                                style={{ 
-                                    minWidth: '150px', // Narrowed from 180px
-                                    backgroundColor: 'rgba(30, 27, 75, 0.85)', 
-                                    backdropFilter: 'blur(12px)',
-                                    borderRadius: '10px',
-                                    border: '1px solid rgba(129, 140, 248, 0.3)',
-                                    padding: '4px', // Reduced container padding
-                                }}
-                            >
-                                <ul className="flex flex-col m-0 p-0 list-none">
-                                    <li style={{ marginBottom: '1px' }}>
-                                        <button
-                                            className={styles.userDropdownItem}
-                                            onMouseDown={() => navigate("/dashboard")}
-                                            style={{ 
-                                                width: '100%', 
-                                                textAlign: 'left', 
-                                                padding: '6px 12px', // Shorter height
-                                                fontSize: '13px',    // Smaller text
-                                                fontWeight: '500',
-                                                color: '#e0e7ff',
-                                                borderRadius: '6px',
-                                                display: 'block',
-                                                background: 'none',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            Dashboard
-                                        </button>
-                                    </li>
-                                    <li style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)', marginTop: '2px', paddingTop: '2px' }}>
-                                        <button
-                                            className={styles.userDropdownItem}
-                                            onMouseDown={handleLogout}
-                                            style={{ 
-                                                width: '100%', 
-                                                textAlign: 'left', 
-                                                padding: '6px 12px', // Shorter height
-                                                fontSize: '13px',    // Smaller text
-                                                fontWeight: '600',
-                                                color: '#fda4af',
-                                                borderRadius: '6px',
-                                                display: 'block',
-                                                background: 'none',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            {authTexts.log_out || "Log out"}
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-                        )}
+                                <div className={styles.userDropdown}>
+                                    <ul className={styles.userDropdownList}>
+                                        <li>
+                                            <button
+                                                className={styles.userDropdownItem}
+                                                onClick={() => {
+                                                    setMenuOpen(false);
+                                                    navigate("/dashboard");
+                                                }}
+                                            >
+                                                Dashboard
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button
+                                                className={styles.userDropdownItem}
+                                                onClick={handleLogout}
+                                            >
+                                                {authTexts.log_out || "Log out"}
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
