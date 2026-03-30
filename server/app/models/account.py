@@ -19,6 +19,8 @@ class Account(db.Model):
     player        = db.relationship("Player",        back_populates="account", uselist=False)
     team_manager  = db.relationship("TeamManager",   back_populates="account", uselist=False)
 
+    is_verified = db.Column(db.Boolean, nullable=False, default=False)
+
     @property
     def resolved_role(self):
         """Returns the model with the highest level of inheritance."""

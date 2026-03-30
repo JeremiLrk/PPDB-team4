@@ -7,6 +7,28 @@ import TeamCard from "@/components/dashboard/TeamCard.jsx";
 import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js";
 import CreateTeamButton from "@/components/team/CreateTeamButton.jsx";
 
+function parseUtcTimestamp(value) {
+    if (typeof value !== "string") {
+        return null
+    }
+
+    const parsed = new Date(value)
+
+    if (Number.isNaN(parsed.getTime())) {
+        return null
+    }
+
+    return parsed
+}
+
+function formatLocalTimestamp(value) {
+    const parsed = parseUtcTimestamp(value)
+    if (!parsed) {
+        return value || "-"
+    }
+
+    return parsed.toLocaleString()
+}
 
 // We combine both modules into one proxy object,
 // so as not to rewrite every styles.* in the template.
@@ -531,3 +553,137 @@ export function TeamsTab({
     );
 }
  
+export function AvailabilityTab({
+    availabilityBlocks,
+    availabilityForm,
+    availabilityLoading,
+    availabilitySubmitting,
+    availabilityMessage,
+    onAvailabilityFieldChange,
+    onAvailabilitySubmit,
+    onAvailabilityDelete,
+    texts,
+}) {
+    return (
+        <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
+            <article className={styles.panel}>
+                <h3 className={styles.panelTitle}>
+                    {texts?.availability_title || "My Availability"}
+                </h3>
+                <form className={styles.form} onSubmit={onAvailabilitySubmit}>
+                    <div className={styles.formRow}>
+                        <label className={styles.formLabel}>
+                            {texts?.date || "Date"}
+                            <input
+                                className={styles.formInput}
+                                type="date"
+                                name="date"
+                                value={availabilityForm.date}
+                                onChange={onAvailabilityFieldChange}
+                                required
+                            />
+                        </label>
+                        <label className={styles.formLabel}>
+                            {texts?.start_time || "Start time"}
+                            <input
+                                className={styles.formInput}
+                                type="time"
+                                name="startTime"
+                                value={availabilityForm.startTime}
+                                onChange={onAvailabilityFieldChange}
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <label className={styles.formLabel}>
+                        {texts?.end_time || "End time"}
+                        <input
+                            className={styles.formInput}
+                            type="time"
+                            name="endTime"
+                            value={availabilityForm.endTime}
+                            onChange={onAvailabilityFieldChange}
+                            required
+                        />
+                    </label>
+
+                    <div className={styles.formActions}>
+                        <button
+                            className={styles.submitButton}
+                            type="submit"
+                            disabled={availabilitySubmitting}
+                        >
+                            {availabilitySubmitting
+                                ? texts?.adding || "Adding..."
+                                : texts?.add_availability_block ||
+                                  "Add availability block"}
+                        </button>
+                    </div>
+                </form>
+
+                {availabilityMessage.text ? (
+                    <p
+                        className={`${styles.notice} ${
+                            availabilityMessage.type === "error"
+                                ? styles.noticeError
+                                : availabilityMessage.type === "success"
+                                  ? styles.noticeSuccess
+                                  : styles.noticeInfo
+                        }`}
+                    >
+                        {availabilityMessage.text}
+                    </p>
+                ) : null}
+            </article>
+
+            <article className={styles.panel}>
+                <div className={styles.panelTopRow}>
+                    <h3 className={styles.panelTitle}>
+                        {texts?.availability_blocks || "Your blocks"}
+                    </h3>
+                    <span className={styles.counter}>
+                        {availabilityBlocks.length}
+                    </span>
+                </div>
+
+                {availabilityLoading ? (
+                    <p className={styles.muted}>
+                        {texts?.loading || "Loading..."}
+                    </p>
+                ) : null}
+
+                {!availabilityLoading && availabilityBlocks.length === 0 ? (
+                    <p className={styles.muted}>
+                        {texts?.no_availability_blocks ||
+                            "No availability blocks yet."}
+                    </p>
+                ) : null}
+
+                {!availabilityLoading && availabilityBlocks.length > 0 ? (
+                    <ul className={styles.list}>
+                        {availabilityBlocks.map((block) => (
+                            <li className={styles.listItem} key={block.id}>
+                                <div>
+                                    <p className={styles.primaryText}>
+                                        {formatLocalTimestamp(block.start_at)} -{" "}
+                                        {formatLocalTimestamp(block.end_at)}
+                                    </p>
+                                </div>
+                                <button
+                                    className={styles.primaryButton}
+                                    type="button"
+                                    onClick={() =>
+                                        onAvailabilityDelete(block.id)
+                                    }
+                                >
+                                    {texts?.delete || "Delete"}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                ) : null}
+            </article>
+        </section>
+    )
+}

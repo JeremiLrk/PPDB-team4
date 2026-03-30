@@ -19,16 +19,16 @@ def _get_current_user():
 
 @availability_bp.get("")
 def get_my_availability():
-    user = _get_current_user()
-    if not user:
+    account = _get_current_user()
+    if not account:
         return jsonify({"message": "Unauthorized."}), 401
 
-    return jsonify({"availability": list_blocks_for_user(user.id)}), 200
+    return jsonify({"availability": list_blocks_for_user(account.id)}), 200
 
 @availability_bp.post("")
 def create_my_availability_block():
-    user = _get_current_user()
-    if not user:
+    account = _get_current_user()
+    if not account:
         return jsonify({"message": "Unauthorized."}), 401
 
     data = request.get_json() or {}
@@ -44,19 +44,19 @@ def create_my_availability_block():
     if start_at <= datetime.utcnow():
         return jsonify({"message": "start_at must be in the future."}), 400
 
-    if has_overlap(user.id, start_at, end_at):
+    if has_overlap(account.id, start_at, end_at):
         return jsonify({"message": "Availability block overlaps with an existing block."}), 409
 
-    block = create_block_for_user(user.id, start_at, end_at)
+    block = create_block_for_user(account.id, start_at, end_at)
     return jsonify({"block": block}), 201
 
 @availability_bp.delete("/<int:block_id>")
 def delete_my_availability_block(block_id):
-    user = _get_current_user()
-    if not user:
+    account = _get_current_user()
+    if not account:
         return jsonify({"message": "Unauthorized."}), 401
 
-    deleted = delete_block_for_user(user.id, block_id)
+    deleted = delete_block_for_user(account.id, block_id)
     if not deleted:
         return jsonify({"message": "Availability block not found."}), 404
 

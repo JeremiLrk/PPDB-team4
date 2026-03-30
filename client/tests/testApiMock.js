@@ -100,7 +100,7 @@ export function mockApi(options = {}) {
         if (path === "/api/health") return jsonResponse({ db_connected: true });
         if (path === "/api/me") {
             if (!me) return jsonResponse({ message: "Unauthorized" }, 401);
-            return jsonResponse({ user: me });
+            return jsonResponse({ account: me });
         }
         if (path === "/api/me/dashboard") return jsonResponse(dashboardData);
         if (path === "/api/clubs") return jsonResponse({ clubs });

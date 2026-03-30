@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS account (
     email VARCHAR(254) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'account',
+    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
 
     account_role_id BIGINT NOT NULL,
 
