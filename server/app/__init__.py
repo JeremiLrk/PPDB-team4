@@ -18,6 +18,7 @@ from server.app.utils.seed_table import seed_table
 from server.app.models.page_text import PageText
 from server.seeds.seed_teams_and_users import seed_teams_and_users
 from server.app.models.account_role import AccountRole
+from server.app.models.ladder import MatchRuleSet, LadderRatingFunction, Ladder
 from sqlalchemy import text
 
 
@@ -112,6 +113,16 @@ def _init_db(app: Flask):
         seed_table(
             model=AccountRole,
             seeds_file="server/seeds/account_role.json",
+            unique_fields=[],
+        )
+        seed_table(
+            model=MatchRuleSet,
+            seeds_file="server/seeds/match_rule_set.json",
+            unique_fields=[],
+        )
+        seed_table(
+            model=LadderRatingFunction,
+            seeds_file="server/seeds/ladder_rating_function.json",
             unique_fields=[],
         )
         seed_teams_and_users()

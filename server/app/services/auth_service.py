@@ -38,7 +38,7 @@ def register_user(email, password, first_name, last_name, date_of_birth):
         last_name=last_name,
         date_of_birth=date_of_birth,
         account_role_id=user_role.id,
-        is_verified=False,
+        is_verified=True,
     )
 
     db.session.add(new_user)

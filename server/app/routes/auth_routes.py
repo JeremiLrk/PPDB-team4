@@ -78,7 +78,6 @@ def login():
     return response
 
 @auth_bp.route("/logout", methods=["POST"])
-@login_required
 def logout():
     response = make_response(jsonify({"message": "Successfully logged out."}), 200)
     response.set_cookie(

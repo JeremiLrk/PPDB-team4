@@ -1,20 +1,15 @@
 from server.extensions import db
 
-# # Voeg deze klassen toe zodat SQLAlchemy de relaties begrijpt
-# class SportType(db.Model):
-#     __tablename__ = "sport_type"
-#     id = db.Column(db.BigInteger, primary_key=True)
-#     name = db.Column(db.String(64), nullable=False)
+class MatchRuleSet(db.Model):
+    __tablename__ = "match_rule_set"
+    id = db.Column(db.BigInteger, primary_key=True)
+    name = db.Column(db.String(64), nullable=False)
+    description = db.Column(db.String(512), nullable=True)
 
-# class MatchRuleSet(db.Model):
-#     __tablename__ = "match_rule_set"
-#     id = db.Column(db.BigInteger, primary_key=True)
-#     name = db.Column(db.String(64), nullable=False)
-
-# class LadderRatingFunction(db.Model):
-#     __tablename__ = "ladder_rating_function"
-#     id = db.Column(db.BigInteger, primary_key=True)
-#     name = db.Column(db.String(64), nullable=False)
+class LadderRatingFunction(db.Model):
+    __tablename__ = "ladder_rating_function"
+    id = db.Column(db.BigInteger, primary_key=True)
+    name = db.Column(db.String(64), nullable=False)
 
 class Ladder(db.Model):
     __tablename__ = "ladder"
