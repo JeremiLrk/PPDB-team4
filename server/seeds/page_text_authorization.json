@@ -371,16 +371,64 @@
         "language": "nl",
         "value": "Het wachtwoord is opnieuw ingesteld."
     },
-
     {
         "page": "authorization",
-        "key": "user",
+        "key": "verify_title",
         "language": "en",
-        "value": "User"
+        "value": "Email verification"
     },
     {
         "page": "authorization",
-        "key": "user",
+        "key": "verify_title",
+        "language": "nl",
+        "value": "E-mailverificatie"
+    },
+    {
+        "page": "authorization",
+        "key": "verify_pending",
+        "language": "en",
+        "value": "Verifying your email"
+    },
+    {
+        "page": "authorization",
+        "key": "verify_pending",
+        "language": "nl",
+        "value": "Je e-mailadres wordt geverifieerd"
+    },
+    {
+        "page": "authorization",
+        "key": "verify_success",
+        "language": "en",
+        "value": "Email verified successfully"
+    },
+    {
+        "page": "authorization",
+        "key": "verify_success",
+        "language": "nl",
+        "value": "E-mailadres succesvol geverifieerd"
+    },
+    {
+        "page": "authorization",
+        "key": "verify_failed",
+        "language": "en",
+        "value": "Verification link is invalid or expired"
+    },
+    {
+        "page": "authorization",
+        "key": "verify_failed",
+        "language": "nl",
+        "value": "Verificatielink is ongeldig of verlopen"
+    },
+
+    {
+        "page": "authorization",
+        "key": "account",
+        "language": "en",
+        "value": "Account"
+    },
+    {
+        "page": "authorization",
+        "key": "account",
         "language": "nl",
         "value": "Gebruiker"
     },

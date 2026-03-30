@@ -1,0 +1,197 @@
+
+
+.page {
+    width: 100%;
+    max-width: 52rem;
+    margin: 0 auto;
+    display: grid;
+    gap: 1.6rem;
+}
+
+/*  Back button  */
+
+.backBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease;
+    width: fit-content;
+}
+
+.backBtn:hover {
+    color: #94a3b8;
+}
+
+/*  Hero block  */
+
+.hero {
+    border-radius: 1.1rem;
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+}
+
+.heroAccent {
+    height: 4px;
+    background: linear-gradient(90deg,
+        rgba(14, 165, 233, 0.9),
+        rgba(16, 185, 129, 0.7),
+        rgba(14, 165, 233, 0.1));
+}
+
+.heroBody {
+    padding: 1.6rem 1.8rem;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.name {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #f8fafc;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.tag {
+    display: inline-block;
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 0.26rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    background: rgba(14, 116, 144, 0.28);
+    color: #7dd3fc;
+}
+
+.tagMuted {
+    border-color: rgba(148, 163, 184, 0.2);
+    background: rgba(148, 163, 184, 0.07);
+    color: #475569;
+}
+
+/*  Info grid  */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.75rem;
+}
+
+.infoCard {
+    border-radius: 0.8rem;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(15, 23, 42, 0.44);
+    padding: 0.85rem 1rem;
+}
+
+.infoLabel {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: #475569;
+}
+
+.infoValue {
+    margin: 0.35rem 0 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+/*  Players section  */
+.section {
+    border-radius: 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    background: rgba(15, 23, 42, 0.44);
+    backdrop-filter: blur(4px);
+    padding: 1rem 1.1rem;
+    display: grid;
+    gap: 0.75rem;
+}
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.sectionTitle {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+/*  Inline state (loading / error inside a section)  */
+.inlineState {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: #64748b;
+    font-size: 0.88rem;
+}
+.retryBtn {
+    background: none;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 0.5rem;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.22rem 0.6rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+.retryBtn:hover {
+    border-color: #38bdf8;
+    color: #7dd3fc;
+}
+
+/*  States  */
+
+.state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 4rem 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.error {
+    color: #fca5a5;
+    margin: 0;
+}
+
+.spinner {
+    width: 1.4rem;
+    height: 1.4rem;
+    border: 2px solid rgba(148, 163, 184, 0.15);
+    border-top-color: #38bdf8;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 480px) {
+    .name { font-size: 1.5rem; }
+    .heroBody { padding: 1.2rem; }
+    .section { padding: 0.85rem; }
+}

@@ -1,0 +1,77 @@
+import styles from "@/style/Dashboard.module.css";
+import { getDashboardTabs } from "@/components/dashboard/dashboardUtils.js";
+import { HomeIcon, SignOutIcon, ThemeIcon } from "@/components/dashboard/DashboardIcons.jsx";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext";
+
+export default function DashboardSidebar({
+    theme,
+    activeTab,
+    texts,
+    onTabChange,
+    onThemeToggle,
+    onGoHome,
+    onSignOut,
+}) {
+    const { currentUser, loadingUser } = useCurrentUserContext();
+    const tabs = getDashboardTabs(texts || {});
+
+    return (
+        <aside className={styles.sidebar}>
+            <div className={styles.brand}>NetRank</div>
+
+            <p className={styles.userValue}>
+                {loadingUser
+                    ? "Loading..."
+                    : currentUser?.email || texts?.unknown_user || "unknown"}
+            </p>
+            <nav className={styles.nav} aria-label={texts?.dashboard_tabs_aria || "Dashboard tabs"}>
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        type="button"
+                        className={`${styles.navButton} ${activeTab === tab.id ? styles.navButtonActive : ""}`}
+                        onClick={() => onTabChange(tab.id)}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </nav>
+
+            <div className={styles.sidebarFooter}>
+                <button
+                    type="button"
+                    className={styles.iconButton}
+                    onClick={onThemeToggle}
+                    aria-label={
+                        theme === "dark"
+                            ? texts?.switch_to_light_mode || "Switch to light mode"
+                            : texts?.switch_to_dark_mode || "Switch to dark mode"
+                    }
+                    title={theme === "dark" ? texts?.light_mode || "Light mode" : texts?.dark_mode || "Dark mode"}
+                >
+                    <ThemeIcon isDarkMode={theme === "dark"} />
+                </button>
+
+                <button
+                    type="button"
+                    className={styles.iconButton}
+                    onClick={onGoHome}
+                    aria-label={texts?.go_to_home || "Go to home"}
+                    title={texts?.home || "Home"}
+                >
+                    <HomeIcon />
+                </button>
+
+                <button
+                    type="button"
+                    className={`${styles.iconButton} ${styles.signOutButton}`}
+                    onClick={onSignOut}
+                    aria-label={texts?.sign_out || "Sign out"}
+                    title={texts?.sign_out || "Sign out"}
+                >
+                    <SignOutIcon />
+                </button>
+            </div>
+        </aside>
+    );
+}

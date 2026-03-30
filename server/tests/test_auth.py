@@ -2,29 +2,33 @@ import uuid
 from flask import Flask
 from flask.testing import FlaskClient
 
-from server.app.models.user import User
+from server.app.models.account import Account
+from server.app.models.club import Club
+from server.app.services.auth_service import generate_verification_token
 from server.extensions import db
+
 
 def _unique_email() -> str:
     return f"test-{uuid.uuid4()}@example.com"
 
 def test_signup_success(client: FlaskClient, app: Flask):
     email = _unique_email()
-    payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "User", "dateOfBirth": "2000-01-01"}
+    payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"}
     response = client.post("/api/signup", json=payload)
 
     assert response.status_code == 201
-    assert response.get_json()["message"] == "Registered successfully."
+    assert response.get_json()["message"] == "Registered successfully. Check your email to verify your account."
 
     with app.app_context():
-        user = User.query.filter_by(email=email).first()
+        account = Account.query.filter_by(email=email).first()
 
-        assert user is not None
-        assert user.email == email
-        assert user.password_hash != "password123"
-        assert user.first_name == "Test"
-        assert user.last_name == "User"
-        assert str(user.date_of_birth) == "2000-01-01"
+        assert account is not None
+        assert account.email == email
+        assert account.password_hash != "password123"
+        assert account.first_name == "Test"
+        assert account.last_name == "Account"
+        assert str(account.date_of_birth) == "2000-01-01"
+        assert account.is_verified is False
 
 
 def test_signup_missing_credentials(client: FlaskClient):
@@ -38,7 +42,7 @@ def test_signup_missing_credentials(client: FlaskClient):
 
 def test_signup_short_password(client: FlaskClient):
     email = _unique_email()
-    payload = {"email": email, "password": "pass", "firstName": "Test", "lastName": "User", "dateOfBirth": "2000-01-01"}
+    payload = {"email": email, "password": "pass", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"}
     response = client.post("/api/signup", json=payload)
 
     assert response.status_code == 400
@@ -49,21 +53,34 @@ def test_signup_existing_user(client: FlaskClient, app: Flask):
     email = _unique_email()
 
     with app.app_context():
-        existing_user = User(email=email, password_hash="hashedpassword")
-        db.session.add(existing_user)
-        db.session.commit()
+        # Create baseline user through the same API flow to keep required fields consistent.
+        response = client.post(
+            "/api/signup",
+            json={
+                "email": email,
+                "password": "password123",
+                "firstName": "Existing",
+                "lastName": "User",
+                "dateOfBirth": "2000-01-01",
+            },
+        )
+        assert response.status_code == 201
 
-    payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "User", "dateOfBirth": "2000-01-01"}
+    payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"}
     response = client.post("/api/signup", json=payload)
 
     assert response.status_code == 400
-    assert response.get_json()["message"] == "User already exists."
+    assert response.get_json()["message"] == "Account already exists."
 
 
 def test_login_success(client: FlaskClient):
     email = _unique_email()
-    signup_payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "User", "dateOfBirth": "2000-01-01"}
+    signup_payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"}
     client.post("/api/signup", json=signup_payload)
+
+    token = generate_verification_token(email)
+    verify_response = client.get(f"/api/verify-email/{token}")
+    assert verify_response.status_code == 200
 
     response = client.post("/api/login", json={"email": email, "password": "password123"})
 
@@ -71,9 +88,19 @@ def test_login_success(client: FlaskClient):
     assert response.get_json()["message"] == "Login successful."
 
 
-def test_login_invalid_credentials(client: FlaskClient):
+def test_login_unverified_user(client: FlaskClient):
     email = _unique_email()
     client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "User", "dateOfBirth": "2000-01-01"})
+
+    response = client.post("/api/login", json={"email": email, "password": "password123"})
+
+    assert response.status_code == 403
+    assert response.get_json()["message"] == "Please verify your email before logging in."
+
+
+def test_login_invalid_credentials(client: FlaskClient):
+    email = _unique_email()
+    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"})
 
     payload = {"email": email, "password": "wrongpassword"}
     response = client.post("/api/login", json=payload)
@@ -84,7 +111,7 @@ def test_login_invalid_credentials(client: FlaskClient):
 
 def test_login_missing_credentials(client: FlaskClient):
     email = _unique_email()
-    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "User", "dateOfBirth": "2000-01-01"})
+    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"})
 
     payload = {"email": email}
     response = client.post("/api/login", json=payload)
@@ -95,7 +122,11 @@ def test_login_missing_credentials(client: FlaskClient):
 
 def test_login_jwt_cookie(client: FlaskClient):
     email = _unique_email()
-    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "User", "dateOfBirth": "2000-01-01"})
+    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"})
+
+    token = generate_verification_token(email)
+    verify_response = client.get(f"/api/verify-email/{token}")
+    assert verify_response.status_code == 200
 
     client.post("/api/login", json={"email": email, "password": "password123"})
 
@@ -110,7 +141,12 @@ def test_login_jwt_cookie(client: FlaskClient):
 def test_logout_jwt_cookie(client: FlaskClient):
     email = _unique_email()
 
-    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "User", "dateOfBirth": "2000-01-01"})
+    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"})
+
+    token = generate_verification_token(email)
+    verify_response = client.get(f"/api/verify-email/{token}")
+    assert verify_response.status_code == 200
+
     client.post("/api/login", json={"email": email, "password": "password123"})
     cookie = client.get_cookie("access_token")
     assert cookie is not None
@@ -125,15 +161,22 @@ def test_logout_jwt_cookie(client: FlaskClient):
 
 def test_me_success(client: FlaskClient):
     email = _unique_email()
-    client.post("/api/signup",json={"email": email,"password": "password123","firstName": "Test","lastName": "User","dateOfBirth": "2000-01-01"})
+    client.post("/api/signup",json={"email": email,"password": "password123","firstName": "Test","lastName": "Account","dateOfBirth": "2000-01-01"})
+
+    token = generate_verification_token(email)
+    verify_response = client.get(f"/api/verify-email/{token}")
+    assert verify_response.status_code == 200
+
+    login_response = client.post("/api/login", json={"email": email, "password": "password123"})
+    assert login_response.status_code == 200
 
     response = client.get("/api/me")
 
     assert response.status_code == 200
     data = response.get_json()
-    assert data["user"]["email"] == email
-    assert data["user"]["firstName"] == "Test"
-    assert data["user"]["lastName"] == "User"
+    assert data["account"]["email"] == email
+    assert data["account"]["firstName"] == "Test"
+    assert data["account"]["lastName"] == "Account"
 
 
 def test_me_unauthorized(client: FlaskClient):
@@ -141,3 +184,74 @@ def test_me_unauthorized(client: FlaskClient):
 
     assert response.status_code == 401
     assert response.get_json()["message"] == "Unauthorized."
+# --- Add these to the bottom of your test file ---
+
+def test_is_manager_true(client: FlaskClient, app: Flask):
+    # 1. Create and log in a account (the cookie will be saved in the client)
+    email = _unique_email()
+    client.post("/api/signup", json={
+        "email": email, "password": "password123", 
+        "firstName": "Manager", "lastName": "Account", "dateOfBirth": "2000-01-01"
+    })
+
+    # 2. Create a club and assign this account as a manager in the database
+    with app.app_context():
+        account = Account.query.filter_by(email=email).first()
+        club = Club(name="The Cool Club")
+        club.managers.append(account) # Links the account to the club via our many-to-many relationship
+        db.session.add(club)
+        db.session.commit()
+        club_id = club.id
+
+    # 3. Ask the API if the logged-in account is a manager
+    response = client.get(f"/api/clubs/{club_id}/is_manager")
+
+    # 4. Assert they get a 200 OK and is_manager is true
+    assert response.status_code == 200
+    assert response.get_json()["is_manager"] is True
+
+
+def test_is_manager_false(client: FlaskClient, app: Flask):
+    # 1. Create and log in a account
+    email = _unique_email()
+    client.post("/api/signup", json={
+        "email": email, "password": "password123", 
+        "firstName": "Regular", "lastName": "Account", "dateOfBirth": "2000-01-01"
+    })
+
+    # 2. Create a club, but DO NOT assign the account as a manager
+    with app.app_context():
+        club = Club(name="Another Club")
+        db.session.add(club)
+        db.session.commit()
+        club_id = club.id
+
+    # 3. Ask the API if the logged-in account is a manager
+    response = client.get(f"/api/clubs/{club_id}/is_manager")
+
+    # 4. Assert they get a 200 OK and is_manager is false
+    assert response.status_code == 200
+    assert response.get_json()["is_manager"] is False
+
+
+def test_is_manager_unauthorized(client: FlaskClient, app: Flask):
+    # 1. Create a club (no account logged in)
+    with app.app_context():
+        club = Club(name="No Login Club")
+        db.session.add(club)
+        db.session.commit()
+        club_id = club.id
+
+    # 2. Try to hit the endpoint without a cookie
+    response = client.get(f"/api/clubs/{club_id}/is_manager")
+
+    # 3. Assert they get a 401 Unauthorized and is_manager is false
+    assert response.status_code == 401
+    assert response.get_json()["is_manager"] is False
+
+
+def test_verify_email_invalid_token(client: FlaskClient):
+    response = client.get("/api/verify-email/invalid-token")
+
+    assert response.status_code == 400
+    assert response.get_json()["message"] == "Token is invalid or expired."

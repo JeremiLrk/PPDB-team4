@@ -85,14 +85,17 @@ export function mockApi(options = {}) {
     const {
         me = null,
         dashboardData = { roles: ["user"], clubs: [], pending_requests: { my_requests: [], my_club_creation_requests: [] } },
-        clubs = [{ id: 1, name: "NetRank Club" }],
-        club = { id: 1, name: "NetRank Club" },
+        clubs = [{ id: 1, name: "NetRank Club", description: "Mock data club", sport: "Padel", city: "Antwerp" }],
+        club = { id: 1, name: "NetRank Club", description: "Mock data club", sport: "Padel", city: "Antwerp" },
         ladders = [{ id: 11, name: "Men's Singles" }, { id: 12, name: "U14 Singles" }],
         topPlayers = [{ id: 1, name: "Thomas", rating: 1290 }],
+        teams = [{ id: 201, name: "NetRank Aces", clubId: 1, sportTypeId: 4 }],
+        players = [],
     } = options;
 
     globalThis.fetch = vi.fn(async (input) => {
         const rawUrl = typeof input === "string" ? input : input.url;
+        const method = (typeof input === "string" ? "GET" : input.method || "GET").toUpperCase();
         const url = new URL(rawUrl, "http://localhost");
         const path = url.pathname;
         const lang = url.searchParams.get("lang") || "en";
@@ -100,13 +103,33 @@ export function mockApi(options = {}) {
         if (path === "/api/health") return jsonResponse({ db_connected: true });
         if (path === "/api/me") {
             if (!me) return jsonResponse({ message: "Unauthorized" }, 401);
-            return jsonResponse({ user: me });
+            return jsonResponse({ account: me });
         }
         if (path === "/api/me/dashboard") return jsonResponse(dashboardData);
         if (path === "/api/clubs") return jsonResponse({ clubs });
         if (path === `/api/clubs/${club.id}`) return jsonResponse({ club });
         if (path === `/api/clubs/${club.id}/ladders`) return jsonResponse(ladders);
         if (path === `/api/clubs/${club.id}/top-players`) return jsonResponse(topPlayers);
+        if (path === "/api/teams" || path === "/api/teams/my-all") {
+            return jsonResponse({ total: teams.length, from: 0, to: teams.length, teams });
+        }
+
+        const teamMatch = path.match(/^\/api\/teams\/(\d+)$/);
+        if (teamMatch) {
+            const teamId = Number(teamMatch[1]);
+            const team = teams.find((item) => Number(item.id) === teamId);
+            if (!team) return jsonResponse({ message: "Team not found." }, 404);
+            return jsonResponse({ team });
+        }
+
+        const teamPlayersMatch = path.match(/^\/api\/teams\/(\d+)\/players$/);
+        if (teamPlayersMatch) {
+            return jsonResponse({ total: players.length, players });
+        }
+
+        if (path === "/api/logout" && method === "POST") {
+            return jsonResponse({ message: "Successfully logged out." });
+        }
 
         const pageMatch = path.match(/^\/api\/texts\/page\/([^/]+)$/);
         if (pageMatch) {

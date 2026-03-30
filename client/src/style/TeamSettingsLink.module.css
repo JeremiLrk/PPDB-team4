@@ -1,0 +1,30 @@
+/* TeamSettingsLink.module.css */
+
+.gearBtn {
+    display:         inline-flex;
+    align-items:     center;
+    justify-content: center;
+    padding:         0.3rem;
+    border:          none;
+    background:      transparent;
+    border-radius:   6px;
+    cursor:          pointer;
+    color:           var(--color-muted, #8b97a8);
+    transition:      color 120ms ease, background 120ms ease, transform 120ms ease;
+    flex-shrink:     0;
+}
+
+.gearBtn:hover {
+    color:      var(--color-accent, #5b8cff);
+    background: var(--color-hover-bg, rgba(91, 140, 255, 0.1));
+    transform:  rotate(30deg);
+}
+
+.gearBtn:active {
+    transform: rotate(60deg);
+}
+
+.gearBtn:focus-visible {
+    outline:        2px solid var(--color-accent, #5b8cff);
+    outline-offset: 2px;
+}

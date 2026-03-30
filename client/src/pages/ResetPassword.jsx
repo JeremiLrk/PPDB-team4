@@ -1,4 +1,4 @@
-import styles from "@/style/ResetPassword.module.css"
+import au_styles from "@/style/Authorization.module.css"
 import { useState } from "react"
 import { notify } from "@/hooks/useNotify.js"
 import { useParams, useNavigate } from "react-router-dom"
@@ -43,14 +43,14 @@ const ResetPassword = () => {
     }
 
     return (
-        <div className={styles.resetContainer}>
-            <div className={styles.resetCard}>
-                <h1 className={styles.resetTitle}>{au_texts.reset_title}</h1>
-                <form className={styles.resetForm} onSubmit={handleSubmit}>
-                    <div className={styles.resetFormGroup}>
+        <div className={au_styles.container}>
+            <div className={au_styles.card}>
+                <h1 className={au_styles.headerTitle}>{au_texts.reset_title}</h1>
+                <form className={au_styles.form} onSubmit={handleSubmit}>
+                    <div className={au_styles.formGroup}>
                         <label
                             htmlFor="new-password"
-                            className={styles.resetLabel}
+                            className={au_styles.formLabel}
                         >
                             {au_texts.new_password}
                         </label>
@@ -60,15 +60,15 @@ const ResetPassword = () => {
                             placeholder={au_texts.placeholder_new_password}
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className={styles.resetInput}
+                            className={au_styles.formInput}
                             required
                         />
                     </div>
 
-                    <div className={styles.resetFormGroup}>
+                    <div className={au_styles.formGroup}>
                         <label
                             htmlFor="repeat-password"
-                            className={styles.resetLabel}
+                            className={au_styles.formLabel}
                         >
                             {au_texts.repeat_password}
                         </label>
@@ -78,12 +78,12 @@ const ResetPassword = () => {
                             placeholder={au_texts.placeholder_repeat_password}
                             value={repeatPassword}
                             onChange={(e) => setRepeatPassword(e.target.value)}
-                            className={styles.resetInput}
+                            className={au_styles.formInput}
                             required
                         />
                     </div>
 
-                    <button type="submit" className={styles.resetButton}>
+                    <button type="submit" className={au_styles.formButton}>
                         {au_texts.reset_password}
                     </button>
                 </form>

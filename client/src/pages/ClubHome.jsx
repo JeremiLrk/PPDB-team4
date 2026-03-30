@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"; 
 import { useNavigate, useParams } from "react-router-dom";
 import background from "@/assets/background.webp";
 import styles from "@/style/Home.module.css";
@@ -11,6 +12,9 @@ function ClubHome() {
     const { clubId } = useParams();
     const navigate = useNavigate();
     const { lang } = useLangContext();
+    
+    const [isManager, setIsManager] = useState(false);
+
     const ladderTexts = usePageTexts("ladder", lang);
     const scoreTexts = usePageTexts("score", lang);
     const baseTexts = usePageTexts("base", lang);
@@ -19,6 +23,25 @@ function ClubHome() {
     const { club, loading: clubLoading, error: clubError } = useClub(clubId);
     const { players: topPlayers, loading: topLoading } = useTopPlayers(clubId);
     const medals = ["🥇", "🥈", "🥉"];
+
+    useEffect(() => {
+        const checkManagerStatus = async () => {
+            try {
+                const response = await fetch(`/api/clubs/${clubId}/is_manager`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setIsManager(data.is_manager);
+                }
+            } catch (err) {
+                console.error("Fout bij checken manager status:", err);
+                setIsManager(false);
+            }
+        };
+
+        if (clubId) {
+            checkManagerStatus();
+        }
+    }, [clubId]);
 
     return (
         <div className={styles.container}>
@@ -49,18 +72,32 @@ function ClubHome() {
                 {clubLoading && <h1>{clubHomeTexts.loading_club || "Loading club..."}</h1>}
                 {clubError && <h1>{clubHomeTexts.error_loading_club || "Error loading club"}</h1>}
                 {!clubLoading && club && (
-                    <h1 className="text-5xl font-semibold tracking-tight">{club.name}</h1>
+                    <>
+                        <h1 className="text-5xl font-semibold tracking-tight">{club.name}</h1>
+                        
+                        {/*DE BEHEER KNOP - Alleen zichtbaar voor managers */}
+                        {isManager && (
+                            <div className="mt-4">
+                                <button
+                                    onClick={() => navigate(`/clubs/${clubId}/settings`)}
+                                    className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-4 py-1.5 text-sm font-semibold text-amber-500 border border-amber-500/20 hover:bg-amber-500/20 transition"
+                                >
+                                    ⚙️ {clubHomeTexts.manage_club || "Club Beheren"}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 <img src={background} alt="Tennis match" className="mt-6 w-full rounded-2xl" />
 
-                <p className="mt-6 text-lg text-slate-300/70">
-                    {clubHomeTexts.tagline || "Compete. Challenge. Climb the ladder."}
-                </p>
-
-                <p className="mt-2 text-sm text-slate-400">
-                    {clubHomeTexts.subtagline || "The competitive ranking system for tennis and padel clubs."}
-                </p>
+                <div className="mt-2 text-sm text-slate-400">
+                    {clubLoading && <span>{clubHomeTexts.loading_club || "Loading club..."}</span>}
+                    {clubError && <span>{clubHomeTexts.error_loading_club || "Error loading club"}</span>}
+                    {!clubLoading && club && (
+                        <p className="text-2xl tracking-tight">{club.description}</p>
+                    )}
+                </div>
 
                 <div className="mt-10 flex justify-center gap-4">
                     <button

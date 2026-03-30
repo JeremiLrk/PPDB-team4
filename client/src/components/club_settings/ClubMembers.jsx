@@ -1,0 +1,35 @@
+import styles from "@/style/ClubSettings.module.css";
+
+export function ClubMembers({ members, onRemove }) {
+    return (
+        <article className={`${styles.panel} ${styles.contentFade}`}>
+            <div className={styles.panelTopRow}>
+                <h3 className={styles.panelTitle}>Members</h3>
+                <span className={styles.counter}>{members.length}</span>
+            </div>
+
+            {members.length === 0 ? (
+                <p className={styles.muted}>No members yet.</p>
+            ) : (
+                <ul className={styles.list}>
+                    {members.map(m => (
+                        <li key={m.id} className={styles.listItem}>
+                            <div>
+                                <p className={styles.primaryText}>{m.email}</p>
+                            </div>
+
+                            <button
+                                onClick={() => onRemove(m.id)}
+                                className={styles.linkButton}
+                            >
+                                Remove
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </article>
+    );
+}
+
+export default ClubMembers;

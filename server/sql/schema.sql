@@ -57,12 +57,14 @@ CREATE TABLE IF NOT EXISTS account (
     date_of_birth DATE,
     email VARCHAR(254) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'account',
+    is_verified BOOLEAN NOT NULL DEFAULT FALSE,
 
     account_role_id BIGINT NOT NULL,
 
     CONSTRAINT fk_account_role
-        FOREIGN KEY (id)
-        REFERENCES account_role_id(id)
+        FOREIGN KEY (account_role_id)
+        REFERENCES account_role(id)
         ON DELETE CASCADE,
 
     CONSTRAINT pk_account
@@ -113,22 +115,51 @@ CREATE TABLE IF NOT EXISTS team_manager (
 CREATE TABLE IF NOT EXISTS club_owner (
     id BIGINT,
 
-    CONSTRAINT fk_club_owner_team_manager
+    CONSTRAINT fk_club_owner_account
         FOREIGN KEY (id)
-        REFERENCES team_manager(id)
+        REFERENCES account(id)
         ON DELETE CASCADE,
 
     CONSTRAINT pk_club_owner
         PRIMARY KEY (id)
 );
+
+/*
+=====
+AVAILABILITY
+=====
+*/
+
+CREATE TABLE IF NOT EXISTS availability_block (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    user_id BIGINT NOT NULL,
+    start_at TIMESTAMP NOT NULL,
+    end_at TIMESTAMP NOT NULL,
+
+    CONSTRAINT fk_availability_block_user
+        FOREIGN KEY (user_id)
+        REFERENCES account(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT pk_availability_block
+        PRIMARY KEY (id),
+
+    CONSTRAINT check_availability_block_start_before_end
+        CHECK (start_at < end_at)
+);
+
 /*
  =====
  CLUBS
  =====
  */
+
 CREATE TABLE IF NOT EXISTS club (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(64) NOT NULL,
+    description VARCHAR(512) NOT NULL,
+    sport VARCHAR(64),
+    city VARCHAR(128) NOT NULL,
 
     CONSTRAINT pk_club
         PRIMARY KEY (id)
@@ -140,7 +171,7 @@ CREATE TABLE IF NOT EXISTS club_owner_club (
 
     CONSTRAINT fk_co_club_owner
         FOREIGN KEY (club_owner_id)
-        REFERENCES club_owner(id)
+        REFERENCES account(id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_co_club
@@ -151,7 +182,42 @@ CREATE TABLE IF NOT EXISTS club_owner_club (
     CONSTRAINT pk_club_owner_club
         PRIMARY KEY (club_owner_id, club_id)
 );
+CREATE TABLE IF NOT EXISTS club_join_request (
+    club_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    date TIMESTAMPTZ NOT NULL,
 
+    CONSTRAINT fk_club_id
+        FOREIGN KEY (club_id)
+        REFERENCES club(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_user_id
+        FOREIGN KEY (user_id)
+        REFERENCES account(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT pk_club_id_user_id
+        PRIMARY KEY (user_id, club_id)
+);
+
+CREATE TABLE IF NOT EXISTS club_player (
+    club_id BIGINT NOT NULL,
+    player_id BIGINT NOT NULL,
+
+    CONSTRAINT fk_club_id
+        FOREIGN KEY (club_id)
+        REFERENCES club(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_player_id
+        FOREIGN KEY (player_id)
+        REFERENCES player(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT pk_club_player
+        PRIMARY KEY (club_id, player_id)
+);
 /*
  =====
  TEAMS
@@ -463,105 +529,3 @@ CREATE TRIGGER trg_check_teams_no_common_players
     BEFORE INSERT OR UPDATE ON match_proposal
     FOR EACH ROW
 EXECUTE FUNCTION check_teams_no_common_players();
-
-/*
- =====
- DEMO DATA (FOR LIVE SHOWCASE)
- =====
- */
-
-INSERT INTO sport_type (name, minimum_number_of_players_on_a_team, maximum_number_of_players_per_team)
-SELECT 'Tennis Singles', 1, 1
-WHERE NOT EXISTS (
-    SELECT 1 FROM sport_type WHERE name = 'Tennis Singles'
-);
-
-INSERT INTO ladder_rating_function (name)
-SELECT 'ELO Demo'
-WHERE NOT EXISTS (
-    SELECT 1 FROM ladder_rating_function WHERE name = 'ELO Demo'
-);
-
-INSERT INTO club (name)
-SELECT 'NetRank Club'
-WHERE NOT EXISTS (
-    SELECT 1 FROM club WHERE name = 'NetRank Club'
-);
-
--- Keep demo data deterministic on every startup/deploy run.
-DELETE FROM ladder_team
-WHERE ladder_id IN (
-    SELECT l.id
-    FROM ladder l
-    WHERE l.club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1)
-);
-
-DELETE FROM ladder
-WHERE club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1);
-
-DELETE FROM team
-WHERE club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1);
-
-INSERT INTO team (club_id, name, sport_type_id)
-SELECT
-    (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1),
-    x.team_name,
-    (SELECT id FROM sport_type WHERE name = 'Tennis Singles' ORDER BY id LIMIT 1)
-FROM (
-    VALUES
-        ('Thomas'),
-        ('Lars'),
-        ('Noah'),
-        ('Milan'),
-        ('Tom'),
-        ('Ben')
-) AS x(team_name)
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM team t
-    WHERE t.club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1)
-      AND t.name = x.team_name
-);
-
-INSERT INTO ladder (club_id, name, description, sport_type_id, ladder_rating_function_id)
-SELECT
-    (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1),
-    x.name,
-    x.description,
-    (SELECT id FROM sport_type WHERE name = 'Tennis Singles' ORDER BY id LIMIT 1),
-    (SELECT id FROM ladder_rating_function WHERE name = 'ELO Demo' ORDER BY id LIMIT 1)
-FROM (
-    VALUES
-        ('Men''s Singles', 'Senior singles ranking.'),
-        ('U14 Singles', 'Youth under-14 singles ranking.')
-) AS x(name, description)
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM ladder l
-    WHERE l.club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1)
-      AND l.name = x.name
-);
-
-INSERT INTO ladder_team (ladder_id, team_id, rank, rating, matches_played)
-SELECT
-    (SELECT id FROM ladder WHERE club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1) AND name = x.ladder_name ORDER BY id LIMIT 1),
-    (SELECT id FROM team WHERE club_id = (SELECT id FROM club WHERE name = 'NetRank Club' ORDER BY id LIMIT 1) AND name = x.team_name ORDER BY id LIMIT 1),
-    x.rank,
-    x.rating,
-    x.matches_played
-FROM (
-    VALUES
-        ('Men''s Singles', 'Thomas', 1, 1290, 14),
-        ('Men''s Singles', 'Lars', 2, 1245, 13),
-        ('Men''s Singles', 'Noah', 3, 1205, 12),
-        ('Men''s Singles', 'Milan', 4, 1170, 11),
-        ('U14 Singles', 'Tom', 1, 1150, 10),
-        ('U14 Singles', 'Ben', 2, 1120, 9),
-        ('U14 Singles', 'Noah', 3, 1085, 8),
-        ('U14 Singles', 'Milan', 4, 1050, 7)
-) AS x(ladder_name, team_name, rank, rating, matches_played)
-ON CONFLICT (ladder_id, team_id)
-DO UPDATE SET
-    rank = EXCLUDED.rank,
-    rating = EXCLUDED.rating,
-    matches_played = EXCLUDED.matches_played;

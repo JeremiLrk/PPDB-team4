@@ -6,13 +6,14 @@ function Clubs() {
     const navigate = useNavigate();
     const { clubs, loading, error } = useClubs();
 
+
     return (
         <section className={styles.container}>
             <h2 className={styles.title}>All Clubs</h2>
             <p className={styles.subtitle}>
-                Kies een club om de club-homepage te openen.
+                Kies een club om de club-homepage te openen, of start je eigen club!
             </p>
-
+            
             {loading && <p className={styles.info}>Clubs laden...</p>}
             {error && <p className={styles.error}>{error}</p>}
 

@@ -10,7 +10,7 @@ export function useTopPlayers(clubId) {
         fetch(`/api/clubs/${clubId}/top-players`)
             .then(res => res.json())
             .then(data => {
-                setPlayers(data)
+                setPlayers(data.players)
                 setLoading(false)
             })
     }, [clubId])

@@ -10,7 +10,7 @@ import { mockApi } from "./testApiMock.js";
 // Verifies landing texts switch from English to Dutch through the header language toggle.
 test("landing switches from EN to NL using header language toggle", async () => {
     mockApi();
-    const user = userEvent.setup();
+    const account = userEvent.setup();
 
     render(
         <MemoryRouter initialEntries={["/"]}>
@@ -21,7 +21,7 @@ test("landing switches from EN to NL using header language toggle", async () => 
     expect(await screen.findByRole("heading", { name: "How NetRank works" })).toBeInTheDocument();
 
     const banner = screen.getByRole("banner");
-    await user.click(within(banner).getByRole("button", { name: "NL" }));
+    await account.click(within(banner).getByRole("button", { name: "NL" }));
 
     expect(await screen.findByRole("heading", { name: "Hoe NetRank werkt" })).toBeInTheDocument();
 });

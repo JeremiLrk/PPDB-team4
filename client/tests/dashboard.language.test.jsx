@@ -13,13 +13,13 @@ test("dashboard renders Dutch texts when language is nl", async () => {
     mockApi({
         dashboardData: {
             roles: ["user"],
-            clubs: [{ id: 1, name: "NetRank Club", membership_status: "member" }],
+            clubs: [{ id: 1, name: "NetRank Club", description: "Mock data club", sport: "Padel", city: "Antwerp", membership_status: "member" }],
             pending_requests: { my_requests: [], my_club_creation_requests: [] },
         },
-        clubs: [{ id: 1, name: "NetRank Club" }],
+        clubs: [{ id: 1, name: "NetRank Club", description: "Mock data club", sport: "Padel", city: "Antwerp" }],
     });
 
-    const user = userEvent.setup();
+    const account = userEvent.setup();
 
     render(
         <MemoryRouter>
@@ -36,6 +36,6 @@ test("dashboard renders Dutch texts when language is nl", async () => {
     expect(screen.getByRole("button", { name: "Overzicht" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Zoek clubs" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Zoek clubs" }));
+    await account.click(screen.getByRole("button", { name: "Zoek clubs" }));
     expect(await screen.findByPlaceholderText("Zoek op clubnaam")).toBeInTheDocument();
 });

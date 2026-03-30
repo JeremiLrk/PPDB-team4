@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import { useRegister } from "@/hooks/useRegister.js"
-import styles from "@/style/Register.module.css"
-import { useCurrentUserContext } from "@/context/useCurrentUserContext.js"
+import au_styles from "@/style/Authorization.module.css"
+import { useCurrentUserContext } from "@/context/useCurrentUserContext"
 import { useLangContext } from "@/context/useLangContext.js"
 import { usePageTexts } from "@/hooks/usePageTexts.js"
 
@@ -25,16 +25,16 @@ const Register = () => {
     } = useRegister(setCurrentUser)
 
     return (
-        <div className={styles.registerContainer}>
-            <div className={styles.registerCard}>
-                <h1 className={styles.registerTitle}>{au_texts.register}</h1>
+        <div className={au_styles.container}>
+            <div className={au_styles.card}>
+                <h1 className={au_styles.headerTitle}>{au_texts.register}</h1>
 
-                <form className={styles.registerForm} onSubmit={handleSubmit}>
-                    <div className={styles.nameFieldsRow}>
-                        <div className={styles.registerFormGroup}>
+                <form className={au_styles.form} onSubmit={handleSubmit}>
+                    <div className={au_styles.nameFieldsRow}>
+                        <div className={au_styles.formGroup}>
                             <label
                                 htmlFor="register-firstname"
-                                className={styles.registerLabel}
+                                className={au_styles.formLabel}
                             >
                                 {au_texts.first_name}
                             </label>
@@ -44,14 +44,14 @@ const Register = () => {
                                 placeholder={au_texts.placeholder_first_name}
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
-                                className={styles.registerInput}
+                                className={au_styles.formInput}
                             />
                         </div>
 
-                        <div className={styles.registerFormGroup}>
+                        <div className={au_styles.formGroup}>
                             <label
                                 htmlFor="register-lastname"
-                                className={styles.registerLabel}
+                                className={au_styles.formLabel}
                             >
                                 {au_texts.last_name}
                             </label>
@@ -61,15 +61,15 @@ const Register = () => {
                                 placeholder={au_texts.placeholder_last_name}
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
-                                className={styles.registerInput}
+                                className={au_styles.formInput}
                             />
                         </div>
                     </div>
 
-                    <div className={styles.registerFormGroup}>
+                    <div className={au_styles.formGroup}>
                         <label
                             htmlFor="register-dateofbirth"
-                            className={styles.registerLabel}
+                            className={au_styles.formLabel}
                         >
                             {au_texts.date_of_birth}
                         </label>
@@ -78,14 +78,14 @@ const Register = () => {
                             type="date"
                             value={dateOfBirth}
                             onChange={(e) => setDateOfBirth(e.target.value)}
-                            className={styles.registerInput}
+                            className={au_styles.formInput}
                         />
                     </div>
 
-                    <div className={styles.registerFormGroup}>
+                    <div className={au_styles.formGroup}>
                         <label
                             htmlFor="register-email"
-                            className={styles.registerLabel}
+                            className={au_styles.formLabel}
                         >
                             {au_texts.email}
                         </label>
@@ -95,14 +95,14 @@ const Register = () => {
                             placeholder={au_texts.placeholder_email}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className={styles.registerInput}
+                            className={au_styles.formInput}
                         />
                     </div>
 
-                    <div className={styles.registerFormGroup}>
+                    <div className={au_styles.formGroup}>
                         <label
                             htmlFor="register-password"
-                            className={styles.registerLabel}
+                            className={au_styles.formLabel}
                         >
                             {au_texts.password}
                         </label>
@@ -112,23 +112,23 @@ const Register = () => {
                             placeholder={au_texts.placeholder_password}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className={styles.registerInput}
+                            className={au_styles.formInput}
                         />
                     </div>
 
-                    <button type="submit" className={styles.registerButton}>
+                    <button type="submit" className={au_styles.formButton}>
                         {au_texts.create_account}
                     </button>
                 </form>
 
-                <p className={styles.registerText}>
+                <p className={au_styles.footerText}>
                     {au_texts.has_account}{" "}
-                    <Link to="/login" className={styles.registerLink}>
+                    <Link to="/login" className={au_styles.footerLink}>
                         {au_texts.log_in}
                     </Link>
                 </p>
 
-                <Link to="/" className={styles.guestLink}>
+                <Link to="/" className={au_styles.footerLinkGuest}>
                     {au_texts.as_guest}
                 </Link>
             </div>

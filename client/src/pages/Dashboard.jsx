@@ -1,25 +1,32 @@
 import styles from "@/style/Dashboard.module.css";
+import formStyles from "@/style/common/Forms.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
-import DashboardSidebar from "@/app/components/dashboard/DashboardSidebar.jsx";
-import { CreateClubTab, OverviewTab, RequestsTab, SearchTab } from "@/app/components/dashboard/DashboardTabs.jsx";
+import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
+import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab, ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
 import { useLangContext } from "@/context/useLangContext.js";
 import { usePageTexts } from "@/hooks/usePageTexts.js";
 
 function Dashboard({ currentUser, setUser }) {
-    const { lang } = useLangContext();
-    const dashboardTexts = usePageTexts("dashboard", lang);
-    const workspace = useDashboardWorkspace(setUser, dashboardTexts);
+    const { lang } = useLangContext()
+    const dashboardTexts = usePageTexts("dashboard", lang)
+    const workspace = useDashboardWorkspace(setUser, dashboardTexts)
 
     if (workspace.loading) {
-        return <div className={styles.loading}>{dashboardTexts.loading_dashboard || "Loading dashboard..."}</div>;
+        return (
+            <div className={styles.loading}>
+                {dashboardTexts.loading_dashboard || "Loading dashboard..."}
+            </div>
+        )
     }
 
     return (
-        <section className={`${styles.shell} ${workspace.theme === "light" ? styles.light : ""}`}>
+        <section
+            className={`${styles.shell} ${workspace.theme === "light" ? styles.light : ""}`}
+        >
             <DashboardSidebar
-                currentUser={currentUser}
                 theme={workspace.theme}
                 activeTab={workspace.activeTab}
+                isClubOwner={workspace.isClubOwner}
                 texts={dashboardTexts}
                 onTabChange={workspace.setActiveTab}
                 onThemeToggle={workspace.onThemeToggle}
@@ -30,13 +37,15 @@ function Dashboard({ currentUser, setUser }) {
             <div className={styles.workspace}>
 
 
-                {workspace.error ? <p className={styles.warning}>{workspace.error}</p> : null}
+                {workspace.error ? <p className={formStyles.warning}>{workspace.error}</p> : null}
 
                 {workspace.activeTab === "overview" ? (
                     <OverviewTab
                         myClubs={workspace.myClubs}
                         myRequests={workspace.myRequests}
-                        pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
+                        pendingJoinRequestClubIds={
+                            workspace.pendingJoinRequestClubIds
+                        }
                         clubCreationRequests={workspace.clubCreationRequests}
                         texts={dashboardTexts}
                     />
@@ -51,16 +60,55 @@ function Dashboard({ currentUser, setUser }) {
                         filteredDiscoverClubs={workspace.filteredDiscoverClubs}
                         myClubIds={workspace.myClubIds}
                         pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
+                        clubJoinrequest={workspace.clubJoinrequest}
+                        texts={dashboardTexts}
+                    />
+                ) : null}
+
+                {workspace.activeTab === "availability" ? (
+                    <AvailabilityTab
+                        availabilityBlocks={workspace.availabilityBlocks}
+                        availabilityForm={workspace.availabilityForm}
+                        availabilityLoading={workspace.availabilityLoading}
+                        availabilitySubmitting={
+                            workspace.availabilitySubmitting
+                        }
+                        availabilityMessage={workspace.availabilityMessage}
+                        onAvailabilityFieldChange={
+                            workspace.onAvailabilityFieldChange
+                        }
+                        onAvailabilitySubmit={workspace.onAvailabilitySubmit}
+                        onAvailabilityDelete={workspace.onAvailabilityDelete}
                         texts={dashboardTexts}
                     />
                 ) : null}
 
                 {workspace.activeTab === "requests" ? (
-                    <RequestsTab myRequests={workspace.myRequests} texts={dashboardTexts} />
+                    <RequestsTab 
+                        myRequests={workspace.myRequests} 
+                        texts={dashboardTexts} 
+                        />
+                ) : null}
+
+                {workspace.activeTab === "teams" ? (
+                    <TeamsTab
+                        teams={workspace.myTeams}
+                        total={workspace.myTeamsTotal}
+                        loading={workspace.myTeamsLoading}
+                        error={workspace.myTeamsError}
+                        sort={workspace.myTeamsSort}
+                        pageSize={workspace.myTeamsPageSize}
+                        hasMore={workspace.myTeamsHasMore}
+                        onLoad={workspace.loadMyTeams}
+                        onLoadMore={workspace.loadMoreMyTeams}
+                        texts={dashboardTexts}
+                        currentUser={currentUser}
+                    />
                 ) : null}
 
                 {workspace.activeTab === "createClub" ? (
                     <CreateClubTab
+                        clubCreaterequest={workspace.clubCreaterequest}
                         clubRequestForm={workspace.clubRequestForm}
                         clubRequestSubmitting={workspace.clubRequestSubmitting}
                         clubRequestMessage={workspace.clubRequestMessage}
@@ -68,11 +116,25 @@ function Dashboard({ currentUser, setUser }) {
                         onFieldChange={workspace.onClubRequestFieldChange}
                         onSubmit={workspace.onClubRequestSubmit}
                         texts={dashboardTexts}
+                        incomingJoinRequests={workspace.incomingJoinRequests}
+                        decideJoinrequest={workspace.decideJoinrequest}
+                        isClubOwner={workspace.isClubOwner}
+                    />
+                ) : null}
+
+                {workspace.activeTab === "manageClubs" ? (
+                    <ManageClubsTab
+                        myClubs={workspace.myClubs}
+                        incomingJoinRequests={workspace.incomingJoinRequests}
+                        decideJoinrequest={workspace.decideJoinrequest}
+                        isClubOwner={workspace.isClubOwner}
+                        onGoSettings={workspace.onGoSettings}
+                        texts={dashboardTexts}
                     />
                 ) : null}
             </div>
         </section>
-    );
+    )
 }
 
-export default Dashboard;
+export default Dashboard

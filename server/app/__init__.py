@@ -1,8 +1,11 @@
 from flask import Flask
 
+from server.app.routes.sport_type_routes import sport_type_bp
+from server.app.routes.team_routes import team_bp
 from server.config import SECRET_KEY, config_data
 from server.extensions import db
 from server.app.routes.auth_routes import auth_bp
+from server.app.routes.availability_routes import availability_bp
 from server.app.routes.clubs_routes import clubs_bp
 from server.app.routes.dashboard_routes import dashboard_bp
 from server.app.routes.health_routes import api
@@ -12,7 +15,11 @@ from server.app.routes.ladders_routes import ladders_bp
 from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
-from server.app.models.PageText import PageText
+from server.app.models.page_text import PageText
+from server.seeds.seed_teams_and_users import seed_teams_and_users
+from server.app.models.account_role import AccountRole
+from server.app.models.ladder import MatchRuleSet, LadderRatingFunction, Ladder
+from sqlalchemy import text
 
 
 def create_app():
@@ -24,7 +31,15 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = SECRET_KEY
 
-    db.init_app(app)
+    db.init_app(app)    
+
+    with app.app_context():
+        print("Dropping all tables including dependencies...")
+        db.session.execute(text("DROP SCHEMA public CASCADE"))
+        db.session.execute(text("CREATE SCHEMA public"))
+        db.session.execute(text("GRANT ALL ON SCHEMA public TO public"))  # restore rights
+        db.session.commit()
+        print("Database schema reset complete.")
 
     _register_blueprints(app)
     _init_db(app)
@@ -40,11 +55,14 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(root_bp)
     app.register_blueprint(api)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(availability_bp)
     app.register_blueprint(ladders_bp)
     app.register_blueprint(ladder_bp)
     app.register_blueprint(clubs_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(texts)
+    app.register_blueprint(team_bp)
+    app.register_blueprint(sport_type_bp)
 
 
 def _init_db(app: Flask):
@@ -92,3 +110,19 @@ def _init_db(app: Flask):
             seeds_file="server/seeds/page_text_club_home.json",
             unique_fields=["page", "key", "language"],
         )
+        seed_table(
+            model=AccountRole,
+            seeds_file="server/seeds/account_role.json",
+            unique_fields=[],
+        )
+        seed_table(
+            model=MatchRuleSet,
+            seeds_file="server/seeds/match_rule_set.json",
+            unique_fields=[],
+        )
+        seed_table(
+            model=LadderRatingFunction,
+            seeds_file="server/seeds/ladder_rating_function.json",
+            unique_fields=[],
+        )
+        seed_teams_and_users()

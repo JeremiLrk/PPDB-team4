@@ -11,7 +11,7 @@ export function useLadders(clubId) {
     fetch(`/api/clubs/${clubId}/ladders`)
       .then(res => res.json())
       .then(data => {
-        setLadders(data);
+        setLadders(data.ladders);
         setLoading(false);
       })
       .catch(err => {

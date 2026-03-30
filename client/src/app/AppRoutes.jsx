@@ -10,10 +10,16 @@ import Dashboard from "@/pages/Dashboard.jsx";
 import NotFound from "@/pages/NotFound.jsx";
 import ForgotPassword from "@/pages/ForgotPassword.jsx";
 import ResetPassword from "@/pages/ResetPassword.jsx";
-import { useCurrentUserContext } from "@/context/useCurrentUserContext.js";
+import ClubSettings from "@/pages/ClubSettings.jsx";
+import { useCurrentUserContext } from "@/context/useCurrentUserContext";
+import ProtectedRoute from "./ProtectedRoute";
+import Teams from "@/pages/Teams.jsx";
+import TeamDetail from "@/pages/TeamDetail.jsx";
+import TeamSettings from "@/pages/TeamSettings.jsx";
+import VerifyEmail from "@/pages/VerifyEmail.jsx";
 
 export default function AppRoutes() {
-    const { currentUser, setCurrentUser } = useCurrentUserContext();
+    const { currentUser, setCurrentUser } = useCurrentUserContext()
 
     return (
         <Routes>
@@ -21,22 +27,32 @@ export default function AppRoutes() {
             <Route path="/clubs" element={<Clubs />} />
             <Route path="/clubs/:clubId" element={<ClubHome />} />
             <Route path="/clubs/:clubId/ladders" element={<Ladders />} />
-            <Route path="/clubs/:clubId/ladders/:ladderId" element={<Ladder />} />
+            <Route
+                path="/clubs/:clubId/ladders/:ladderId"
+                element={<Ladder />}
+            />
             <Route path="/ladder" element={<Ladder />} />
             <Route path="/login" element={<Login setUser={setCurrentUser} />} />
-            <Route path="/register" element={<Register setUser={setCurrentUser} />} />
+            <Route
+                path="/register"
+                element={<Register setUser={setCurrentUser} />}
+            />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route
-                path="/dashboard"
-                element={
-                    currentUser ? (
-                        <Dashboard currentUser={currentUser} setUser={setCurrentUser} />
-                    ) : (
-                        <Navigate to="/login" replace />
-                    )
-                }
-            />
+            <Route path="/teams" element={<Teams />} />
+            <Route path="/teams/:teamId" element={<TeamDetail />} />
+            <Route path="/teams/:teamId/settings" element={<TeamSettings />} />
+            <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                        <Dashboard />
+                    </ProtectedRoute>
+                }/>
+            <Route path="/clubs/:clubId/settings" element={
+                    <ProtectedRoute>
+                        <ClubSettings />
+                    </ProtectedRoute>
+                }/>
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
             <Route path="*" element={<NotFound />} />
         </Routes>
     );

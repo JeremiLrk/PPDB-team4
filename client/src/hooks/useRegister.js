@@ -33,11 +33,14 @@ export function useRegister(setUser) {
                 throw new Error(data?.message || "Registration failed")
             }
 
-            setUser(data.user)
+            setUser(null)
 
-            notify.success("Registration successful")
+            notify.success(
+                data?.message ||
+                    "Registration successful. Please verify your email.",
+            )
 
-            navigate("/")
+            navigate("/login")
         } catch (err) {
             console.error(err.message || "Registration failed")
             notify.error(err.message || "Registration failed")

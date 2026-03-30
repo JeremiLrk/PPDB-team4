@@ -23,7 +23,7 @@ export function useLogin(setUser) {
                 throw new Error(data?.message || "Login failed");
             }
 
-            setUser(data.user);
+            setUser(data.account);
             notify.success("Login successful");
             navigate("/dashboard");
         } catch (err) {
