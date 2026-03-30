@@ -13,8 +13,12 @@ from server.extensions import db
 from server.app.models.sport_type import SportType
 from server.app.models.account import Account, TeamManager
 from server.app.models.account_role import AccountRole
+from server.app.models.club import Club
+from server.app.models.club_owner import ClubOwner
 from server.app.models.player import Player
 from server.app.models.team import Team
+from server.app.models.ladder import Ladder
+from server.app.models.ladder_team import LadderTeam
 
 TAG = "[seed:teams_and_users]"
 
@@ -103,7 +107,7 @@ def _get_or_create_club(name: str) -> tuple:
   existing = Club.query.filter_by(name=name).first()
   if existing:
     return existing, False
-  club = Club(name=name)
+  club = Club(name=name, description="test club", sport="Padel",  city="Antwerp")
   db.session.add(club)
   db.session.flush()
   return club, True

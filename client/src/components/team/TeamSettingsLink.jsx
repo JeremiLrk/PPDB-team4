@@ -1,3 +1,7 @@
+import { useNavigate } from "react-router-dom";
+import styles from "@/style/TeamSettingsLink.module.css";
+import GearIcon from "@/components/icon/GearIcon.jsx";
+
 /**
  * Returns true if the user can open the team settings page.
  * - Administrator → always
