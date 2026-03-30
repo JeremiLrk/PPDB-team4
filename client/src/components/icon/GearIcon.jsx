@@ -1,13 +1,13 @@
 /**
- * GearIcon — SVG шестерня, яка використовується як посилання на TeamSettings.
- * Виноситься в окремий модуль, щоб повторно використовуватися в TeamCard,
- * TeamDetail та будь-де ще.
+ * GearIcon — SVG gear used as a reference to TeamSettings.
+ * Moved to a separate module to be reused in TeamCard,
+ * TeamDetail and anywhere else.
  *
  * Props:
- *   size    — розмір у px (default: 18)
- *   title   — tooltip / aria-label (default: "Settings")
- *   className — додаткові CSS-класи
- *   style   — inline styles
+ * size — size in px (default: 18)
+ * title — tooltip / aria-label (default: "Settings")
+ * className — additional CSS classes
+ * style — inline styles
  */
 export default function GearIcon({ size = 18, title = "Settings", className = "", style }) {
     return (

@@ -9,7 +9,7 @@ export function useTeamPlayers(teamId) {
 
     const addPlayerLocally = useCallback((player) => {
         setPlayers(prev => {
-            // захист від дублювання
+            // duplicate protection
             if (prev.some(p => p.id === player.id)) return prev;
             return [player, ...prev];
         });

@@ -1,14 +1,10 @@
-import { useNavigate } from "react-router-dom";
-import GearIcon from "@/components/icon/GearIcon.jsx";
-import styles   from "@/style/TeamSettingsLink.module.css";
-
 /**
- * Повертає true, якщо користувач може відкрити сторінку налаштувань команди.
- *   - Administrator           → завжди
- *   - ClubOwner власника клубу цієї команди → так
- *   - TeamManager цієї команди              → так
+ * Returns true if the user can open the team settings page.
+ * - Administrator → always
+ * - ClubOwner of the club owner of this team → yes
+ * - TeamManager of this team → yes
  *
- * Логіка дзеркалює _can_edit_team() на сервері та canManageTeam() у TeamSettings.
+ * The logic mirrors _can_edit_team() on the server and canManageTeam() in TeamSettings.
  */
 export function canManageTeam(account, team) {
     if (!account || !team) return false;
@@ -30,13 +26,13 @@ export function canManageTeam(account, team) {
 }
 
 /**
- * TeamSettingsLink — іконка-кнопка ⚙, яка веде на /teams/:teamId/settings.
- * Рендериться лише якщо поточний користувач може керувати командою.
+ * TeamSettingsLink — a ⚙ button icon that links to /teams/:teamId/settings.
+ * Rendered only if the current user can manage the team.
  *
  * Props:
- *   currentUser — об'єкт з контексту useCurrentUserContext
- *   team        — об'єкт команди { id, clubId, ... }
- *   size        — розмір іконки (default: 18)
+ * currentUser — an object from the useCurrentUserContext context
+ * team — a team object { id, clubId, ... }
+ * size — the size of the icon (default: 18)
  */
 export default function TeamSettingsLink({ currentUser, team, size = 18 }) {
     const navigate = useNavigate();

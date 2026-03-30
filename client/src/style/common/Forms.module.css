@@ -117,7 +117,7 @@
 /*  Form layout  */
 
 /*
-   .form, .formRow, .formActions — з Dashboard.module.css (відсутні у Forms).
+   .form, .formRow, .formActions — from Dashboard.module.css (missing in Forms).
 */
 
 .form {
@@ -141,10 +141,10 @@
 /*  Form fields  */
 
 /*
-   Пріоритет Dashboard.module.css:
-     border-radius: 0.72rem  (Forms мав 0.6rem)
-     padding:       0.62rem 0.75rem  (Forms мав 0.55rem 0.68rem)
-     font-size:     0.94rem  (Forms мав 0.88rem)
+   Priority Dashboard.module.css:
+     border-radius: 0.72rem  (Forms had 0.6rem)
+     padding:       0.62rem 0.75rem  (Forms had 0.55rem 0.68rem)
+     font-size:     0.94rem  (Forms had 0.88rem)
 */
 
 .formLabel {
@@ -198,13 +198,13 @@
 }
 
 
-/*  Submit buttons  */
+/* Submit buttons */
 
 /*
-   .submitButton — повноширинний варіант з Dashboard (CreateClubTab).
-   .submitBtn    — варіант з Forms (CreateTeamButton), зберігає width: 100%
-                   але flex-центрування для спіннера.
-   Обидва нормалізовані до однакових border-radius / font / transition.
+.submitButton is the fullwidth version from Dashboard (CreateClubTab).
+.submitBtn is the version from Forms (CreateTeamButton), keeps width: 100%
+but flex-centers for the spinner.
+Both are normalized to the same border-radius / font / transition.
 */
 
 .submitButton,

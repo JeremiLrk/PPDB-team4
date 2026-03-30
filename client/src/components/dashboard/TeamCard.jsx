@@ -7,11 +7,11 @@ import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
  * TeamCard — a box for one team in the list.
  *
  * Props:
- * team        — { id, name, clubId?, sportTypeId? }
- * texts       — localization object (optional)
- * currentUser — поточний користувач (для відображення кнопки ⚙)
- * onClick     — custom handler for the "Open" button click;
- *               if not passed — navigate to /teams/:id
+ * team — { id, name, clubId?, sportTypeId? }
+ * texts — localization object (optional)
+ * currentUser — current user (to display the ⚙ button)
+ * onClick — custom handler for the "Open" button click;
+ * if not passed — navigate to /teams/:id
  */
 export default function TeamCard({ team, texts, currentUser, onClick }) {
     const navigate = useNavigate();
