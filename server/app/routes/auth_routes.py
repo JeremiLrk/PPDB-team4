@@ -8,7 +8,7 @@ from server.app.decorators.login_required import login_required
 from server.app.models.account import Account
 from server.app.services.auth_service import register_user, login_user, verify_user, generate_reset_token, verify_reset_token, update_password, generate_verification_token, verify_email_token, mark_user_as_verified
 
-env_path = Path(__file__).resolve().parent.parent / '.env'
+env_path = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(dotenv_path=env_path)
 
 resend.api_key = os.environ["RESEND_API_KEY"]

@@ -10,7 +10,7 @@ from server.app.models.account import Account
 from server.app.models.account_role import AccountRole
 from server.extensions import db
 
-env_path = Path(__file__).resolve().parent.parent / '.env'
+env_path = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(dotenv_path=env_path)
 
 PW_RESET_SALT = os.environ["PW_RESET_SALT"]

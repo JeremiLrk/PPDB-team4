@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 
 from server.app.routes.sport_type_routes import sport_type_bp
@@ -33,13 +35,15 @@ def create_app():
 
     db.init_app(app)    
 
-    with app.app_context():
-        print("Dropping all tables including dependencies...")
-        db.session.execute(text("DROP SCHEMA public CASCADE"))
-        db.session.execute(text("CREATE SCHEMA public"))
-        db.session.execute(text("GRANT ALL ON SCHEMA public TO public"))  # restore rights
-        db.session.commit()
-        print("Database schema reset complete.")
+    should_reset_db = os.getenv("RESET_DB_ON_STARTUP", "").lower() in {"1", "true", "yes"}
+    if should_reset_db:
+        with app.app_context():
+            print("Dropping all tables including dependencies...")
+            db.session.execute(text("DROP SCHEMA public CASCADE"))
+            db.session.execute(text("CREATE SCHEMA public"))
+            db.session.execute(text("GRANT ALL ON SCHEMA public TO public"))  # restore rights
+            db.session.commit()
+            print("Database schema reset complete.")
 
     _register_blueprints(app)
     _init_db(app)
