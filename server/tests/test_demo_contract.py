@@ -26,7 +26,9 @@ def test_demo_ladders_include_expected_names(client: FlaskClient):
     response = client.get(f"/api/clubs/{club_id}/ladders")
     assert response.status_code == 200
 
-    ladders = response.get_json()
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    ladders = payload.get("ladders", [])
     assert isinstance(ladders, list)
     assert len(ladders) >= 2
 
@@ -40,7 +42,9 @@ def test_top_players_contract_and_sorting(client: FlaskClient):
     response = client.get(f"/api/clubs/{club_id}/top-players")
     assert response.status_code == 200
 
-    players = response.get_json()
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    players = payload.get("players", [])
     assert isinstance(players, list)
     assert len(players) > 0
 
@@ -58,7 +62,9 @@ def test_ladder_detail_contract(client: FlaskClient):
     club_id = _get_netrank_club_id(client)
     ladders_response = client.get(f"/api/clubs/{club_id}/ladders")
     assert ladders_response.status_code == 200
-    ladders = ladders_response.get_json()
+    ladders_payload = ladders_response.get_json()
+    assert isinstance(ladders_payload, dict)
+    ladders = ladders_payload.get("ladders", [])
     assert isinstance(ladders, list)
     assert len(ladders) > 0
 

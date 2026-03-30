@@ -1,4 +1,4 @@
-import secrets
+import os
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -20,4 +20,4 @@ config_data = {
 
 DEBUG = True
 HOST = "127.0.0.1" if DEBUG else "0.0.0.0"
-SECRET_KEY = secrets.token_urlsafe(32)  # generates ~32 bytes of a secure key
+SECRET_KEY = os.getenv("SECRET_KEY", "ppdb-dev-secret-key-change-me")
