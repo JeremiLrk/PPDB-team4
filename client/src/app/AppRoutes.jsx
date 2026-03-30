@@ -16,9 +16,10 @@ import ProtectedRoute from "./ProtectedRoute";
 import Teams from "@/pages/Teams.jsx";
 import TeamDetail from "@/pages/TeamDetail.jsx";
 import TeamSettings from "@/pages/TeamSettings.jsx";
+import VerifyEmail from "@/pages/VerifyEmail.jsx";
 
 export default function AppRoutes() {
-    const { currentUser, setCurrentUser } = useCurrentUserContext();
+    const { currentUser, setCurrentUser } = useCurrentUserContext()
 
     return (
         <Routes>
@@ -26,10 +27,16 @@ export default function AppRoutes() {
             <Route path="/clubs" element={<Clubs />} />
             <Route path="/clubs/:clubId" element={<ClubHome />} />
             <Route path="/clubs/:clubId/ladders" element={<Ladders />} />
-            <Route path="/clubs/:clubId/ladders/:ladderId" element={<Ladder />} />
+            <Route
+                path="/clubs/:clubId/ladders/:ladderId"
+                element={<Ladder />}
+            />
             <Route path="/ladder" element={<Ladder />} />
             <Route path="/login" element={<Login setUser={setCurrentUser} />} />
-            <Route path="/register" element={<Register setUser={setCurrentUser} />} />
+            <Route
+                path="/register"
+                element={<Register setUser={setCurrentUser} />}
+            />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/teams" element={<Teams />} />
@@ -45,6 +52,7 @@ export default function AppRoutes() {
                         <ClubSettings />
                     </ProtectedRoute>
                 }/>
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
             <Route path="*" element={<NotFound />} />
         </Routes>
     );

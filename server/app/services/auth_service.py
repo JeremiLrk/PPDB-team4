@@ -1,6 +1,7 @@
 import os
 import jwt
 import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 from server.config import SECRET_KEY
 from itsdangerous import URLSafeTimedSerializer
@@ -9,9 +10,11 @@ from server.app.models.account import Account
 from server.app.models.account_role import AccountRole
 from server.extensions import db
 
-load_dotenv()
+env_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 PW_RESET_SALT = os.environ["PW_RESET_SALT"]
+EMAIL_VERIFICATION_SALT = os.environ.get("EMAIL_VERIFICATION_SALT", "email-verify-salt")
 
 def register_user(email, password, first_name, last_name, date_of_birth):
     if len(password) < 6:
@@ -35,6 +38,7 @@ def register_user(email, password, first_name, last_name, date_of_birth):
         last_name=last_name,
         date_of_birth=date_of_birth,
         account_role_id=user_role.id,
+        is_verified=False,
     )
 
     db.session.add(new_user)
@@ -45,6 +49,8 @@ def login_user(email, password):
     account = Account.query.filter_by(email=email).first()
     if not account or not check_password_hash(account.password_hash, password):
         return None
+    if not account.is_verified:
+        raise PermissionError("Please verify your email before logging in.")
 
 
     resolved = account.resolved_role
@@ -79,6 +85,11 @@ def generate_reset_token(email):
     serializer = URLSafeTimedSerializer(SECRET_KEY)
     return serializer.dumps(email, salt=PW_RESET_SALT)
 
+
+def generate_verification_token(email):
+    serializer = URLSafeTimedSerializer(SECRET_KEY)
+    return serializer.dumps(email, salt=EMAIL_VERIFICATION_SALT)
+
 def verify_reset_token(token, expiration=900):
     serializer = URLSafeTimedSerializer(SECRET_KEY)
     try:
@@ -87,6 +98,25 @@ def verify_reset_token(token, expiration=900):
     except:
         return None
 
+
+def verify_email_token(token, expiration=86400):
+    serializer = URLSafeTimedSerializer(SECRET_KEY)
+    try:
+        email = serializer.loads(token, salt=EMAIL_VERIFICATION_SALT, max_age=expiration)
+        return email
+    except:
+        return None
+
+
+def mark_user_as_verified(email):
+    account = Account.query.filter_by(email=email).first()
+    if not account:
+        raise ValueError("User not found.")
+
+    account.is_verified = True
+    db.session.commit()
+    return account
+    
 def update_password(email, password):
     if len(password) < 6:
         raise ValueError("Password is too short.")

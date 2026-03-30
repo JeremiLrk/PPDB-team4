@@ -1,21 +1,27 @@
 import styles from "@/style/Dashboard.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
-import { CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab, ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
+import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab, ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
 import { useLangContext } from "@/context/useLangContext.js";
 import { usePageTexts } from "@/hooks/usePageTexts.js";
 
 function Dashboard({ currentUser, setUser }) {
-    const { lang } = useLangContext();
-    const dashboardTexts = usePageTexts("dashboard", lang);
-    const workspace = useDashboardWorkspace(setUser, dashboardTexts);
+    const { lang } = useLangContext()
+    const dashboardTexts = usePageTexts("dashboard", lang)
+    const workspace = useDashboardWorkspace(setUser, dashboardTexts)
 
     if (workspace.loading) {
-        return <div className={styles.loading}>{dashboardTexts.loading_dashboard || "Loading dashboard..."}</div>;
+        return (
+            <div className={styles.loading}>
+                {dashboardTexts.loading_dashboard || "Loading dashboard..."}
+            </div>
+        )
     }
 
     return (
-        <section className={`${styles.shell} ${workspace.theme === "light" ? styles.light : ""}`}>
+        <section
+            className={`${styles.shell} ${workspace.theme === "light" ? styles.light : ""}`}
+        >
             <DashboardSidebar
                 theme={workspace.theme}
                 activeTab={workspace.activeTab}
@@ -28,15 +34,17 @@ function Dashboard({ currentUser, setUser }) {
             />
 
             <div className={styles.workspace}>
-
-
-                {workspace.error ? <p className={styles.warning}>{workspace.error}</p> : null}
+                {workspace.error ? (
+                    <p className={styles.warning}>{workspace.error}</p>
+                ) : null}
 
                 {workspace.activeTab === "overview" ? (
                     <OverviewTab
                         myClubs={workspace.myClubs}
                         myRequests={workspace.myRequests}
-                        pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
+                        pendingJoinRequestClubIds={
+                            workspace.pendingJoinRequestClubIds
+                        }
                         clubCreationRequests={workspace.clubCreationRequests}
                         texts={dashboardTexts}
                     />
@@ -52,6 +60,24 @@ function Dashboard({ currentUser, setUser }) {
                         myClubIds={workspace.myClubIds}
                         pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
                         clubJoinrequest={workspace.clubJoinrequest}
+                        texts={dashboardTexts}
+                    />
+                ) : null}
+
+                {workspace.activeTab === "availability" ? (
+                    <AvailabilityTab
+                        availabilityBlocks={workspace.availabilityBlocks}
+                        availabilityForm={workspace.availabilityForm}
+                        availabilityLoading={workspace.availabilityLoading}
+                        availabilitySubmitting={
+                            workspace.availabilitySubmitting
+                        }
+                        availabilityMessage={workspace.availabilityMessage}
+                        onAvailabilityFieldChange={
+                            workspace.onAvailabilityFieldChange
+                        }
+                        onAvailabilitySubmit={workspace.onAvailabilitySubmit}
+                        onAvailabilityDelete={workspace.onAvailabilityDelete}
                         texts={dashboardTexts}
                     />
                 ) : null}
@@ -107,7 +133,7 @@ function Dashboard({ currentUser, setUser }) {
                 ) : null}
             </div>
         </section>
-    );
+    )
 }
 
-export default Dashboard;
+export default Dashboard

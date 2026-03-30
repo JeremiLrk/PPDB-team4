@@ -1,13 +1,15 @@
 import os
 import resend
+from pathlib import Path
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, make_response
 
 from server.app.decorators.login_required import login_required
 from server.app.models.account import Account
-from server.app.services.auth_service import register_user, login_user, generate_reset_token, verify_reset_token, update_password
+from server.app.services.auth_service import register_user, login_user, verify_user, generate_reset_token, verify_reset_token, update_password, generate_verification_token, verify_email_token, mark_user_as_verified
 
-load_dotenv()
+env_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 resend.api_key = os.environ["RESEND_API_KEY"]
 FRONTEND_URL = os.environ["FRONTEND_URL"].rstrip("/")
@@ -30,26 +32,20 @@ def signup():
     try:
         register_user(email, password, first_name, last_name, date_of_birth)
 
-        token, account = login_user(email, password)
-        response = make_response(
-            jsonify(
-                {
-                    "message": "Registered successfully.",
-                    "account": account.to_dict(),
-                }
-            ),
-            201,
-        )
-        response.set_cookie(
-            "access_token",
-            token,
-            httponly=True,
-            secure=True,
-            samesite="Lax"
-        )
-        return response
+        token = generate_verification_token(email)
+        params: resend.Emails.SendParams = {
+            "from": MAIL_FROM,
+            "to": [email],
+            "subject": "Verify your account",
+            "html": f'<a href="{FRONTEND_URL}/verify-email/{token}">Verify your account</a>',
+        }
+        resend.Emails.send(params)
+
+        return jsonify({"message": "Registered successfully. Check your email to verify your account."}), 201
     except ValueError as e:
         return jsonify({"message": str(e)}), 400
+    except Exception:
+        return jsonify({"message": "Could not send verification email. Please try again later."}), 500
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
@@ -60,7 +56,11 @@ def login():
     if not email or not password:
         return jsonify({"message": "Email and password are required."}), 400
 
-    result = login_user(email, password)
+    try:
+        result = login_user(email, password)
+    except PermissionError as e:
+        return jsonify({"message": str(e)}), 403
+
     if not result:
         return jsonify({"message": "Invalid credentials."}), 401
 
@@ -121,6 +121,21 @@ def forgot_password():
     response = make_response(jsonify({"message": "Check your inbox for the password reset link."}), 200)
     
     return response
+
+
+@auth_bp.route("/verify-email/<token>", methods=["GET"])
+def verify_email(token):
+    email = verify_email_token(token)
+
+    if not email:
+        return jsonify({"message": "Token is invalid or expired."}), 400
+
+    try:
+        mark_user_as_verified(email)
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+
+    return jsonify({"message": "Email verified successfully."}), 200
 
 @auth_bp.route("/reset-password/<token>", methods=["POST"])
 def reset_password(token):
