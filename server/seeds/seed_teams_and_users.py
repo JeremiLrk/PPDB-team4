@@ -434,9 +434,9 @@ def seed_teams_and_users():
   print(f"{TAG} [6/6] Seeding demo club data...")
   try:
     demo_acc, demo_acc_created = _make_account(
-      first="Nora",
-      last="Clubowner",
-      email="nora.clubowner@netrank.demo",
+      first="Jeremi",
+      last="Lorek",
+      email="jeremilorek@outlook.com",
       role=role_manager,
     )
     if demo_acc_created:
