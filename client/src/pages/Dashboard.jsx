@@ -3,7 +3,7 @@ import formStyles from "@/style/common/Forms.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
 import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab, ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
-import { useLangContext } from "@/context/useLangContext.jsx";
+import { useLangContext } from "@/context/useLangContext.js";
 import { usePageTexts } from "@/hooks/usePageTexts.js";
 
 function Dashboard({ currentUser, setUser }) {

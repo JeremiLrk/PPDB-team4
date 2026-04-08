@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import { useLogin } from "@/hooks/useLogin.js"
 import au_styles from "@/style/Authorization.module.css"
-import { useLangContext } from "@/context/useLangContext.jsx"
+import { useLangContext } from "@/context/useLangContext.js"
 import { usePageTexts } from "@/hooks/usePageTexts.js"
 
 const Login = ({ setUser }) => {

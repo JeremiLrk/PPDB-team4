@@ -2,9 +2,8 @@ import os
 
 from flask import Flask
 
-from server.app.errors import register_error_handlers
 from server.app.routes.sport_type_routes import sport_type_bp
-from server.app.routes.team import team_bp
+from server.app.routes.team_routes import team_bp
 from server.config import SECRET_KEY, config_data
 from server.extensions import db
 from server.app.routes.auth_routes import auth_bp
@@ -20,15 +19,13 @@ from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
 from server.app.models.page_text import PageText
 from server.seeds.seed_teams_and_users import seed_teams_and_users
-from server.app.models.account import AccountRole
+from server.app.models.account_role import AccountRole
 from server.app.models.ladder import MatchRuleSet, LadderRatingFunction, Ladder
 from sqlalchemy import text
 
 
 def create_app():
     app = Flask(__name__)
-    register_error_handlers(app)
-
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"postgresql+psycopg://{config_data['db_username']}:{config_data['db_password']}"
         f"@{config_data['db_host']}:{config_data['db_port']}/{config_data['db_name']}"

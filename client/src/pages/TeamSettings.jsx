@@ -13,10 +13,8 @@ import commonStyles from "@/style/common/Common.module.css";
 
 export default function TeamSettings() {
     const { teamId }    = useParams();
+    const navigate      = useNavigate();
     const { currentUser } = useCurrentUserContext();
-
-    const navigate= useNavigate();
-
 
     const { team,    loading: teamLoading,    error: teamError    } = useTeam(teamId);
     const { players, loading: playersLoading, error: playersError,

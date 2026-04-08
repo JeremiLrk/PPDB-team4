@@ -266,11 +266,6 @@ CREATE TABLE IF NOT EXISTS team_manager_team (
     team_manager_id BIGINT NOT NULL,
     team_id BIGINT NOT NULL,
 
-    can_rename BOOLEAN NOT NULL DEFAULT true,
-    can_delete BOOLEAN NOT NULL DEFAULT true,
-    can_edit_players BOOLEAN NOT NULL DEFAULT true,
-    can_edit_managers BOOLEAN NOT NULL DEFAULT true,
-
     CONSTRAINT fk_tm_team_manager
         FOREIGN KEY (team_manager_id)
         REFERENCES team_manager(id)

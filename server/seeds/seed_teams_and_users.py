@@ -11,11 +11,12 @@ from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 from server.extensions import db
 from server.app.models.sport_type import SportType
-from server.app.models.account import Account, AccountRole
+from server.app.models.account import Account, TeamManager
+from server.app.models.account_role import AccountRole
 from server.app.models.club import Club
 from server.app.models.club_owner import ClubOwner
 from server.app.models.player import Player
-from server.app.models.team import Team, TeamManager
+from server.app.models.team import Team
 from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
 
@@ -64,7 +65,6 @@ def _make_account(first: str, last: str, email: str, role: AccountRole) -> tuple
     password_hash=generate_password_hash("Password123!"),
     account_role_id=role.id,
     date_of_birth=datetime.date(1995, 1, 1),
-    is_verified = True,
   )
   db.session.add(acc)
   db.session.flush()
