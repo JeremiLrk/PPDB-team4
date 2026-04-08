@@ -45,6 +45,8 @@
     position: fixed;
     top: 50%;
     left: 50%;
+    transform: translateY(-50%) translateX(-50%) scale(1);
+
     width: 288px;
     z-index: 200;
 
@@ -56,7 +58,6 @@
                 0 0 0 1px rgba(56, 189, 248, 0.06);
 
     opacity: 0;
-    transform: translateY(-50%) translateX(-50%) scale(1);
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
@@ -207,55 +208,16 @@ but flex-centers for the spinner.
 Both are normalized to the same border-radius / font / transition.
 */
 
-.submitButton,
-.submitBtn {
-    border-radius: 0.66rem;
-    border: 1px solid var(--action-border);
-    background: var(--action-bg);
-    color: var(--action-text);
-    font-size: 0.84rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.18s ease, border-color 0.2s ease,
-                box-shadow 0.2s ease, background 0.2s ease;
-}
 
-.submitButton {
-    padding: 0.42rem 0.72rem;
-}
-
-.submitBtn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.58rem;
-    margin-top: 0.1rem;
-}
-
-.submitButton:hover,
-.submitBtn:hover:not(:disabled) {
-    border-color: var(--action-hover-border);
-    background: var(--action-hover-bg);
-    transform: translateY(-1px) scale(1.01);
-    box-shadow: 0 10px 20px rgba(20, 184, 166, 0.18);
-}
-
-.submitButton:disabled,
-.submitBtn:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
 
 
 /*  Feedback: notice / warning / error  */
 
 /*
-   .notice* — з Dashboard.module.css (інлайн-повідомлення у CreateClubTab).
-   .warning  — з Dashboard.module.css (глобальна помилка у TeamsTab/SearchTab).
-   .error    — з Forms.module.css (локальна помилка у CreateTeamButton).
-   Нормалізовано: однакові border-radius та padding-подібні значення.
+    .notice* — from Dashboard.module.css (inline message in CreateClubTab).
+    .warning — from Dashboard.module.css (global error in TeamsTab/SearchTab).
+    .error — from Forms.module.css (local error in CreateTeamButton).
+    Normalized: same border-radius and padding-like values.
 */
 
 .warning {
@@ -340,22 +302,4 @@ Both are normalized to the same border-radius / font / transition.
 }
 
 
-/*  Animations  */
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0);   }
-}
-
-
-/*  Responsive  */
-
-@media (max-width: 640px) {
-    .formRow {
-        grid-template-columns: 1fr;
-    }
-}

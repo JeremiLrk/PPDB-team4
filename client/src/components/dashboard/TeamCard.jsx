@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import styles from "@/style/common/Common.module.css";
+import panelStyles from "@/style/common/Panel.module.css";
+import discoverStyles from "@/style/common/DiscoverGrid.module.css";
 import ItemCard from "@/components/common/ItemCard.jsx";
 import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
 
@@ -27,8 +28,8 @@ export default function TeamCard({ team, texts, currentUser, onClick }) {
     return (
         <ItemCard>
             <div>
-                <p className={styles.primaryText}>{team.name}</p>
-                <p className={styles.secondaryText}>
+                <p className={panelStyles.primaryText}>{team.name}</p>
+                <p className={panelStyles.secondaryText}>
                     {team.clubId
                         ? `Club #${team.clubId}`
                         : texts?.independent_team || "Independent"}
@@ -37,7 +38,7 @@ export default function TeamCard({ team, texts, currentUser, onClick }) {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                 <TeamSettingsLink currentUser={currentUser} team={team} />
-                <button className={styles.linkButton} onClick={handleOpen}>
+                <button className={discoverStyles.linkButton} onClick={handleOpen}>
                     {texts?.open || "Open"}
                 </button>
             </div>

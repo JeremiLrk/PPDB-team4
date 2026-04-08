@@ -1,15 +1,21 @@
-import styles from "@/style/Dashboard.module.css";
+import styles from "@/style/dashboard/Dashboard.module.css";
+
+
+
 import formStyles from "@/style/common/Forms.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
-import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab, ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
+import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab,ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
 import { useLangContext } from "@/context/useLangContext.jsx";
-import { usePageTexts } from "@/hooks/usePageTexts.js";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import {useCurrentUserContext} from "@/context/useCurrentUserContext.jsx";
+import {TeamsTab} from "@/components/dashboard/TeamsDashboardTab.jsx";
 
-function Dashboard({ currentUser, setUser }) {
+function Dashboard() {
+    const { currentUser, setCurrentUser } = useCurrentUserContext();
     const { lang } = useLangContext()
     const dashboardTexts = usePageTexts("dashboard", lang)
-    const workspace = useDashboardWorkspace(setUser, dashboardTexts)
+    const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts)
 
     if (workspace.loading) {
         return (
@@ -92,17 +98,7 @@ function Dashboard({ currentUser, setUser }) {
 
                 {workspace.activeTab === "teams" ? (
                     <TeamsTab
-                        teams={workspace.myTeams}
-                        total={workspace.myTeamsTotal}
-                        loading={workspace.myTeamsLoading}
-                        error={workspace.myTeamsError}
-                        sort={workspace.myTeamsSort}
-                        pageSize={workspace.myTeamsPageSize}
-                        hasMore={workspace.myTeamsHasMore}
-                        onLoad={workspace.loadMyTeams}
-                        onLoadMore={workspace.loadMoreMyTeams}
                         texts={dashboardTexts}
-                        currentUser={currentUser}
                     />
                 ) : null}
 

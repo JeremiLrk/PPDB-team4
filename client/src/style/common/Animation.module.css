@@ -1,0 +1,52 @@
+/*  Animation helpers  */
+
+.contentFade {
+    animation: contentIn 260ms ease;
+}
+
+.contentGrid {
+    display: grid;
+    grid-template-columns: 1.22fr 0.78fr;
+    gap: 1rem;
+}
+
+@keyframes contentIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+
+/*  Responsive  */
+
+@media (max-width: 1040px) {
+    .contentGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .listItem {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/*  Animations  */
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+
+/*  Responsive  */
+
+@media (max-width: 640px) {
+    .formRow {
+        grid-template-columns: 1fr;
+    }
+}

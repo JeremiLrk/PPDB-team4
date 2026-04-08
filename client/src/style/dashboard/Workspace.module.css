@@ -1,0 +1,31 @@
+.workspace {
+    background: var(--workspace-bg);
+    padding: 1.1rem 1.25rem;
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+}
+
+.workspaceHeader {
+    border-bottom: 1px solid var(--muted-border);
+    padding-bottom: 0.85rem;
+}
+
+.workspaceTitle {
+    margin: 0;
+    font-size: 1.48rem;
+    color: var(--text-heading);
+    letter-spacing: -0.01em;
+}
+
+.workspaceSubtitle {
+    margin: 0.35rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+}
+
+@media (max-width: 640px) {
+    .workspace {
+        padding: 0.9rem;
+    }
+}

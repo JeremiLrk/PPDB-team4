@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import styles from "@/style/VerifyEmail.module.css"
 import { useLangContext } from "@/context/useLangContext.jsx"
-import { usePageTexts } from "@/hooks/usePageTexts.js"
+import { usePageTexts } from "@/hooks/common/usePageTexts.js"
 
 const VerifyEmail = () => {
     const { token } = useParams()

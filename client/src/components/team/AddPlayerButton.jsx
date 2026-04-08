@@ -2,7 +2,7 @@ import { useRef, useEffect } from "react";
 import styles      from "@/style/common/Forms.module.css";
 import teamStyles  from "@/style/TeamSettings.module.css";
 import commonStyles from "@/style/common/Common.module.css";
-import { useAddPlayer }  from "@/hooks/useAddPlayer.js";
+import { useAddPlayer }  from "@/hooks/teams/useAddPlayer.js";
 import { PlusIcon }      from "@/components/icon/PlusIcon.jsx";
 import { Spinner }       from "@/components/forms/Spinner.jsx";
 import ItemCard          from "@/components/common/ItemCard.jsx";

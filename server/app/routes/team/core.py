@@ -13,7 +13,7 @@ core_bp = Blueprint("team_core", __name__)
 
 @core_bp.route("/<int:team_id>", methods=["GET"])
 def get_team(team_id: int):
-    """GET /api/teams/<team_id> — публічний."""
+    """GET /api/teams/<team_id> — public."""
     team = _get_team_or_404(team_id)
     return jsonify({
         "team": team.to_dict()
@@ -22,7 +22,7 @@ def get_team(team_id: int):
 
 @core_bp.route("", methods=["GET"])
 def get_teams():
-    """GET /api/teams?from=0&to=20&sort=name — публічний."""
+    """GET /api/teams?from=0&to=20&sort=name — public."""
     offset, limit, sort_col =  _parse_pagination(request.args)
 
     total = Team.query.count()

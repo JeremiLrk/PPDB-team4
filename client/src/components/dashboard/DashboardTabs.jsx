@@ -1,12 +1,9 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link} from "react-router-dom";
 import formStyles from "@/style/common/Forms.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import dashStyles from "@/style/ClubSettings.module.css";
 
-import TeamCard from "@/components/dashboard/TeamCard.jsx";
 import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js";
-import CreateTeamButton from "@/components/team/CreateTeamButton.jsx";
 
 function parseUtcTimestamp(value) {
     if (typeof value !== "string") {
@@ -31,13 +28,9 @@ function formatLocalTimestamp(value) {
     return parsed.toLocaleString()
 }
 
-// We combine both modules into one proxy object,
-// so as not to rewrite every styles.* in the template.
-// Dashboard-specific classes (shell, sidebar, …) only cover what
-// is not in Common, so there are no collisions.
 const styles = { ...formStyles, ...commonStyles, ...dashStyles };
 
-//  Overview Tab 
+//  Overview Tab
 
 export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, clubCreationRequests, texts }) {
     return (
@@ -92,7 +85,7 @@ export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, cl
     );
 }
 
-//  Search Tab 
+//  Search Tab
 
 export function SearchTab({
     searchTerm,
@@ -170,8 +163,8 @@ export function SearchTab({
     );
 }
 
-export function RequestsTab({ 
-    myRequests, 
+export function RequestsTab({
+    myRequests,
     texts
 }) {
     return (
@@ -212,7 +205,7 @@ export function RequestsTab({
     );
 }
 
-//  Create Club Tab 
+//  Create Club Tab
 
 export function CreateClubTab({
     clubRequestForm,
@@ -306,7 +299,7 @@ export function CreateClubTab({
             </article>
 
             {/* Right Column: Both types of requests */}
-            <div className={styles.requestsSidebar}>
+            <div className={.requestsSidebar}>
                 <article className={styles.panel}>
                     <div className={styles.panelTopRow}>
                         <h3 className={styles.panelTitle}>
@@ -343,13 +336,13 @@ export function CreateClubTab({
     );
 }
 
-export function ManageClubsTab({ 
-    myClubs, 
-    incomingJoinRequests, 
-    decideJoinrequest, 
-    isClubOwner, 
+export function ManageClubsTab({
+    myClubs,
+    incomingJoinRequests,
+    decideJoinrequest,
+    isClubOwner,
     onGoSettings,
-    texts 
+    texts
 }) {
     const ownedClubs = myClubs.filter(club => club.membership_status === "owner");
 
@@ -365,14 +358,14 @@ export function ManageClubsTab({
     }
 
     return (
-        <div className={`${styles.tabContent} ${styles.contentFade}`}>
+        <div className={`${.tabContent} ${styles.contentFade}`}>
             <h2 className={styles.panelTitle}>{texts?.manage_clubs_title || "Club Administration"}</h2>
-            
-            <div className={styles.twoColumnLayout}>
+
+            <div className={.twoColumnLayout}>
                 <section className={styles.mainColumn}>
                     <article className={styles.panel}>
                         <h3 className={styles.panelTitle}>{texts?.your_clubs || "Your Owned Clubs"}</h3>
-                        
+
                         {ownedClubs.length === 0 ? (
                             <p className={styles.muted}>You haven't been assigned as an owner to any clubs yet.</p>
                         ) : (
@@ -385,7 +378,7 @@ export function ManageClubsTab({
                                                 {club.city} - {club.sport}
                                             </p>
                                         </div>
-                                        <button 
+                                        <button
                                         onClick={() => onGoSettings(club.id)}
                                         className={styles.linkButton}>
                                             Settings
@@ -397,7 +390,7 @@ export function ManageClubsTab({
                     </article>
                 </section>
 
-                <aside className={styles.requestsSidebar}>
+                <aside className={.requestsSidebar}>
                     <article className={styles.panel}>
                         <div className={styles.panelTopRow}>
                             <h3 className={styles.panelTitle}>
@@ -418,27 +411,27 @@ export function ManageClubsTab({
                                             </p>
                                         </div>
                                         <div className={styles.actionRow} style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                                            <button 
-                                            className={styles.submitButton} 
+                                            <button
+                                            className={styles.submitButton}
                                             type="button"
                                             onClick={(e) => {
                                                 // Find all buttons in this specific div and disable them
-                                                const row = e.currentTarget.closest(`.${styles.actionRow}`);
+                                                const row = e.currentTarget.closest(`.${.actionRow}`);
                                                 row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                                                
+
                                                 decideJoinrequest(req.club_id, req.user_id, "approved");
                                             }}>
                                             {texts?.approve || "Approve"}
                                         </button>
-                                        
-                                        <button 
-                                            className={styles.submitButton} 
+
+                                        <button
+                                            className={styles.submitButton}
                                             type="button"
                                             style={{ filter: 'grayscale(1) brightness(0.7)' }}
                                             onClick={(e) => {
-                                                const row = e.currentTarget.closest(`.${styles.actionRow}`);
+                                                const row = e.currentTarget.closest(`.${.actionRow}`);
                                                 row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                                                
+
                                                 decideJoinrequest(req.club_id, req.user_id, "rejected");
                                             }}>
                                             {texts?.reject || "Reject"}
@@ -454,106 +447,9 @@ export function ManageClubsTab({
         </div>
     );
 }
-//  Teams Tab 
+//  Teams Tab
 
-const SORT_OPTIONS      = [{ value: "id", label: "By ID" }, { value: "name", label: "By Name" }];
-const PAGE_SIZE_OPTIONS = [6, 12, 24];
 
-export function TeamsTab({
-                             teams, total, loading, error,
-                             sort, pageSize, hasMore,
-                             onLoad, onLoadMore,
-                             texts,
-                             currentUser,
-                         }) {
-    const navigate = useNavigate();
-
-    useEffect(() => { void onLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    function handleTeamCreated() {
-        void onLoad({ sort, pageSize });
-    }
-
-    return (
-        <article className={`${styles.panel} ${styles.contentFade}`} style={{ display: "grid", gap: "1rem" }}>
-
-            {/* Header row */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
-                <h3 className={styles.panelTitle} style={{ margin: 0 }}>
-                    {texts?.my_teams || "My Teams"}
-                    {total !== null && (
-                        <span className={styles.counter} style={{ marginLeft: "0.6rem" }}>{total}</span>
-                    )}
-                </h3>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
-                    <select
-                        className={styles.searchInput}
-                        style={{ width: "auto", marginBottom: 0 }}
-                        value={sort}
-                        onChange={e => void onLoad({ sort: e.target.value, pageSize })}
-                        disabled={loading}
-                    >
-                        {SORT_OPTIONS.map(o => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
-                    </select>
-
-                    <select
-                        className={styles.searchInput}
-                        style={{ width: "auto", marginBottom: 0 }}
-                        value={pageSize}
-                        onChange={e => void onLoad({ sort, pageSize: Number(e.target.value) })}
-                        disabled={loading}
-                    >
-                        {PAGE_SIZE_OPTIONS.map(n => (
-                            <option key={n} value={n}>{n} per load</option>
-                        ))}
-                    </select>
-
-                    <CreateTeamButton onCreated={handleTeamCreated} />
-                </div>
-            </div>
-
-            {/* Error */}
-            {error && <p className={styles.warning}>{error}</p>}
-
-            {/* Empty state */}
-            {!loading && !error && teams.length === 0 && (
-                <p className={styles.muted}>
-                    {texts?.no_teams_yet || "You are not a member of any team yet."}
-                </p>
-            )}
-
-            {/* Teams list */}
-            {teams.length > 0 && (
-                <ul className={styles.list} style={{ margin: 0, padding: 0 }}>
-                    {teams.map(team => (
-                        <TeamCard key={team.id} team={team} texts={texts} currentUser={currentUser} />
-                    ))}
-                </ul>
-            )}
-
-            {/* Loading */}
-            {loading && (
-                <p className={styles.muted}>{texts?.loading_teams || "Loading teams…"}</p>
-            )}
-
-            {/* Load more */}
-            {!loading && hasMore && teams.length > 0 && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span className={styles.muted} style={{ fontSize: "0.82rem" }}>
-                        {texts?.showing || "Showing"} {teams.length}{total !== null ? ` / ${total}` : ""}
-                    </span>
-                    <button className={styles.primaryButton} onClick={() => void onLoadMore()}>
-                        {texts?.load_more || "Load more"}
-                    </button>
-                </div>
-            )}
-        </article>
-    );
-}
- 
 export function AvailabilityTab({
     availabilityBlocks,
     availabilityForm,

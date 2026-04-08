@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { useDeletePlayer }from "@/hooks/useDeletePlayer.js";
+import { useDeletePlayer }from "@/hooks/teams/useDeletePlayer.js";
 import { Spinner } from "@/components/forms/Spinner.jsx";
 import styles from "@/style/common/Forms.module.css";
 import teamStyles from "@/style/TeamSettings.module.css";

@@ -95,7 +95,7 @@ def remove_manager_from_team(account: Account, team_id: int, account_id: int):
 
 @membership_bp.route("/<int:team_id>/players", methods=["GET"])
 def get_team_players(team_id: int):
-    """GET /api/teams/<team_id>/players — список гравців команди."""
+    """GET /api/teams/<team_id>/players — list of team players."""
 
     # Call to check if this team exists
     team = _get_team_or_404(team_id)

@@ -14,9 +14,9 @@ my_teams_bp = Blueprint("team_my", __name__)
 def get_my_teams(account: Account):
     """
     GET /api/teams/my?from=0&to=20&sort=name
-    Команди якими керує поточний акаунт.
-    Administrator бачить всі. ClubOwner — клубні + прямо керовані.
-    TeamManager — лише керовані. Інші — порожній список.
+    Teams managed by the current account.
+    Administrator sees all. ClubOwner — club + directly managed.
+    TeamManager — managed only. Others — empty list.
     """
     offset, limit, sort_col = _parse_pagination(request.args)
 
@@ -60,7 +60,7 @@ def get_my_teams(account: Account):
 def get_my_all_teams(account: Account):
     """
     GET /api/teams/my-all?from=0&to=20&sort=name
-    Всі команди де акаунт задіяний — як менеджер, власник клубу або гравець.
+    All teams where the account is involved - as a manager, club owner or player.
     """
     offset, limit, sort_col = _parse_pagination(request.args)
 

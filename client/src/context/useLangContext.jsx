@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import {useLang} from "@/hooks/useLang.js";
+import {useLang} from "@/hooks/common/useLang.js";
 
 export const LangContext = createContext(null);
 

@@ -1,8 +1,8 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useTeam } from "@/hooks/useTeam.js";
+import { useTeam } from "@/hooks/teams/useTeam.js";
 import styles from "@/style/TeamDetail.module.css";
 import commonStyles from "@/style/common/Common.module.css";
-import {useTeamPlayers} from "@/hooks/useTeamPlayers.js";
+import {useTeamPlayers} from "@/hooks/teams/useTeamPlayers.js";
 import PlayerCard from "@/components/team/PlayerCard.jsx";
 import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";

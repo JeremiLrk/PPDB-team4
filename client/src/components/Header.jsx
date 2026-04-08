@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { notify } from "@/hooks/useNotify.js";
 import Badge from "./Badge";
 import styles from "@/style/Header.module.css";
-import { usePageTexts } from "@/hooks/usePageTexts.js";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 

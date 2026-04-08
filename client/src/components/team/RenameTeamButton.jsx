@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { useRenameTeam }from "@/hooks/useRenameTeam.js";
+import { useRenameTeam }from "@/hooks/teams/useRenameTeam.js";
 import { Spinner } from "@/components/forms/Spinner.jsx";
 import { SuccessIcon } from "@/components/icon/SuccessIcon.jsx";
 import { Field } from "@/components/forms/Field.jsx";

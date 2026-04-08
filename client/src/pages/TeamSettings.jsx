@@ -1,7 +1,7 @@
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useState } from "react";
-import { useTeam }from "@/hooks/useTeam.js";
-import { useTeamPlayers } from "@/hooks/useTeamPlayers.js";
+import { useTeam }from "@/hooks/teams/useTeam.js";
+import { useTeamPlayers } from "@/hooks/teams/useTeamPlayers.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 import AddPlayerButton from "@/components/team/AddPlayerButton.jsx";
 import PlayerCard from "@/components/team/PlayerCard.jsx";

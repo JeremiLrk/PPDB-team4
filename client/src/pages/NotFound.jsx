@@ -1,7 +1,7 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import {useLangContext} from "@/context/useLangContext.jsx";
-import {usePageTexts} from "@/hooks/usePageTexts.js";
+import {usePageTexts} from "@/hooks/common/usePageTexts.js";
 
 const NotFound = () => {
     const {lang, setLang } = useLangContext();

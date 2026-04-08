@@ -1,0 +1,72 @@
+/*  Panel / Surface  */
+
+.panel {
+    border: 1px solid var(--surface-border);
+    border-radius: 1rem;
+    background: var(--surface-bg);
+    backdrop-filter: blur(4px);
+    padding: 0.95rem;
+    transition: transform 0.22s ease, box-shadow 0.24s ease, border-color 0.2s ease;
+}
+.panel:hover {
+    transform: translateY(-2px);
+    border-color: var(--nav-active-border);
+    box-shadow: 0 12px 28px rgba(2, 132, 199, 0.14);
+}
+
+.panelFooter {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px 14px;
+    border-top: 1px solid var(--border-color, #e5e7eb);
+    gap: 8px;
+}
+
+.panelFooterSpacer {
+    flex: 1;
+}
+
+.panelTopRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.panelTitle {
+    margin: 0;
+    font-size: 1.06rem;
+    color: var(--text-heading);
+}
+
+.panelCounter {
+    min-width: 1.95rem;
+    text-align: center;
+    border-radius: 999px;
+    background: var(--counter-bg);
+    padding: 0.2rem 0.52rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-heading);
+}
+
+
+/*  List  */
+
+.list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.listItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    border-top: 1px solid var(--muted-border);
+    padding: 0.75rem 0;
+}
+.listItem:first-child {
+    border-top: none;
+    padding-top: 0;
+}

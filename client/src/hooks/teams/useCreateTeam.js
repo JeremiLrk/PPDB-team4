@@ -5,20 +5,26 @@ const INITIAL_FORM = { name: "", clubId: "", sportTypeId: "" };
 /**
  * Manages the create-team form state and submission.
  * @param {{ onCreated?: (team: object) => void }} options
+ * error - -3
+ * loading - -2
+ * idle - -1
+ * form - 0
+ * success - 1
+ *
  */
 export function useCreateTeam({ onCreated } = {}) {
     const [form, setForm]   = useState(INITIAL_FORM);
-    const [step, setStep]   = useState("idle"); // idle | form | loading | success | error
+    const [step, setStep]   = useState(-1);
     const [error, setError] = useState("");
 
     function openForm() {
         setForm(INITIAL_FORM);
         setError("");
-        setStep("form");
+        setStep(0);
     }
 
     function closeForm() {
-        setStep("idle");
+        setStep(-1);
         setForm(INITIAL_FORM);
         setError("");
     }
@@ -33,7 +39,7 @@ export function useCreateTeam({ onCreated } = {}) {
             return;
         }
 
-        setStep("loading");
+        setStep(-2);
         setError("");
 
         try {
@@ -52,11 +58,11 @@ export function useCreateTeam({ onCreated } = {}) {
 
             if (!res.ok) {
                 setError(data?.message || "Something went wrong.");
-                setStep("form");
+                setStep(0);
                 return;
             }
 
-            setStep("success");
+            setStep(1);
             onCreated?.(data.team);
 
             // Auto-close after success flash
@@ -64,7 +70,7 @@ export function useCreateTeam({ onCreated } = {}) {
 
         } catch {
             setError("Network error. Please try again.");
-            setStep("form");
+            setStep(0);
         }
     }
 
@@ -76,8 +82,8 @@ export function useCreateTeam({ onCreated } = {}) {
         closeForm,
         updateField,
         submit,
-        isOpen:    step !== "idle",
-        isLoading: step === "loading",
-        isSuccess: step === "success",
+        isOpen:    step !== -1,
+        isLoading: step === -2,
+        isSuccess: step === 1,
     };
 }

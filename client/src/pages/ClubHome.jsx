@@ -6,7 +6,7 @@ import { useLadders } from "@/hooks/useLadders";
 import { useTopPlayers } from "@/hooks/useTopPlayers";
 import useClub from "@/hooks/useClub";
 import { useLangContext } from "@/context/useLangContext.jsx";
-import { usePageTexts } from "@/hooks/usePageTexts.js";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 function ClubHome() {
     const { clubId } = useParams();
