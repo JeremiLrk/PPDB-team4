@@ -10,4 +10,7 @@ class ClubOwner(db.Model):
     clubs        = db.relationship("Club", secondary=ClubOwnerClub.__tablename__, back_populates="owners")
 
     def to_dict(self):
-        return self.account.to_dict()
+        return {
+            "id":      self.id,
+            "clubIds": [c.id for c in self.clubs],
+        }

@@ -6,8 +6,7 @@ from dotenv import load_dotenv
 from server.config import SECRET_KEY
 from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
-from server.app.models.account import Account
-from server.app.models.account_role import AccountRole
+from server.app.models.account import Account, AccountRole
 from server.extensions import db
 
 env_path = Path(__file__).resolve().parents[2] / ".env"

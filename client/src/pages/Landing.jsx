@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import styles from "@/style/Landing.module.css";
-import { useLangContext } from "@/context/useLangContext.js";
+import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/usePageTexts.js";
 
 function Landing() {

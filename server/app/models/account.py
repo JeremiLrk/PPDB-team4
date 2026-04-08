@@ -1,6 +1,13 @@
 from server.extensions import db
-from server.app.models.club_owner import ClubOwner
-from server.app.models.player import Player
+
+
+class AccountRole(db.Model):
+    __tablename__ = "account_role"
+
+    id   = db.Column(db.BigInteger, primary_key=True)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+
+    accounts = db.relationship("Account", back_populates="account_role")
 
 class Account(db.Model):
     __tablename__ = "account"
@@ -16,8 +23,8 @@ class Account(db.Model):
 
     account_role  = db.relationship("AccountRole", back_populates="accounts")
     administrator = db.relationship("Administrator", back_populates="account", uselist=False)
-    player        = db.relationship("Player",        back_populates="account", uselist=False)
-    team_manager  = db.relationship("TeamManager",   back_populates="account", uselist=False)
+    player        = db.relationship("Player", back_populates="account", uselist=False)
+    team_manager  = db.relationship("TeamManager", back_populates="account", uselist=False)
 
     is_verified = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -34,39 +41,70 @@ class Account(db.Model):
             return self.player
         return self
 
-    def to_dict(self):
-        resolved = self.resolved_role
+    @property
+    def resolved_roles(self) -> list:
+        """Returns all active roles for this account."""
+        roles = []
+        if self.administrator:
+            roles.append(self.administrator)
+        if self.team_manager and self.team_manager.club_owner:
+            roles.append(self.team_manager.club_owner)
+        elif self.team_manager:
+            roles.append(self.team_manager)
+        if self.player:
+            roles.append(self.player)
+        return roles
 
-        if isinstance(resolved, Administrator):
-            role = "administrator"
-        elif isinstance(resolved, ClubOwner):
-            role = "club_owner"
-        elif isinstance(resolved, TeamManager):
-            role = "team_manager"
-        elif isinstance(resolved, Player):
-            role = "player"
-        else:
-            role = "user"
+    def to_dict(self, include=None):
+        """
+        include: list of additional data to include.
+        Possible values: "player", "team_manager", "club_owner", "administrator"
+        If None — returns basic information.
+        """
 
-        # IDs of teams the account manages (as TeamManager or ClubOwner)
+        roles = []
+        if self.administrator:
+            roles.append("administrator")
+        if self.team_manager and self.team_manager.club_owner:
+            roles.append("club_owner")
+        elif self.team_manager:
+            roles.append("team_manager")
+        if self.player:
+            roles.append("player")
+        if not roles:
+            roles.append("user")
+
+
         managed_team_ids = []
         if self.team_manager:
             managed_team_ids = [t.id for t in self.team_manager.teams]
 
-        # IDs of clubs the account owns (only for ClubOwner)
         club_ids = []
-        if isinstance(resolved, ClubOwner):
-            club_ids = [c.id for c in resolved.clubs]
+        if self.team_manager and self.team_manager.club_owner:
+            club_ids = [c.id for c in self.team_manager.club_owner.clubs]
 
-        return {
-            "id":             self.id,
-            "email":          self.email,
-            "firstName":      self.first_name,
-            "lastName":       self.last_name,
-            "role":           role,
-            "managedTeamIds": managed_team_ids,
-            "clubIds":        club_ids,
+        base = {
+            "id":               self.id,
+            "email":            self.email,
+            "firstName":        self.first_name,
+            "lastName":         self.last_name,
+            "roles":            roles,
+            "managedTeamIds":   managed_team_ids,
+            "clubIds":          club_ids,
         }
+
+        if include:
+            include = set(include)
+            if "player" in include and self.player:
+                base["player"] = self.player.to_dict()
+            if "team_manager" in include and self.team_manager:
+                base["teamManager"] = self.team_manager.to_dict()
+            if "club_owner" in include and self.team_manager and self.team_manager.club_owner:
+                base["clubOwner"] = self.team_manager.club_owner.to_dict()
+            if "administrator" in include and self.administrator:
+                base["administrator"] = self.administrator.to_dict()
+
+        return base
 
 class Administrator(db.Model):
     __tablename__ = "administrator"
@@ -80,16 +118,7 @@ class Administrator(db.Model):
     account = db.relationship("Account", back_populates="administrator")
 
     def to_dict(self):
-        return self.account.to_dict()
-
-class TeamManager(db.Model):
-    __tablename__ = "team_manager"
-
-    id = db.Column(db.BigInteger, db.ForeignKey("account.id", ondelete="CASCADE"), primary_key=True)
-
-    account    = db.relationship("Account",   back_populates="team_manager")
-    teams      = db.relationship("Team",      secondary="team_manager_team", back_populates="managers")
-    club_owner = db.relationship("ClubOwner", back_populates="team_manager", uselist=False)
-
-    def to_dict(self):
-        return self.account.to_dict()
+        return {
+            "id":          self.id,
+            "accessLevel": self.access_level,
+        }

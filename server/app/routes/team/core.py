@@ -1,0 +1,154 @@
+from flask import Blueprint, request, jsonify, abort
+from server.extensions import db
+from server.app.models.account import Account, Administrator
+from server.app.models.team import Team, TeamManagerTeam, TeamManager
+from server.app.decorators.login_required import login_required
+from server.app.utils.promote import promote_to_team_manager
+from ._helpers import _get_team_or_404, _parse_pagination
+from ._permissions import _can_rename_or_403, _can_delete_or_403
+from ...models.club_owner import ClubOwner
+
+core_bp = Blueprint("team_core", __name__)
+
+
+@core_bp.route("/<int:team_id>", methods=["GET"])
+def get_team(team_id: int):
+    """GET /api/teams/<team_id> — публічний."""
+    team = _get_team_or_404(team_id)
+    return jsonify({
+        "team": team.to_dict()
+    }), 200
+
+
+@core_bp.route("", methods=["GET"])
+def get_teams():
+    """GET /api/teams?from=0&to=20&sort=name — публічний."""
+    offset, limit, sort_col =  _parse_pagination(request.args)
+
+    total = Team.query.count()
+    teams = Team.query.order_by(sort_col).offset(offset).limit(limit).all()
+
+    return jsonify({
+        "total": total,
+        "from":  offset,
+        "to":    offset + len(teams),
+        "teams": [t.to_dict() for t in teams],
+    }), 200
+
+
+@core_bp.route("/by-club/<int:club_id>", methods=["GET"])
+def get_teams_by_club(club_id: int):
+    """GET /api/teams/by-club/<club_id>?from=0&to=20&sort=name"""
+    from server.app.models.club import Club
+    club = Club.query.get(club_id)
+    if not club:
+        abort(404, description="Club not found.")
+
+    offset, limit, sort_col = _parse_pagination(request.args)
+
+    base_query = Team.query.filter_by(club_id=club_id)
+    total = base_query.count()
+    teams = base_query.order_by(sort_col).offset(offset).limit(limit).all()
+
+    return jsonify({
+        "clubId": club_id,
+        "total":  total,
+        "from":   offset,
+        "to":     offset + len(teams),
+        "teams":  [t.to_dict() for t in teams],
+    }), 200
+
+
+@core_bp.route("", methods=["POST"])
+@login_required
+def create_team(account: Account):
+    """POST /api/teams — make team."""
+    data = request.get_json(silent=True)
+    if not data:
+        abort(400, description="No JSON body provided.")
+
+    name = data.get("name", "").strip()
+    if not name:
+        abort(422, description="Field 'name' is required.")
+
+    club_id       = data.get("clubId")
+    sport_type_id = data.get("sportTypeId")
+    resolved      = account.resolved_role
+
+    if isinstance(resolved, Administrator):
+        acting_manager = None
+    elif isinstance(resolved, (ClubOwner, TeamManager)):
+        acting_manager = account.team_manager
+    else:
+        promote_to_team_manager(account)
+        acting_manager = account.team_manager
+
+    if club_id is not None:
+        if Team.query.filter_by(club_id=club_id, name=name).first():
+            abort(409, description="A team with this name already exists in the club.")
+
+    new_team = Team(name=name, club_id=club_id, sport_type_id=sport_type_id)
+    db.session.add(new_team)
+    db.session.flush()
+
+    if acting_manager is not None:
+        assoc = TeamManagerTeam(
+            team_manager_id=acting_manager.id,
+            team_id=new_team.id,
+            can_rename=True,
+            can_delete=True,
+            can_edit_players=True,
+            can_edit_managers=True,
+        )
+        db.session.add(assoc)
+
+    db.session.commit()
+    return jsonify({
+        "message": "Team created successfully.",
+        "team": new_team.to_dict()
+    }), 201
+
+
+@core_bp.route("/<int:team_id>", methods=["DELETE"])
+@login_required
+def delete_team(account: Account, team_id: int):
+    """DELETE /api/teams/<team_id> - delete team."""
+    team = _get_team_or_404(team_id)
+
+    _can_delete_or_403(account.resolved_role, team)
+
+    db.session.delete(team)
+    db.session.commit()
+    return jsonify({
+        "message": "Team deleted successfully."
+    }), 200
+
+
+@core_bp.route("/<int:team_id>", methods=["PATCH"])
+@login_required
+def rename_team(account: Account, team_id: int):
+    """PATCH /api/teams/<team_id> — renaming a team."""
+    team = _get_team_or_404(team_id)
+
+    _can_rename_or_403(account.resolved_role, team)
+
+    data = request.get_json(silent=True)
+    if not data:
+        abort(400, description="No JSON body provided.")
+
+    name = data.get("name", "").strip()
+    if not name:
+        abort(422, description="Field 'name' is required.")
+    if name == team.name:
+        abort(422, description="New name is the same as current.")
+
+    if team.club_id is not None:
+        if Team.query.filter_by(Team.club_id == team.club_id, Team.name == name, Team.id != team.id).first():
+            abort(409, description="A team with this name already exists in the club.")
+
+    team.name = name
+    db.session.commit()
+    return jsonify({
+        "message": "Team renamed successfully.",
+        "team": team.to_dict()
+    }), 200
