@@ -18,6 +18,7 @@ export function useClubSettings(clubId) {
 
     const [members, setMembers] = useState([]);
     const [ladders, setLadders] = useState([]);
+    const [owners, setOwners] = useState([]);
 
     const [ratingFunctions, setRatingFunctions] = useState([]);
     const [ruleSets, setRuleSets] = useState([]);
@@ -29,9 +30,10 @@ export function useClubSettings(clubId) {
         async function fetchClubData() {
             try {
                 // Fetching core data + the metadata for dropdowns
-                const [clubRes, membersRes, laddersRes, ratingsRes, rulesRes] = await Promise.all([
+                const [clubRes, membersRes, ownersRes, laddersRes, ratingsRes, rulesRes] = await Promise.all([
                     fetch(`/api/clubs/${clubId}`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/members`, { credentials: "include" }),
+                    fetch(`/api/clubs/${clubId}/owners`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/ladders`, { credentials: "include" }),
                     fetch(`/api/rating-functions`), 
                     fetch(`/api/rule-sets`)
@@ -39,6 +41,7 @@ export function useClubSettings(clubId) {
 
                 const clubData = await clubRes.json();
                 const membersData = await membersRes.json();
+                const ownersData = await ownersRes.json();
                 const laddersData = await laddersRes.json();
                 const ratingsData = await ratingsRes.json();
                 const rulesData = await rulesRes.json();
@@ -54,7 +57,8 @@ export function useClubSettings(clubId) {
                 });
 
                 setMembers(membersData.members || []);
-                
+                setOwners(ownersData.owners || []);
+
                 // Handle the array response from your Flask API
                 setLadders(Array.isArray(laddersData) ? laddersData : (laddersData.ladders || []));
 
@@ -167,6 +171,56 @@ export function useClubSettings(clubId) {
         }
     };
 
+    const addOwner = async (ownerId) => {
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/owners`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ owner_id: ownerId }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            // Refresh owners list or append the new one
+            setOwners(prev => [...prev, data.owner]);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const removeOwner = async (ownerId) => {
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/owners/${ownerId}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message);
+            }
+            setOwners(prev => prev.filter(o => o.id !== ownerId));
+        } catch (err) {
+            alert(err.message); // Use alert for specific owner errors (like self-deletion)
+        }
+    };
+
+    const searchAccounts = async (query) => {
+        if (!query || query.length < 3) return [];
+        
+        try {
+            const res = await fetch(`/api/accounts/search?q=${encodeURIComponent(query)}`, {
+                credentials: "include"
+            });
+            const data = await res.json();
+            return data.accounts || [];
+        } catch (err) {
+            console.error("Search failed", err);
+            return [];
+        }
+    };
+
+
     return {
         loading,
         error,
@@ -185,6 +239,11 @@ export function useClubSettings(clubId) {
         members,
         addMember,
         removeMember,
+
+        owners,
+        addOwner,
+        removeOwner,
+        searchAccounts,
 
         ladders,
         createLadder,
