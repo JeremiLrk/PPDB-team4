@@ -68,6 +68,12 @@
     z-index: -1;
 }
 
+@media (max-width: 1040px) {
+    .shell {
+        grid-template-columns: 1fr;
+    }
+}
+
 /*  Light theme override  */
 
 .light {
@@ -133,6 +139,62 @@
 }
 
 
+/*  Notice pills  */
+
+.notice {
+    margin: 0.8rem 0 0;
+    border: 1px solid;
+    border-radius: 0.72rem;
+    padding: 0.62rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.noticeSuccess {
+    border-color: rgba(34, 197, 94, 0.42);
+    background: rgba(20, 83, 45, 0.25);
+    color: #bbf7d0;
+}
+
+.noticeInfo {
+    border-color: rgba(14, 165, 233, 0.42);
+    background: rgba(14, 116, 144, 0.2);
+    color: #bae6fd;
+}
+
+.noticeError {
+    border-color: rgba(239, 68, 68, 0.42);
+    background: rgba(127, 29, 29, 0.26);
+    color: #fecaca;
+}
+
+
+/*  Gen pills  */
+
+.info {
+    margin-top: 1.5rem;
+}
+
+.error {
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--danger-border);
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    border-radius: 0.72rem;
+    padding: 0.52rem 0.65rem;
+    line-height: 1.4;
+}
+
+.warning {
+    margin: 0;
+    border: 1px solid var(--danger-border);
+    border-radius: 0.72rem;
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    padding: 0.62rem 0.75rem;
+}
+
+
 /*  Typography  */
 
 .primaryText {
@@ -147,4 +209,10 @@
 .muted {
     margin: 0;
     color: var(--text-secondary);
+}
+
+
+
+.noStylePleaseFixMe {
+
 }

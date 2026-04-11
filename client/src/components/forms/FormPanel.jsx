@@ -1,7 +1,10 @@
 import { useRef, useEffect} from "react";
 import { Spinner } from "@/components/forms/Spinner.jsx";
 import { SuccessIcon } from "@/components/icon/SuccessIcon.jsx";
-import styles from "@/style/common/Forms.module.css";
+import commonStyles from "@/style/common/Common.module.css";
+import fromStyles from "@/style/common/Forms.module.css";
+import panelStyles from "@/style/common/Panel.module.css";
+import buttonStyles from "@/style/common/Buttons.module.css";
 
 /**
  * FormPanel — drop-down dialog with step-by-step navigation (Back / Next / Confirm).
@@ -96,11 +99,11 @@ export function FormPanel({
 
     // --- Navigation footer ----------------------------------------------------
     const navigationFooter = !isSuccess && (
-        <div className={styles.panelFooter}>
+        <div className={panelStyles.panelFooter}>
             {/* Back button — hidden on the first page*/}
             {step > 0 && (
                 <button
-                    className={styles.backBtn}
+                    className={buttonStyles.backBtn}
                     onClick={onBack}
                     disabled={isLoading}
                 >
@@ -109,12 +112,12 @@ export function FormPanel({
             )}
 
             {/* Spacer — so that "Next/Confirm" is always on the right */}
-            <span className={styles.footerSpacer} />
+            <span className={panelStyles.panelFooterSpacer} />
 
             {/* "Next" or "Confirm" */}
             {isLastStep ? (
                 <button
-                    className={styles.submitBtn}
+                    className={buttonStyles.submitBtn}
                     onClick={onSubmit}
                     disabled={isLoading || !canNext}
                 >
@@ -122,7 +125,7 @@ export function FormPanel({
                 </button>
             ) : (
                 <button
-                    className={styles.nextBtn}
+                    className={buttonStyles.nextBtn}
                     onClick={onNext}
                     disabled={isLoading || !canNext}
                 >
@@ -133,31 +136,31 @@ export function FormPanel({
     );
 
     return (
-        <div className={styles.wrapper}>
+        <div className={fromStyles.wrapper}>
             {/* --- Trigger --------------------------------------------------- */}
             <button
                 ref={triggerRef}
                 onClick={isOpen ? closePanel : openPanel}
-                className={`${triggerClassName ?? styles.trigger} ${isOpen ? (triggerOpenClassName ?? styles.triggerOpen) : ""}`}
+                className={`${triggerClassName ?? fromStyles.trigger} ${isOpen ? (triggerOpenClassName ?? fromStyles.triggerOpen) : ""}`}
                 aria-expanded={isOpen}
                 aria-haspopup="dialog"
             >
                 {triggerContent}
             </button>
 
-            {/* --- Panel --------------------------------------------------- */}
+            {/* ---Dropdown Panel --------------------------------------------------- */}
             <div
                 ref={panelRef}
                 role="dialog"
                 aria-label={ariaLabel ?? title}
                 aria-modal="true"
-                className={`${styles.panel} ${panelClassName ?? ""} ${isOpen ? styles.panelOpen : ""}`}
+                className={`${panelStyles.dropdownPanel} ${panelClassName ?? ""} ${isOpen ? panelStyles.dropdownPanelOpen : ""}`}
             >
-                {/* Заголовок */}
-                <div className={styles.panelHeader}>
-                    <p className={styles.panelTitle}>{title}</p>
+                {/* Title */}
+                <div className={panelStyles.dropdownPanelHeader}>
+                    <p className={panelStyles.dropdownPanelTitle}>{title}</p>
                     <button
-                        className={styles.closeBtn}
+                        className={buttonStyles.closeBtn}
                         onClick={closePanel}
                         aria-label="Close"
                     >
@@ -166,16 +169,16 @@ export function FormPanel({
                 </div>
 
                 {/* --- Part 1: Question Pages --------------------------- */}
-                <div className={styles.panelBody}>
+                <div className={panelStyles.dropdownPanel}>
                     {isSuccess ? (
-                        <div className={styles.successBody}>
+                        <div className={fromStyles.successBody}>
                             <SuccessIcon />
-                            <p className={styles.successLabel}>{successLabel}</p>
+                            <p className={fromStyles.successLabel}>{successLabel}</p>
                         </div>
                     ) : (
                         <>
                             {children}
-                            {error && <p className={styles.error}>{error}</p>}
+                            {error && <p className={commonStyles.error}>{error}</p>}
                         </>
                     )}
                 </div>

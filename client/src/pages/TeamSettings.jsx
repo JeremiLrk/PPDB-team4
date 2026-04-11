@@ -10,6 +10,7 @@ import GearIcon from "@/components/icon/GearIcon.jsx";
 import { canManageTeam }from "@/components/team/TeamSettingsLink.jsx";
 import styles from "@/style/TeamSettings.module.css";
 import commonStyles from "@/style/common/Common.module.css";
+import panelStyles from "@/style/common/Panel.module.css";
 
 export default function TeamSettings() {
     const { teamId }    = useParams();
@@ -115,7 +116,7 @@ export default function TeamSettings() {
                     <div className={styles.sectionTitleRow}>
                         <h2 className={styles.sectionTitle}>Players</h2>
                         {total !== null && (
-                            <span className={commonStyles.counter}>{total}</span>
+                            <span className={panelStyles.panelCounter}>{total}</span>
                         )}
                     </div>
                     <AddPlayerButton teamId={teamId} onAdded={reloadPlayers} />
@@ -144,7 +145,7 @@ export default function TeamSettings() {
 
                 {/* List */}
                 {!playersLoading && !playersError && players.length > 0 && (
-                    <ul className={commonStyles.list}>
+                    <ul className={panelStyles.list}>
                         {players.map(player => (
                             <PlayerCard
                                 key={player.playerId ?? player.id}

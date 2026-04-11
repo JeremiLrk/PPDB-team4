@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useTeam } from "@/hooks/teams/useTeam.js";
 import styles from "@/style/TeamDetail.module.css";
 import commonStyles from "@/style/common/Common.module.css";
+import panelStyles from "@/style/common/Panel.module.css";
 import {useTeamPlayers} from "@/hooks/teams/useTeamPlayers.js";
 import PlayerCard from "@/components/team/PlayerCard.jsx";
 import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
@@ -72,7 +73,7 @@ export default function TeamDetail() {
                 <div className={styles.sectionHeader}>
                     <h2 className={styles.sectionTitle}>Players</h2>
                     {total !== null && (
-                        <span className={commonStyles.counter}>{total}</span>
+                        <span className={panelStyles.panelCounter}>{total}</span>
                     )}
                 </div>
 
@@ -95,7 +96,7 @@ export default function TeamDetail() {
                 )}
 
                 {!playersLoading && !playersError && players.length > 0 && (
-                    <ul className={commonStyles.list}>
+                    <ul className={panelStyles.list}>
                         {players.map(player => (
                             <PlayerCard key={player.playerId ?? player.id} player={player} />
                         ))}

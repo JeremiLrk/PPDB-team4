@@ -299,7 +299,7 @@ export function CreateClubTab({
             </article>
 
             {/* Right Column: Both types of requests */}
-            <div className={.requestsSidebar}>
+            <div className={commonStyles.noStylePleaseFixMe}>
                 <article className={styles.panel}>
                     <div className={styles.panelTopRow}>
                         <h3 className={styles.panelTitle}>
@@ -358,11 +358,11 @@ export function ManageClubsTab({
     }
 
     return (
-        <div className={`${.tabContent} ${styles.contentFade}`}>
+        <div className={`${commonStyles.noStylePleaseFixMe} ${styles.contentFade}`}>
             <h2 className={styles.panelTitle}>{texts?.manage_clubs_title || "Club Administration"}</h2>
 
-            <div className={.twoColumnLayout}>
-                <section className={styles.mainColumn}>
+            <div className={commonStyles.noStylePleaseFixMe}>
+                <section className={commonStyles.noStylePleaseFixMe}>
                     <article className={styles.panel}>
                         <h3 className={styles.panelTitle}>{texts?.your_clubs || "Your Owned Clubs"}</h3>
 
@@ -390,7 +390,7 @@ export function ManageClubsTab({
                     </article>
                 </section>
 
-                <aside className={.requestsSidebar}>
+                <aside className={commonStyles.noStylePleaseFixMe}>
                     <article className={styles.panel}>
                         <div className={styles.panelTopRow}>
                             <h3 className={styles.panelTitle}>
@@ -416,7 +416,7 @@ export function ManageClubsTab({
                                             type="button"
                                             onClick={(e) => {
                                                 // Find all buttons in this specific div and disable them
-                                                const row = e.currentTarget.closest(`.${.actionRow}`);
+                                                const row = e.currentTarget.closest(`.${commonStyles.noStylePleaseFixMe}`);
                                                 row.querySelectorAll('button').forEach(btn => btn.disabled = true);
 
                                                 decideJoinrequest(req.club_id, req.user_id, "approved");
@@ -429,7 +429,7 @@ export function ManageClubsTab({
                                             type="button"
                                             style={{ filter: 'grayscale(1) brightness(0.7)' }}
                                             onClick={(e) => {
-                                                const row = e.currentTarget.closest(`.${.actionRow}`);
+                                                const row = e.currentTarget.closest(`.${commonStyles.noStylePleaseFixMe}`);
                                                 row.querySelectorAll('button').forEach(btn => btn.disabled = true);
 
                                                 decideJoinrequest(req.club_id, req.user_id, "rejected");

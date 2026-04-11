@@ -50,6 +50,52 @@
     color: var(--text-heading);
 }
 
+/*  Dropdown panel  */
+
+.dropdownPanel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translateY(-50%) translateX(-50%) scale(1);
+
+    width: 288px;
+    z-index: 200;
+
+    border: 1px solid var(--surface-border);
+    border-radius: 1rem;
+    background: var(--surface-bg-soft);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(56, 189, 248, 0.06);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.dropdownPanelOpen {
+    opacity: 1;
+    transform: translateY(-50%) translateX(-50%) scale(1);
+    pointer-events: auto;
+}
+
+.dropdownPanelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.72rem 0.9rem;
+    border-bottom: 1px solid var(--muted-border);
+}
+
+.dropdownPanelTitle {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
 
 /*  List  */
 
@@ -69,4 +115,10 @@
 .listItem:first-child {
     border-top: none;
     padding-top: 0;
+}
+@media (max-width: 640px) {
+    .listItem {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }

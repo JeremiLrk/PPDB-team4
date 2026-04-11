@@ -33,7 +33,7 @@ export default function DashboardSidebar({
                     <button
                         key={tab.id}
                         type="button"
-                        className={`${navStyles.navButton} ${activeTab === tab.id ? styles.navButtonActive : ""}`}
+                        className={`${navStyles.navButton} ${activeTab === tab.id ? btnStyles.navButtonActive : ""}`}
                         onClick={() => onTabChange(tab.id)}
                     >
                         {tab.label}

@@ -2,7 +2,7 @@ import commonStyles from "@/style/common/Common.module.css";
 import animationStyles from "@/style/common/Animation.module.css";
 import panelStyles from "@/style/common/Panel.module.css";
 import formStyles from "@/style/common/Forms.module.css";
-import discoverStyles from "@/style/common/DiscoverGrid.module.css";
+import buttonStyles from "@/style/common/Buttons.module.css";
 
 
 import TeamCard from "@/components/dashboard/TeamCard.jsx";
@@ -36,15 +36,15 @@ export function TeamsTab({ texts }) {
 
     return (
         <div className={`${animationStyles.contentGrid} ${animationStyles.contentFade}`}>
-            <article className={`${formStyles.panel} ${animationStyles.contentFade}`} style={{ display: "grid", gap: "1rem" }}>
+            <article className={`${panelStyles.panel}`}>
 
                 {/* Header row */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
 
-                    <h3 className={formStyles.panelTitle} style={{ margin: 0 }}>
+                    <h3 className={panelStyles.panelTitle} style={{ margin: 0 }}>
                         {texts?.my_teams || "My Teams"}
                         {total !== null && (
-                            <span className={panelStyles.counter} style={{ marginLeft: "0.6rem" }}>{total}</span>
+                            <span className={panelStyles.panelCounter} style={{ marginLeft: "0.6rem" }}>{total}</span>
                         )}
                     </h3>
 
@@ -78,11 +78,11 @@ export function TeamsTab({ texts }) {
                 </div>
 
                 {/* Error */}
-                {error && <p className={formStyles.warning}>{error}</p>}
+                {error && <p className={commonStyles.warning}>{error}</p>}
 
                 {/* Empty state */}
                 {!loading && !error && teams.length === 0 && (
-                    <p className={panelStyles.muted}>
+                    <p className={commonStyles.muted}>
                         {texts?.no_teams_yet || "You are not a member of any team yet."}
                     </p>
                 )}
@@ -98,16 +98,16 @@ export function TeamsTab({ texts }) {
 
                 {/* Loading */}
                 {loading && (
-                    <p className={panelStyles.muted}>{texts?.loading_teams || "Loading teams…"}</p>
+                    <p className={commonStyles.muted}>{texts?.loading_teams || "Loading teams…"}</p>
                 )}
 
                 {/* Load more */}
                 {!loading && hasMore && teams.length > 0 && (
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span className={panelStyles.muted} style={{ fontSize: "0.82rem" }}>
+                        <span className={commonStyles.muted} style={{ fontSize: "0.82rem" }}>
                             {texts?.showing || "Showing"} {teams.length}{total !== null ? ` / ${total}` : ""}
                         </span>
-                        <button className={discoverStyles.primaryButton} onClick={() => void loadMore()}>
+                        <button className={buttonStyles.primaryButton} onClick={() => void loadMore()}>
                             {texts?.load_more || "Load more"}
                         </button>
                     </div>

@@ -1,5 +1,6 @@
 import styles from "@/style/dashboard/Dashboard.module.css";
-
+import commonStyles from "@/style/common/Common.module.css";
+import workspaceStyles from "@/style/dashboard/Workspace.module.css";
 
 
 import formStyles from "@/style/common/Forms.module.css";
@@ -19,7 +20,7 @@ function Dashboard() {
 
     if (workspace.loading) {
         return (
-            <div className={styles.loading}>
+            <div className={commonStyles.loading}>
                 {dashboardTexts.loading_dashboard || "Loading dashboard..."}
             </div>
         )
@@ -27,7 +28,7 @@ function Dashboard() {
 
     return (
         <section
-            className={`${styles.shell} ${workspace.theme === "light" ? styles.light : ""}`}
+            className={`${commonStyles.shell} ${workspace.theme === "light" ? commonStyles.light : ""}`}
         >
             <DashboardSidebar
                 theme={workspace.theme}
@@ -40,7 +41,7 @@ function Dashboard() {
                 onSignOut={workspace.onSignOut}
             />
 
-            <div className={styles.workspace}>
+            <div className={workspaceStyles.workspace}>
 
 
                 {workspace.error ? <p className={formStyles.warning}>{workspace.error}</p> : null}
