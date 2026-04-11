@@ -45,6 +45,8 @@ function ClubSettings() {
                     <ClubLadders
                         ladders={settings.ladders}
                         onCreate={settings.createLadder}
+                        ratingFunctions={settings.ratingFunctions}
+                        ruleSets={settings.ruleSets}
                     />
                 )}
 

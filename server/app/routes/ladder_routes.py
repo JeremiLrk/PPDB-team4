@@ -1,9 +1,11 @@
-from flask import Blueprint
+from flask import Blueprint, jsonify
 from server.app.services.ladder_service import get_all_players_ladder
+from server.app.models.ladder import Ladder
+from server.extensions import db
 
 ladder_bp = Blueprint("ladder", __name__, url_prefix="/api")
 
-@ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>")
+@ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>/players")
 def get_players(club_id, ladder_id):
     rows = get_all_players_ladder(ladder_id)
     return [
@@ -14,3 +16,32 @@ def get_players(club_id, ladder_id):
         }
         for team, ladder_team in rows
     ]
+
+from flask import Blueprint, jsonify
+from server.app.models.ladder import Ladder, MatchRuleSet, LadderRatingFunction
+from server.app.models.sport_type import SportType 
+
+@ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>")
+def get_ladder_details(club_id, ladder_id):
+    result = (
+        db.session.query(Ladder, SportType.name, MatchRuleSet.name, LadderRatingFunction.name)
+        .outerjoin(SportType, Ladder.sport_type_id == SportType.id)
+        .outerjoin(MatchRuleSet, Ladder.ruleset_id == MatchRuleSet.id)
+        .outerjoin(LadderRatingFunction, Ladder.ladder_rating_function_id == LadderRatingFunction.id)
+        .filter(Ladder.id == ladder_id, Ladder.club_id == club_id)
+        .first()
+    )
+
+    if not result:
+        return jsonify({"message": "Ladder not found"}), 404
+
+    ladder, sport_name, ruleset_name, rating_func_name = result
+
+    return jsonify({
+        "id": ladder.id,
+        "name": ladder.name,
+        "description": ladder.description,
+        "sport_type": sport_name,           # Returns "Tennis" instead of 1
+        "ruleset": ruleset_name,            # Returns "Standard" instead of 5
+        "rating_function": rating_func_name # Returns "Elo" instead of 1
+    })

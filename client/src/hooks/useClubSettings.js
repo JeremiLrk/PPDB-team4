@@ -6,11 +6,9 @@ export function useClubSettings(clubId) {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
     const [activeTab, setActiveTab] = useState("overview");
 
     const [club, setClub] = useState(null);
-
     const [formData, setFormData] = useState({
         name: "",
         description: "",
@@ -21,34 +19,33 @@ export function useClubSettings(clubId) {
     const [members, setMembers] = useState([]);
     const [ladders, setLadders] = useState([]);
 
+    const [ratingFunctions, setRatingFunctions] = useState([]);
+    const [ruleSets, setRuleSets] = useState([]);
+
     const [updating, setUpdating] = useState(false);
     const [updateMessage, setUpdateMessage] = useState(null);
 
     useEffect(() => {
         async function fetchClubData() {
             try {
-                const [clubRes, membersRes, laddersRes] = await Promise.all([
-                    fetch(`/api/clubs/${clubId}`, {
-                        credentials: "include",
-                    }),
-                    fetch(`/api/clubs/${clubId}/members`, {
-                        credentials: "include",
-                    }),
-                    fetch(`/api/clubs/${clubId}/ladders`, {
-                        credentials: "include",
-                    }),
+                // Fetching core data + the metadata for dropdowns
+                const [clubRes, membersRes, laddersRes, ratingsRes, rulesRes] = await Promise.all([
+                    fetch(`/api/clubs/${clubId}`, { credentials: "include" }),
+                    fetch(`/api/clubs/${clubId}/members`, { credentials: "include" }),
+                    fetch(`/api/clubs/${clubId}/ladders`, { credentials: "include" }),
+                    fetch(`/api/rating-functions`), 
+                    fetch(`/api/rule-sets`)
                 ]);
 
                 const clubData = await clubRes.json();
                 const membersData = await membersRes.json();
                 const laddersData = await laddersRes.json();
+                const ratingsData = await ratingsRes.json();
+                const rulesData = await rulesRes.json();
 
                 if (!clubRes.ok) throw new Error(clubData.message);
-                if (!membersRes.ok) throw new Error(membersData.message);
-                if (!laddersRes.ok) throw new Error(laddersData.message);
 
                 setClub(clubData.club);
-
                 setFormData({
                     name: clubData.club.name || "",
                     description: clubData.club.description || "",
@@ -57,9 +54,13 @@ export function useClubSettings(clubId) {
                 });
 
                 setMembers(membersData.members || []);
-                setLadders(laddersData.ladders || []);
+                
+                // Handle the array response from your Flask API
+                setLadders(Array.isArray(laddersData) ? laddersData : (laddersData.ladders || []));
 
-                console.log(laddersData);
+                // Set dropdown options
+                setRatingFunctions(ratingsData.ratingFunctions || []);
+                setRuleSets(rulesData.ruleSets || []);
 
             } catch (err) {
                 setError(err.message);
@@ -68,7 +69,7 @@ export function useClubSettings(clubId) {
             }
         }
 
-        fetchClubData();
+        if (clubId) fetchClubData();
     }, [clubId]);
 
     const handleChange = (e) => {
@@ -187,6 +188,9 @@ export function useClubSettings(clubId) {
 
         ladders,
         createLadder,
+
+        ratingFunctions,
+        ruleSets,
 
         goBack: () => navigate("/dashboard"),
     };
