@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS account (
         PRIMARY KEY (id)
 );
 
-create table IF NOT EXISTS administrator (
+CREATE TABLE IF NOT EXISTS administrator (
     id BIGINT,
     access_level INT NOT NULL,
 
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS club_owner (
 
     CONSTRAINT fk_club_owner_account
         FOREIGN KEY (id)
-        REFERENCES account(id)
+        REFERENCES team_manager(id)
         ON DELETE CASCADE,
 
     CONSTRAINT pk_club_owner
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS club_owner_club (
 
     CONSTRAINT fk_co_club_owner
         FOREIGN KEY (club_owner_id)
-        REFERENCES account(id)
+        REFERENCES club_owner(id)
         ON DELETE CASCADE,
 
     CONSTRAINT fk_co_club
@@ -229,6 +229,9 @@ CREATE TABLE IF NOT EXISTS team (
     name VARCHAR(64) NOT NULL,
     sport_type_id BIGINT,
 
+    -- FIX: UNIQUE(club_id, name) silently allows duplicate names when club_id IS NULL
+    --      because PostgreSQL does not consider NULL = NULL in UNIQUE constraints.
+    --      The partial index below covers the NULL case separately.
     UNIQUE (club_id, name),
 
     CONSTRAINT fk_team_club
@@ -244,6 +247,10 @@ CREATE TABLE IF NOT EXISTS team (
     CONSTRAINT pk_team
         PRIMARY KEY (id)
 );
+-- Prevents duplicate team names among club-less (independent) teams.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_team_name_no_club
+    ON team (name)
+    WHERE club_id IS NULL;
 
 CREATE TABLE IF NOT EXISTS player_team (
     player_id BIGINT NOT NULL,
@@ -311,7 +318,7 @@ CREATE TABLE IF NOT EXISTS match_rule_set (
 
 CREATE TABLE IF NOT EXISTS match_rule_set_rule (
     match_rule_set_id BIGINT NOT NULL,
-    match_rule_id  INT NOT NULL,
+    match_rule_id BIGINT NOT NULL,
 
     CONSTRAINT fk_mrsr_rule_set
         FOREIGN KEY (match_rule_set_id)
@@ -440,12 +447,15 @@ CREATE TABLE IF NOT EXISTS ladder (
     description VARCHAR(1024),
     sport_type_id BIGINT,
     ruleset_id BIGINT,
-    ladder_rating_function_id BIGINT NOT NULL,
+    -- FIX: was NOT NULL with ON DELETE SET NULL — contradiction; made nullable.
+    ladder_rating_function_id BIGINT,
 
+    -- FIX: was ON DELETE CASCADE — deleting a sport_type destroyed all ladders.
+    --      Changed to SET NULL because sport_type_id is already nullable.
     CONSTRAINT fk_ladder_sport_type_id
         FOREIGN KEY (sport_type_id)
         REFERENCES sport_type(id)
-        ON DELETE CASCADE,
+        ON DELETE SET NULL,
 
     CONSTRAINT fk_ruleset_id
         FOREIGN KEY (ruleset_id)
