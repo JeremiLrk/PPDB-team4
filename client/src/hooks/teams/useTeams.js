@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import {useState, useCallback, useEffect} from "react";
 
 const DEFAULT_PAGE_SIZE = 12;
 
@@ -68,5 +68,11 @@ export function useTeams({
 
     const hasMore = total === null ? true : offset < total;
 
+    // Initial load on mount
+    useEffect(() => {
+        void fetchTeams({ fromOffset: 0, currentSort: sort, currentPageSize: pageSize, append: false });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    
     return { teams, total, loading, error, sort, pageSize, hasMore, load, loadMore, setSort, setPageSize };
 }

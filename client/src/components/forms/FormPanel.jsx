@@ -1,4 +1,5 @@
 import { useRef, useEffect} from "react";
+import { createPortal } from "react-dom";
 import { Spinner } from "@/components/forms/Spinner.jsx";
 import { SuccessIcon } from "@/components/icon/SuccessIcon.jsx";
 import commonStyles from "@/style/common/Common.module.css";
@@ -148,44 +149,50 @@ export function FormPanel({
                 {triggerContent}
             </button>
 
-            {/* ---Dropdown Panel --------------------------------------------------- */}
-            <div
-                ref={panelRef}
-                role="dialog"
-                aria-label={ariaLabel ?? title}
-                aria-modal="true"
-                className={`${panelStyles.dropdownPanel} ${panelClassName ?? ""} ${isOpen ? panelStyles.dropdownPanelOpen : ""}`}
-            >
-                {/* Title */}
-                <div className={panelStyles.dropdownPanelHeader}>
-                    <p className={panelStyles.dropdownPanelTitle}>{title}</p>
-                    <button
-                        className={buttonStyles.closeBtn}
-                        onClick={closePanel}
-                        aria-label="Close"
-                    >
-                        ×
-                    </button>
-                </div>
+            {/* ---Dropdown Panel — rendered via portal at <body> so that
+                 position:fixed is always relative to the viewport, not to any
+                 ancestor that has transform/animation (e.g. .contentFade).    */}
+            {createPortal(
 
-                {/* --- Part 1: Question Pages --------------------------- */}
-                <div className={panelStyles.dropdownPanel}>
-                    {isSuccess ? (
-                        <div className={fromStyles.successBody}>
-                            <SuccessIcon />
-                            <p className={fromStyles.successLabel}>{successLabel}</p>
-                        </div>
-                    ) : (
-                        <>
-                            {children}
-                            {error && <p className={commonStyles.error}>{error}</p>}
-                        </>
-                    )}
-                </div>
+                <div
+                    ref={panelRef}
+                    role="dialog"
+                    aria-label={ariaLabel ?? title}
+                    aria-modal="true"
+                    className={`${panelStyles.dropdownPanel} ${panelClassName ?? ""} ${isOpen ? panelStyles.dropdownPanelOpen : ""}`}
+                >
+                    {/* Title */}
+                    <div className={panelStyles.dropdownPanelHeader}>
+                        <p className={panelStyles.dropdownPanelTitle}>{title}</p>
+                        <button
+                            className={buttonStyles.closeBtn}
+                            onClick={closePanel}
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+                    </div>
 
-                {/* --- Part 2: Footer Navigation --------------------------- */}
-                {navigationFooter}
-            </div>
+                    {/* --- Part 1: Question Pages --------------------------- */}
+                    <div className={panelStyles.panelBody}>
+                        {isSuccess ? (
+                            <div className={fromStyles.successBody}>
+                                <SuccessIcon />
+                                <p className={fromStyles.successLabel}>{successLabel}</p>
+                            </div>
+                        ) : (
+                            <>
+                                {children}
+                                {error && <p className={commonStyles.error}>{error}</p>}
+                            </>
+                        )}
+                    </div>
+
+                    {/* --- Part 2: Footer Navigation --------------------------- */}
+                    {navigationFooter}
+                </div>,
+                document.body
+            )}
         </div>
     );
 }

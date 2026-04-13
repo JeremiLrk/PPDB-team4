@@ -21,7 +21,7 @@ export default function TeamSettings() {
 
     const { team,    loading: teamLoading,    error: teamError    } = useTeam(teamId);
     const { players, loading: playersLoading, error: playersError,
-            total,   reload: reloadPlayers, addPlayerLocally} = useTeamPlayers(teamId);
+            total,   reload: reloadPlayers} = useTeamPlayers(teamId);
 
     // Local display name — updated optimistically after rename
     const [displayName, setDisplayName] = useState(null);

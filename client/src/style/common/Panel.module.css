@@ -14,6 +14,10 @@
     box-shadow: 0 12px 28px rgba(2, 132, 199, 0.14);
 }
 
+.panelBody {
+    padding: 0.75rem 0.9rem;
+}
+
 .panelFooter {
     display: flex;
     align-items: center;
@@ -80,6 +84,7 @@
 }
 
 .dropdownPanelHeader {
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: space-between;

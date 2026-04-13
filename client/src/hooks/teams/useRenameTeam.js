@@ -1,58 +1,68 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 
 /**
- * useRenameTeam - manages the rename panel and PATCH request.
+ * useRenameTeam - manages the rename panel state and PATCH request.
+ * Uses the same step-based API as useCreateTeam:
+ *   -1 = closed (idle)
+ *   -2 = loading
+ *    0 = form open
+ *    1 = success
  *
  * @param {{ teamId: number|string, currentName: string, onRenamed?: (team: object) => void }} options
  */
 export function useRenameTeam({ teamId, currentName, onRenamed } = {}) {
-    const [isOpen,   setIsOpen]   = useState(false);
-    const [newName,  setNewName]  = useState("");
-    const [loading,  setLoading]  = useState(false);
-    const [error,    setError]    = useState(null);
-    const [success,  setSuccess]  = useState(false);
+    const [newName, setNewName] = useState("");
+    const [step,    setStep]    = useState(-1);
+    const [error,   setError]   = useState(null);
 
-    const openPanel = useCallback(() => {
+    function openPanel() {
         setNewName("");
         setError(null);
-        setSuccess(false);
-        setIsOpen(true);
-    }, []);
+        setStep(0);
+    }
 
-    const closePanel = useCallback(() => {
-        setIsOpen(false);
+    function closePanel() {
+        setStep(-1);
+        setNewName("");
         setError(null);
-        setSuccess(false);
-    }, []);
+    }
 
-    const submit = useCallback(async () => {
+    async function submit() {
         const name = newName.trim() || currentName;
         if (!name) return;
 
-        setLoading(true);
+        setStep(-2);
         setError(null);
+
         try {
             const res  = await fetch(`/api/teams/${teamId}`, {
-                method:  "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify({ name }),
+                method:      "PATCH",
+                credentials: "include",
+                headers:     { "Content-Type": "application/json" },
+                body:        JSON.stringify({ name }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data?.message || "Failed to rename team.");
-            setSuccess(true);
+
+            setStep(1);
             onRenamed?.(data.team ?? { name });
-            setTimeout(() => setIsOpen(false), 900);
+
+            setTimeout(closePanel, 1400);
         } catch (err) {
             setError(err.message);
-        } finally {
-            setLoading(false);
+            setStep(0);
         }
-    }, [teamId, newName, currentName, onRenamed]);
+    }
 
     return {
-        isOpen, openPanel, closePanel,
         newName, setNewName,
-        loading, error, success,
+        step,
+        error,
+        openPanel,
+        closePanel,
         submit,
+        isOpen:    step !== -1,
+        isLoading: step === -2,
+        isSuccess: step === 1,
     };
 }

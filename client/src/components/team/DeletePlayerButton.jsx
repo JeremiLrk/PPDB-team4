@@ -3,6 +3,7 @@ import { Spinner }         from "@/components/forms/Spinner.jsx";
 import { FormPanel }       from "@/components/forms/FormPanel.jsx";
 import { FormPage }        from "@/components/forms/FormPage.jsx";
 import teamStyles    from "@/style/TeamSettings.module.css";
+import {TrashIcon} from "@/components/icon/TrashIcon.jsx";
 
 /**
  * DeletePlayerButton - trash icon that opens a confirmation dropdown.

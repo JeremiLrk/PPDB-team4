@@ -1,13 +1,12 @@
-import { useRef, useEffect } from "react";
-import { useRenameTeam }from "@/hooks/teams/useRenameTeam.js";
-import { Spinner } from "@/components/forms/Spinner.jsx";
-import { SuccessIcon } from "@/components/icon/SuccessIcon.jsx";
-import { Field } from "@/components/forms/Field.jsx";
+import { FormPanel } from "@/components/forms/FormPanel.jsx";
+import { FormPage }  from "@/components/forms/FormPage.jsx";
+import { Field }     from "@/components/forms/Field.jsx";
+import { PencilIcon } from "@/components/icon/PencilIcon.jsx";
+import { useRenameTeam } from "@/hooks/teams/useRenameTeam.js";
 import styles from "@/style/common/Forms.module.css";
-import teamStyles from "@/style/TeamSettings.module.css";
 
 /**
- * RenameTeamButton - pencil icon next to the team name that opens a rename panel.
+ * RenameTeamButton — pencil icon that opens a rename panel.
  *
  * Props:
  *   teamId      {number|string}
@@ -16,123 +15,51 @@ import teamStyles from "@/style/TeamSettings.module.css";
  */
 export default function RenameTeamButton({ teamId, currentName, onRenamed }) {
     const {
-        isOpen, openPanel, closePanel,
         newName, setNewName,
-        loading, error, success,
-        submit,
+        step,
+        openPanel, closePanel, submit,
+        isOpen, isLoading, isSuccess, error,
     } = useRenameTeam({ teamId, currentName, onRenamed });
 
-    const panelRef    = useRef(null);
-    const triggerRef  = useRef(null);
-    const inputRef    = useRef(null);
-
-    // Close on outside click
-    useEffect(() => {
-        if (!isOpen) return;
-        function onOutside(e) {
-            if (
-                panelRef.current   && !panelRef.current.contains(e.target) &&
-                triggerRef.current && !triggerRef.current.contains(e.target)
-            ) closePanel();
-        }
-        document.addEventListener("mousedown", onOutside);
-        return () => document.removeEventListener("mousedown", onOutside);
-    }, [isOpen, closePanel]);
-
-    // Close on Escape
-    useEffect(() => {
-        if (!isOpen) return;
-        function onKey(e) { if (e.key === "Escape") closePanel(); }
-        document.addEventListener("keydown", onKey);
-        return () => document.removeEventListener("keydown", onKey);
-    }, [isOpen, closePanel]);
-
-    // Auto-focus input
-    useEffect(() => {
-        if (isOpen) setTimeout(() => inputRef.current?.focus(), 60);
-    }, [isOpen]);
+    const canSubmit = !!newName.trim();
 
     return (
-        <div className={styles.wrapper}>
-            {/* Trigger - pencil icon button */}
-            <button
-                ref={triggerRef}
-                onClick={isOpen ? closePanel : openPanel}
-                className={`${teamStyles.renameBtn} ${isOpen ? teamStyles.renameBtnOpen : ""}`}
-                aria-expanded={isOpen}
-                aria-haspopup="dialog"
-                aria-label="Rename team"
-                title="Rename team"
-            >
-                <PencilIcon />
-            </button>
+        <FormPanel
+            title="Rename Team"
+            triggerContent={<PencilIcon />}
 
-            {/* Panel */}
-            <div
-                ref={panelRef}
-                role="dialog"
-                aria-label="Rename team"
-                aria-modal="true"
-                className={`${styles.panel} ${teamStyles.renamePanel} ${isOpen ? styles.panelOpen : ""}`}
-            >
-                {/* Header */}
-                <div className={styles.panelHeader}>
-                    <p className={styles.panelTitle}>Rename Team</p>
-                    <button
-                        className={styles.closeBtn}
-                        onClick={closePanel}
-                        aria-label="Close"
-                    >
-                        ×
-                    </button>
-                </div>
+            isOpen={isOpen}
+            openPanel={openPanel}
+            closePanel={closePanel}
 
-                {/* Body */}
-                <div className={styles.panelBody}>
-                    {success ? (
-                        <div className={styles.successBody}>
-                            <SuccessIcon />
-                            <p className={styles.successLabel}>Team renamed!</p>
-                        </div>
-                    ) : (
-                        <>
-                            <Field label="New Name">
-                                <input
-                                    ref={inputRef}
-                                    className={styles.formInput}
-                                    type="text"
-                                    placeholder={currentName}
-                                    value={newName}
-                                    onChange={e => setNewName(e.target.value)}
-                                    onKeyDown={e => e.key === "Enter" && submit()}
-                                    disabled={loading}
-                                />
-                            </Field>
+            step={step === -2 ? 0 : step}
+            totalSteps={1}
+            onNext={submit}
+            onBack={undefined}
+            onSubmit={submit}
 
-                            {error && <p className={styles.error}>{error}</p>}
+            isLoading={isLoading}
+            isSuccess={isSuccess}
+            successLabel="Team renamed!"
+            error={error}
 
-                            <div className={teamStyles.confirmActions}>
-                                <button
-                                    className={teamStyles.cancelBtn}
-                                    onClick={closePanel}
-                                    disabled={loading}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className={styles.submitBtn}
-                                    onClick={submit}
-                                    disabled={loading || (!newName.trim())}
-                                >
-                                    {loading ? <><Spinner /> Saving…</> : "Rename"}
-                                </button>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
+            submitLabel="Rename"
+            canNext={canSubmit}
+        >
+            <FormPage active={!isSuccess}>
+                <Field label="New Name">
+                    <input
+                        className={styles.formInput}
+                        type="text"
+                        placeholder={currentName}
+                        value={newName}
+                        onChange={e => setNewName(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && canSubmit && submit()}
+                        disabled={isLoading}
+                        autoFocus
+                    />
+                </Field>
+            </FormPage>
+        </FormPanel>
     );
 }
-
-
