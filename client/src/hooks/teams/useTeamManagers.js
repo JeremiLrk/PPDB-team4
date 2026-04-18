@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 
 /**
- * useTeamManagers — завантажує список менеджерів команди.
+ * useTeamManagers — loads a list of team managers.
  *
- * Кожен менеджер у списку містить стандартні поля акаунту
- * плюс об'єкт permissions { canRename, canDelete, canEditPlayers, canEditManagers }.
+ * Each manager in the list contains standard account fields
+ * plus a permissions object { canRename, canDelete, canEditPlayers, canEditManagers }.
  *
  * @param {number|string} teamId
  */

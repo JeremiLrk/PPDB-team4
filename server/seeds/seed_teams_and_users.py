@@ -110,12 +110,12 @@ def _make_team(name: str, sport: SportType, club_id=None, verbose: bool = True) 
   return team, True
 
 
-def _get_or_create_club(name: str) -> tuple:
+def _get_or_create_club(name: str, sport_type_id: int | None = None) -> tuple:
   """Returns (club, created: bool)."""
   existing = Club.query.filter_by(name=name).first()
   if existing:
     return existing, False
-  club = Club(name=name, description="test club", sport="Padel", city="Antwerp")
+  club = Club(name=name, description="test club", sport_type_id=sport_type_id, city="Antwerp")
   db.session.add(club)
   db.session.flush()
   return club, True
@@ -451,7 +451,7 @@ def seed_teams_and_users(verbose: bool = True):
     demo_owner, demo_owner_created = _make_club_owner(demo_tm)
     _log(f"{TAG}   demo club_owner {'created' if demo_owner_created else 'already exists'} (id={demo_owner.id})", verbose)
 
-    demo_club, demo_club_created = _get_or_create_club("NetRank Club")
+    demo_club, demo_club_created = _get_or_create_club("NetRank Club", sport_type_id=tennis.id)
     _log(f"{TAG}   demo club {'created' if demo_club_created else 'already exists'} (id={demo_club.id})", verbose)
 
     if demo_club not in demo_owner.clubs:

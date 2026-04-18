@@ -6,12 +6,12 @@ import { TrashIcon }        from "@/components/icon/TrashIcon.jsx";
 import teamStyles           from "@/style/TeamSettings.module.css";
 
 /**
- * DeleteManagerButton — кошик з підтвердженням видалення менеджера.
+ * DeleteManagerButton — a trash can with confirmation of manager deletion.
  *
  * Props:
- *   teamId    {number|string}
- *   managerId {number|string}  — account.id менеджера
- *   onDeleted {() => void}
+ * teamId {number|string}
+ * managerId {number|string} — manager account.id
+ * onDeleted {() => void}
  */
 export default function DeleteManagerButton({ teamId, managerId, onDeleted }) {
     const {

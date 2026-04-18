@@ -3,13 +3,13 @@ import ItemCard           from "@/components/common/ItemCard.jsx";
 import DeleteManagerButton from "@/components/team/DeleteManagerButton.jsx";
 
 /**
- * ManagerCard — один рядок менеджера у списку команди.
+ * ManagerCard — one line of the manager in the team list.
  *
  * Props:
- *   manager    — { id, firstName, lastName, email, permissions: { canEditManagers, … } }
- *   teamId     — якщо передано, показує кнопку видалення
- *   canDelete  — чи може поточний користувач видаляти менеджерів
- *   onDeleted  — колбек після видалення
+ * manager — { id, firstName, lastName, email, permissions: { canEditManagers, … } }
+ * teamId — if passed, shows the delete button
+ * canDelete — whether the current user can delete managers
+ * onDeleted — callback after deletion
  */
 export default function ManagerCard({ manager, teamId, canDelete, onDeleted }) {
     const fullName = [manager.firstName, manager.lastName]
@@ -48,7 +48,7 @@ export default function ManagerCard({ manager, teamId, canDelete, onDeleted }) {
     );
 }
 
-/* ── Мінімалістичний бейдж з іконками прав ──────────────────────────────── */
+/* -- Minimalist badge with rights icons -------------------------------- */
 
 const PERM_ICONS = [
     { key: "canRename",       icon: "✏️", title: "Can rename"        },

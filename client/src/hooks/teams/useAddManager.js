@@ -96,7 +96,7 @@ export function useAddManager({ teamId, onAdded } = {}) {
         return () => clearTimeout(debounceRef.current);
     }, [query, teamId, isOpen, step]);
 
-    // Вибрати акаунт і перейти на крок 1
+    // Select an account and go to step 1
     const selectAccount = useCallback((account) => {
         setSelected(account);
         setAddErr(null);

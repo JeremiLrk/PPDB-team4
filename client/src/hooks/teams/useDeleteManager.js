@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 
 /**
- * useDeleteManager — керує підтвердженням і DELETE-запитом на видалення менеджера.
+ * useDeleteManager — manages confirmation and DELETE requests to delete a manager.
  *
  * @param {{ teamId: number|string, managerId: number|string, onDeleted?: () => void }} options
  */
