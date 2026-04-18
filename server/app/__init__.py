@@ -14,6 +14,7 @@ from server.app.routes.health_routes import api
 from server.app.routes.root_routes import root_bp
 from server.app.routes.ladder_routes import ladder_bp
 from server.app.routes.ladders_routes import ladders_bp
+from server.app.routes.match_routes import matches_bp
 from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
@@ -21,6 +22,7 @@ from server.app.models.page_text import PageText
 from server.seeds.seed_teams_and_users import seed_teams_and_users
 from server.app.models.account_role import AccountRole
 from server.app.models.ladder import MatchRuleSet, LadderRatingFunction, Ladder
+from server.app.models.match import MatchStatus, VenueType
 from sqlalchemy import text
 
 
@@ -62,6 +64,7 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(availability_bp)
     app.register_blueprint(ladders_bp)
     app.register_blueprint(ladder_bp)
+    app.register_blueprint(matches_bp)
     app.register_blueprint(clubs_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(texts)
@@ -122,11 +125,21 @@ def _init_db(app: Flask):
         seed_table(
             model=MatchRuleSet,
             seeds_file="server/seeds/match_rule_set.json",
-            unique_fields=[],
+            unique_fields=["name"],
+        )
+        seed_table(
+            model=MatchStatus,
+            seeds_file="server/seeds/match_status.json",
+            unique_fields=["name"],
+        )
+        seed_table(
+            model=VenueType,
+            seeds_file="server/seeds/venue_type.json",
+            unique_fields=["name"],
         )
         seed_table(
             model=LadderRatingFunction,
             seeds_file="server/seeds/ladder_rating_function.json",
-            unique_fields=[],
+            unique_fields=["name"],
         )
         seed_teams_and_users()

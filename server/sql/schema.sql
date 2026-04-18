@@ -330,14 +330,25 @@ CREATE TABLE IF NOT EXISTS match_rule_set_rule (
 
 CREATE TABLE IF NOT EXISTS match_proposal (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
+    proposed_by_user_id BIGINT NOT NULL,
     sport_type_id BIGINT NOT NULL,
     ruleset_id BIGINT,
     team1_id BIGINT NOT NULL,
     team2_id BIGINT NOT NULL,
     status_id BIGINT NOT NULL,
+    week_start_date DATE NOT NULL,
+    proposed_start_at TIMESTAMP NOT NULL,
+    proposed_end_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now(),
 
     location VARCHAR(256),
     venue_type_id BIGINT,
+
+    CONSTRAINT fk_match_proposal_proposed_by
+        FOREIGN KEY (proposed_by_user_id)
+        REFERENCES account(id)
+        ON DELETE RESTRICT,
 
     CONSTRAINT fk_match_proposal_sport_type_id
         FOREIGN KEY (sport_type_id)
@@ -370,6 +381,12 @@ CREATE TABLE IF NOT EXISTS match_proposal (
 
     CONSTRAINT chk_teams_different
         CHECK (team1_id <> team2_id),
+    CONSTRAINT chk_match_proposal_team_order
+        CHECK (team1_id < team2_id),
+    CONSTRAINT chk_match_proposal_start_before_end
+        CHECK (proposed_start_at < proposed_end_at),
+    CONSTRAINT uq_match_proposal_week_pair
+        UNIQUE (week_start_date, team1_id, team2_id),
 
     CONSTRAINT pk_match_proposal PRIMARY KEY (id)
 );
