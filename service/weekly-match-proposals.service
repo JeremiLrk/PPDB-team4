@@ -1,0 +1,14 @@
+[Unit]
+Description=Generate weekly NetRank match proposals
+Wants=network-online.target
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+User=app
+Group=www-data
+WorkingDirectory=/home/app/PPDB-Team4
+Environment="PATH=/home/app/PPDB-Team4/venv/bin"
+Environment="PYTHONPATH=/home/app/PPDB-Team4"
+Environment="WEEKLY_MATCH_PROPOSER_EMAIL=jeremilorek@outlook.com"
+ExecStart=/home/app/PPDB-Team4/venv/bin/python -m flask --app server.wsgi:app generate-weekly-match-proposals --location "Weekly ladder match"

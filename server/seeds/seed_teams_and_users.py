@@ -10,15 +10,28 @@ import datetime
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 from server.extensions import db
+from server.app.models.availability_block import AvailabilityBlock
 from server.app.models.sport_type import SportType
 from server.app.models.account import Account, TeamManager
 from server.app.models.account_role import AccountRole
 from server.app.models.club import Club
 from server.app.models.club_owner import ClubOwner
+from server.app.models.club_player import ClubPlayer
 from server.app.models.player import Player
 from server.app.models.team import Team
 from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
+from server.app.models.match import (
+  MatchAccepted,
+  MatchCancelled,
+  MatchProposal,
+  MatchRejected,
+  MatchStatus,
+)
+from server.app.services.weekly_match_proposal_service import (
+  generate_weekly_match_proposals,
+  next_week_start,
+)
 
 TAG = "[seed:teams_and_users]"
 
@@ -198,6 +211,108 @@ def _get_or_create_ladder_team(
   db.session.add(row)
   db.session.flush()
   return row, True
+
+
+def _get_or_create_availability_block(
+  user_id: int,
+  start_at: datetime.datetime,
+  end_at: datetime.datetime,
+) -> tuple:
+  """Returns (availability_block, created: bool)."""
+  existing = AvailabilityBlock.query.filter_by(
+    user_id=user_id,
+    start_at=start_at,
+    end_at=end_at,
+  ).first()
+  if existing:
+    return existing, False
+
+  block = AvailabilityBlock(
+    user_id=user_id,
+    start_at=start_at,
+    end_at=end_at,
+  )
+  db.session.add(block)
+  db.session.flush()
+  return block, True
+
+
+def _ensure_player_on_team(account: Account, team: Team) -> Player:
+  player, _ = _make_player(account)
+  if team not in player.teams:
+    player.teams.append(team)
+    db.session.flush()
+  return player
+
+
+def _get_or_create_club_player(club_id: int, player_id: int) -> tuple:
+  """Returns (club_player, created: bool)."""
+  existing = ClubPlayer.query.filter_by(club_id=club_id, player_id=player_id).first()
+  if existing:
+    return existing, False
+
+  club_player = ClubPlayer(club_id=club_id, player_id=player_id)
+  db.session.add(club_player)
+  db.session.flush()
+  return club_player, True
+
+
+def _ensure_team_players_in_club(team: Team, club: Club) -> int:
+  added = 0
+  for player in team.players:
+    _, created = _get_or_create_club_player(club.id, player.id)
+    if created:
+      added += 1
+  return added
+
+
+def _reset_demo_match_proposal_to_pending(
+  week_start_date: datetime.date,
+  team1_id: int,
+  team2_id: int,
+):
+  ordered_team1_id, ordered_team2_id = sorted((team1_id, team2_id))
+  proposal = MatchProposal.query.filter_by(
+    week_start_date=week_start_date,
+    team1_id=ordered_team1_id,
+    team2_id=ordered_team2_id,
+  ).first()
+  if not proposal:
+    return
+
+  pending = MatchStatus.query.filter_by(name="pending").first()
+  if pending:
+    proposal.status_id = pending.id
+
+  for model in (MatchAccepted, MatchRejected, MatchCancelled):
+    row = db.session.get(model, proposal.id)
+    if row:
+      db.session.delete(row)
+
+  db.session.flush()
+
+
+def _delete_demo_match_proposal(
+  week_start_date: datetime.date,
+  team1_id: int,
+  team2_id: int,
+):
+  ordered_team1_id, ordered_team2_id = sorted((team1_id, team2_id))
+  proposal = MatchProposal.query.filter_by(
+    week_start_date=week_start_date,
+    team1_id=ordered_team1_id,
+    team2_id=ordered_team2_id,
+  ).first()
+  if not proposal:
+    return
+
+  for model in (MatchAccepted, MatchRejected, MatchCancelled):
+    row = db.session.get(model, proposal.id)
+    if row:
+      db.session.delete(row)
+
+  db.session.delete(proposal)
+  db.session.flush()
 
 
 #  Main seed 
@@ -443,6 +558,10 @@ def seed_teams_and_users():
       print(f"{TAG}   demo account created (id={demo_acc.id}, email={demo_acc.email})")
     else:
       print(f"{TAG}   demo account already exists (id={demo_acc.id}), skipping")
+    demo_acc.password_hash = generate_password_hash("Password123!")
+    if not demo_acc.is_verified:
+      demo_acc.is_verified = True
+      print(f"{TAG}   demo account marked as verified")
 
     demo_tm, demo_tm_created = _make_manager(demo_acc)
     if demo_tm_created:
@@ -541,6 +660,178 @@ def seed_teams_and_users():
       matches_played=8,
     )
     print(f"{TAG}   demo ladder standings upserted")
+
+    demo_week_start = next_week_start()
+    demo_availability_start = datetime.datetime.combine(
+      demo_week_start + datetime.timedelta(days=1),
+      datetime.time(hour=18, minute=0),
+    )
+    demo_availability_end = demo_availability_start + datetime.timedelta(hours=2)
+
+    aces_player_acc, _ = _make_account(
+      first="Nora",
+      last="Vandenberg",
+      email="nora.vandenberg@example.com",
+      role=role_player,
+    )
+    juniors_player_acc, _ = _make_account(
+      first="Milo",
+      last="Peeters",
+      email="milo.peeters@example.com",
+      role=role_player,
+    )
+    _ensure_player_on_team(aces_player_acc, men_team)
+    _ensure_player_on_team(juniors_player_acc, junior_team)
+
+    club_player_count = 0
+    club_player_count += _ensure_team_players_in_club(men_team, demo_club)
+    club_player_count += _ensure_team_players_in_club(junior_team, demo_club)
+    print(f"{TAG}   demo club memberships upserted for team players (added={club_player_count})")
+
+    _get_or_create_availability_block(
+      user_id=aces_player_acc.id,
+      start_at=demo_availability_start,
+      end_at=demo_availability_end,
+    )
+    _get_or_create_availability_block(
+      user_id=juniors_player_acc.id,
+      start_at=demo_availability_start + datetime.timedelta(minutes=30),
+      end_at=demo_availability_end,
+    )
+    print(
+      f"{TAG}   demo availability added for weekly match generation "
+      f"({demo_availability_start.isoformat()} -> {demo_availability_end.isoformat()})"
+    )
+
+    db.session.flush()
+    generation_result = generate_weekly_match_proposals(
+      proposed_by_user_id=demo_acc.id,
+      week_start_date=demo_week_start,
+      ladder_id=men_ladder.id,
+      managed_team_ids=None,
+      duration_minutes=60,
+      location="NetRank Court 1",
+    )
+    _reset_demo_match_proposal_to_pending(
+      week_start_date=demo_week_start,
+      team1_id=men_team.id,
+      team2_id=junior_team.id,
+    )
+    print(
+      f"{TAG}   weekly match proposals generated: "
+      f"created={generation_result['created_count']}, skipped={generation_result['skipped_count']}"
+    )
+
+    old_player_demo_team = Team.query.filter_by(
+      name="NetRank Challengers",
+      club_id=demo_club.id,
+    ).first()
+    if demo_acc.player and old_player_demo_team in demo_acc.player.teams:
+      demo_acc.player.teams.remove(old_player_demo_team)
+      print(f"{TAG}   removed demo player from old owned-club player-only team")
+    if demo_acc.player and men_team in demo_acc.player.teams:
+      demo_acc.player.teams.remove(men_team)
+      print(f"{TAG}   removed demo player from managed NetRank team")
+    if old_player_demo_team:
+      _delete_demo_match_proposal(
+        week_start_date=demo_week_start,
+        team1_id=old_player_demo_team.id,
+        team2_id=junior_team.id,
+      )
+
+    player_demo_club, player_demo_club_created = _get_or_create_club("Player Demo Club")
+    if player_demo_club_created:
+      print(f"{TAG}   player demo club created (id={player_demo_club.id})")
+    else:
+      print(f"{TAG}   player demo club already exists (id={player_demo_club.id}), skipping")
+
+    player_demo_team, player_demo_team_created = _make_team(
+      "Player Demo A",
+      tennis,
+      club_id=player_demo_club.id,
+    )
+    if player_demo_team_created:
+      print(f"{TAG}   team '{player_demo_team.name}' created in player demo club")
+    else:
+      print(f"{TAG}   team '{player_demo_team.name}' already exists in player demo club, skipping")
+
+    player_demo_opponent, player_demo_opponent_created = _make_team(
+      "Player Demo B",
+      tennis,
+      club_id=player_demo_club.id,
+    )
+    if player_demo_opponent_created:
+      print(f"{TAG}   team '{player_demo_opponent.name}' created in player demo club")
+    else:
+      print(f"{TAG}   team '{player_demo_opponent.name}' already exists in player demo club, skipping")
+
+    player_demo_ladder, player_demo_ladder_created = _get_or_create_ladder(
+      club_id=player_demo_club.id,
+      name="Player Demo Singles",
+      description="Demo ladder where Jeremi is only a player",
+      sport_type_id=tennis.id,
+      ladder_rating_function_id=rating_fn_id,
+    )
+    if player_demo_ladder_created:
+      print(f"{TAG}   ladder '{player_demo_ladder.name}' created")
+    else:
+      print(f"{TAG}   ladder '{player_demo_ladder.name}' already exists, skipping")
+
+    _get_or_create_ladder_team(
+      ladder_id=player_demo_ladder.id,
+      team_id=player_demo_team.id,
+      rank=1,
+      rating=1110,
+      matches_played=3,
+    )
+    _get_or_create_ladder_team(
+      ladder_id=player_demo_ladder.id,
+      team_id=player_demo_opponent.id,
+      rank=2,
+      rating=1090,
+      matches_played=3,
+    )
+
+    opponent_acc, _ = _make_account(
+      first="Robin",
+      last="Vermeulen",
+      email="robin.vermeulen@example.com",
+      role=role_player,
+    )
+    _ensure_player_on_team(demo_acc, player_demo_team)
+    _ensure_player_on_team(opponent_acc, player_demo_opponent)
+    _ensure_team_players_in_club(player_demo_team, player_demo_club)
+    _ensure_team_players_in_club(player_demo_opponent, player_demo_club)
+
+    _get_or_create_availability_block(
+      user_id=demo_acc.id,
+      start_at=demo_availability_start,
+      end_at=demo_availability_end,
+    )
+    _get_or_create_availability_block(
+      user_id=opponent_acc.id,
+      start_at=demo_availability_start + datetime.timedelta(minutes=15),
+      end_at=demo_availability_end,
+    )
+
+    player_demo_generation_result = generate_weekly_match_proposals(
+      proposed_by_user_id=demo_acc.id,
+      week_start_date=demo_week_start,
+      ladder_id=player_demo_ladder.id,
+      managed_team_ids=None,
+      duration_minutes=60,
+      location="Player Demo Court 1",
+    )
+    _reset_demo_match_proposal_to_pending(
+      week_start_date=demo_week_start,
+      team1_id=player_demo_team.id,
+      team2_id=player_demo_opponent.id,
+    )
+    print(
+      f"{TAG}   player-only weekly match proposals generated: "
+      f"created={player_demo_generation_result['created_count']}, "
+      f"skipped={player_demo_generation_result['skipped_count']}"
+    )
 
   except Exception as e:
     print(f"{TAG} ERROR seeding demo club data: {e}")

@@ -1,5 +1,7 @@
 import os
+from datetime import datetime
 
+import click
 from flask import Flask
 
 from server.app.routes.sport_type_routes import sport_type_bp
@@ -21,8 +23,13 @@ from server.app.utils.seed_table import seed_table
 from server.app.models.page_text import PageText
 from server.seeds.seed_teams_and_users import seed_teams_and_users
 from server.app.models.account_role import AccountRole
+from server.app.models.account import Account
 from server.app.models.ladder import MatchRuleSet, LadderRatingFunction, Ladder
 from server.app.models.match import MatchStatus, VenueType
+from server.app.services.weekly_match_proposal_service import (
+    generate_weekly_match_proposals,
+    next_week_start,
+)
 from sqlalchemy import text
 
 
@@ -48,6 +55,7 @@ def create_app():
             print("Database schema reset complete.")
 
     _register_blueprints(app)
+    _register_cli_commands(app)
     _init_db(app)
 
     @app.get("/")
@@ -70,6 +78,73 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(texts)
     app.register_blueprint(team_bp)
     app.register_blueprint(sport_type_bp)
+
+
+def _register_cli_commands(app: Flask):
+    @app.cli.command("generate-weekly-match-proposals")
+    @click.option(
+        "--week-start",
+        "week_start",
+        default=None,
+        help="Monday week start date in YYYY-MM-DD format. Defaults to next week.",
+    )
+    @click.option(
+        "--proposer-email",
+        "proposer_email",
+        default=None,
+        help="Account email to store as proposed_by_user_id. Defaults to WEEKLY_MATCH_PROPOSER_EMAIL or the first account.",
+    )
+    @click.option(
+        "--duration-minutes",
+        "duration_minutes",
+        default=60,
+        show_default=True,
+        type=int,
+        help="Required overlapping availability duration.",
+    )
+    @click.option(
+        "--location",
+        "location",
+        default=None,
+        help="Optional location stored on generated proposals.",
+    )
+    def generate_weekly_match_proposals_command(week_start, proposer_email, duration_minutes, location):
+        """Generate next week's ladder match proposals from player availability."""
+        # This command is intended for cron/systemd. It runs outside the web
+        # request cycle, while the generator remains reusable by routes/tests.
+        target_week_start = next_week_start()
+        if week_start:
+            try:
+                target_week_start = datetime.strptime(week_start, "%Y-%m-%d").date()
+            except ValueError as exc:
+                raise click.ClickException("week-start must be YYYY-MM-DD.") from exc
+
+        account = _resolve_weekly_proposal_account(proposer_email)
+        if not account:
+            raise click.ClickException(
+                "No proposer account found. Seed users first or pass --proposer-email."
+            )
+
+        result = generate_weekly_match_proposals(
+            proposed_by_user_id=account.id,
+            week_start_date=target_week_start,
+            managed_team_ids=None,
+            duration_minutes=duration_minutes,
+            location=location,
+        )
+
+        click.echo(
+            "Weekly match proposals generated "
+            f"for {result['week_start_date']}: "
+            f"created={result['created_count']}, skipped={result['skipped_count']}"
+        )
+
+
+def _resolve_weekly_proposal_account(proposer_email: str | None):
+    configured_email = proposer_email or os.getenv("WEEKLY_MATCH_PROPOSER_EMAIL")
+    if configured_email:
+        return Account.query.filter_by(email=configured_email).first()
+    return Account.query.order_by(Account.id.asc()).first()
 
 
 def _init_db(app: Flask):
