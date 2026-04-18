@@ -4,7 +4,7 @@ from server.extensions import db
 from server.app.decorators import login_required
 from server.app.models.account import Account
 from server.app.models.player import Player, PlayerTeam
-from server.app.models.team import TeamManagerTeam
+from server.app.models.team import TeamManagerTeam, TeamManager
 
 from server.app.utils.promote import promote_to_team_manager, promote_to_player
 from ._helpers import (
@@ -15,7 +15,7 @@ from ._helpers import (
 )
 from ._permissions import (
     _can_edit_players_or_403,
-    _can_edit_managers_or_403
+    _can_edit_managers_or_403, _get_permissions
 )
 
 membership_bp = Blueprint("team_membership", __name__)
@@ -30,7 +30,7 @@ def add_manager_to_team(account: Account, team_id: int) -> tuple[Response, int]:
     _can_edit_managers_or_403(account.resolved_role, team)
 
     data = request.get_json(silent=True)
-    if not data:
+    if data is None:
         abort(400, description="No JSON body provided.")
 
     target= _resolve_target(data.get("accountId"))
@@ -122,15 +122,15 @@ def get_team_players(team_id: int):
 def add_player_to_team(account: Account, team_id: int):
     """POST /api/teams/<team_id>/players — add player."""
     team = _get_team_or_404(team_id)
+    resolved = account.resolved_role
 
-    _can_edit_players_or_403(account, team)
+    _can_edit_players_or_403(resolved, team)
 
     data = request.get_json(silent=True)
-    if not data:
+    if data is None:
         abort(400, description="No JSON body provided.")
 
     target = _resolve_target(data.get("accountId"))
-
 
     if target.player:
         already = any(a.team_id == team.id for a in target.player.playerteam_associations)
@@ -145,7 +145,7 @@ def add_player_to_team(account: Account, team_id: int):
 
     return jsonify({
         "message": "Player added successfully.",
-        "player": target.player.to_dict(include = ["player"])
+        "player": target.to_dict(include = ["player"])
     }), 200
 
 
@@ -154,8 +154,9 @@ def add_player_to_team(account: Account, team_id: int):
 def remove_player_from_team(account: Account, team_id: int, account_id: int):
     """DELETE /api/teams/<team_id>/players/<account_id>."""
     team = _get_team_or_404(team_id)
+    resolved = account.resolved_role
 
-    _can_edit_players_or_403(account, team)
+    _can_edit_players_or_403(resolved, team)
 
     target = _resolve_target(account_id)
 
@@ -196,4 +197,81 @@ def search_accounts_not_in_team(account: Account, team_id: int):
         "teamId": team_id,
         "q": q,
         "results": [a.to_dict() for a in matches]
+    }), 200
+
+
+@membership_bp.route("/<int:team_id>/my-permissions", methods=["GET"])
+@login_required
+def get_my_permissions(account: Account, team_id: int):
+    """GET /api/teams/<team_id>/my-permissions — returns current user's permissions for the team."""
+    team = _get_team_or_404(team_id)
+    permissions = _get_permissions(account.resolved_role, team)
+    return jsonify({
+        "teamId":      team_id,
+        "permissions": permissions,
+    }), 200
+
+
+@membership_bp.route("/<int:team_id>/managers/search", methods=["GET"])
+@login_required
+def search_accounts_not_manager_of_team(account: Account, team_id: int):
+    """GET /api/teams/<team_id>/managers/search?q=<string>.
+
+    Returns a list of accounts that are NOT yet managers of this team.
+    Only available to those with the can_edit_managers permission for this team.
+    """
+    team = _get_team_or_404(team_id)
+
+    _can_edit_managers_or_403(account.resolved_role, team)
+
+    q = request.args.get("q", "").strip()
+    if not q:
+        abort(400, description="Query parameter 'q' is required.")
+
+    # IDs of accounts that are already managers of this team.
+    # team_manager.id == account.id (PK — shared with account)
+    existing = db.session.execute(
+        db.select(TeamManagerTeam.team_manager_id)
+        .where(TeamManagerTeam.team_id == team_id)
+    ).fetchall()
+    exclude_ids = {row.team_manager_id for row in existing}
+
+    matches = _search_accounts(q, exclude_ids)
+    return jsonify({
+        "teamId":  team_id,
+        "q":       q,
+        "results": [a.to_dict() for a in matches],
+    }), 200
+
+@membership_bp.route("/<int:team_id>/managers", methods=["GET"])
+def get_team_managers(team_id: int):
+    """GET /api/teams/<team_id>/managers — a list of team managers with their rights."""
+    team = _get_team_or_404(team_id)
+
+    # Load manager accounts along with their association (rights)
+    rows = (
+        db.session.query(Account, TeamManagerTeam)
+        .join(TeamManager, TeamManager.id == Account.id)
+        .join(TeamManagerTeam, TeamManagerTeam.team_manager_id == TeamManager.id)
+        .filter(TeamManagerTeam.team_id == team_id)
+        .order_by(Account.last_name.asc(), Account.first_name.asc(), Account.id.asc())
+        .all()
+    )
+
+    managers = []
+    for account, assoc in rows:
+        d = account.to_dict()
+        # Add this manager's rights to the team
+        d["permissions"] = {
+            "canRename":       assoc.can_rename,
+            "canDelete":       assoc.can_delete,
+            "canEditPlayers":  assoc.can_edit_players,
+            "canEditManagers": assoc.can_edit_managers,
+        }
+        managers.append(d)
+
+    return jsonify({
+        "teamId":   team_id,
+        "total":    len(managers),
+        "managers": managers,
     }), 200

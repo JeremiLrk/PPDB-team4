@@ -5,7 +5,7 @@ from server.app.models.team import Team, TeamManagerTeam, TeamManager
 from server.app.decorators.login_required import login_required
 from server.app.utils.promote import promote_to_team_manager
 from ._helpers import _get_team_or_404, _parse_pagination
-from ._permissions import _can_rename_or_403, _can_delete_or_403
+from ._permissions import require_can_delete_team, require_can_rename_team
 from ...models.club_owner import ClubOwner
 
 core_bp = Blueprint("team_core", __name__)
@@ -64,16 +64,25 @@ def get_teams_by_club(club_id: int):
 def create_team(account: Account):
     """POST /api/teams — make team."""
     data = request.get_json(silent=True)
-    if not data:
+    if data is None:
         abort(400, description="No JSON body provided.")
 
     name = data.get("name", "").strip()
     if not name:
         abort(422, description="Field 'name' is required.")
 
-    club_id       = data.get("clubId")
+    club_id = data.get("clubId")
+
+    existing = db.session.query(Team).filter_by(
+        name=name,
+        club_id=club_id
+    ).first()
+
+    if existing:
+        abort(400, description="Team with this name already exists.")
+
     sport_type_id = data.get("sportTypeId")
-    resolved      = account.resolved_role
+    resolved = account.resolved_role
 
     if isinstance(resolved, Administrator):
         acting_manager = None
@@ -84,7 +93,7 @@ def create_team(account: Account):
         acting_manager = account.team_manager
 
     if club_id is not None:
-        if Team.query.filter_by(club_id=club_id, name=name).first():
+        if Team.query.filter(Team.club_id == club_id, Team.name == name).first():
             abort(409, description="A team with this name already exists in the club.")
 
     new_team = Team(name=name, club_id=club_id, sport_type_id=sport_type_id)
@@ -111,11 +120,10 @@ def create_team(account: Account):
 
 @core_bp.route("/<int:team_id>", methods=["DELETE"])
 @login_required
+@require_can_delete_team
 def delete_team(account: Account, team_id: int):
     """DELETE /api/teams/<team_id> - delete team."""
     team = _get_team_or_404(team_id)
-
-    _can_delete_or_403(account.resolved_role, team)
 
     db.session.delete(team)
     db.session.commit()
@@ -126,14 +134,13 @@ def delete_team(account: Account, team_id: int):
 
 @core_bp.route("/<int:team_id>", methods=["PATCH"])
 @login_required
+@require_can_rename_team
 def rename_team(account: Account, team_id: int):
     """PATCH /api/teams/<team_id> — renaming a team."""
     team = _get_team_or_404(team_id)
 
-    _can_rename_or_403(account.resolved_role, team)
-
     data = request.get_json(silent=True)
-    if not data:
+    if data is None:
         abort(400, description="No JSON body provided.")
 
     name = data.get("name", "").strip()
@@ -143,7 +150,11 @@ def rename_team(account: Account, team_id: int):
         abort(422, description="New name is the same as current.")
 
     if team.club_id is not None:
-        if Team.query.filter_by(Team.club_id == team.club_id, Team.name == name, Team.id != team.id).first():
+        if Team.query.filter(
+            Team.club_id == team.club_id,
+            Team.name == name,
+            Team.id != team.id,
+        ).first():
             abort(409, description="A team with this name already exists in the club.")
 
     team.name = name

@@ -1,10 +1,13 @@
 import os
 
+
 from flask import Flask
 
 from server.app.errors import register_error_handlers
+from server.app.models.match_rule import MatchRuleSet
 from server.app.routes.sport_type_routes import sport_type_bp
 from server.app.routes.team import team_bp
+from server.app.routes.match_rule import match_rule_bp, match_rule_set_bp
 from server.config import SECRET_KEY, config_data
 from server.extensions import db
 from server.app.routes.auth_routes import auth_bp
@@ -20,9 +23,8 @@ from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
 from server.app.models.page_text import PageText
 from server.app.models.account import AccountRole
-from server.app.models.ladder import MatchRuleSet, LadderRatingFunction, Ladder
+from server.app.models.ladder import LadderRatingFunction, Ladder
 from sqlalchemy import text
-
 
 def create_app():
     app = Flask(__name__)
@@ -75,6 +77,8 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(texts)
     app.register_blueprint(team_bp)
     app.register_blueprint(sport_type_bp)
+    app.register_blueprint(match_rule_bp)
+    app.register_blueprint(match_rule_set_bp)
 
 
 def init_db(app: Flask):

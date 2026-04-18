@@ -24,7 +24,7 @@ export default function AddPlayerButton({ teamId, onAdded }) {
         query, setQuery,
         results, searching, searchErr,
         addPlayer, addingId, addedIds, addErr,
-        inputRef, // авто-фокус керується хуком
+        inputRef,
     } = useAddPlayer({ teamId, onAdded });
 
     return (
