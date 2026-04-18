@@ -14,12 +14,38 @@ from server.app.models.match import (
     MatchProposal,
     MatchRejected,
     MatchStatus,
-    VenueType,
 )
 from server.app.models.team import Team
+from server.app.models.venue_type import VenueType
+from server.app.services.weekly_match_proposal_service import (
+    generate_weekly_match_proposals,
+    next_week_start,
+)
 from server.extensions import db
 
-matches_bp = Blueprint("matches", __name__, url_prefix="/api/matches")
+match_proposals_bp = Blueprint("match_proposals", __name__, url_prefix="/api/matches")
+
+
+def _proposal_payload(proposal: MatchProposal):
+    return {
+        "id": proposal.id,
+        "proposed_by_user_id": proposal.proposed_by_user_id,
+        "sport_type_id": proposal.sport_type_id,
+        "ruleset_id": proposal.ruleset_id,
+        "team1_id": proposal.team1_id,
+        "team2_id": proposal.team2_id,
+        "status_id": proposal.status_id,
+        "status": proposal.status.name if proposal.status else None,
+        "week_start_date": proposal.week_start_date.isoformat() if proposal.week_start_date else None,
+        "proposed_start_at": proposal.proposed_start_at.isoformat() + "Z" if proposal.proposed_start_at else None,
+        "proposed_end_at": proposal.proposed_end_at.isoformat() + "Z" if proposal.proposed_end_at else None,
+        "created_at": proposal.created_at.isoformat() + "Z" if proposal.created_at else None,
+        "updated_at": proposal.updated_at.isoformat() + "Z" if proposal.updated_at else None,
+        "location": proposal.location,
+        "venue_type_id": proposal.venue_type_id,
+        "team1_name": proposal.team1.name if proposal.team1 else None,
+        "team2_name": proposal.team2.name if proposal.team2 else None,
+    }
 
 
 def _parse_timestamp(value):
@@ -63,8 +89,9 @@ def _resolve_managed_team_ids(account):
 
     managed_ids = set()
     if isinstance(resolved, ClubOwner):
-        for team in resolved.teams:
-            managed_ids.add(team.id)
+        if resolved.team_manager:
+            for team in resolved.team_manager.teams:
+                managed_ids.add(team.id)
         for club in resolved.clubs:
             for team in club.teams:
                 managed_ids.add(team.id)
@@ -78,13 +105,26 @@ def _resolve_managed_team_ids(account):
     return set()
 
 
+def _resolve_visible_team_ids(account):
+    managed_ids = _resolve_managed_team_ids(account)
+    if managed_ids is None:
+        return None
+
+    visible_ids = set(managed_ids)
+    if account.player:
+        for team in account.player.teams:
+            visible_ids.add(team.id)
+
+    return visible_ids
+
+
 def _can_manage_team(account, team):
     resolved = account.resolved_role
     if isinstance(resolved, Administrator):
         return True
 
     if isinstance(resolved, ClubOwner):
-        manages_team = team in resolved.teams
+        manages_team = resolved.team_manager is not None and team in resolved.team_manager.teams
         owns_club = team.club is not None and team.club in resolved.clubs
         return owns_club or manages_team
 
@@ -94,7 +134,18 @@ def _can_manage_team(account, team):
     return False
 
 
-@matches_bp.post("/proposals")
+def _is_player_on_team(account, team):
+    return account.player is not None and team in account.player.teams
+
+
+def _can_respond_to_proposal(account, team1, team2):
+    return (
+        (team1 and (_can_manage_team(account, team1) or _is_player_on_team(account, team1)))
+        or (team2 and (_can_manage_team(account, team2) or _is_player_on_team(account, team2)))
+    )
+
+
+@match_proposals_bp.post("/proposals")
 @login_required
 def create_match_proposal(account):
     data = request.get_json() or {}
@@ -113,8 +164,8 @@ def create_match_proposal(account):
     if team1_id == team2_id:
         return jsonify({"message": "team1_id and team2_id must be different."}), 422
 
-    team1 = Team.query.get(team1_id)
-    team2 = Team.query.get(team2_id)
+    team1 = db.session.get(Team, team1_id)
+    team2 = db.session.get(Team, team2_id)
     if not team1 or not team2:
         return jsonify({"message": "One or both teams were not found."}), 404
 
@@ -154,7 +205,7 @@ def create_match_proposal(account):
     venue_type_id = data.get("venue_type_id")
 
     if venue_type_id is not None:
-        venue_exists = VenueType.query.get(venue_type_id)
+        venue_exists = db.session.get(VenueType, venue_type_id)
         if not venue_exists:
             return jsonify({"message": "venue_type_id not found."}), 404
 
@@ -182,22 +233,22 @@ def create_match_proposal(account):
         db.session.rollback()
         return jsonify({"message": "A proposal for this team pair and week already exists."}), 409
 
-    return jsonify({"proposal": proposal.to_dict()}), 201
+    return jsonify({"proposal": _proposal_payload(proposal)}), 201
 
 
-@matches_bp.get("/proposals")
+@match_proposals_bp.get("/proposals")
 @login_required
 def list_match_proposals(account):
     query = MatchProposal.query
-    managed_team_ids = _resolve_managed_team_ids(account)
+    visible_team_ids = _resolve_visible_team_ids(account)
 
-    if managed_team_ids is not None:
-        if not managed_team_ids:
+    if visible_team_ids is not None:
+        if not visible_team_ids:
             return jsonify({"proposals": [], "total": 0}), 200
         query = query.filter(
             or_(
-                MatchProposal.team1_id.in_(managed_team_ids),
-                MatchProposal.team2_id.in_(managed_team_ids),
+                MatchProposal.team1_id.in_(visible_team_ids),
+                MatchProposal.team2_id.in_(visible_team_ids),
             )
         )
 
@@ -223,23 +274,59 @@ def list_match_proposals(account):
             MatchProposal.id.asc(),
         ).all()
     )
-    return jsonify({"proposals": [proposal.to_dict() for proposal in proposals], "total": len(proposals)}), 200
+    return jsonify({"proposals": [_proposal_payload(proposal) for proposal in proposals], "total": len(proposals)}), 200
 
 
-@matches_bp.patch("/proposals/<int:proposal_id>/status")
+@match_proposals_bp.post("/proposals/generate-weekly")
+@login_required
+def generate_weekly_proposals(account):
+    data = request.get_json() or {}
+
+    week_start_date = _parse_date(data.get("week_start_date")) if data.get("week_start_date") else next_week_start()
+    if not week_start_date:
+        return jsonify({"message": "week_start_date must be YYYY-MM-DD."}), 422
+
+    ladder_id = data.get("ladder_id")
+    if ladder_id is not None:
+        try:
+            ladder_id = int(ladder_id)
+        except (TypeError, ValueError):
+            return jsonify({"message": "ladder_id must be an integer."}), 422
+
+    duration_minutes = data.get("duration_minutes", 60)
+    try:
+        duration_minutes = int(duration_minutes)
+    except (TypeError, ValueError):
+        return jsonify({"message": "duration_minutes must be an integer."}), 422
+    if duration_minutes <= 0:
+        return jsonify({"message": "duration_minutes must be greater than zero."}), 422
+
+    managed_team_ids = _resolve_managed_team_ids(account)
+    result = generate_weekly_match_proposals(
+        proposed_by_user_id=account.id,
+        week_start_date=week_start_date,
+        ladder_id=ladder_id,
+        managed_team_ids=managed_team_ids,
+        duration_minutes=duration_minutes,
+        location=data.get("location"),
+    )
+    return jsonify(result), 201
+
+
+@match_proposals_bp.patch("/proposals/<int:proposal_id>/status")
 @login_required
 def update_match_proposal_status(account, proposal_id):
-    proposal = MatchProposal.query.get(proposal_id)
+    proposal = db.session.get(MatchProposal, proposal_id)
     if not proposal:
         return jsonify({"message": "Match proposal not found."}), 404
 
-    team1 = Team.query.get(proposal.team1_id)
-    team2 = Team.query.get(proposal.team2_id)
-    can_manage = (team1 and _can_manage_team(account, team1)) or (team2 and _can_manage_team(account, team2))
+    team1 = db.session.get(Team, proposal.team1_id)
+    team2 = db.session.get(Team, proposal.team2_id)
+    can_respond = _can_respond_to_proposal(account, team1, team2)
     is_proposer = proposal.proposed_by_user_id == account.id
     is_admin = isinstance(account.resolved_role, Administrator)
 
-    if not (can_manage or is_proposer or is_admin):
+    if not (can_respond or is_proposer or is_admin):
         return jsonify({"message": "Forbidden: cannot update this proposal."}), 403
 
     data = request.get_json() or {}
@@ -256,21 +343,21 @@ def update_match_proposal_status(account, proposal_id):
 
     normalized_status = next_status.name.lower()
     if normalized_status == "accepted":
-        accepted = MatchAccepted.query.get(proposal.id)
+        accepted = db.session.get(MatchAccepted, proposal.id)
         if not accepted:
             accepted = MatchAccepted(id=proposal.id)
             db.session.add(accepted)
         accepted.response_by_user_id = account.id
         accepted.response_text = data.get("response_text")
     elif normalized_status == "rejected":
-        rejected = MatchRejected.query.get(proposal.id)
+        rejected = db.session.get(MatchRejected, proposal.id)
         if not rejected:
             rejected = MatchRejected(id=proposal.id)
             db.session.add(rejected)
         rejected.response_by_user_id = account.id
         rejected.response_text = data.get("response_text")
     elif normalized_status == "cancelled":
-        cancelled = MatchCancelled.query.get(proposal.id)
+        cancelled = db.session.get(MatchCancelled, proposal.id)
         if not cancelled:
             cancelled = MatchCancelled(id=proposal.id)
             db.session.add(cancelled)
@@ -290,7 +377,7 @@ def update_match_proposal_status(account, proposal_id):
         if score_team1 < 0 or score_team2 < 0:
             return jsonify({"message": "Scores must be >= 0."}), 422
 
-        played = MatchPlayed.query.get(proposal.id)
+        played = db.session.get(MatchPlayed, proposal.id)
         if not played:
             played = MatchPlayed(id=proposal.id, score_team1=score_team1, score_team2=score_team2)
             db.session.add(played)
@@ -304,4 +391,4 @@ def update_match_proposal_status(account, proposal_id):
                 return jsonify({"message": "rating must be an integer."}), 422
 
     db.session.commit()
-    return jsonify({"proposal": proposal.to_dict()}), 200
+    return jsonify({"proposal": _proposal_payload(proposal)}), 200

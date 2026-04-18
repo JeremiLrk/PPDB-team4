@@ -1,0 +1,10 @@
+[Unit]
+Description=Run weekly NetRank match proposal generation
+
+[Timer]
+OnCalendar=Mon *-*-* 03:00:00
+Persistent=true
+Unit=weekly-match-proposals.service
+
+[Install]
+WantedBy=timers.target

@@ -1,6 +1,7 @@
 import os
+from datetime import datetime
 
-
+import click
 from flask import Flask
 
 from server.app.errors import register_error_handlers
@@ -9,6 +10,7 @@ from server.app.routes.sport_type_routes import sport_type_bp
 from server.app.routes.team import team_bp
 from server.app.routes.match_rule import match_rule_bp, match_rule_set_bp
 from server.app.routes.matcher import matches_bp
+from server.app.routes.match_routes import match_proposals_bp
 from server.config import SECRET_KEY, config_data
 from server.extensions import db
 from server.app.routes.auth_routes import auth_bp
@@ -23,8 +25,14 @@ from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
 from server.app.models.page_text import PageText
-from server.app.models.account import AccountRole
-from server.app.models.ladder import LadderRatingFunction, Ladder
+from server.app.models.account import Account, AccountRole
+from server.app.models.ladder import LadderRatingFunction
+from server.app.models.match import MatchStatus
+from server.app.models.venue_type import VenueType
+from server.app.services.weekly_match_proposal_service import (
+    generate_weekly_match_proposals,
+    next_week_start,
+)
 from sqlalchemy import text
 
 def create_app():
@@ -51,13 +59,13 @@ def create_app():
             print("Database schema reset complete.")
 
     _register_blueprints(app)
+    _register_cli_commands(app)
     init_db(app)
 
     should_seed = os.getenv("SEED_ON_STARTUP", "").lower() in {"1", "true", "yes"}
     if should_seed:
         seed_verbose = os.getenv("SEED_VERBOSE", "1").lower() not in {"0", "false", "no"}
         seed_db(app, verbose=seed_verbose)
-
 
     @app.get("/")
     def root():
@@ -81,6 +89,74 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(match_rule_bp)
     app.register_blueprint(match_rule_set_bp)
     app.register_blueprint(matches_bp)
+    app.register_blueprint(match_proposals_bp)
+
+
+def _register_cli_commands(app: Flask):
+    @app.cli.command("generate-weekly-match-proposals")
+    @click.option(
+        "--week-start",
+        "week_start",
+        default=None,
+        help="Monday week start date in YYYY-MM-DD format. Defaults to next week.",
+    )
+    @click.option(
+        "--proposer-email",
+        "proposer_email",
+        default=None,
+        help="Account email to store as proposed_by_user_id. Defaults to WEEKLY_MATCH_PROPOSER_EMAIL or the first account.",
+    )
+    @click.option(
+        "--duration-minutes",
+        "duration_minutes",
+        default=60,
+        show_default=True,
+        type=int,
+        help="Required overlapping availability duration.",
+    )
+    @click.option(
+        "--location",
+        "location",
+        default=None,
+        help="Optional location stored on generated proposals.",
+    )
+    def generate_weekly_match_proposals_command(week_start, proposer_email, duration_minutes, location):
+        """Generate next week's ladder match proposals from player availability."""
+        # This command is intended for cron/systemd. It runs outside the web
+        # request cycle, while the generator remains reusable by routes/tests.
+        target_week_start = next_week_start()
+        if week_start:
+            try:
+                target_week_start = datetime.strptime(week_start, "%Y-%m-%d").date()
+            except ValueError as exc:
+                raise click.ClickException("week-start must be YYYY-MM-DD.") from exc
+
+        account = _resolve_weekly_proposal_account(proposer_email)
+        if not account:
+            raise click.ClickException(
+                "No proposer account found. Seed users first or pass --proposer-email."
+            )
+
+        result = generate_weekly_match_proposals(
+            proposed_by_user_id=account.id,
+            week_start_date=target_week_start,
+            managed_team_ids=None,
+            duration_minutes=duration_minutes,
+            location=location,
+        )
+
+        click.echo(
+            "Weekly match proposals generated "
+            f"for {result['week_start_date']}: "
+            f"created={result['created_count']}, skipped={result['skipped_count']}"
+        )
+
+
+def _resolve_weekly_proposal_account(proposer_email: str | None):
+    configured_email = proposer_email or os.getenv("WEEKLY_MATCH_PROPOSER_EMAIL")
+    if configured_email:
+        return Account.query.filter_by(email=configured_email).first()
+    return Account.query.order_by(Account.id.asc()).first()
 
 
 def init_db(app: Flask):
@@ -153,4 +229,14 @@ def _seed_reference_tables():
         model=LadderRatingFunction,
         seeds_file="server/seeds/ladder_rating_function.json",
         unique_fields=[],
+    )
+    seed_table(
+        model=MatchStatus,
+        seeds_file="server/seeds/match_status.json",
+        unique_fields=["name"],
+    )
+    seed_table(
+        model=VenueType,
+        seeds_file="server/seeds/venue_type.json",
+        unique_fields=["name"],
     )

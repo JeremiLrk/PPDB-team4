@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS match_rule_set_rule (
 
 CREATE TABLE IF NOT EXISTS match_proposal (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
+    proposed_by_user_id BIGINT,
     sport_type_id BIGINT NOT NULL,
     rule_snapshot JSONB,
     ruleset_id BIGINT,
@@ -95,9 +96,19 @@ CREATE TABLE IF NOT EXISTS match_proposal (
     team1_id BIGINT NOT NULL,
     team2_id BIGINT NOT NULL,
     status_id BIGINT NOT NULL,
+    week_start_date DATE,
+    proposed_start_at TIMESTAMP,
+    proposed_end_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP NOT NULL DEFAULT now(),
 
     location VARCHAR(256),
     venue_type_id BIGINT,
+
+    CONSTRAINT fk_match_proposal_proposed_by
+        FOREIGN KEY (proposed_by_user_id)
+            REFERENCES account(id)
+            ON DELETE RESTRICT,
 
     CONSTRAINT fk_match_proposal_sport_type_id
         FOREIGN KEY (sport_type_id)
@@ -134,6 +145,18 @@ CREATE TABLE IF NOT EXISTS match_proposal (
     CONSTRAINT pk_match_proposal
         PRIMARY KEY (id)
 );
+
+ALTER TABLE match_proposal
+    ADD COLUMN IF NOT EXISTS proposed_by_user_id BIGINT,
+    ADD COLUMN IF NOT EXISTS week_start_date DATE,
+    ADD COLUMN IF NOT EXISTS proposed_start_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS proposed_end_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT now(),
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT now();
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_match_proposal_week_pair
+    ON match_proposal (week_start_date, team1_id, team2_id)
+    WHERE week_start_date IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS match_accepted (
     id BIGINT PRIMARY KEY,

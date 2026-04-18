@@ -11,6 +11,7 @@ import datetime
 from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 from server.extensions import db
+from server.app.models.availability_block import AvailabilityBlock
 from server.app.models.sport_type import SportType
 from server.app.models.account import Account, AccountRole
 from server.app.models.club import Club
@@ -19,6 +20,8 @@ from server.app.models.player import Player, PlayerTeam
 from server.app.models.team import Team, TeamManager, TeamManagerTeam
 from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
+from server.app.models.match import MatchAccepted, MatchCancelled, MatchProposal, MatchRejected, MatchStatus
+from server.app.services.weekly_match_proposal_service import generate_weekly_match_proposals, next_week_start
 
 TAG = "[seed:teams_and_users]"
 
@@ -231,6 +234,37 @@ def _get_or_create_ladder_team(ladder_id, team_id, rank, rating, matches_played)
   db.session.add(row)
   db.session.flush()
   return row, True
+
+
+def _get_or_create_availability_block(user_id: int, start_at: datetime.datetime, end_at: datetime.datetime) -> tuple:
+  existing = AvailabilityBlock.query.filter_by(user_id=user_id, start_at=start_at, end_at=end_at).first()
+  if existing:
+    return existing, False
+  block = AvailabilityBlock(user_id=user_id, start_at=start_at, end_at=end_at)
+  db.session.add(block)
+  db.session.flush()
+  return block, True
+
+
+def _reset_proposal_to_pending(week_start_date: datetime.date, team1_id: int, team2_id: int):
+  ordered_team1_id, ordered_team2_id = sorted((team1_id, team2_id))
+  proposal = MatchProposal.query.filter_by(
+    week_start_date=week_start_date,
+    team1_id=ordered_team1_id,
+    team2_id=ordered_team2_id,
+  ).first()
+  if not proposal:
+    return
+
+  pending_status = MatchStatus.query.filter(MatchStatus.name.ilike("pending")).first()
+  if pending_status:
+    proposal.status_id = pending_status.id
+
+  for model in (MatchAccepted, MatchRejected, MatchCancelled):
+    row = db.session.get(model, proposal.id)
+    if row:
+      db.session.delete(row)
+  db.session.flush()
 
 
 # -- Main seed -----------------------------------------------------------------
@@ -473,6 +507,60 @@ def seed_teams_and_users(verbose: bool = True):
     _get_or_create_ladder_team(junior_ladder.id, junior_team.id, rank=1, rating=1215, matches_played=10)
     _get_or_create_ladder_team(junior_ladder.id, men_team.id,    rank=2, rating=1100, matches_played=8)
     _log(f"{TAG}   demo ladder standings upserted", verbose)
+
+    demo_week_start = next_week_start()
+    avail_start = datetime.datetime.combine(
+      demo_week_start + datetime.timedelta(days=1),
+      datetime.time(hour=18, minute=0),
+    )
+    avail_end = avail_start + datetime.timedelta(hours=2)
+
+    player_demo_club, _ = _get_or_create_club("Player Demo Club", sport_type_id=tennis.id)
+    player_demo_a, _ = _make_team("Player Demo A", tennis, club_id=player_demo_club.id, verbose=verbose)
+    player_demo_b, _ = _make_team("Player Demo B", tennis, club_id=player_demo_club.id, verbose=verbose)
+
+    player_demo_ladder, _ = _get_or_create_ladder(
+      player_demo_club.id,
+      "Player Demo Singles",
+      "Demo ladder where Jeremi is only a player",
+      tennis.id,
+      rating_fn_id,
+    )
+    _get_or_create_ladder_team(player_demo_ladder.id, player_demo_a.id, rank=1, rating=1110, matches_played=3)
+    _get_or_create_ladder_team(player_demo_ladder.id, player_demo_b.id, rank=2, rating=1090, matches_played=3)
+
+    demo_player, _ = _make_player(demo_acc)
+    _assign_player_to_team(demo_player, player_demo_a)
+
+    opponent_acc, _ = _make_account("Robin", "Vermeulen", "robin.vermeulen@example.com", role_player)
+    opponent_player, _ = _make_player(opponent_acc)
+    _assign_player_to_team(opponent_player, player_demo_b)
+
+    _get_or_create_availability_block(demo_acc.id, avail_start, avail_end)
+    _get_or_create_availability_block(
+      opponent_acc.id,
+      avail_start + datetime.timedelta(minutes=30),
+      avail_end,
+    )
+
+    generation_result = generate_weekly_match_proposals(
+      proposed_by_user_id=demo_acc.id,
+      week_start_date=demo_week_start,
+      ladder_id=player_demo_ladder.id,
+      managed_team_ids=None,
+      duration_minutes=60,
+      location="Player Demo Court 1",
+    )
+    _reset_proposal_to_pending(
+      week_start_date=demo_week_start,
+      team1_id=player_demo_a.id,
+      team2_id=player_demo_b.id,
+    )
+    _log(
+      f"{TAG}   player-demo weekly proposals generated: "
+      f"created={generation_result['created_count']}, skipped={generation_result['skipped_count']}",
+      verbose,
+    )
 
   except Exception as e:
     print(f"{TAG} ERROR seeding demo club data: {e}")
