@@ -24,7 +24,7 @@ class ClubOwnerClub(db.Model):
     # Permissions (mirrors the SQL DDL exactly)
     can_rename             = db.Column(db.Boolean, nullable=False, default=False)
     can_change_description = db.Column(db.Boolean, nullable=False, default=False)
-    can_create_match       = db.Column("can_create_match", db.Boolean, nullable=False, default=False)
+    can_manage_match       = db.Column("can_manage_match", db.Boolean, nullable=False, default=False)
     can_add_club_players   = db.Column(db.Boolean, nullable=False, default=False)
     can_add_club_owners    = db.Column(db.Boolean, nullable=False, default=False)
     can_add_club_rule      = db.Column(db.Boolean, nullable=False, default=False)
@@ -38,7 +38,7 @@ class ClubOwnerClub(db.Model):
             "clubId":               self.club_id,
             "canRename":            self.can_rename,
             "canChangeDescription": self.can_change_description,
-            "canCreateMatch":       self.can_create_match,
+            "canManageMatch":       self.can_manage_match,
             "canAddClubPlayers":    self.can_add_club_players,
             "canAddClubOwners":     self.can_add_club_owners,
             "canAddClubRule":       self.can_add_club_rule,

@@ -52,9 +52,9 @@ class ClubOwner(db.Model):
         a = self.assoc_for(club)
         return a is not None and a.can_change_description
 
-    def can_create_match_in(self, club: Club) -> bool:
+    def can_manage_match_in(self, club: Club) -> bool:
         a = self.assoc_for(club)
-        return a is not None and a.can_create_match
+        return a is not None and a.can_manage_match
 
     def can_add_club_players_to(self, club: Club) -> bool:
         a = self.assoc_for(club)

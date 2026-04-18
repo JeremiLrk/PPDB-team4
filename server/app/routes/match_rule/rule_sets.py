@@ -1,15 +1,3 @@
-"""
-Routes for MatchRuleSet:
-  POST   /api/match-rule-sets                                          — create a set
-  DELETE /api/match-rule-sets/<set_id>                                 — delete a set
-  PATCH  /api/match-rule-sets/<set_id>/name                            — rename a set
-  PATCH  /api/match-rule-sets/<set_id>/description                     — change description
-  POST   /api/match-rule-sets/<set_id>/rules                           — add a rule to a set
-  DELETE /api/match-rule-sets/<set_id>/rules/<rule_id>                 — remove rule from set
-  GET    /api/match-rule-sets/<set_id>                                 — get a set (public)
-  GET    /api/match-rule-sets                                          — list sets (public)
-"""
-
 from flask import Blueprint, request, jsonify, abort, Response
 
 from server.extensions import db
@@ -17,7 +5,7 @@ from server.app.decorators.login_required import login_required
 from server.app.models.account import Account
 from server.app.models.match_rule import MatchRuleSet, MatchRuleSetRule
 from ._helpers import (
-    _get_rule_or_404,
+    _get_active_rule_or_404,
     _get_rule_set_or_404,
     _is_owner_of_rule_set,
     _can_use_rule,
@@ -197,7 +185,7 @@ def add_rule_to_set(account: Account, set_id: int) -> tuple[Response, int]:
     if not rule_id:
         abort(422, description="Field 'ruleId' is required.")
 
-    rule = _get_rule_or_404(rule_id)
+    rule = _get_active_rule_or_404(rule_id)
 
     if not _can_use_rule(resolved, rule):
         abort(403, description="Forbidden: this rule is private and does not belong to you.")

@@ -48,10 +48,10 @@ def _make_account(app, *, email="user@test.com", role_name="team_manager") -> Ac
     return acc
 
 
-def _make_rule(creator_id=None, *, name="Rule A", public=True, club_id=None) -> MatchRule:
+def _make_rule(creator_id=None, *, name="Rule A", description = "", public=True, club_id=None) -> MatchRule:
     rule = MatchRule(
         name=name,
-        description="desc",
+        description=description,
         can_be_used_by_others=public,
         creator_id=creator_id,
         club_id=club_id,
@@ -332,7 +332,7 @@ class TestRenameRule:
         ({},                         400),   # empty body
         ({"name": ""},               422),   # empty name
         ({"name": "Same Name"},      422),   # the same name (check separately below)
-        ({"name": "Brand New Name"}, 200),
+        ({"name": "Brand New Name"}, 201),
     ])
     def test_rename_validation(self, client, app, monkeypatch, payload, expected_status):
         with app.app_context():
@@ -379,8 +379,7 @@ class TestUpdateRuleDescription:
     def test_same_description_returns_422(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(app, email="desc_same@t.com")
-            rule = _make_rule(creator_id=acc.id, name="Desc Rule")
-            rule.description = "old desc"
+            rule = _make_rule(creator_id=acc.id, name="Desc Rule", description="old desc")
             db.session.commit()
             rule_id = rule.id
             acc_id  = acc.id
@@ -398,8 +397,7 @@ class TestUpdateRuleDescription:
     def test_new_description_returns_200(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(app, email="desc_ok@t.com")
-            rule = _make_rule(creator_id=acc.id, name="Desc Rule OK")
-            rule.description = "old"
+            rule = _make_rule(creator_id=acc.id, name="Desc Rule OK", description = "old")
             db.session.commit()
             rule_id = rule.id
             acc_id  = acc.id
@@ -412,7 +410,7 @@ class TestUpdateRuleDescription:
             f"/api/match-rules/{rule_id}/description",
             json={"description": "new desc"},
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         assert resp.get_json()["rule"]["description"] == "new desc"
 
 

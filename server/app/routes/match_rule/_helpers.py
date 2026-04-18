@@ -3,8 +3,6 @@
 from flask import abort
 from server.app.models.match_rule import MatchRule, MatchRuleSet
 from server.app.models.account import Administrator
-from server.app.models.club_owner import ClubOwner
-from server.app.models.team import TeamManager
 
 
 # ---------------------------------------------------------------------------
@@ -15,6 +13,14 @@ def _get_rule_or_404(rule_id: int) -> MatchRule:
     rule = MatchRule.query.get(rule_id)
     if not rule:
         abort(404, description="Match rule not found.")
+    return rule
+
+
+def _get_active_rule_or_404(rule_id: int) -> MatchRule:
+    """Like _get_rule_or_404 but also rejects inactive rules."""
+    rule = _get_rule_or_404(rule_id)
+    if not rule.is_active:
+        abort(410, description="This match rule is no longer active.")
     return rule
 
 

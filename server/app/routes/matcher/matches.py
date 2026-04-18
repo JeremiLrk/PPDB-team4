@@ -1,51 +1,13 @@
-"""
-Match routes
-============
-
-Proposal lifecycle
-------------------
-  POST   /api/matches                              — create match_proposal
-  POST   /api/matches/<id>/accept                  — accept a proposal
-  POST   /api/matches/<id>/reject                  — reject a proposal
-  POST   /api/matches/<id>/result/check            — dry-run: warn if result already exists, do NOT save
-  POST   /api/matches/<id>/result                  — submit result (overwrites silently if already exists)
-  POST   /api/matches/<id>/cancel                  — cancel an accepted match (≠ reject)
-
-List endpoints
---------------
-  GET    /api/matches/active                       — accepted matches (status=accepted, not yet played/cancelled)
-  GET    /api/matches/played                       — matches with a result (status=played)
-  GET    /api/matches/pending                      — proposals awaiting accept/reject by the current user's teams
-  GET    /api/matches/awaiting-result              — accepted matches where current user's team can submit a result
-
-Permission model
-----------------
-  Creating a proposal:
-    - Administrator                              → always allowed
-    - ClubOwner with can_create_match on team's club → allowed
-    - TeamManager who manages at least one of the two teams → allowed
-
-  Accepting / Rejecting:
-    - Only users who manage team2 (the challenged team) may respond.
-    - Administrator can always respond.
-
-  Submitting result:
-    - Manager / ClubOwner of either team (team1 or team2).
-    - Administrator.
-
-  Cancelling (after acceptance):
-    - Manager / ClubOwner of team1 (the proposing team).
-    - Administrator.
-"""
-
 from flask import Blueprint, request, jsonify, abort, Response
 
 from server.app.routes.matcher._helpers import (
     _get_team_or_404,
     _get_proposal_or_404,
-    _manages_team,
 )
-from server.app.routes.matcher._permissions import _can_create_match
+from server.app.routes.matcher._permissions import (
+    _can_manage_match,
+    _can_manage_either_team,
+)
 from server.extensions import db
 from server.app.decorators.login_required import login_required
 from server.app.models.account import Account
@@ -96,15 +58,17 @@ def create_match_proposal(account: Account) -> tuple[Response, int]:
     team1 = _get_team_or_404(team1_id)
     team2 = _get_team_or_404(team2_id)
 
-    if not _can_create_match(resolved, team1, team2):
+    if not _can_manage_either_team(resolved, team1, team2):
         abort(403, description="Forbidden: you do not have permission to create a match for these teams.")
 
     ruleset_id    = data.get("rulesetId")
+    rule_snapshot = data.get("ruleSnapshot")  # NEW: optional JSONB snapshot of ruleset at proposal time
     location      = data.get("location", "").strip() or None
     venue_type_id = data.get("venueTypeId")
 
     proposal = MatchProposal(
         sport_type_id = sport_type_id,
+        rule_snapshot = rule_snapshot,
         ruleset_id    = ruleset_id,
         team1_id      = team1_id,
         team2_id      = team2_id,
@@ -142,7 +106,7 @@ def accept_match(account: Account, match_id: int) -> tuple[Response, int]:
         abort(409, description=f"Match is not pending (current status: {proposal.status.name}).")
 
     team2 = _get_team_or_404(proposal.team2_id)
-    if not _manages_team(resolved, team2):
+    if not _can_manage_match(resolved, team2):
         abort(403, description="Forbidden: only managers of the challenged team may accept.")
 
     data          = request.get_json(silent=True) or {}
@@ -184,7 +148,7 @@ def reject_match(account: Account, match_id: int) -> tuple[Response, int]:
         abort(409, description=f"Match is not pending (current status: {proposal.status.name}).")
 
     team2 = _get_team_or_404(proposal.team2_id)
-    if not _manages_team(resolved, team2):
+    if not _can_manage_match(resolved, team2):
         abort(403, description="Forbidden: only managers of the challenged team may reject.")
 
     data          = request.get_json(silent=True) or {}
@@ -229,7 +193,8 @@ def check_match_result(account: Account, match_id: int) -> tuple[Response, int]:
 
     team1 = _get_team_or_404(proposal.team1_id)
     team2 = _get_team_or_404(proposal.team2_id)
-    if not (_manages_team(resolved, team1) or _manages_team(resolved, team2)):
+
+    if not (_can_manage_either_team(resolved, team1, team2)):
         abort(403, description="Forbidden: you must manage one of the teams to submit a result.")
 
     data = request.get_json(silent=True)
@@ -279,7 +244,7 @@ def submit_match_result(account: Account, match_id: int) -> tuple[Response, int]
 
     team1 = _get_team_or_404(proposal.team1_id)
     team2 = _get_team_or_404(proposal.team2_id)
-    if not (_manages_team(resolved, team1) or _manages_team(resolved, team2)):
+    if not (_can_manage_either_team(resolved, team1, team2)):
         abort(403, description="Forbidden: you must manage one of the teams to submit a result.")
 
     data = request.get_json(silent=True)
@@ -342,7 +307,7 @@ def cancel_match(account: Account, match_id: int) -> tuple[Response, int]:
         abort(409, description=f"Only accepted matches can be cancelled (current: {proposal.status.name}).")
 
     team1 = _get_team_or_404(proposal.team1_id)
-    if not _manages_team(resolved, team1):
+    if not _can_manage_match(resolved, team1):
         abort(403, description="Forbidden: only managers of the proposing team (team1) may cancel.")
 
     data   = request.get_json(silent=True) or {}

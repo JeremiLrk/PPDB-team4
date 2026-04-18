@@ -5,6 +5,7 @@ Runs INDEPENDENTLY from the Flask application:
     python -m server.app.utils.reset_db
     python -m server.app.utils.reset_db --no-schema # only DROP/CREATE schema
     python -m server.app.utils.reset_db --help
+    python -m server.app.utils.reset_db --schemas <schemas path>
 
 Does not import create_app, Flask or SQLAlchemy — uses psycopg directly,
 so can be run before application initialization (e.g. in CI or scripts).
@@ -50,18 +51,20 @@ def reset_schema(conn) -> None:
     print("[reset_db] Schema reset complete.")
 
 
-def apply_schema(conn) -> None:
-    """Runs schema.sql against the current connection."""
-    if not SCHEMA_FILE.exists():
-        print(f"[reset_db] ERROR: schema file not found: {SCHEMA_FILE}", file=sys.stderr)
-        sys.exit(1)
+def apply_schemas(conn, schema_files) -> None:
+    """Runs multiple SQL schema files in order."""
+    for schema_file in schema_files:
+        if not schema_file.exists():
+            print(f"[reset_db] ERROR: schema file not found: {schema_file}", file=sys.stderr)
+            sys.exit(1)
 
-    sql = SCHEMA_FILE.read_text(encoding="utf-8")
-    print(f"[reset_db] Applying {SCHEMA_FILE.relative_to(PROJECT_ROOT)}...")
-    with conn.cursor() as cur:
-        cur.execute(sql)
-    conn.commit()
-    print("[reset_db] Schema applied successfully.")
+        sql = schema_file.read_text(encoding="utf-8")
+        print(f"[reset_db] Applying {schema_file.relative_to(PROJECT_ROOT)}...")
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+
+    print("[reset_db] All schemas applied successfully.")
 
 
 def main(argv=None) -> None:
@@ -70,15 +73,24 @@ def main(argv=None) -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "examples:\n"
-            "  python -m server.app.utils.reset_db              # full reset + apply schema\n"
-            "  python -m server.app.utils.reset_db --no-schema  # only DROP/CREATE schema\n"
+            "  python -m server.app.utils.reset_db\n"
+            "  python -m server.app.utils.reset_db --schemas schema.sql seed.sql\n"
+            "  python -m server.app.utils.reset_db --no-schema\n"
         ),
     )
+
     parser.add_argument(
         "--no-schema",
         action="store_true",
         help="Skip applying schema.sql after the reset (leaves DB empty).",
     )
+
+    parser.add_argument(
+        "--schemas",
+        nargs="+",
+        help="List of schema files to apply (relative to project root).",
+    )
+
     args = parser.parse_args(argv)
 
     try:
@@ -89,8 +101,15 @@ def main(argv=None) -> None:
 
     try:
         reset_schema(conn)
+
         if not args.no_schema:
-            apply_schema(conn)
+            if args.schemas:
+                schema_files = [PROJECT_ROOT / s for s in args.schemas]
+            else:
+                schema_files = [SCHEMA_FILE]
+
+            apply_schemas(conn, schema_files)
+
     except Exception as e:
         conn.rollback()
         print(f"[reset_db] ERROR: {e}", file=sys.stderr)

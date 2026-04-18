@@ -29,7 +29,7 @@ class TeamManagerTeam(db.Model):
     can_delete          = db.Column(db.Boolean, nullable=False, default=True)
     can_edit_players    = db.Column(db.Boolean, nullable=False, default=True)
     can_edit_managers   = db.Column(db.Boolean, nullable=False, default=True)
-    can_create_match    = db.Column(db.Boolean, nullable=False, default=True)
+    can_manage_match    = db.Column("can_manage_match", db.Boolean, nullable=False, default=False)
 
     # Reverse links
     team_manager    = db.relationship("TeamManager", back_populates="team_associations")
@@ -42,7 +42,7 @@ class TeamManagerTeam(db.Model):
             "canDelete":        self.can_delete,
             "canEditPlayers":   self.can_edit_players,
             "canEditManagers":  self.can_edit_managers,
-            "canCreateMatch":   self.can_create_match,
+            "canManageMatch":   self.can_manage_match,
         }
 
 
@@ -140,9 +140,9 @@ class TeamManager(db.Model):
         a = self.assoc_for(team)
         return a is not None and a.can_delete
 
-    def can_create_match_in(self, club: Team) -> bool:
+    def can_manage_match_in(self, club: Team) -> bool:
         a = self.assoc_for(club)
-        return a is not None and a.can_create_match
+        return a is not None and a.can_manage_match
 
     def can_edit_players_of(self, team: Team) -> bool:
         a = self.assoc_for(team)

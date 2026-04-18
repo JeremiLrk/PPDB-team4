@@ -6,7 +6,7 @@ Hierarchy:
     match_accepted        — 1-to-1 extension: proposal was accepted
     match_rejected        — 1-to-1 extension: proposal was rejected
     match_played          — 1-to-1 extension: result submitted
-    match_cancelled       — 1-to-1 extension: match was cancelled (≠ rejected)
+    match_cancelled       — 1-to-1 extension: match was cancelled (=/= rejected)
 
 Status values (seeded into match_status):
   1 pending   — freshly proposed, awaiting response
@@ -18,6 +18,8 @@ Status values (seeded into match_status):
 
 from __future__ import annotations
 from server.extensions import db
+from server.app.models.venue_type import VenueType
+
 
 
 # ---------------------------------------------------------------------------
@@ -56,6 +58,7 @@ class MatchProposal(db.Model):
         db.ForeignKey("sport_type.id", ondelete="RESTRICT"),
         nullable=False,
     )
+    rule_snapshot = db.Column(db.JSON, nullable=True)
     ruleset_id = db.Column(
         db.BigInteger,
         db.ForeignKey("match_rule_set.id", ondelete="SET NULL"),
@@ -108,6 +111,7 @@ class MatchProposal(db.Model):
             "status":       self.status.to_dict() if self.status else None,
             "location":     self.location,
             "venueTypeId":  self.venue_type_id,
+            "ruleSnapshot": self.rule_snapshot,
         }
 
     def to_dict_full(self) -> dict:

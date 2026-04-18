@@ -25,19 +25,6 @@ def _get_team_or_404(team_id: int) -> Team:
     return team
 
 
-def _manages_team(resolved, team: Team) -> bool:
-    """True if *resolved* is an Administrator, a ClubOwner of the team's club,
-    or a TeamManager explicitly assigned to *team*."""
-    if isinstance(resolved, Administrator):
-        return True
-    if isinstance(resolved, ClubOwner):
-        return team.club is not None and team.club in resolved.clubs
-    if isinstance(resolved, TeamManager):
-        return any(a.team_id == team.id for a in resolved.team_associations)
-    return False
-
-
-
 def _parse_pagination(args):
     try:
         offset = int(args.get("from", 0))

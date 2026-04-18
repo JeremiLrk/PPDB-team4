@@ -20,7 +20,7 @@ _TEST_TABLES = (
 @pytest.fixture(scope="session", autouse=True)
 def reset_database_once():
     subprocess.run(
-        ["python", "-m", "server.app.utils.reset_db"],
+        ["python", "-m", "server.app.utils.reset_db", "--no-schema"],
         check=True
     )
 

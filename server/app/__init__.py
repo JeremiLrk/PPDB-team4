@@ -8,6 +8,7 @@ from server.app.models.match_rule import MatchRuleSet
 from server.app.routes.sport_type_routes import sport_type_bp
 from server.app.routes.team import team_bp
 from server.app.routes.match_rule import match_rule_bp, match_rule_set_bp
+from server.app.routes.matcher import matches_bp
 from server.config import SECRET_KEY, config_data
 from server.extensions import db
 from server.app.routes.auth_routes import auth_bp
@@ -37,7 +38,7 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = SECRET_KEY
 
-    db.init_app(app)    
+    db.init_app(app)
 
     should_reset_db = os.getenv("RESET_DB_ON_STARTUP", "").lower() in {"1", "true", "yes"}
     if should_reset_db:
@@ -79,6 +80,7 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(sport_type_bp)
     app.register_blueprint(match_rule_bp)
     app.register_blueprint(match_rule_set_bp)
+    app.register_blueprint(matches_bp)
 
 
 def init_db(app: Flask):
@@ -89,7 +91,14 @@ def init_db(app: Flask):
     Safe to run repeatedly — all operations are idempotent.
     """
     with app.app_context():
-        load_sql("server/sql/schema.sql")
+        load_sql([
+            "server/sql/infrastructure.sql",
+            "server/sql/account.sql",
+            "server/sql/club_and_team.sql",
+            "server/sql/match_rules.sql",
+            "server/sql/schema.sql",
+            "server/sql/triggers.sql"
+        ])
         db.create_all()
 
         _seed_page_texts()
