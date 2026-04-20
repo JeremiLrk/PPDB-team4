@@ -114,7 +114,7 @@ def get_club_ladders(club_id: int):
     
     # Zet ze om naar een lijst die React begrijpt
     return jsonify([
-        {"id": l.id, "name": l.name, "description": l.description} 
+        {"id": l.id, "name": l.name, "description": l.description,"ruleset_id": l.ruleset_id}
         for l in ladders
     ]), 200
 
@@ -262,8 +262,8 @@ def create_ladder(club_id: int):
         name=data.get("name"),
         description=data.get("description"),
         sport_type_id=data.get("sport_type_id", 1),
-        ruleset_id=data.get("ruleset_id", 1),
-        ladder_rating_function_id=data.get("ladder_rating_function_id", 1)
+        ruleset_id=data.get("ruleset_id"),
+        ladder_rating_function_id=data.get("ladder_rating_function_id", 1),
     )
 
     db.session.add(ladder)

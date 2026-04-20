@@ -47,6 +47,10 @@ def register_user(email, password, first_name, last_name, date_of_birth):
 
 def login_user(email, password):
     account = Account.query.filter_by(email=email).first()
+    print(f"--- DEBUG LOGIN ---")
+    print(f"Did we find the account? {account is not None}")
+    if account:
+        print(f"Does the password match? {check_password_hash(account.password_hash, password)}")
     if not account or not check_password_hash(account.password_hash, password):
         return None
     if not account.is_verified:

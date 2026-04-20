@@ -36,8 +36,17 @@ function ClubSidebar({ activeTab, onTabChange }) {
                         onClick={() => onTabChange("members")}
                     >
                         Members
-                        
                     </button>
+
+                    <button
+                        className={`${styles.ladderButton} ${
+                            activeTab === "rules" ? "bg-indigo-500/20 border-l-4 border-indigo-500" : ""
+                        }`}
+                        onClick={() => onTabChange("rules")}
+                    >
+                        Match Rules
+                    </button>
+                        
 
                                         <button
                         className={styles.ladderButton}

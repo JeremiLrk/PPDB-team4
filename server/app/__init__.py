@@ -1,5 +1,6 @@
 import os
 
+from server.app.routes.ruleset_routes import ruleset_bp
 from flask import Flask
 
 from server.app.routes.sport_type_routes import sport_type_bp
@@ -67,6 +68,7 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(texts)
     app.register_blueprint(team_bp)
     app.register_blueprint(sport_type_bp)
+    app.register_blueprint(ruleset_bp)
 
 
 def _init_db(app: Flask):

@@ -3,7 +3,11 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-PROJECT_DIR="$HOME/Documents/PPDB/PPDB-team4"
+# --- Dynamically detect project root ---
+# Gets the directory of the script (dev_tools), then goes up one level
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
 BACKEND_DIR="$PROJECT_DIR/server"
 FRONTEND_DIR="$PROJECT_DIR/client"
 VENV_DIR="$PROJECT_DIR/.venv"
@@ -48,8 +52,8 @@ cd "$PROJECT_DIR" || exit 1
 # --- Restart mode ---
 if [ "$RESTART" = true ]; then
     echo -e "\033[33mStopping old processes...\033[0m"
-    pkill -f "python.*wsgi"
-    pkill -f vite
+    pkill -f "python.*wsgi" || true
+    pkill -f vite || true
     sleep 2
 fi
 
@@ -60,25 +64,36 @@ if [ "$CLEAN" = true ]; then
     rm -rf "$FRONTEND_DIR/node_modules"
 fi
 
-# --- Rebuild venv ---
+# --- Check & Rebuild venv ---
+NEEDS_BACKEND_INSTALL=$INSTALL
+
 if [ "$REBUILD" = true ] || [ ! -d "$VENV_DIR" ]; then
     echo -e "\033[32mCreating virtual environment with $PYTHON_BIN...\033[0m"
     rm -rf "$VENV_DIR"
     $PYTHON_BIN -m venv "$VENV_DIR"
+    # Force install dependencies if the venv is brand new
+    NEEDS_BACKEND_INSTALL=true
 fi
 
 # --- Activate venv ---
 source "$VENV_DIR/bin/activate"
 
 # --- Install backend dependencies ---
-if [ "$INSTALL" = true ] || [ "$REBUILD" = true ]; then
+if [ "$NEEDS_BACKEND_INSTALL" = true ]; then
     echo -e "\033[32mInstalling backend dependencies...\033[0m"
     pip install --upgrade pip
     pip install -r requirements.txt
 fi
 
-# --- Install frontend dependencies ---
-if [ "$INSTALL" = true ] || [ "$CLEAN" = true ]; then
+# --- Check & Install frontend dependencies ---
+NEEDS_FRONTEND_INSTALL=$INSTALL
+
+if [ ! -d "$FRONTEND_DIR/node_modules" ]; then
+    # Force install dependencies if node_modules is missing
+    NEEDS_FRONTEND_INSTALL=true
+fi
+
+if [ "$NEEDS_FRONTEND_INSTALL" = true ] || [ "$CLEAN" = true ]; then
     echo -e "\033[32mInstalling frontend dependencies...\033[0m"
     cd "$FRONTEND_DIR" || exit 1
     npm install
@@ -92,6 +107,10 @@ sudo systemctl is-active --quiet postgresql || sudo systemctl start postgresql
 # --- Start Backend ---
 echo -e "\033[34mStarting backend...\033[0m"
 cd "$PROJECT_DIR" || exit 1
+
+# Force Python to only look in the current project directory
+export PYTHONPATH="$PROJECT_DIR"
+
 stdbuf -oL python -m server.wsgi 2>&1 | tee "$PROJECT_DIR/backend.log" &
 BACKEND_PID=$!
 echo -e "\033[35mBackend PID: $BACKEND_PID (logs: backend.log)\033[0m"
@@ -106,6 +125,6 @@ echo -e "\033[35mFrontend PID: $FRONTEND_PID (logs: frontend.log)\033[0m"
 echo -e "\033[32mBackend: http://127.0.0.1:5000\033[0m"
 echo -e "\033[32mFrontend: http://localhost:5173\033[0m"
 
-trap "echo -e '\033[31mStopping processes...\033[0m'; kill $BACKEND_PID $FRONTEND_PID; exit" INT
+trap "echo -e '\033[31mStopping processes...\033[0m'; kill $BACKEND_PID $FRONTEND_PID 2>/dev/null; exit" INT
 
 wait
