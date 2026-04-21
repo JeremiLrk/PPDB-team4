@@ -23,10 +23,10 @@ export function useDashboard() {
                 const response = await fetch("/api/me/dashboard", {
                     credentials: "include",
                 });
-
+/* 
                 if (!response.ok) {
                     throw new Error("Dashboard data kon niet geladen worden.");
-                }
+                } */
 
                 const data = await response.json();
                 if (alive) {

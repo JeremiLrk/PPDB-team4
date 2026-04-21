@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import styles from "@/style/Clubs.module.css";
+import commonStyles from "@/style/common/Common.module.css";
 import useClubs from "@/hooks/useClubs";
 
 function Clubs() {
@@ -14,8 +15,8 @@ function Clubs() {
                 Kies een club om de club-homepage te openen, of start je eigen club!
             </p>
             
-            {loading && <p className={styles.info}>Clubs laden...</p>}
-            {error && <p className={styles.error}>{error}</p>}
+            {loading && <p className={commonStyles.info}>Clubs laden...</p>}
+            {error && <p className={commonStyles.error}>{error}</p>}
 
             <div className={styles.grid}>
                 {clubs.map((club) => (

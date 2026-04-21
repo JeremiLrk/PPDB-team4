@@ -1,0 +1,46 @@
+[
+  { "page": "team_settings", "key": "add_manager_title",        "language": "en", "value": "Add Manager" },
+  { "page": "team_settings", "key": "add_manager_title",        "language": "nl", "value": "Manager toevoegen" },
+
+  { "page": "team_settings", "key": "add_manager_btn",          "language": "en", "value": "Add Manager" },
+  { "page": "team_settings", "key": "add_manager_btn",          "language": "nl", "value": "Manager toevoegen" },
+
+  { "page": "team_settings", "key": "add_manager_aria",         "language": "en", "value": "Add manager to team" },
+  { "page": "team_settings", "key": "add_manager_aria",         "language": "nl", "value": "Manager aan team toevoegen" },
+
+  { "page": "team_settings", "key": "manager_added_success",    "language": "en", "value": "Manager added!" },
+  { "page": "team_settings", "key": "manager_added_success",    "language": "nl", "value": "Manager toegevoegd!" },
+
+  { "page": "team_settings", "key": "confirm_add_manager",      "language": "en", "value": "Add Manager" },
+  { "page": "team_settings", "key": "confirm_add_manager",      "language": "nl", "value": "Toevoegen" },
+
+  { "page": "team_settings", "key": "permissions_label",        "language": "en", "value": "Permissions for this manager:" },
+  { "page": "team_settings", "key": "permissions_label",        "language": "nl", "value": "Rechten voor deze manager:" },
+
+  { "page": "team_settings", "key": "perm_can_rename",          "language": "en", "value": "Rename team" },
+  { "page": "team_settings", "key": "perm_can_rename",          "language": "nl", "value": "Team hernoemen" },
+
+  { "page": "team_settings", "key": "perm_can_delete",          "language": "en", "value": "Delete team" },
+  { "page": "team_settings", "key": "perm_can_delete",          "language": "nl", "value": "Team verwijderen" },
+
+  { "page": "team_settings", "key": "perm_can_edit_players",    "language": "en", "value": "Edit players" },
+  { "page": "team_settings", "key": "perm_can_edit_players",    "language": "nl", "value": "Spelers bewerken" },
+
+  { "page": "team_settings", "key": "perm_can_edit_managers",   "language": "en", "value": "Edit managers" },
+  { "page": "team_settings", "key": "perm_can_edit_managers",   "language": "nl", "value": "Managers bewerken" },
+
+  { "page": "team_settings", "key": "select_btn",               "language": "en", "value": "Select" },
+  { "page": "team_settings", "key": "select_btn",               "language": "nl", "value": "Selecteren" },
+
+  { "page": "team_settings", "key": "selected_account_label",   "language": "en", "value": "Adding as manager:" },
+  { "page": "team_settings", "key": "selected_account_label",   "language": "nl", "value": "Wordt toegevoegd als manager:" },
+
+  { "page": "team_settings", "key": "search_placeholder",       "language": "en", "value": "Name, email, or ID…" },
+  { "page": "team_settings", "key": "search_placeholder",       "language": "nl", "value": "Naam, e-mail of ID…" },
+
+  { "page": "team_settings", "key": "search_hint",              "language": "en", "value": "Type to search accounts." },
+  { "page": "team_settings", "key": "search_hint",              "language": "nl", "value": "Typ om accounts te zoeken." },
+
+  { "page": "team_settings", "key": "no_results",               "language": "en", "value": "No accounts found." },
+  { "page": "team_settings", "key": "no_results",               "language": "nl", "value": "Geen accounts gevonden." }
+]

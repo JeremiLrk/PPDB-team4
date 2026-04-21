@@ -52,17 +52,23 @@ const PAGE_TEXTS = {
     dashboard: {
         en: {
             tab_overview: "Overview",
+            tab_availability: "Availability",
             tab_search: "Search Clubs",
             tab_requests: "My Requests",
+            tab_teams: "My Teams",
             tab_create_club: "Add your own club",
+            tab_manage_club: "Manage your clubs",
             search_by_name: "Search by club name",
             signed_in_as: "Signed in as",
         },
         nl: {
             tab_overview: "Overzicht",
+            tab_availability: "Beschikbaarheid",
             tab_search: "Zoek clubs",
             tab_requests: "Mijn aanvragen",
+            tab_teams: "Mijn teams",
             tab_create_club: "Voeg je eigen club toe",
+            tab_manage_club: "Beheer je clubs",
             search_by_name: "Zoek op clubnaam",
             signed_in_as: "Ingelogd als",
         },
@@ -108,8 +114,8 @@ export function mockApi(options = {}) {
         if (path === "/api/me/dashboard") return jsonResponse(dashboardData);
         if (path === "/api/clubs") return jsonResponse({ clubs });
         if (path === `/api/clubs/${club.id}`) return jsonResponse({ club });
-        if (path === `/api/clubs/${club.id}/ladders`) return jsonResponse(ladders);
-        if (path === `/api/clubs/${club.id}/top-players`) return jsonResponse(topPlayers);
+        if (path === `/api/clubs/${club.id}/ladders`) return jsonResponse({ ladders });
+        if (path === `/api/clubs/${club.id}/top-players`) return jsonResponse({ players: topPlayers });
         if (path === "/api/teams" || path === "/api/teams/my-all") {
             return jsonResponse({ total: teams.length, from: 0, to: teams.length, teams });
         }

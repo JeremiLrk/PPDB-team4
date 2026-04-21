@@ -4,7 +4,7 @@ import { useDashboard } from "@/hooks/useDashboard.js";
 import useClubs from "@/hooks/useClubs.js";
 import { notify } from "@/hooks/useNotify.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
-import { useTeams } from "@/hooks/useTeams.js";
+import { useTeams } from "@/hooks/teams/useTeams.js";
 
 const DEFAULT_THEME = "dark"
 const THEME_STORAGE_KEY = "dashboard_theme"

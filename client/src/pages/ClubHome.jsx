@@ -5,8 +5,8 @@ import styles from "@/style/Home.module.css";
 import { useLadders } from "@/hooks/useLadders";
 import { useTopPlayers } from "@/hooks/useTopPlayers";
 import useClub from "@/hooks/useClub";
-import { useLangContext } from "@/context/useLangContext.js";
-import { usePageTexts } from "@/hooks/usePageTexts.js";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 function ClubHome() {
     const { clubId } = useParams();

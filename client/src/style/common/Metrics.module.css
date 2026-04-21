@@ -1,0 +1,25 @@
+/*  Metrics  */
+
+.metrics {
+    display: grid;
+    gap: 0.65rem;
+}
+.metricCard {
+    border: 1px solid var(--surface-border);
+    border-radius: 0.78rem;
+    padding: 0.72rem;
+    background: var(--surface-bg-soft);
+}
+.metricLabel {
+    margin: 0;
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.metricValue {
+    margin: 0.34rem 0 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-heading);
+}

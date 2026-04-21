@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "@/style/Teams.module.css";
-import { useTeams } from "@/hooks/useTeams.js";
+import { useTeams } from "@/hooks/teams/useTeams.js";
 
 const SORT_OPTIONS = [
     { value: "id",   label: "By ID" },

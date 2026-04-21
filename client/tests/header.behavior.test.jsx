@@ -6,7 +6,7 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 
 import Header from "../src/components/Header.jsx";
 import { LangContext } from "../src/context/useLangContext.js";
-import { CurrentUserContext } from "../src/context/useCurrentUserContext.js";
+import CurrentUserContext from "../src/context/useCurrentUserContext.jsx";
 
 vi.mock("@/hooks/useNotify.js", () => ({
   notify: {
