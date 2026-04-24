@@ -14,21 +14,20 @@ export function canManageTeam(account, team) {
     if (!account || !team) return false;
     const roles = account.roles ?? (account.role ? [account.role] : []);
 
-    if (roles.includes("administrator")) return true;
+    if (role === "administrator") return true;
 
-    if (roles.includes("club_owner")) {
+    if (role === "club_owner") {
         const ownsClub    = team.clubId && account.clubIds?.includes(team.clubId);
         const managesTeam = account.managedTeamIds?.includes(team.id);
         return ownsClub || managesTeam;
     }
 
-    if (roles.includes("team_manager")) {
+    if (role === "team_manager") {
         return account.managedTeamIds?.includes(team.id);
     }
 
     return false;
 }
-
 
 /**
  * TeamSettingsLink — a ⚙ button icon that links to /teams/:teamId/settings.

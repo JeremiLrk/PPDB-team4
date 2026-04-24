@@ -21,6 +21,7 @@ from server.app.routes.health_routes import api
 from server.app.routes.root_routes import root_bp
 from server.app.routes.ladder_routes import ladder_bp
 from server.app.routes.ladders_routes import ladders_bp
+from server.app.routes.match_routes import matches_bp
 from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
@@ -37,8 +38,6 @@ from sqlalchemy import text
 
 def create_app():
     app = Flask(__name__)
-    register_error_handlers(app)
-
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         f"postgresql+psycopg://{config_data['db_username']}:{config_data['db_password']}"
         f"@{config_data['db_host']}:{config_data['db_port']}/{config_data['db_name']}"
@@ -81,6 +80,7 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(availability_bp)
     app.register_blueprint(ladders_bp)
     app.register_blueprint(ladder_bp)
+    app.register_blueprint(matches_bp)
     app.register_blueprint(clubs_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(texts)

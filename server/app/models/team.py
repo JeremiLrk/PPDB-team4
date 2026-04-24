@@ -1,4 +1,3 @@
-from __future__ import annotations
 from server.extensions import db
 
 from typing import TYPE_CHECKING
