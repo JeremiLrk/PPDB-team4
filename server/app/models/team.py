@@ -119,7 +119,15 @@ class TeamManager(db.Model):
     @property
     def teams(self) -> list[Team]:
         """Returns the list of teams managed by this manager."""
+        if hasattr(self, "_teams_override"):
+            return self._teams_override
         return [a.team for a in self.team_associations]
+
+    @teams.setter
+    def teams(self, value: list[Team]) -> None:
+        # Backward-compatible in-memory assignment for tests/helpers that do
+        # not materialize TeamManagerTeam association objects.
+        self._teams_override = value
 
     # ------------------------------------------------------------------
     # Permission helpers — per-team

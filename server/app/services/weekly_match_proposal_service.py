@@ -12,6 +12,8 @@ from server.extensions import db
 
 
 DEFAULT_MATCH_DURATION_MINUTES = 60
+DEFAULT_AUTOGEN_MIN_LEAD_DAYS = 7
+DEFAULT_AUTOGEN_EARLIEST_HOUR = 8
 
 
 @dataclass(frozen=True)
@@ -38,6 +40,7 @@ def generate_weekly_match_proposals(
     managed_team_ids: set[int] | None = None,
     duration_minutes: int = DEFAULT_MATCH_DURATION_MINUTES,
     location: str | None = None,
+    generated_at: datetime | None = None,
 ) -> dict:
     """
     Generate pending match proposals for teams sharing a ladder.
@@ -54,6 +57,10 @@ def generate_weekly_match_proposals(
     week_start_at = datetime.combine(target_week_start, time.min)
     week_end_at = datetime.combine(week_end_exclusive, time.min)
     duration = timedelta(minutes=duration_minutes)
+    not_before = None
+    if week_start_date is None:
+        # Automatic weekly runs keep a safety window before the earliest slot.
+        not_before = _auto_generation_not_before(generated_at or datetime.utcnow())
 
     pending_status = _resolve_status("pending")
     if not pending_status:
@@ -91,7 +98,14 @@ def generate_weekly_match_proposals(
 
             # A team is available only when every player on that team has an
             # overlapping block; then both team windows must overlap too.
-            common_window = _find_common_team_window(team1, team2, week_start_at, week_end_at, duration)
+            common_window = _find_common_team_window(
+                team1,
+                team2,
+                week_start_at,
+                week_end_at,
+                duration,
+                not_before=not_before,
+            )
             if not common_window:
                 skipped.append(_skip(ladder.id, team1.id, team2.id, "no_common_availability"))
                 continue
@@ -158,14 +172,29 @@ def _find_common_team_window(
     week_start_at: datetime,
     week_end_at: datetime,
     duration: timedelta,
+    not_before: datetime | None = None,
 ) -> TimeWindow | None:
     team1_windows = _team_available_windows(team1, week_start_at, week_end_at)
     team2_windows = _team_available_windows(team2, week_start_at, week_end_at)
 
     for window in _intersect_window_lists(team1_windows, team2_windows):
-        if window.end - window.start >= duration:
-            return window
+        candidate_start = window.start
+        if not_before and candidate_start < not_before:
+            candidate_start = not_before
+        if window.end - candidate_start >= duration:
+            return TimeWindow(start=candidate_start, end=window.end)
     return None
+
+
+def _auto_generation_not_before(generated_at: datetime) -> datetime:
+    threshold = generated_at + timedelta(days=DEFAULT_AUTOGEN_MIN_LEAD_DAYS)
+    earliest_on_threshold_day = datetime.combine(
+        threshold.date(),
+        time(hour=DEFAULT_AUTOGEN_EARLIEST_HOUR),
+    )
+    if threshold < earliest_on_threshold_day:
+        return earliest_on_threshold_day
+    return threshold
 
 
 def _team_available_windows(team: Team, week_start_at: datetime, week_end_at: datetime) -> list[TimeWindow]:

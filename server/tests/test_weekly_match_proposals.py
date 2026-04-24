@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import Flask
 from flask.testing import FlaskClient
 
@@ -7,6 +9,7 @@ from server.app.models.ladder_team import LadderTeam
 from server.app.models.match import MatchProposal
 from server.app.models.team import Team
 from server.app.services.weekly_match_proposal_service import (
+    _auto_generation_not_before,
     generate_weekly_match_proposals,
     next_week_start,
 )
@@ -16,7 +19,7 @@ from server.extensions import db
 def _login_demo_player(client: FlaskClient):
     response = client.post(
         "/api/login",
-        json={"email": "jeremilorek@outlook.com", "password": "Password123!"},
+        json={"email": "jeremilorek@outlook.com", "password": "qwertyuiop"},
     )
     assert response.status_code == 200
 
@@ -97,3 +100,8 @@ def test_weekly_generation_is_idempotent_for_existing_week(app: Flask):
         assert result["skipped_count"] >= 1
         assert any(row["reason"] == "already_exists" for row in result["skipped"])
         assert after_count == before_count
+
+
+def test_auto_generation_has_one_week_precaution_floor():
+    generated_at = datetime(2026, 4, 26, 3, 0, 0)  # Sunday 03:00
+    assert _auto_generation_not_before(generated_at) == datetime(2026, 5, 3, 8, 0, 0)

@@ -146,14 +146,6 @@ CREATE TABLE IF NOT EXISTS match_proposal (
         PRIMARY KEY (id)
 );
 
-ALTER TABLE match_proposal
-    ADD COLUMN IF NOT EXISTS proposed_by_user_id BIGINT,
-    ADD COLUMN IF NOT EXISTS week_start_date DATE,
-    ADD COLUMN IF NOT EXISTS proposed_start_at TIMESTAMP,
-    ADD COLUMN IF NOT EXISTS proposed_end_at TIMESTAMP,
-    ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT now(),
-    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT now();
-
 CREATE UNIQUE INDEX IF NOT EXISTS uq_match_proposal_week_pair
     ON match_proposal (week_start_date, team1_id, team2_id)
     WHERE week_start_date IS NOT NULL;

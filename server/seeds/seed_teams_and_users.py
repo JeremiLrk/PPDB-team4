@@ -8,7 +8,6 @@ Seeding order:
 """
 
 import datetime
-from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 from server.extensions import db
 from server.app.models.availability_block import AvailabilityBlock
@@ -18,7 +17,7 @@ from server.app.models.club import Club
 from server.app.models.club_owner import ClubOwner
 from server.app.models.player import Player, PlayerTeam
 from server.app.models.team import Team, TeamManager, TeamManagerTeam
-from server.app.models.ladder import Ladder
+from server.app.models.ladder import Ladder, LadderRatingFunction
 from server.app.models.ladder_team import LadderTeam
 from server.app.models.match import MatchAccepted, MatchCancelled, MatchProposal, MatchRejected, MatchStatus
 from server.app.services.weekly_match_proposal_service import generate_weekly_match_proposals, next_week_start
@@ -61,16 +60,25 @@ def _get_or_create_sport(name: str, min_p: int, max_p: int, verbose: bool = True
   return sport
 
 
-def _make_account(first: str, last: str, email: str, role: AccountRole) -> tuple:
+def _make_account(
+    first: str,
+    last: str,
+    email: str,
+    role: AccountRole,
+    password: str = "Password123!",
+    force_password_update: bool = False,
+) -> tuple:
   """Returns (account, created: bool)."""
   existing = Account.query.filter_by(email=email).first()
   if existing:
+    if force_password_update:
+      existing.password_hash = generate_password_hash(password)
     return existing, False
   acc = Account(
     first_name=first,
     last_name=last,
     email=email,
-    password_hash=generate_password_hash("Password123!"),
+    password_hash=generate_password_hash(password),
     account_role_id=role.id,
     date_of_birth=datetime.date(1995, 1, 1),
     is_verified=True,
@@ -187,16 +195,13 @@ def _assign_player_to_team(player: Player, team: Team) -> bool:
 
 
 def _ensure_default_ladder_rating_function() -> int:
-  existing_id = db.session.execute(
-    text("SELECT id FROM ladder_rating_function ORDER BY id ASC LIMIT 1")
-  ).scalar()
-  if existing_id:
-    return int(existing_id)
-  created_id = db.session.execute(
-    text("INSERT INTO ladder_rating_function (name) VALUES (:name) RETURNING id"),
-    {"name": "ELO"},
-  ).scalar_one()
-  return int(created_id)
+  existing = LadderRatingFunction.query.order_by(LadderRatingFunction.id.asc()).first()
+  if existing:
+    return int(existing.id)
+  created = LadderRatingFunction(name="ELO")
+  db.session.add(created)
+  db.session.flush()
+  return int(created.id)
 
 
 def _get_or_create_ladder(club_id, name, description, sport_type_id, ladder_rating_function_id) -> tuple:
@@ -476,8 +481,18 @@ def seed_teams_and_users(verbose: bool = True):
   # 6. Demo club + ladders
   _log(f"{TAG} [6/6] Seeding demo club data...", verbose)
   try:
-    demo_acc, demo_acc_created = _make_account("Jeremi", "Lorek", "jeremilorek@outlook.com", role=role_manager)
+    demo_acc, demo_acc_created = _make_account(
+      "Jeremi",
+      "Lorek",
+      "jeremilorek@outlook.com",
+      role=role_manager,
+      password="qwertyuiop",
+      force_password_update=True,
+    )
     _log(f"{TAG}   demo account {'created' if demo_acc_created else 'already exists'} (id={demo_acc.id})", verbose)
+    if not demo_acc.is_verified:
+      demo_acc.is_verified = True
+      _log(f"{TAG}   demo account verification enabled", verbose)
 
     demo_tm, demo_tm_created = _make_manager(demo_acc)
     _log(f"{TAG}   demo team_manager {'created' if demo_tm_created else 'already exists'} (id={demo_tm.id})", verbose)

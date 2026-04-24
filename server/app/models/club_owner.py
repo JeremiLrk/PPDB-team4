@@ -28,7 +28,15 @@ class ClubOwner(db.Model):
     @property
     def clubs(self) -> list[Club]:
         """Returns the list of clubs this owner manages."""
+        if hasattr(self, "_clubs_override"):
+            return self._clubs_override
         return [a.club for a in self.club_associations]
+
+    @clubs.setter
+    def clubs(self, value: list[Club]) -> None:
+        # Backward-compatible in-memory assignment for tests/helpers that do
+        # not materialize ClubOwnerClub association objects.
+        self._clubs_override = value
 
     # ------------------------------------------------------------------
     # Permission helpers — per-club

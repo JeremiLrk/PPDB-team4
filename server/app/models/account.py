@@ -122,3 +122,8 @@ class Administrator(db.Model):
             "id":          self.id,
             "accessLevel": self.access_level,
         }
+
+
+# Backward-compatible re-exports for modules/tests importing these from account.
+from server.app.models.team import TeamManager  # noqa: E402
+from server.app.models.club_owner import ClubOwner  # noqa: E402

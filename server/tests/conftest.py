@@ -1,6 +1,7 @@
 import pytest
+import sys
 
-from server.app import create_app
+from server.app import create_app, seed_db
 from server.extensions import db
 import subprocess
 
@@ -20,7 +21,7 @@ _TEST_TABLES = (
 @pytest.fixture(scope="session", autouse=True)
 def reset_database_once():
     subprocess.run(
-        ["python", "-m", "server.app.utils.reset_db", "--no-schema"],
+        [sys.executable, "-m", "server.app.utils.reset_db", "--no-schema"],
         check=True
     )
 
@@ -34,6 +35,9 @@ def app():
             "SECRET_KEY": "test_secret_key",
         }
     )
+
+    # Weekly proposal tests rely on seeded demo users/teams/ladders.
+    seed_db(flask_app, verbose=False)
 
     with flask_app.app_context():
         yield flask_app

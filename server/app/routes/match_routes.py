@@ -5,7 +5,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 
 from server.app.decorators.login_required import login_required
-from server.app.models.account import Administrator, TeamManager
+from server.app.models.account import Administrator
 from server.app.models.club_owner import ClubOwner
 from server.app.models.match import (
     MatchAccepted,
@@ -15,7 +15,7 @@ from server.app.models.match import (
     MatchRejected,
     MatchStatus,
 )
-from server.app.models.team import Team
+from server.app.models.team import Team, TeamManager
 from server.app.models.venue_type import VenueType
 from server.app.services.weekly_match_proposal_service import (
     generate_weekly_match_proposals,
