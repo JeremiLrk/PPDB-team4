@@ -1,19 +1,20 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSportTypes } from "@/hooks/useSportTypes.js"
 
 export function useClubSettings(clubId) {
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState("overview");
+    const { sportTypes, loading: sloading, error: serror } = useSportTypes();
 
     const [club, setClub] = useState(null);
     const [formData, setFormData] = useState({
         name: "",
         description: "",
         city: "",
-        sport: "",
+        sport_type_id: "", // Matches the name attribute in our select
     });
 
     const [members, setMembers] = useState([]);
@@ -26,10 +27,12 @@ export function useClubSettings(clubId) {
     const [updating, setUpdating] = useState(false);
     const [updateMessage, setUpdateMessage] = useState(null);
 
+    // --- ADDED: Tab State Logic ---
+    const [activeTab, setActiveTab] = useState("general");
+
     useEffect(() => {
         async function fetchClubData() {
             try {
-                // Fetching core data + the metadata for dropdowns
                 const [clubRes, membersRes, ownersRes, laddersRes, ratingsRes, rulesRes] = await Promise.all([
                     fetch(`/api/clubs/${clubId}`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/members`, { credentials: "include" }),
@@ -49,20 +52,17 @@ export function useClubSettings(clubId) {
                 if (!clubRes.ok) throw new Error(clubData.message);
 
                 setClub(clubData.club);
+                
                 setFormData({
                     name: clubData.club.name || "",
                     description: clubData.club.description || "",
                     city: clubData.club.city || "",
-                    sport: clubData.club.sport || "",
+                    sport_type_id: clubData.club.sport_type_id || "",
                 });
 
                 setMembers(membersData.members || []);
                 setOwners(ownersData.owners || []);
-
-                // Handle the array response from your Flask API
                 setLadders(Array.isArray(laddersData) ? laddersData : (laddersData.ladders || []));
-
-                // Set dropdown options
                 setRatingFunctions(ratingsData.ratingFunctions || []);
                 setRuleSets(rulesData.ruleSets || []);
 
@@ -85,7 +85,6 @@ export function useClubSettings(clubId) {
 
     const updateClub = async (e) => {
         e.preventDefault();
-
         setUpdating(true);
         setUpdateMessage(null);
 
@@ -93,20 +92,15 @@ export function useClubSettings(clubId) {
             const res = await fetch(`/api/clubs/${clubId}`, {
                 method: "PUT",
                 credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
 
             const data = await res.json();
-
             if (!res.ok) throw new Error(data.message);
 
             setClub(prev => ({ ...prev, ...formData }));
-
             setUpdateMessage({ type: "success", text: "Saved successfully" });
-
         } catch (err) {
             setUpdateMessage({ type: "error", text: err.message });
         } finally {
@@ -250,6 +244,7 @@ export function useClubSettings(clubId) {
 
         ratingFunctions,
         ruleSets,
+        sportTypes,
 
         goBack: () => navigate("/dashboard"),
     };

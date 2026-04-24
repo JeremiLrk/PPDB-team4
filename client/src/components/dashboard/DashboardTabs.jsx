@@ -212,8 +212,6 @@ export function RequestsTab({
     );
 }
 
-//  Create Club Tab 
-
 export function CreateClubTab({
     clubRequestForm,
     clubRequestSubmitting,
@@ -222,6 +220,7 @@ export function CreateClubTab({
     onFieldChange,
     onSubmit,
     texts,
+    sportTypes = [],
     incomingJoinRequests,
     decideJoinrequest,
     isClubOwner
@@ -259,17 +258,25 @@ export function CreateClubTab({
                             />
                         </label>
 
+                        {/* Updated: Sport Selection dropdown */}
                         <label className={styles.formLabel}>
                             {texts?.main_sport || "Main Sport"}
-                            <input
+                            <select
                                 className={styles.formInput}
-                                type="text"
-                                name="sport"
-                                value={clubRequestForm.sport}
+                                name="sport_type_id" 
+                                value={clubRequestForm.sport_type_id || ""}
                                 onChange={onFieldChange}
-                                placeholder={texts?.main_sport_placeholder || "Padel"}
                                 required
-                            />
+                            >
+                                <option value="" disabled>
+                                    {texts?.select_sport_placeholder || "Select a sport"}
+                                </option>
+                                {sportTypes.map((sport) => (
+                                    <option key={sport.id} value={sport.id}>
+                                        {sport.name}
+                                    </option>
+                                ))}
+                            </select>
                         </label>
                     </div>
 
@@ -327,6 +334,7 @@ export function CreateClubTab({
                                         <p className={styles.primaryText}>{request.name || texts?.new_club || "New Club"}</p>
                                         <p className={styles.secondaryText}>
                                             {request.city || texts?.unknown_city || "Unknown city"}
+                                            {/* Note: request.sport might need to be mapped back to a name if the request only stores the ID */}
                                             {request.sport ? ` • ${request.sport}` : ""}
                                         </p>
                                     </div>
@@ -342,6 +350,8 @@ export function CreateClubTab({
         </section>
     );
 }
+
+export default CreateClubTab;
 
 export function ManageClubsTab({ 
     myClubs, 
@@ -382,7 +392,7 @@ export function ManageClubsTab({
                                         <div>
                                             <p className={styles.primaryText}>{club.name}</p>
                                             <p className={styles.secondaryText}>
-                                                {club.city} - {club.sport}
+                                                {club.city} - {club.sport_type_id}
                                             </p>
                                         </div>
                                         <button 

@@ -158,8 +158,13 @@ CREATE TABLE IF NOT EXISTS club (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(64) NOT NULL,
     description VARCHAR(512) NOT NULL,
-    sport VARCHAR(64),
+    sport_type_id BIGINT,
     city VARCHAR(128) NOT NULL,
+
+    CONSTRAINT fk_club_sport_type_id
+        FOREIGN KEY (sport_type_id)
+        REFERENCES sport_type(id)
+        ON DELETE CASCADE,
 
     CONSTRAINT pk_club
         PRIMARY KEY (id)

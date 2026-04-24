@@ -39,6 +39,7 @@ function ClubSettings() {
                         onSubmit={settings.updateClub}
                         updating={settings.updating}
                         updateMessage={settings.updateMessage}
+                        sportTypes={settings.sportTypes}
                     />
                 )}
 

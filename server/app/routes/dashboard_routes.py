@@ -241,7 +241,7 @@ def add_club():
 
     data = request.get_json()
 
-    required_fields = ["name", "description", "sport", "city"]
+    required_fields = ["name", "description", "sport_type_id", "city"]
     missing = [f for f in required_fields if not data.get(f)]
     if missing:
         return jsonify({"message": f"Missing fields: {missing}"}), 400
@@ -250,7 +250,7 @@ def add_club():
             club = Club(
                 name=data["name"],
                 description=data["description"],
-                sport=data["sport"],
+                sport_type_id=data["sport_type_id"],
                 city=data["city"]
             )
 

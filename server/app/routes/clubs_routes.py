@@ -14,7 +14,7 @@ clubs_bp = Blueprint("clubs", __name__, url_prefix="/api")
 @clubs_bp.get("/clubs")
 def list_clubs():
     db_clubs = Club.query.order_by(Club.name.asc()).all()
-    clubs = [{"id": club.id, "name": club.name, "description": club.description, "sport": club.sport, "city": club.city} for club in db_clubs]
+    clubs = [{"id": club.id, "name": club.name, "description": club.description, "sport_type_id": club.sport_type_id, "city": club.city} for club in db_clubs]
     return jsonify({"clubs": clubs}), 200
 
 @clubs_bp.get("/clubs/<int:club_id>")
@@ -23,37 +23,8 @@ def get_club(club_id: int):
     if not club:
         return jsonify({"message": "Club not found"}), 404
     
-    return jsonify({"club": {"id": club.id, "name": club.name, "description": club.description, "sport": club.sport, "city": club.city}}), 200
+    return jsonify({"club": {"id": club.id, "name": club.name, "description": club.description, "sport_type_id": club.sport_type_id, "city": club.city}}), 200
 
-@clubs_bp.post("/clubs")
-def create_club():
-    # 1. Kijk wie de club probeert aan te maken (net als bij je is_manager route)
-    token = request.cookies.get("access_token")
-    account = verify_user(token)
-
-    if not account:
-        return jsonify({"message": "Je moet ingelogd zijn om een club te maken"}), 401
-
-    # 2. Haal de naam van de club uit de request van de frontend
-    data = request.get_json()
-    club_name = data.get("name")
-
-    if not club_name:
-        return jsonify({"message": "Clubnaam is verplicht"}), 400
-
-    # 3. Maak de nieuwe club aan
-    new_club = Club(name=club_name)
-
-    new_club.managers.append(account)
-
-    # 5. Opslaan in de database
-    db.session.add(new_club)
-    db.session.commit()
-
-    return jsonify({
-        "message": "Club succesvol aangemaakt!", 
-        "club": {"id": new_club.id, "name": new_club.name}
-    }), 201
 
 @clubs_bp.get("/clubs/<int:club_id>/ladders")
 def get_club_ladders(club_id: int):
@@ -89,7 +60,7 @@ def update_club(club_id: int):
     club.name = data.get("name", club.name)
     club.description = data.get("description", club.description)
     club.city = data.get("city", club.city)
-    club.sport = data.get("sport", club.sport)
+    club.sport_type_id = data.get("sport_type_id", club.sport_type_id)
 
     db.session.commit()
 

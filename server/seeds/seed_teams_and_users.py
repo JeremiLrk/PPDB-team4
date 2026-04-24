@@ -107,7 +107,7 @@ def _get_or_create_club(name: str) -> tuple:
   existing = Club.query.filter_by(name=name).first()
   if existing:
     return existing, False
-  club = Club(name=name, description="test club", sport="Padel",  city="Antwerp")
+  club = Club(name=name, description="test club", sport_type_id=1,  city="Antwerp")
   db.session.add(club)
   db.session.flush()
   return club, True

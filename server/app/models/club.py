@@ -15,7 +15,7 @@ class Club(db.Model):
     #     backref=db.backref('managed_clubs', lazy=True)
     # )
     description = db.Column(db.String(512), nullable=False)
-    sport = db.Column(db.String(64))
+    sport_type_id = db.Column(db.Integer, nullable=True)
     city = db.Column(db.String(128))
     owners = db.relationship("ClubOwner", secondary=ClubOwnerClub.__tablename__, back_populates="clubs")
     teams  = db.relationship("Team", back_populates="club")
@@ -25,6 +25,6 @@ class Club(db.Model):
             "id": self.id,
             "name": self.name,  
             "description": self.description, 
-            "sport": self.sport,
+            "sport_type_id": self.sport_type_id,
             "city": self.city
         }
