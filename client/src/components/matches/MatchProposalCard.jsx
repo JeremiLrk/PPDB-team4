@@ -1,4 +1,5 @@
 import commonStyles from "@/style/common/Common.module.css";
+import styles from "@/style/matches/MatchProposalCard.module.css";
 import ItemCard from "@/components/common/ItemCard.jsx";
 
 function parseDate(value) {
@@ -34,6 +35,7 @@ function statusClass(status) {
 export default function MatchProposalCard({ proposal, disabled, onStatusChange }) {
     const normalizedStatus = (proposal.status || "pending").toLowerCase();
     const canRespond = normalizedStatus === "pending";
+    const canResetToPending = normalizedStatus !== "pending";
 
     return (
         <ItemCard>
@@ -50,8 +52,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange }
             </div>
 
             <div
-                className={commonStyles.actionRow}
-                style={{ gap: "0.5rem", flexWrap: "wrap", justifyContent: "flex-end" }}
+                className={styles.actionRow}
             >
                 <span className={`${commonStyles.statusPill} ${statusClass(proposal.status)}`}>
                     {proposal.status}
@@ -60,7 +61,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange }
                 {canRespond ? (
                     <>
                         <button
-                            className={commonStyles.primaryButton}
+                            className={styles.acceptButton}
                             type="button"
                             disabled={disabled}
                             onClick={() => onStatusChange(proposal.id, "accepted")}
@@ -68,7 +69,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange }
                             Accept
                         </button>
                         <button
-                            className={commonStyles.primaryButton}
+                            className={styles.rejectButton}
                             type="button"
                             disabled={disabled}
                             onClick={() => onStatusChange(proposal.id, "rejected")}
@@ -76,7 +77,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange }
                             Reject
                         </button>
                         <button
-                            className={commonStyles.primaryButton}
+                            className={styles.cancelButton}
                             type="button"
                             disabled={disabled}
                             onClick={() => onStatusChange(proposal.id, "cancelled")}
@@ -84,6 +85,17 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange }
                             Cancel
                         </button>
                     </>
+                ) : null}
+
+                {canResetToPending ? (
+                    <button
+                        className={styles.resetButton}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => onStatusChange(proposal.id, "pending")}
+                    >
+                        Set Pending
+                    </button>
                 ) : null}
             </div>
         </ItemCard>

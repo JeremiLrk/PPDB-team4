@@ -12,7 +12,11 @@ import GearIcon from "@/components/icon/GearIcon.jsx";
  */
 export function canManageTeam(account, team) {
     if (!account || !team) return false;
-    const roles = account.roles ?? (account.role ? [account.role] : []);
+    const roles = Array.isArray(account.roles)
+        ? account.roles
+        : (account.role ? [account.role] : []);
+    const role = roles[0] ?? account.role ?? null;
+    if (!role) return false;
 
     if (role === "administrator") return true;
 

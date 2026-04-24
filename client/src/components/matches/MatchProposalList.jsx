@@ -1,4 +1,6 @@
+import buttonStyles from "@/style/common/Buttons.module.css";
 import commonStyles from "@/style/common/Common.module.css";
+import panelStyles from "@/style/common/Panel.module.css";
 import MatchProposalCard from "@/components/matches/MatchProposalCard.jsx";
 
 export default function MatchProposalList({
@@ -14,7 +16,7 @@ export default function MatchProposalList({
             {error ? (
                 <div style={{ display: "grid", gap: "0.7rem" }}>
                     <p className={commonStyles.muted}>{error}</p>
-                    <button className={commonStyles.primaryButton} type="button" onClick={onReload}>
+                    <button className={buttonStyles.primaryButton} type="button" onClick={onReload}>
                         Retry
                     </button>
                 </div>
@@ -27,7 +29,7 @@ export default function MatchProposalList({
             ) : null}
 
             {!loading && proposals.length > 0 ? (
-                <ul className={commonStyles.list}>
+                <ul className={panelStyles.list}>
                     {proposals.map((proposal) => (
                         <MatchProposalCard
                             key={proposal.id}

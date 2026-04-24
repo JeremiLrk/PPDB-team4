@@ -34,7 +34,8 @@ class Account(db.Model):
             return self.player
         return self
 
-    def to_dict(self):
+    def to_dict(self, include=None):
+        include = include or []
         resolved = self.resolved_role
 
         if isinstance(resolved, Administrator):
@@ -58,15 +59,23 @@ class Account(db.Model):
         if isinstance(resolved, ClubOwner):
             club_ids = [c.id for c in resolved.clubs]
 
-        return {
+        payload = {
             "id":             self.id,
             "email":          self.email,
             "firstName":      self.first_name,
             "lastName":       self.last_name,
             "role":           role,
+            "roles":          [role],
             "managedTeamIds": managed_team_ids,
             "clubIds":        club_ids,
         }
+
+        # Backward-compatible expansion for team membership payloads.
+        if "player" in include and self.player:
+            payload["playerId"] = self.player.id
+            payload["accountId"] = self.id
+
+        return payload
 
 class Administrator(db.Model):
     __tablename__ = "administrator"
@@ -87,5 +96,6 @@ class Administrator(db.Model):
 
 
 # Backward-compatible re-exports for modules/tests importing these from account.
+from server.app.models.account_role import AccountRole  # noqa: E402
 from server.app.models.team import TeamManager  # noqa: E402
 from server.app.models.club_owner import ClubOwner  # noqa: E402

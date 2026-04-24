@@ -4,7 +4,6 @@ from datetime import datetime
 import click
 from flask import Flask
 
-from server.app.errors import register_error_handlers
 from server.app.models.match_rule import MatchRuleSet
 from server.app.routes.sport_type_routes import sport_type_bp
 from server.app.routes.team import team_bp
@@ -21,7 +20,6 @@ from server.app.routes.health_routes import api
 from server.app.routes.root_routes import root_bp
 from server.app.routes.ladder_routes import ladder_bp
 from server.app.routes.ladders_routes import ladders_bp
-from server.app.routes.match_routes import matches_bp
 from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
@@ -88,7 +86,6 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(sport_type_bp)
     app.register_blueprint(match_rule_bp)
     app.register_blueprint(match_rule_set_bp)
-    app.register_blueprint(matches_bp)
     app.register_blueprint(match_proposals_bp)
 
 

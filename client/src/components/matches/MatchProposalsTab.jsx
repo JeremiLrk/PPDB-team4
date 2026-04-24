@@ -1,4 +1,6 @@
-import commonStyles from "@/style/common/Common.module.css";
+import animationStyles from "@/style/common/Animation.module.css";
+import buttonStyles from "@/style/common/Buttons.module.css";
+import panelStyles from "@/style/common/Panel.module.css";
 import { useMatchProposals } from "@/hooks/useMatchProposals.js";
 import MatchProposalList from "@/components/matches/MatchProposalList.jsx";
 
@@ -14,7 +16,7 @@ export default function MatchProposalsTab() {
 
     return (
         <article
-            className={`${commonStyles.panel} ${commonStyles.contentFade}`}
+            className={`${panelStyles.panel} ${animationStyles.contentFade}`}
             style={{ display: "grid", gap: "1rem" }}
         >
             <div
@@ -26,15 +28,15 @@ export default function MatchProposalsTab() {
                     gap: "0.75rem",
                 }}
             >
-                <h3 className={commonStyles.panelTitle} style={{ margin: 0 }}>
+                <h3 className={panelStyles.panelTitle} style={{ margin: 0 }}>
                     Weekly Match Proposals
-                    <span className={commonStyles.counter} style={{ marginLeft: "0.6rem" }}>
+                    <span className={panelStyles.panelCounter} style={{ marginLeft: "0.6rem" }}>
                         {proposals.length}
                     </span>
                 </h3>
 
                 <button
-                    className={commonStyles.primaryButton}
+                    className={buttonStyles.primaryButton}
                     type="button"
                     onClick={load}
                     disabled={loading}

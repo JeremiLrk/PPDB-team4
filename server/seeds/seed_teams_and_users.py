@@ -15,6 +15,7 @@ from server.app.models.sport_type import SportType
 from server.app.models.account import Account, TeamManager
 from server.app.models.account_role import AccountRole
 from server.app.models.club import Club
+from server.app.models.club_player import ClubPlayer
 from server.app.models.club_owner import ClubOwner
 from server.app.models.player import Player, PlayerTeam
 from server.app.models.team import Team, TeamManager, TeamManagerTeam
@@ -195,6 +196,24 @@ def _assign_player_to_team(player: Player, team: Team) -> bool:
   return True
 
 
+def _ensure_player_on_team(account: Account, team: Team) -> bool:
+  player, _ = _make_player(account)
+  return _assign_player_to_team(player, team)
+
+
+def _ensure_team_players_in_club(team: Team, club: Club) -> int:
+  created = 0
+  player_ids = [row.player_id for row in PlayerTeam.query.filter_by(team_id=team.id).all()]
+  for player_id in player_ids:
+    existing = ClubPlayer.query.filter_by(club_id=club.id, player_id=player_id).first()
+    if existing:
+      continue
+    db.session.add(ClubPlayer(club_id=club.id, player_id=player_id))
+    created += 1
+  db.session.flush()
+  return created
+
+
 def _ensure_default_ladder_rating_function() -> int:
   existing = LadderRatingFunction.query.order_by(LadderRatingFunction.id.asc()).first()
   if existing:
@@ -270,6 +289,28 @@ def _reset_proposal_to_pending(week_start_date: datetime.date, team1_id: int, te
     row = db.session.get(model, proposal.id)
     if row:
       db.session.delete(row)
+  db.session.flush()
+
+
+def _reset_demo_match_proposal_to_pending(week_start_date: datetime.date, team1_id: int, team2_id: int):
+  _reset_proposal_to_pending(week_start_date=week_start_date, team1_id=team1_id, team2_id=team2_id)
+
+
+def _delete_demo_match_proposal(week_start_date: datetime.date, team1_id: int, team2_id: int):
+  ordered_team1_id, ordered_team2_id = sorted((team1_id, team2_id))
+  proposal = MatchProposal.query.filter_by(
+    week_start_date=week_start_date,
+    team1_id=ordered_team1_id,
+    team2_id=ordered_team2_id,
+  ).first()
+  if not proposal:
+    return
+
+  for model in (MatchAccepted, MatchRejected, MatchCancelled):
+    row = db.session.get(model, proposal.id)
+    if row:
+      db.session.delete(row)
+  db.session.delete(proposal)
   db.session.flush()
 
 
@@ -720,34 +761,47 @@ def seed_teams_and_users(verbose: bool = True):
     _ensure_team_players_in_club(player_demo_team, player_demo_club)
     _ensure_team_players_in_club(player_demo_opponent, player_demo_club)
 
-    _get_or_create_availability_block(
-      user_id=demo_acc.id,
-      start_at=demo_availability_start,
-      end_at=demo_availability_end,
-    )
-    _get_or_create_availability_block(
-      user_id=opponent_acc.id,
-      start_at=demo_availability_start + datetime.timedelta(minutes=15),
-      end_at=demo_availability_end,
-    )
+    player_demo_weeks = [demo_week_start + datetime.timedelta(days=7 * i) for i in range(3)]
+    total_created = 0
+    total_skipped = 0
 
-    player_demo_generation_result = generate_weekly_match_proposals(
-      proposed_by_user_id=demo_acc.id,
-      week_start_date=demo_week_start,
-      ladder_id=player_demo_ladder.id,
-      managed_team_ids=None,
-      duration_minutes=60,
-      location="Player Demo Court 1",
-    )
-    _reset_demo_match_proposal_to_pending(
-      week_start_date=demo_week_start,
-      team1_id=player_demo_team.id,
-      team2_id=player_demo_opponent.id,
-    )
+    for week_start in player_demo_weeks:
+      weekly_start = datetime.datetime.combine(
+        week_start + datetime.timedelta(days=1),
+        datetime.time(hour=18, minute=0),
+      )
+      weekly_end = weekly_start + datetime.timedelta(hours=2)
+
+      _get_or_create_availability_block(
+        user_id=demo_acc.id,
+        start_at=weekly_start,
+        end_at=weekly_end,
+      )
+      _get_or_create_availability_block(
+        user_id=opponent_acc.id,
+        start_at=weekly_start + datetime.timedelta(minutes=15),
+        end_at=weekly_end,
+      )
+
+      player_demo_generation_result = generate_weekly_match_proposals(
+        proposed_by_user_id=demo_acc.id,
+        week_start_date=week_start,
+        ladder_id=player_demo_ladder.id,
+        managed_team_ids=None,
+        duration_minutes=60,
+        location="Player Demo Court 1",
+      )
+      _reset_demo_match_proposal_to_pending(
+        week_start_date=week_start,
+        team1_id=player_demo_team.id,
+        team2_id=player_demo_opponent.id,
+      )
+      total_created += player_demo_generation_result["created_count"]
+      total_skipped += player_demo_generation_result["skipped_count"]
+
     print(
-      f"{TAG}   player-only weekly match proposals generated: "
-      f"created={player_demo_generation_result['created_count']}, "
-      f"skipped={player_demo_generation_result['skipped_count']}"
+      f"{TAG}   player-only weekly match proposals generated for {len(player_demo_weeks)} weeks: "
+      f"created={total_created}, skipped={total_skipped}"
     )
 
   except Exception as e:
