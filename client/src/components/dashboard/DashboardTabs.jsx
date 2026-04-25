@@ -216,23 +216,19 @@ export function CreateClubTab({
     clubRequestForm,
     clubRequestSubmitting,
     clubRequestMessage,
-    clubCreationRequests,
     onFieldChange,
     onSubmit,
     texts,
-    sportTypes = [],
-    incomingJoinRequests,
-    decideJoinrequest,
-    isClubOwner
+    sportTypes = []
 }) {
     return (
-        <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
-            {/* Left Column: The Form */}
-            <article className={styles.panel}>
+        /* Removed the sidebar logic entirely */
+        <section className={`${styles.singleColumnLayout} ${styles.contentFade}`}>
+            <article className={styles.fullWidthPanel}>
                 <h3 className={styles.panelTitle}>{texts?.request_your_club || "Request Your Own Club"}</h3>
                 <form className={styles.form} onSubmit={onSubmit}>
-                    <label className={styles.formLabel}>
-                        {texts?.club_name || "Club Name"}
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>{texts?.club_name || "Club Name"}</label>
                         <input
                             className={styles.formInput}
                             type="text"
@@ -242,11 +238,11 @@ export function CreateClubTab({
                             placeholder={texts?.club_name_placeholder || "What is your club's name?"}
                             required
                         />
-                    </label>
+                    </div>
 
                     <div className={styles.formRow}>
-                        <label className={styles.formLabel}>
-                            {texts?.city || "City"}
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>{texts?.city || "City"}</label>
                             <input
                                 className={styles.formInput}
                                 type="text"
@@ -256,11 +252,10 @@ export function CreateClubTab({
                                 placeholder={texts?.city_placeholder || "City where your club is based"}
                                 required
                             />
-                        </label>
+                        </div>
 
-                        {/* Updated: Sport Selection dropdown */}
-                        <label className={styles.formLabel}>
-                            {texts?.main_sport || "Main Sport"}
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>{texts?.main_sport || "Main Sport"}</label>
                             <select
                                 className={styles.formInput}
                                 name="sport_type_id" 
@@ -268,89 +263,43 @@ export function CreateClubTab({
                                 onChange={onFieldChange}
                                 required
                             >
-                                <option value="" disabled>
-                                    {texts?.select_sport_placeholder || "Select a sport"}
-                                </option>
+                                <option value="" disabled>{texts?.select_sport_placeholder || "Select a sport"}</option>
                                 {sportTypes.map((sport) => (
-                                    <option key={sport.id} value={sport.id}>
-                                        {sport.name}
-                                    </option>
+                                    <option key={sport.id} value={sport.id}>{sport.name}</option>
                                 ))}
                             </select>
-                        </label>
+                        </div>
                     </div>
 
-                    <label className={styles.formLabel}>
-                        {texts?.description || "Description"}
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>{texts?.description || "Description"}</label>
                         <textarea
                             className={styles.formTextarea}
                             name="description"
                             value={clubRequestForm.description}
                             onChange={onFieldChange}
-                            placeholder={
-                                texts?.description_placeholder ||
-                                "Tell us what your club is about and why you want to use our platform"
-                            }
-                            rows={4}
+                            placeholder={texts?.description_placeholder || "Tell us about your club..."}
+                            rows={6} // Made slightly taller since we have more room
                             required
                         />
-                    </label>
+                    </div>
 
                     <div className={styles.formActions}>
                         <button type="submit" className={styles.submitButton} disabled={clubRequestSubmitting}>
-                            {clubRequestSubmitting
-                                ? texts?.submitting || "Submitting..."
-                                : texts?.submit_club_request || "Submit Club Request"}
+                            {clubRequestSubmitting ? texts?.submitting : texts?.submit_club_request}
                         </button>
                     </div>
                 </form>
 
-                {clubRequestMessage.text ? (
+                {clubRequestMessage.text && (
                     <p className={`${styles.notice} ${clubRequestMessage.type === "error" ? styles.noticeError : styles.noticeSuccess}`}>
                         {clubRequestMessage.text}
                     </p>
-                ) : null}
+                )}
             </article>
-
-            {/* Right Column: Both types of requests */}
-            <div className={styles.requestsSidebar}>
-                <article className={styles.panel}>
-                    <div className={styles.panelTopRow}>
-                        <h3 className={styles.panelTitle}>
-                            {texts?.my_club_registration_requests || "My Club Registration Requests"}
-                        </h3>
-                        <span className={styles.counter}>{clubCreationRequests.length}</span>
-                    </div>
-
-                    {clubCreationRequests.length === 0 ? (
-                        <p className={styles.muted}>
-                            {texts?.no_club_registration_requests_yet || "No club registration requests yet."}
-                        </p>
-                    ) : (
-                        <ul className={styles.list}>
-                            {clubCreationRequests.map((request) => (
-                                <li className={styles.listItem} key={request.id}>
-                                    <div>
-                                        <p className={styles.primaryText}>{request.name || texts?.new_club || "New Club"}</p>
-                                        <p className={styles.secondaryText}>
-                                            {request.city || texts?.unknown_city || "Unknown city"}
-                                            {/* Note: request.sport might need to be mapped back to a name if the request only stores the ID */}
-                                            {request.sport ? ` • ${request.sport}` : ""}
-                                        </p>
-                                    </div>
-                                    <span className={`${styles.statusPill} ${statusClass(request.status)}`}>
-                                        {statusLabel(request.status, texts)}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </article>
-            </div>
         </section>
     );
 }
-
 export default CreateClubTab;
 
 export function ManageClubsTab({ 
