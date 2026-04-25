@@ -12,22 +12,23 @@ import GearIcon from "@/components/icon/GearIcon.jsx";
  */
 export function canManageTeam(account, team) {
     if (!account || !team) return false;
-    const role = account.role;
+    const roles = account.roles ?? [];
 
-    if (role === "administrator") return true;
+    if (roles.includes("administrator")) return true;
 
-    if (role === "club_owner") {
+    if (roles.includes("club_owner")) {
         const ownsClub    = team.clubId && account.clubIds?.includes(team.clubId);
         const managesTeam = account.managedTeamIds?.includes(team.id);
         return ownsClub || managesTeam;
     }
 
-    if (role === "team_manager") {
+    if (roles.includes("team_manager")) {
         return account.managedTeamIds?.includes(team.id);
     }
 
     return false;
 }
+
 
 /**
  * TeamSettingsLink — a ⚙ button icon that links to /teams/:teamId/settings.

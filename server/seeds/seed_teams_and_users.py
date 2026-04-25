@@ -1,9 +1,10 @@
 """
 Seeding order:
-  1. sport_type        (if not present)
-  2. account_role      (if not present)
-  3. account            team_manager  -> team  -> team_manager_team
-  4. account           -> player        -> player_team
+  1. sport_type        (inline, get-or-create)
+  2. account_role      (inline, get-or-create)
+  3. account  -> team_manager  -> TeamManagerTeam (association object)
+  4. account  -> player        -> PlayerTeam      (association object)
+  5. demo club + ladders
 """
 
 import datetime
@@ -11,36 +12,40 @@ from sqlalchemy import text
 from werkzeug.security import generate_password_hash
 from server.extensions import db
 from server.app.models.sport_type import SportType
-from server.app.models.account import Account, TeamManager
-from server.app.models.account_role import AccountRole
+from server.app.models.account import Account, AccountRole
 from server.app.models.club import Club
 from server.app.models.club_owner import ClubOwner
-from server.app.models.player import Player
-from server.app.models.team import Team
+from server.app.models.player import Player, PlayerTeam
+from server.app.models.team import Team, TeamManager, TeamManagerTeam
 from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
 
 TAG = "[seed:teams_and_users]"
 
 
-#  Helpers 
+# -- Helpers -------------------------------------------------------------------
 
-def _get_or_create_role(name: str) -> AccountRole:
+def _log(msg: str, verbose: bool) -> None:
+  if verbose:
+    print(msg)
+
+
+def _get_or_create_role(name: str, verbose: bool = True) -> AccountRole:
   role = AccountRole.query.filter_by(name=name).first()
   if role:
-    print(f"{TAG}   role '{name}' already exists (id={role.id}), skipping")
+    _log(f"{TAG}   role '{name}' already exists (id={role.id}), skipping", verbose)
   else:
     role = AccountRole(name=name)
     db.session.add(role)
     db.session.flush()
-    print(f"{TAG}   role '{name}' created (id={role.id})")
+    _log(f"{TAG}   role '{name}' created (id={role.id})", verbose)
   return role
 
 
-def _get_or_create_sport(name: str, min_p: int, max_p: int) -> SportType:
+def _get_or_create_sport(name: str, min_p: int, max_p: int, verbose: bool = True) -> SportType:
   sport = SportType.query.filter_by(name=name).first()
   if sport:
-    print(f"{TAG}   sport '{name}' already exists (id={sport.id}), skipping")
+    _log(f"{TAG}   sport '{name}' already exists (id={sport.id}), skipping", verbose)
   else:
     sport = SportType(
       name=name,
@@ -49,7 +54,7 @@ def _get_or_create_sport(name: str, min_p: int, max_p: int) -> SportType:
     )
     db.session.add(sport)
     db.session.flush()
-    print(f"{TAG}   sport '{name}' created (id={sport.id}, min={min_p}, max={max_p})")
+    _log(f"{TAG}   sport '{name}' created (id={sport.id}, min={min_p}, max={max_p})", verbose)
   return sport
 
 
@@ -65,6 +70,7 @@ def _make_account(first: str, last: str, email: str, role: AccountRole) -> tuple
     password_hash=generate_password_hash("Password123!"),
     account_role_id=role.id,
     date_of_birth=datetime.date(1995, 1, 1),
+    is_verified=True,
   )
   db.session.add(acc)
   db.session.flush()
@@ -91,23 +97,25 @@ def _make_player(account: Account) -> tuple:
   return p, True
 
 
-def _make_team(name: str, sport: SportType, club_id=None) -> tuple:
+def _make_team(name: str, sport: SportType, club_id=None, verbose: bool = True) -> tuple:
   """Returns (team, created: bool)."""
   existing = Team.query.filter_by(name=name, club_id=club_id).first()
   if existing:
+    _log(f"{TAG}   team '{name}' already exists (id={existing.id}), skipping", verbose)
     return existing, False
   team = Team(name=name, sport_type_id=sport.id, club_id=club_id)
   db.session.add(team)
   db.session.flush()
+  _log(f"{TAG}   team '{name}' created (id={team.id}, sport={sport.name})", verbose)
   return team, True
 
 
-def _get_or_create_club(name: str) -> tuple:
+def _get_or_create_club(name: str, sport_type_id: int | None = None) -> tuple:
   """Returns (club, created: bool)."""
   existing = Club.query.filter_by(name=name).first()
   if existing:
     return existing, False
-  club = Club(name=name, description="test club", sport="Padel",  city="Antwerp")
+  club = Club(name=name, description="test club", sport_type_id=sport_type_id, city="Antwerp")
   db.session.add(club)
   db.session.flush()
   return club, True
@@ -123,17 +131,64 @@ def _make_club_owner(team_manager: TeamManager) -> tuple:
   return owner, True
 
 
+def _assign_manager_to_team(
+    tm: TeamManager,
+    team: Team,
+    can_rename: bool = True,
+    can_delete: bool = True,
+    can_edit_players: bool = True,
+    can_edit_managers: bool = True,
+) -> bool:
+  """
+  Creates a TeamManagerTeam association if it doesn't exist yet.
+  Returns True if created, False if it already existed.
+
+  NOTE: TeamManager.teams is a @property (read-only computed list).
+  We must insert the association object directly — .append() does not work.
+  """
+  existing = TeamManagerTeam.query.filter_by(
+    team_manager_id=tm.id, team_id=team.id
+  ).first()
+  if existing:
+    return False
+  assoc = TeamManagerTeam(
+    team_manager_id=tm.id,
+    team_id=team.id,
+    can_rename=can_rename,
+    can_delete=can_delete,
+    can_edit_players=can_edit_players,
+    can_edit_managers=can_edit_managers,
+  )
+  db.session.add(assoc)
+  db.session.flush()
+  return True
+
+
+def _assign_player_to_team(player: Player, team: Team) -> bool:
+  """
+  Creates a PlayerTeam association if it doesn't exist yet.
+  Returns True if created, False if it already existed.
+
+  NOTE: Player.teams is a @property (read-only computed list).
+  We must insert the association object directly — .append() does not work.
+  """
+  existing = PlayerTeam.query.filter_by(
+    player_id=player.id, team_id=team.id
+  ).first()
+  if existing:
+    return False
+  assoc = PlayerTeam(player_id=player.id, team_id=team.id)
+  db.session.add(assoc)
+  db.session.flush()
+  return True
+
+
 def _ensure_default_ladder_rating_function() -> int:
-  """
-  Ensures there is at least one ladder rating function row and returns its id.
-  Uses SQL directly because there is no ORM model for this table.
-  """
   existing_id = db.session.execute(
     text("SELECT id FROM ladder_rating_function ORDER BY id ASC LIMIT 1")
   ).scalar()
   if existing_id:
     return int(existing_id)
-
   created_id = db.session.execute(
     text("INSERT INTO ladder_rating_function (name) VALUES (:name) RETURNING id"),
     {"name": "ELO"},
@@ -141,18 +196,10 @@ def _ensure_default_ladder_rating_function() -> int:
   return int(created_id)
 
 
-def _get_or_create_ladder(
-  club_id: int,
-  name: str,
-  description: str,
-  sport_type_id: int,
-  ladder_rating_function_id: int,
-) -> tuple:
-  """Returns (ladder, created: bool)."""
+def _get_or_create_ladder(club_id, name, description, sport_type_id, ladder_rating_function_id) -> tuple:
   existing = Ladder.query.filter_by(club_id=club_id, name=name).first()
   if existing:
     return existing, False
-
   ladder = Ladder(
     club_id=club_id,
     name=name,
@@ -166,14 +213,7 @@ def _get_or_create_ladder(
   return ladder, True
 
 
-def _get_or_create_ladder_team(
-  ladder_id: int,
-  team_id: int,
-  rank: int,
-  rating: int,
-  matches_played: int,
-) -> tuple:
-  """Returns (ladder_team, created: bool)."""
+def _get_or_create_ladder_team(ladder_id, team_id, rank, rating, matches_played) -> tuple:
   existing = LadderTeam.query.filter_by(ladder_id=ladder_id, team_id=team_id).first()
   if existing:
     updated = False
@@ -187,53 +227,45 @@ def _get_or_create_ladder_team(
       existing.matches_played = matches_played
       updated = True
     return existing, updated
-
-  row = LadderTeam(
-    ladder_id=ladder_id,
-    team_id=team_id,
-    rank=rank,
-    rating=rating,
-    matches_played=matches_played,
-  )
+  row = LadderTeam(ladder_id=ladder_id, team_id=team_id, rank=rank, rating=rating, matches_played=matches_played)
   db.session.add(row)
   db.session.flush()
   return row, True
 
 
-#  Main seed 
+# -- Main seed -----------------------------------------------------------------
 
-def seed_teams_and_users():
-  print(f"{TAG}  Starting seed ")
+def seed_teams_and_users(verbose: bool = True):
+  _log(f"{TAG} Starting seed", verbose)
 
-  #  Roles
-  print(f"{TAG} [1/5] Seeding account roles...")
+  # 1. Roles
+  _log(f"{TAG} [1/6] Seeding account roles...", verbose)
   try:
-    role_manager = _get_or_create_role("team_manager")
-    role_player  = _get_or_create_role("player")
-    _get_or_create_role("user")
+    role_manager = _get_or_create_role("team_manager", verbose)
+    role_player  = _get_or_create_role("player", verbose)
+    _get_or_create_role("user", verbose)
   except Exception as e:
     print(f"{TAG} ERROR seeding roles: {e}")
     db.session.rollback()
     raise
-  print(f"{TAG} [1/5] Roles OK")
+  _log(f"{TAG} [1/6] Roles OK", verbose)
 
-  #  Sport types
-  print(f"{TAG} [2/5] Seeding sport types...")
+  # 2. Sport types
+  _log(f"{TAG} [2/6] Seeding sport types...", verbose)
   try:
-    football   = _get_or_create_sport("Football",   11, 23)
-    basketball = _get_or_create_sport("Basketball",  5, 12)
-    volleyball = _get_or_create_sport("Volleyball",  6, 14)
-    tennis     = _get_or_create_sport("Tennis",      1,  4)
-    hockey     = _get_or_create_sport("Hockey",     11, 22)
+    football   = _get_or_create_sport("Football",   11, 23, verbose)
+    basketball = _get_or_create_sport("Basketball",  5, 12, verbose)
+    volleyball = _get_or_create_sport("Volleyball",  6, 14, verbose)
+    tennis     = _get_or_create_sport("Tennis",      1,  4, verbose)
+    hockey     = _get_or_create_sport("Hockey",     11, 22, verbose)
   except Exception as e:
     print(f"{TAG} ERROR seeding sport types: {e}")
     db.session.rollback()
     raise
-  print(f"{TAG} [2/5] Sport types OK")
+  _log(f"{TAG} [2/6] Sport types OK", verbose)
 
-  #  Teams
-  print(f"{TAG} [3/5] Seeding teams...")
-
+  # 3. Teams
+  _log(f"{TAG} [3/6] Seeding teams...", verbose)
   TEAMS = [
     ("Red Hawks",         football),
     ("Blue Thunder",      football),
@@ -261,96 +293,81 @@ def seed_teams_and_users():
     ("Velocity FC",       football),
     ("Rapid Rovers",      football),
   ]
-
   teams = []
   teams_created = 0
   teams_skipped = 0
-
   try:
     for name, sport in TEAMS:
-      team, created = _make_team(name, sport)
+      team, created = _make_team(name, sport, verbose=verbose)
       teams.append(team)
       if created:
         teams_created += 1
-        print(f"{TAG}   team '{name}' created (id={team.id}, sport={sport.name})")
       else:
         teams_skipped += 1
-        print(f"{TAG}   team '{name}' already exists (id={team.id}), skipping")
   except Exception as e:
     print(f"{TAG} ERROR seeding teams: {e}")
     db.session.rollback()
     raise
+  _log(f"{TAG} [3/6] Teams OK — created: {teams_created}, skipped: {teams_skipped}", verbose)
 
-  print(f"{TAG} [3/5] Teams OK — created: {teams_created}, skipped: {teams_skipped}")
-
-  #  Managers
-  print(f"{TAG} [4/5] Seeding managers...")
-
+  # 4. Managers
+  _log(f"{TAG} [4/6] Seeding managers...", verbose)
   MANAGERS = [
-    ("Liam",    "Carter",    "liam.carter@example.com"),
-    ("Noah",    "Brooks",    "noah.brooks@example.com"),
-    ("Oliver",  "Hayes",     "oliver.hayes@example.com"),
-    ("Elijah",  "Foster",    "elijah.foster@example.com"),
-    ("James",   "Ward",      "james.ward@example.com"),
-    ("Aiden",   "Cox",       "aiden.cox@example.com"),
-    ("Lucas",   "Griffin",   "lucas.griffin@example.com"),
-    ("Mason",   "Reed",      "mason.reed@example.com"),
-    ("Ethan",   "Bell",      "ethan.bell@example.com"),
-    ("Logan",   "Howard",    "logan.howard@example.com"),
-    ("Jacob",   "Price",     "jacob.price@example.com"),
-    ("Ryan",    "Barnes",    "ryan.barnes@example.com"),
-    ("Daniel",  "Ross",      "daniel.ross@example.com"),
-    ("Jack",    "Henderson", "jack.henderson@example.com"),
-    ("Owen",    "Coleman",   "owen.coleman@example.com"),
-    ("Samuel",  "Jenkins",   "samuel.jenkins@example.com"),
-    ("Wyatt",   "Perry",     "wyatt.perry@example.com"),
-    ("Dylan",   "Powell",    "dylan.powell@example.com"),
-    ("Caleb",   "Long",      "caleb.long@example.com"),
-    ("Hunter",  "Patterson", "hunter.patterson@example.com"),
-    ("Evan",    "Hughes",    "evan.hughes@example.com"),
-    ("Nathan",  "Flores",    "nathan.flores@example.com"),
-    ("Connor",  "Washington","connor.washington@example.com"),
-    ("Luke",    "Butler",    "luke.butler@example.com"),
-    ("Gavin",   "Simmons",   "gavin.simmons@example.com"),
+    ("Liam",    "Carter",     "liam.carter@example.com"),
+    ("Noah",    "Brooks",     "noah.brooks@example.com"),
+    ("Oliver",  "Hayes",      "oliver.hayes@example.com"),
+    ("Elijah",  "Foster",     "elijah.foster@example.com"),
+    ("James",   "Ward",       "james.ward@example.com"),
+    ("Aiden",   "Cox",        "aiden.cox@example.com"),
+    ("Lucas",   "Griffin",    "lucas.griffin@example.com"),
+    ("Mason",   "Reed",       "mason.reed@example.com"),
+    ("Ethan",   "Bell",       "ethan.bell@example.com"),
+    ("Logan",   "Howard",     "logan.howard@example.com"),
+    ("Jacob",   "Price",      "jacob.price@example.com"),
+    ("Ryan",    "Barnes",     "ryan.barnes@example.com"),
+    ("Daniel",  "Ross",       "daniel.ross@example.com"),
+    ("Jack",    "Henderson",  "jack.henderson@example.com"),
+    ("Owen",    "Coleman",    "owen.coleman@example.com"),
+    ("Samuel",  "Jenkins",    "samuel.jenkins@example.com"),
+    ("Wyatt",   "Perry",      "wyatt.perry@example.com"),
+    ("Dylan",   "Powell",     "dylan.powell@example.com"),
+    ("Caleb",   "Long",       "caleb.long@example.com"),
+    ("Hunter",  "Patterson",  "hunter.patterson@example.com"),
+    ("Evan",    "Hughes",     "evan.hughes@example.com"),
+    ("Nathan",  "Flores",     "nathan.flores@example.com"),
+    ("Connor",  "Washington", "connor.washington@example.com"),
+    ("Luke",    "Butler",     "luke.butler@example.com"),
+    ("Gavin",   "Simmons",    "gavin.simmons@example.com"),
   ]
-
   mgr_created = 0
   mgr_skipped = 0
-
   try:
     for i, (first, last, email) in enumerate(MANAGERS):
       team = teams[i]
-
       acc, acc_created = _make_account(first, last, email, role_manager)
       if not acc_created:
-        print(f"{TAG}   account '{email}' already exists (id={acc.id}), skipping")
+        _log(f"{TAG}   account '{email}' already exists (id={acc.id}), skipping", verbose)
         mgr_skipped += 1
         continue
-
       tm, tm_created = _make_manager(acc)
       if not tm_created:
-        print(f"{TAG}   team_manager for '{email}' already exists, skipping")
+        _log(f"{TAG}   team_manager for '{email}' already exists, skipping", verbose)
         mgr_skipped += 1
         continue
-
-      if team not in tm.teams:
-        tm.teams.append(team)
-        print(f"{TAG}   manager {first} {last} (id={acc.id}) -> team '{team.name}' (id={team.id})")
+      assigned = _assign_manager_to_team(tm, team)
+      if assigned:
+        _log(f"{TAG}   manager {first} {last} (id={acc.id}) -> team '{team.name}' (id={team.id})", verbose)
       else:
-        print(f"{TAG}   manager {first} {last} already assigned to '{team.name}', skipping")
-
+        _log(f"{TAG}   manager {first} {last} already assigned to '{team.name}', skipping", verbose)
       mgr_created += 1
-
   except Exception as e:
     print(f"{TAG} ERROR seeding managers: {e}")
     db.session.rollback()
     raise
+  _log(f"{TAG} [4/6] Managers OK — created: {mgr_created}, skipped: {mgr_skipped}", verbose)
 
-  print(f"{TAG} [4/5] Managers OK — created: {mgr_created}, skipped: {mgr_skipped}")
-
-  #  Players
-  print(f"{TAG} [5/5] Seeding players...")
-
+  # 5. Players
+  _log(f"{TAG} [5/6] Seeding players...", verbose)
   PLAYERS = [
     ("Alice",  "Moore",     "alice.moore@example.com",     [0, 1]),
     ("Bob",    "Taylor",    "bob.taylor@example.com",      [0, 2]),
@@ -393,164 +410,78 @@ def seed_teams_and_users():
     ("Maya",   "Edwards",   "maya.edwards@example.com",    [19, 14]),
     ("Nate",   "Collins",   "nate.collins@example.com",    [19, 15]),
   ]
-
   plr_created = 0
   plr_skipped = 0
-
   try:
     for first, last, email, team_indices in PLAYERS:
       acc, acc_created = _make_account(first, last, email, role_player)
       if not acc_created:
-        print(f"{TAG}   account '{email}' already exists (id={acc.id}), skipping")
+        _log(f"{TAG}   account '{email}' already exists (id={acc.id}), skipping", verbose)
         plr_skipped += 1
         continue
-
       player, plr_ok = _make_player(acc)
       if not plr_ok:
-        print(f"{TAG}   player for '{email}' already exists, skipping")
+        _log(f"{TAG}   player for '{email}' already exists, skipping", verbose)
         plr_skipped += 1
         continue
-
-      assigned = []
+      assigned_names = []
       for idx in team_indices:
         if idx >= len(teams):
           print(f"{TAG}   WARNING: team index {idx} out of range, skipping")
           continue
-        if teams[idx] not in player.teams:
-          player.teams.append(teams[idx])
-          assigned.append(teams[idx].name)
-
-      print(f"{TAG}   player {first} {last} (id={acc.id}) -> teams: {assigned}")
+        if _assign_player_to_team(player, teams[idx]):
+          assigned_names.append(teams[idx].name)
+      _log(f"{TAG}   player {first} {last} (id={acc.id}) -> teams: {assigned_names}", verbose)
       plr_created += 1
-
   except Exception as e:
     print(f"{TAG} ERROR seeding players: {e}")
     db.session.rollback()
     raise
+  _log(f"{TAG} [5/6] Players OK — created: {plr_created}, skipped: {plr_skipped}", verbose)
 
-  print(f"{TAG} [5/5] Players OK — created: {plr_created}, skipped: {plr_skipped}")
-
-  #  Demo club + ladders
-  print(f"{TAG} [6/6] Seeding demo club data...")
+  # 6. Demo club + ladders
+  _log(f"{TAG} [6/6] Seeding demo club data...", verbose)
   try:
-    demo_acc, demo_acc_created = _make_account(
-      first="Jeremi",
-      last="Lorek",
-      email="jeremilorek@outlook.com",
-      role=role_manager,
-    )
-    if demo_acc_created:
-      print(f"{TAG}   demo account created (id={demo_acc.id}, email={demo_acc.email})")
-    else:
-      print(f"{TAG}   demo account already exists (id={demo_acc.id}), skipping")
+    demo_acc, demo_acc_created = _make_account("Jeremi", "Lorek", "jeremilorek@outlook.com", role=role_manager)
+    _log(f"{TAG}   demo account {'created' if demo_acc_created else 'already exists'} (id={demo_acc.id})", verbose)
 
     demo_tm, demo_tm_created = _make_manager(demo_acc)
-    if demo_tm_created:
-      print(f"{TAG}   demo team_manager created (id={demo_tm.id})")
-    else:
-      print(f"{TAG}   demo team_manager already exists (id={demo_tm.id}), skipping")
+    _log(f"{TAG}   demo team_manager {'created' if demo_tm_created else 'already exists'} (id={demo_tm.id})", verbose)
 
     demo_owner, demo_owner_created = _make_club_owner(demo_tm)
-    if demo_owner_created:
-      print(f"{TAG}   demo club_owner created (id={demo_owner.id})")
-    else:
-      print(f"{TAG}   demo club_owner already exists (id={demo_owner.id}), skipping")
+    _log(f"{TAG}   demo club_owner {'created' if demo_owner_created else 'already exists'} (id={demo_owner.id})", verbose)
 
-    demo_club, demo_club_created = _get_or_create_club("NetRank Club")
-    if demo_club_created:
-      print(f"{TAG}   demo club created (id={demo_club.id}, name='{demo_club.name}')")
-    else:
-      print(f"{TAG}   demo club already exists (id={demo_club.id}), skipping")
+    demo_club, demo_club_created = _get_or_create_club("NetRank Club", sport_type_id=tennis.id)
+    _log(f"{TAG}   demo club {'created' if demo_club_created else 'already exists'} (id={demo_club.id})", verbose)
 
     if demo_club not in demo_owner.clubs:
       demo_owner.clubs.append(demo_club)
-      print(f"{TAG}   linked owner {demo_owner.id} -> club {demo_club.id}")
-    else:
-      print(f"{TAG}   owner {demo_owner.id} already linked to club {demo_club.id}, skipping")
+      _log(f"{TAG}   linked owner {demo_owner.id} -> club {demo_club.id}", verbose)
 
-    men_team, men_team_created = _make_team("NetRank Aces", tennis, club_id=demo_club.id)
-    if men_team_created:
-      print(f"{TAG}   team '{men_team.name}' created in demo club")
-    else:
-      print(f"{TAG}   team '{men_team.name}' already exists in demo club, skipping")
+    men_team,    _ = _make_team("NetRank Aces",    tennis, club_id=demo_club.id, verbose=verbose)
+    junior_team, _ = _make_team("NetRank Juniors", tennis, club_id=demo_club.id, verbose=verbose)
 
-    junior_team, junior_team_created = _make_team("NetRank Juniors", tennis, club_id=demo_club.id)
-    if junior_team_created:
-      print(f"{TAG}   team '{junior_team.name}' created in demo club")
-    else:
-      print(f"{TAG}   team '{junior_team.name}' already exists in demo club, skipping")
-
-    if men_team not in demo_tm.teams:
-      demo_tm.teams.append(men_team)
-      print(f"{TAG}   manager {demo_tm.id} assigned to '{men_team.name}'")
-    if junior_team not in demo_tm.teams:
-      demo_tm.teams.append(junior_team)
-      print(f"{TAG}   manager {demo_tm.id} assigned to '{junior_team.name}'")
+    _assign_manager_to_team(demo_tm, men_team)
+    _assign_manager_to_team(demo_tm, junior_team)
 
     rating_fn_id = _ensure_default_ladder_rating_function()
-    men_ladder, men_ladder_created = _get_or_create_ladder(
-      club_id=demo_club.id,
-      name="Men's Singles",
-      description="Demo ladder for men's singles",
-      sport_type_id=tennis.id,
-      ladder_rating_function_id=rating_fn_id,
-    )
-    if men_ladder_created:
-      print(f"{TAG}   ladder '{men_ladder.name}' created")
-    else:
-      print(f"{TAG}   ladder '{men_ladder.name}' already exists, skipping")
+    men_ladder,    _ = _get_or_create_ladder(demo_club.id, "Men's Singles", "Demo ladder for men's singles", tennis.id, rating_fn_id)
+    junior_ladder, _ = _get_or_create_ladder(demo_club.id, "U14 Singles",   "Demo ladder for U14 singles",   tennis.id, rating_fn_id)
 
-    junior_ladder, junior_ladder_created = _get_or_create_ladder(
-      club_id=demo_club.id,
-      name="U14 Singles",
-      description="Demo ladder for U14 singles",
-      sport_type_id=tennis.id,
-      ladder_rating_function_id=rating_fn_id,
-    )
-    if junior_ladder_created:
-      print(f"{TAG}   ladder '{junior_ladder.name}' created")
-    else:
-      print(f"{TAG}   ladder '{junior_ladder.name}' already exists, skipping")
-
-    _get_or_create_ladder_team(
-      ladder_id=men_ladder.id,
-      team_id=men_team.id,
-      rank=1,
-      rating=1260,
-      matches_played=15,
-    )
-    _get_or_create_ladder_team(
-      ladder_id=men_ladder.id,
-      team_id=junior_team.id,
-      rank=2,
-      rating=1180,
-      matches_played=12,
-    )
-    _get_or_create_ladder_team(
-      ladder_id=junior_ladder.id,
-      team_id=junior_team.id,
-      rank=1,
-      rating=1215,
-      matches_played=10,
-    )
-    _get_or_create_ladder_team(
-      ladder_id=junior_ladder.id,
-      team_id=men_team.id,
-      rank=2,
-      rating=1100,
-      matches_played=8,
-    )
-    print(f"{TAG}   demo ladder standings upserted")
+    _get_or_create_ladder_team(men_ladder.id,    men_team.id,    rank=1, rating=1260, matches_played=15)
+    _get_or_create_ladder_team(men_ladder.id,    junior_team.id, rank=2, rating=1180, matches_played=12)
+    _get_or_create_ladder_team(junior_ladder.id, junior_team.id, rank=1, rating=1215, matches_played=10)
+    _get_or_create_ladder_team(junior_ladder.id, men_team.id,    rank=2, rating=1100, matches_played=8)
+    _log(f"{TAG}   demo ladder standings upserted", verbose)
 
   except Exception as e:
     print(f"{TAG} ERROR seeding demo club data: {e}")
     db.session.rollback()
     raise
+  _log(f"{TAG} [6/6] Demo club data OK", verbose)
 
-  print(f"{TAG} [6/6] Demo club data OK")
-
-  #  Commit
-  print(f"{TAG} Committing to database...")
+  # Commit
+  _log(f"{TAG} Committing to database...", verbose)
   try:
     db.session.commit()
   except Exception as e:
@@ -558,8 +489,4 @@ def seed_teams_and_users():
     db.session.rollback()
     raise
 
-  print(f"{TAG}  Seed complete ")
-  print(f"{TAG}    teams:    created={teams_created}, skipped={teams_skipped}")
-  print(f"{TAG}    managers: created={mgr_created},  skipped={mgr_skipped}")
-  print(f"{TAG}    players:  created={plr_created},  skipped={plr_skipped}")
-  print(f"{TAG} ") 
+  print(f"{TAG} Seed complete — teams: {teams_created}/{teams_created + teams_skipped}, managers: {mgr_created}/{mgr_created + mgr_skipped}, players: {plr_created}/{plr_created + plr_skipped}")

@@ -6,6 +6,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import Dashboard from "../src/pages/Dashboard.jsx";
 import { LangContext } from "../src/context/useLangContext.js";
+import CurrentUserContext from "../src/context/useCurrentUserContext.jsx";
 import { mockApi } from "./testApiMock.js";
 
 // Verifies dashboard tab labels and search placeholder render in Dutch.
@@ -24,15 +25,23 @@ test("dashboard renders Dutch texts when language is nl", async () => {
     render(
         <MemoryRouter>
             <LangContext.Provider value={{ lang: "nl", setLang: () => {} }}>
-                <Dashboard
-                    currentUser={{ id: 7, email: "demo@netrank.com" }}
-                    setUser={() => {}}
-                />
+                <CurrentUserContext.Provider
+                    value={{
+                        currentUser: { id: 7, email: "demo@netrank.com" },
+                        setCurrentUser: () => {},
+                        loadingUser: false,
+                    }}
+                >
+                    <Dashboard
+                        currentUser={{ id: 7, email: "demo@netrank.com" }}
+                        setUser={() => {}}
+                    />
+                </CurrentUserContext.Provider>
             </LangContext.Provider>
         </MemoryRouter>
     );
 
-    expect(await screen.findByText("Ingelogd als")).toBeInTheDocument();
+    expect(await screen.findByText("demo@netrank.com")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Overzicht" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Zoek clubs" })).toBeInTheDocument();
 

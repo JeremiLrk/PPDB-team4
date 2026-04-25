@@ -1,19 +1,26 @@
-import styles from "@/style/Dashboard.module.css";
+import styles from "@/style/dashboard/Dashboard.module.css";
+import commonStyles from "@/style/common/Common.module.css";
+import workspaceStyles from "@/style/dashboard/Workspace.module.css";
+
+
 import formStyles from "@/style/common/Forms.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
-import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab, ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
-import { useLangContext } from "@/context/useLangContext.js";
-import { usePageTexts } from "@/hooks/usePageTexts.js";
+import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab,ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import {useCurrentUserContext} from "@/context/useCurrentUserContext.jsx";
+import {TeamsTab} from "@/components/dashboard/TeamsDashboardTab.jsx";
 
-function Dashboard({ currentUser, setUser }) {
+function Dashboard() {
+    const { currentUser, setCurrentUser } = useCurrentUserContext();
     const { lang } = useLangContext()
     const dashboardTexts = usePageTexts("dashboard", lang)
-    const workspace = useDashboardWorkspace(setUser, dashboardTexts)
+    const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts)
 
     if (workspace.loading) {
         return (
-            <div className={styles.loading}>
+            <div className={commonStyles.loading}>
                 {dashboardTexts.loading_dashboard || "Loading dashboard..."}
             </div>
         )
@@ -21,7 +28,7 @@ function Dashboard({ currentUser, setUser }) {
 
     return (
         <section
-            className={`${styles.shell} ${workspace.theme === "light" ? styles.light : ""}`}
+            className={`${commonStyles.shell} ${workspace.theme === "light" ? commonStyles.light : ""}`}
         >
             <DashboardSidebar
                 theme={workspace.theme}
@@ -34,7 +41,7 @@ function Dashboard({ currentUser, setUser }) {
                 onSignOut={workspace.onSignOut}
             />
 
-            <div className={styles.workspace}>
+            <div className={workspaceStyles.workspace}>
 
 
                 {workspace.error ? <p className={formStyles.warning}>{workspace.error}</p> : null}
@@ -92,17 +99,7 @@ function Dashboard({ currentUser, setUser }) {
 
                 {workspace.activeTab === "teams" ? (
                     <TeamsTab
-                        teams={workspace.myTeams}
-                        total={workspace.myTeamsTotal}
-                        loading={workspace.myTeamsLoading}
-                        error={workspace.myTeamsError}
-                        sort={workspace.myTeamsSort}
-                        pageSize={workspace.myTeamsPageSize}
-                        hasMore={workspace.myTeamsHasMore}
-                        onLoad={workspace.loadMyTeams}
-                        onLoadMore={workspace.loadMoreMyTeams}
                         texts={dashboardTexts}
-                        currentUser={currentUser}
                     />
                 ) : null}
 

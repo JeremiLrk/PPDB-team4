@@ -1,40 +1,57 @@
-from flask import jsonify
-
-from server.app.models.account import Account
-from server.app.models.account_role import AccountRole 
+from flask import abort
+from server.app.models.account import Account, AccountRole
 from server.app.models.player import Player
-from server.app.models.account import TeamManager
+from server.app.models.team import TeamManager
 from server.extensions import db
 
 
-def promote_to_player(target: Account):
-  """Promotes an account to Player if it is not already one."""
-  if target.player:
-    return None  # already exists
+def _get_or_create_role(name: str) -> AccountRole:
+    """Returns an AccountRole by name, creating it if it doesn't exist."""
+    role = AccountRole.query.filter_by(name=name).first()
+    if not role:
+        role = AccountRole(name=name)
+        db.session.add(role)
+        db.session.flush()
+    return role
 
-  player_role = AccountRole.query.filter_by(name="player").first()
-  if not player_role:
-    return jsonify({"message": "Role 'player' not found in DB."}), 500
 
-  db.session.add(Player(id=target.id))
-  target.account_role_id = player_role.id
-  db.session.flush()
-  db.session.refresh(target)
-  return None
+def promote_to_player(target: Account) -> None:
+    """Promotes an account to Player if it is not already one."""
+    if target.player:
+        return None  # already exists
 
-def promote_to_team_manager(target: Account):
-  """Promotes an account to TeamManager if it is not already one."""
-  if target.team_manager:
-    return None  # already exists
+    player_role = _get_or_create_role("player")
 
-  tm_role = AccountRole.query.filter_by(name="team_manager").first()
-  if not tm_role:
-    return jsonify({"message": "Role 'team_manager' not found in DB."}), 500
+    db.session.add(Player(id=target.id))
+    target.account_role_id = player_role.id
+    db.session.flush()
 
-  new_tm = TeamManager(id=target.id)
-  db.session.add(new_tm)
-  target.account_role_id = tm_role.id
-  db.session.flush()
-  db.session.refresh(target)
-  return None
+    # expire forces SQLAlchemy to reload all attributes (including relationships)
+    # on next access, ensuring target.player reflects the newly inserted row.
+    db.session.expire(target)
 
+    if not target.player:
+        abort(500, description="Player entity was not created.")
+    return None
+
+
+def promote_to_team_manager(target: Account) -> None:
+    """Promotes an account to TeamManager if it is not already one."""
+    if target.team_manager:
+        return None  # already exists
+
+    tm_role = _get_or_create_role("team_manager")
+
+    new_tm = TeamManager(id=target.id)
+    db.session.add(new_tm)
+    target.account_role_id = tm_role.id
+    db.session.flush()
+
+    # expire forces SQLAlchemy to reload all attributes (including relationships)
+    # on next access, ensuring target.team_manager reflects the newly inserted row.
+    db.session.expire(target)
+
+    if not target.team_manager:
+        abort(500, description="TeamManager entity was not created.")
+
+    return None

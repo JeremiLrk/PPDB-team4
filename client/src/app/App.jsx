@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
-import { Toaster } from "react-hot-toast"
 import Background_Glow from "@/components/Background_Glow.jsx"
 import Header from "@/components/Header.jsx"
 import AppRoutes from "@/app/AppRoutes.jsx"
-import { useLang } from "@/hooks/useLang.js"
-import { LangContext } from "@/context/useLangContext.js"
+import {LangProvider} from "@/context/useLangContext.jsx"
 import { CurrentUserProvider } from "@/context/useCurrentUserContext.jsx"
 
 function App() {
@@ -13,41 +11,6 @@ function App() {
     const location = useLocation()
     const isDashboardRoute = location.pathname.startsWith("/dashboard")
     const [status, setStatus] = useState({ state: "loading", msg: "" })
-    const [lang, setLang] = useLang("en")
-    const [currentUser, setCurrentUser] = useState(null)
-
-    useEffect(() => {
-        let alive = true
-
-        async function loadCurrentUser() {
-            try {
-                const response = await fetch("/api/me", {
-                    method: "GET",
-                    credentials: "include",
-                })
-
-                if (!alive) return
-
-                if (!response.ok) {
-                    setCurrentUser(null)
-                    return
-                }
-
-                const data = await response.json()
-                setCurrentUser(data?.account ?? null)
-            } catch (err) {
-                if (alive) {
-                    console.error("Auth check failed:", err)
-                    setCurrentUser(null)
-                }
-            }
-        }
-
-        loadCurrentUser()
-        return () => {
-            alive = false
-        }
-    }, [])
 
     useEffect(() => {
         let alive = true
@@ -90,13 +53,13 @@ function App() {
     return (
         <div className={wrapperClass}>
             <CurrentUserProvider>
-                <LangContext.Provider value={{ lang, setLang }}>
+                <LangProvider>
                     {!isDashboardRoute ? <Background_Glow /> : null}
                     {!isDashboardRoute ? <Header status={status} /> : null}
                     <main className={mainClass}>
                         <AppRoutes />
                     </main>
-                </LangContext.Provider>
+                </LangProvider>
             </CurrentUserProvider>
         </div>
     )

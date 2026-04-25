@@ -2,10 +2,12 @@ import os
 import json
 from typing import Type
 from server.extensions import db
+from sqlalchemy import inspect
+
 
 def seed_table(
         model: Type[db.Model],
-        seeds_file : str,
+        seeds_file: str,
         unique_fields: list[str],
         skip_duplicates: bool = True,
         verbose: bool = True
@@ -18,7 +20,6 @@ def seed_table(
     :param verbose: output a log (default: True)
     :return: None
     """
-
     """
     print(f"CWD: {os.getcwd()}")                          # Where is it launched from?
     print(f"Looking for: {os.path.abspath(seeds_file)}")  # full path to the file
@@ -35,6 +36,10 @@ def seed_table(
     added = 0
     skipped = 0
 
+    # get information about the model's columns
+    mapper = inspect(model)
+    columns = {col.key: col for col in mapper.columns}
+
     for item in data:
         if skip_duplicates:
             filters = {field: item[field] for field in unique_fields}
@@ -43,7 +48,35 @@ def seed_table(
                 skipped += 1
                 continue
 
-        db.session.add(model(**item))
+        # Forming a dict taking into account defaults
+        model_data = {}
+
+        for key, column in columns.items():
+            if key in item:
+                value = item[key]
+
+                # if the value None is default, skip the field
+                if value is None and (column.default is not None or column.server_default is not None):
+                    continue
+
+                model_data[key] = value
+            else:
+                # if there is no key, we don't pass it, SQLAlchemy will use default
+                continue
+
+        for rel in inspect(model).relationships:
+            fk_column = list(rel.local_columns)[0].key
+
+            if fk_column in model_data and model_data[fk_column] is not None:
+                target_model = rel.mapper.class_
+
+                exists = db.session.get(target_model, model_data[fk_column])
+                if not exists:
+                    raise ValueError(
+                        f"{model.__name__}: {fk_column}={model_data[fk_column]} "
+                        f"does not exist in {target_model.__name__}"
+                    )
+        db.session.add(model(**model_data))
         added += 1
 
     db.session.commit()

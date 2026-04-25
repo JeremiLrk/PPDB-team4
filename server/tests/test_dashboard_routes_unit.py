@@ -16,6 +16,52 @@ class _QueryStub:
         return self._result
 
 
+class _ClubOwnerClubQueryStub:
+    def filter_by(self, **kwargs):
+        return self
+
+    def all(self):
+        return []
+
+    def first(self):
+        return None
+
+
+class _ClubPlayerQueryStub:
+    def filter_by(self, **kwargs):
+        return self
+
+    def all(self):
+        return []
+
+    def first(self):
+        return None
+
+
+class _ClubQueryStub:
+    def filter(self, *args, **kwargs):
+        return self
+
+    def all(self):
+        return []
+
+
+class _ClubOwnerStub:
+    query = _ClubOwnerClubQueryStub()
+
+
+class _ClubPlayerStub:
+    query = _ClubPlayerQueryStub()
+
+
+class _ClubStub:
+    query = _ClubQueryStub()
+
+
+class _JoinRequestStub:
+    query = _ClubPlayerQueryStub()
+
+
 def test_get_my_dashboard_returns_401_when_cookie_user_missing():
     app = Flask(__name__)
     with app.test_request_context("/api/me/dashboard"):
@@ -51,13 +97,20 @@ def test_get_my_dashboard_returns_payload_when_account_exists(monkeypatch):
         "Account",
         SimpleNamespace(query=_QueryStub(fake_user)),
     )
+    monkeypatch.setattr(dashboard_routes, "ClubOwner", _ClubOwnerStub)
+    monkeypatch.setattr(dashboard_routes, "ClubOwnerClub", SimpleNamespace(query=_ClubOwnerClubQueryStub()))
+    monkeypatch.setattr(dashboard_routes, "ClubPlayer", _ClubPlayerStub)
+    monkeypatch.setattr(dashboard_routes, "Club", _ClubStub)
+    monkeypatch.setattr(dashboard_routes, "ClubJoinRequest", _JoinRequestStub)
 
     with app.test_request_context("/api/me/dashboard"):
         response, status = dashboard_routes.get_my_dashboard()
 
     payload = response.get_json()
     assert status == 200
-    assert payload["user"] == {"id": 7, "email": "demo@netrank.test"}
+    assert payload["account"] == {"id": 7, "email": "demo@netrank.test"}
+    assert payload["roles"] == ["user"]
+    assert payload["clubs"] == []
     assert payload["pending_requests"] == {
         "my_requests": [],
         "my_club_creation_requests": [],

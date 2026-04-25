@@ -1,4 +1,8 @@
-import styles from "@/style/Dashboard.module.css";
+import styles from "@/style/dashboard/Dashboard.module.css";
+
+import navStyles from "@/style/common/Nav.module.css";
+import btnStyles from "@/style/common/Buttons.module.css";
+
 import { getDashboardTabs } from "@/components/dashboard/dashboardUtils.js";
 import { HomeIcon, SignOutIcon, ThemeIcon } from "@/components/dashboard/DashboardIcons.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
@@ -24,12 +28,12 @@ export default function DashboardSidebar({
                     ? "Loading..."
                     : currentUser?.email || texts?.unknown_user || "unknown"}
             </p>
-            <nav className={styles.nav} aria-label={texts?.dashboard_tabs_aria || "Dashboard tabs"}>
+            <nav className={navStyles.nav} aria-label={texts?.dashboard_tabs_aria || "Dashboard tabs"}>
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
                         type="button"
-                        className={`${styles.navButton} ${activeTab === tab.id ? styles.navButtonActive : ""}`}
+                        className={`${navStyles.navButton} ${activeTab === tab.id ? btnStyles.navButtonActive : ""}`}
                         onClick={() => onTabChange(tab.id)}
                     >
                         {tab.label}
@@ -40,7 +44,7 @@ export default function DashboardSidebar({
             <div className={styles.sidebarFooter}>
                 <button
                     type="button"
-                    className={styles.iconButton}
+                    className={btnStyles.iconButton}
                     onClick={onThemeToggle}
                     aria-label={
                         theme === "dark"
@@ -54,7 +58,7 @@ export default function DashboardSidebar({
 
                 <button
                     type="button"
-                    className={styles.iconButton}
+                    className={btnStyles.iconButton}
                     onClick={onGoHome}
                     aria-label={texts?.go_to_home || "Go to home"}
                     title={texts?.home || "Home"}
@@ -64,7 +68,7 @@ export default function DashboardSidebar({
 
                 <button
                     type="button"
-                    className={`${styles.iconButton} ${styles.signOutButton}`}
+                    className={`${btnStyles.iconButton} ${styles.signOutButton}`}
                     onClick={onSignOut}
                     aria-label={texts?.sign_out || "Sign out"}
                     title={texts?.sign_out || "Sign out"}
