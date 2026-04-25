@@ -1,6 +1,8 @@
 import os
 import requests
 from flask import Blueprint, jsonify, request
+from server.app.models.club import Club
+from server.extensions import db
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -11,14 +13,21 @@ load_dotenv(dotenv_path=env_path, override=True)
 
 weather = Blueprint("weather", __name__, url_prefix="/api")
 
-@weather.get("/weather/<city>")
-def get_weather(city):
+@weather.get("/weather/<int:club_id>") # Using int: for safety
+def get_weather(club_id):
+    club = Club.query.get(club_id)
+    
+    if not club:
+        return jsonify({"error": "Club not found"}), 404
+        
+    if not club.city:
+        return jsonify({"error": "This club has no city assigned"}), 400
+
     key = os.environ.get("WEATHER_API_KEY")
-    
     api_url = "https://api.openweathermap.org/data/2.5/weather"
-    
+
     params = {
-        "q": city,
+        "q": club.city,
         "appid": key,
         "units": "metric"
     }
@@ -29,7 +38,7 @@ def get_weather(city):
         if response.status_code == 401:
             return {
                 "error": "Activation Error",
-                "message": "OpenWeather key is valid but not yet active. Wait ~2 hours."
+                "message": "API Key unauthorized. Check .env loading or activation status."
             }, 401
 
         response.raise_for_status()
