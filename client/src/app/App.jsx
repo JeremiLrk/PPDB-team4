@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
+import { Toaster } from "react-hot-toast"
 import Background_Glow from "@/components/Background_Glow.jsx"
 import Header from "@/components/Header.jsx"
 import AppRoutes from "@/app/AppRoutes.jsx"
@@ -59,6 +60,7 @@ function App() {
                     <main className={mainClass}>
                         <AppRoutes />
                     </main>
+                    <Toaster position="top-center" />
                 </LangProvider>
             </CurrentUserProvider>
         </div>

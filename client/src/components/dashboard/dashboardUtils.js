@@ -3,6 +3,7 @@ import styles from "@/style/common/Common.module.css";
 export function getDashboardTabs(texts) {
     return [
         { id: "overview", label: texts.tab_overview || "Overview" },
+        { id: "profile", label: texts.tab_profile || "My Profile" },
         { id: "availability", label: texts.tab_availability || "Availability" },
         { id: "search", label: texts.tab_search || "Search Clubs" },
         { id: "requests", label: texts.tab_requests || "My Requests" },
