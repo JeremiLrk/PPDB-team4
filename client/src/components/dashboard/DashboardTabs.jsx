@@ -28,6 +28,12 @@ function formatLocalTimestamp(value) {
     return parsed.toLocaleString()
 }
 
+function formatMatchTitle(match) {
+    const team1 = match?.team1Name || (match?.team1Id ? `Team #${match.team1Id}` : "Team 1")
+    const team2 = match?.team2Name || (match?.team2Id ? `Team #${match.team2Id}` : "Team 2")
+    return `${team1} vs ${team2}`
+}
+
 const styles = { ...formStyles, ...commonStyles, ...dashStyles };
 
 //  Overview Tab
@@ -452,6 +458,7 @@ export function ManageClubsTab({
 
 export function AvailabilityTab({
     availabilityBlocks,
+    upcomingMatches,
     availabilityForm,
     availabilityLoading,
     availabilitySubmitting,
@@ -513,8 +520,7 @@ export function AvailabilityTab({
                         >
                             {availabilitySubmitting
                                 ? texts?.adding || "Adding..."
-                                : texts?.add_availability_block ||
-                                  "Add availability block"}
+                                : texts?.add_availability_block || "Add availability block"}
                         </button>
                     </div>
                 </form>
@@ -534,53 +540,78 @@ export function AvailabilityTab({
                 ) : null}
             </article>
 
-            <article className={styles.panel}>
-                <div className={styles.panelTopRow}>
-                    <h3 className={styles.panelTitle}>
-                        {texts?.availability_blocks || "Your blocks"}
-                    </h3>
-                    <span className={styles.counter}>
-                        {availabilityBlocks.length}
-                    </span>
-                </div>
+            <div className={commonStyles.noStylePleaseFixMe}>
+                <article className={styles.panel}>
+                    <div className={styles.panelTopRow}>
+                        <h3 className={styles.panelTitle}>
+                            {texts?.availability_blocks || "Your blocks"}
+                        </h3>
+                        <span className={styles.counter}>{availabilityBlocks.length}</span>
+                    </div>
 
-                {availabilityLoading ? (
-                    <p className={styles.muted}>
-                        {texts?.loading || "Loading..."}
-                    </p>
-                ) : null}
+                    {availabilityLoading ? (
+                        <p className={styles.muted}>{texts?.loading || "Loading..."}</p>
+                    ) : null}
 
-                {!availabilityLoading && availabilityBlocks.length === 0 ? (
-                    <p className={styles.muted}>
-                        {texts?.no_availability_blocks ||
-                            "No availability blocks yet."}
-                    </p>
-                ) : null}
+                    {!availabilityLoading && availabilityBlocks.length === 0 ? (
+                        <p className={styles.muted}>
+                            {texts?.no_availability_blocks || "No availability blocks yet."}
+                        </p>
+                    ) : null}
 
-                {!availabilityLoading && availabilityBlocks.length > 0 ? (
-                    <ul className={styles.list}>
-                        {availabilityBlocks.map((block) => (
-                            <li className={styles.listItem} key={block.id}>
-                                <div>
-                                    <p className={styles.primaryText}>
-                                        {formatLocalTimestamp(block.start_at)} -{" "}
-                                        {formatLocalTimestamp(block.end_at)}
-                                    </p>
-                                </div>
-                                <button
-                                    className={styles.primaryButton}
-                                    type="button"
-                                    onClick={() =>
-                                        onAvailabilityDelete(block.id)
-                                    }
-                                >
-                                    {texts?.delete || "Delete"}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                ) : null}
-            </article>
+                    {!availabilityLoading && availabilityBlocks.length > 0 ? (
+                        <ul className={styles.list}>
+                            {availabilityBlocks.map((block) => (
+                                <li className={styles.listItem} key={block.id}>
+                                    <div>
+                                        <p className={styles.primaryText}>
+                                            {formatLocalTimestamp(block.start_at)} - {formatLocalTimestamp(block.end_at)}
+                                        </p>
+                                    </div>
+                                    <button
+                                        className={styles.primaryButton}
+                                        type="button"
+                                        onClick={() => onAvailabilityDelete(block.id)}
+                                    >
+                                        {texts?.delete || "Delete"}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : null}
+                </article>
+
+                <article className={styles.panel}>
+                    <div className={styles.panelTopRow}>
+                        <h3 className={styles.panelTitle}>
+                            {texts?.availability_upcoming_matches || "Upcoming matches"}
+                        </h3>
+                        <span className={styles.counter}>{upcomingMatches.length}</span>
+                    </div>
+
+                    {upcomingMatches.length === 0 ? (
+                        <p className={styles.muted}>
+                            {texts?.no_upcoming_matches || "No upcoming matches scheduled."}
+                        </p>
+                    ) : (
+                        <ul className={styles.list}>
+                            {upcomingMatches.map((match) => (
+                                <li className={styles.listItem} key={match.id}>
+                                    <div>
+                                        <p className={styles.primaryText}>{formatMatchTitle(match)}</p>
+                                        <p className={styles.secondaryText}>
+                                            {match.location || texts?.unknown_location || "Unknown location"}
+                                        </p>
+                                    </div>
+                                    <span className={`${styles.statusPill} ${styles.statusApproved}`}>
+                                        {match.status?.name || texts?.status_accepted || "Accepted"}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </article>
+            </div>
         </section>
     )
 }

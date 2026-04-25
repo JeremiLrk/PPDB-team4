@@ -466,6 +466,30 @@
     },
     {
         "page": "dashboard",
+        "key": "availability_upcoming_matches",
+        "language": "en",
+        "value": "Upcoming matches"
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_upcoming_matches",
+        "language": "nl",
+        "value": "Komende wedstrijden"
+    },
+    {
+        "page": "dashboard",
+        "key": "no_upcoming_matches",
+        "language": "en",
+        "value": "No upcoming matches scheduled."
+    },
+    {
+        "page": "dashboard",
+        "key": "no_upcoming_matches",
+        "language": "nl",
+        "value": "Geen komende wedstrijden gepland."
+    },
+    {
+        "page": "dashboard",
         "key": "loading",
         "language": "en",
         "value": "Loading..."

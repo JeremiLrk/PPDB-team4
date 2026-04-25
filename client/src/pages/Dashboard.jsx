@@ -75,6 +75,7 @@ function Dashboard() {
                 {workspace.activeTab === "availability" ? (
                     <AvailabilityTab
                         availabilityBlocks={workspace.availabilityBlocks}
+                        upcomingMatches={workspace.upcomingMatches}
                         availabilityForm={workspace.availabilityForm}
                         availabilityLoading={workspace.availabilityLoading}
                         availabilitySubmitting={
