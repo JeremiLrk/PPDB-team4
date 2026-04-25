@@ -74,6 +74,31 @@ def test_player_can_see_and_accept_weekly_proposal(client: FlaskClient):
     assert accept_response.get_json()["proposal"]["status"] == "accepted"
 
 
+def test_player_can_set_accepted_proposal_back_to_pending(client: FlaskClient):
+    _login_demo_player(client)
+
+    list_response = client.get("/api/matches/proposals")
+    assert list_response.status_code == 200
+
+    proposals = list_response.get_json()["proposals"]
+    player_demo_proposal = next(
+        proposal for proposal in proposals if proposal["team1_name"] == "Player Demo A"
+    )
+
+    accept_response = client.patch(
+        f"/api/matches/proposals/{player_demo_proposal['id']}/status",
+        json={"status": "accepted"},
+    )
+    assert accept_response.status_code == 200
+
+    pending_response = client.patch(
+        f"/api/matches/proposals/{player_demo_proposal['id']}/status",
+        json={"status": "pending"},
+    )
+    assert pending_response.status_code == 200
+    assert pending_response.get_json()["proposal"]["status"] == "pending"
+
+
 def test_weekly_generation_is_idempotent_for_existing_week(app: Flask):
     with app.app_context():
         account = Account.query.filter_by(email="jeremilorek@outlook.com").first()
