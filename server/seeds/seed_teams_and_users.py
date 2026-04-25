@@ -19,6 +19,7 @@ from server.app.models.player import Player
 from server.app.models.team import Team
 from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
+from server.app.models.match import MatchStatus, MatchProposal, MatchPlayed
 
 TAG = "[seed:teams_and_users]"
 
@@ -200,7 +201,67 @@ def _get_or_create_ladder_team(
   return row, True
 
 
-#  Main seed 
+def _ensure_match_status(name: str) -> int:
+  existing_id = db.session.execute(
+    text("SELECT id FROM match_status WHERE name = :name LIMIT 1"),
+    {"name": name},
+  ).scalar()
+  if existing_id:
+    return int(existing_id)
+  created_id = db.session.execute(
+    text("INSERT INTO match_status (name) VALUES (:name) RETURNING id"),
+    {"name": name},
+  ).scalar_one()
+  return int(created_id)
+
+
+def _seed_demo_matches(team1: Team, team2: Team, sport: SportType) -> None:
+  already = db.session.execute(
+    text("SELECT COUNT(*) FROM match_proposal WHERE team1_id = :t1 AND team2_id = :t2"),
+    {"t1": team1.id, "t2": team2.id},
+  ).scalar()
+  if already and already > 0:
+    print(f"{TAG}   demo matches already exist, skipping")
+    return
+
+  status_id = _ensure_match_status("played")
+
+  # (score_team1, score_team2, days_ago)
+  FIXTURES = [
+    (3, 1, 60),
+    (1, 3, 45),
+    (2, 1, 35),
+    (0, 3, 28),
+    (3, 2, 21),
+    (2, 1, 14),
+    (3, 1,  7),
+    (2, 0,  1),
+  ]
+
+  now = datetime.datetime.utcnow()
+  for score1, score2, days_ago in FIXTURES:
+    proposal = MatchProposal(
+      sport_type_id=sport.id,
+      team1_id=team1.id,
+      team2_id=team2.id,
+      status_id=status_id,
+    )
+    db.session.add(proposal)
+    db.session.flush()
+
+    played = MatchPlayed(
+      id=proposal.id,
+      score_team1=score1,
+      score_team2=score2,
+      played_at=now - datetime.timedelta(days=days_ago),
+    )
+    db.session.add(played)
+    db.session.flush()
+
+  print(f"{TAG}   seeded {len(FIXTURES)} demo matches ({team1.name} vs {team2.name})")
+
+
+#  Main seed
 
 def seed_teams_and_users():
   print(f"{TAG}  Starting seed ")
@@ -431,7 +492,7 @@ def seed_teams_and_users():
   print(f"{TAG} [5/5] Players OK — created: {plr_created}, skipped: {plr_skipped}")
 
   #  Demo club + ladders
-  print(f"{TAG} [6/6] Seeding demo club data...")
+  print(f"{TAG} [6/7] Seeding demo club data...")
   try:
     demo_acc, demo_acc_created = _make_account(
       first="Jeremi",
@@ -547,7 +608,21 @@ def seed_teams_and_users():
     db.session.rollback()
     raise
 
-  print(f"{TAG} [6/6] Demo club data OK")
+  print(f"{TAG} [6/7] Demo club data OK")
+
+  #  Demo match history (Net Crushers vs Sand Smashers)
+  print(f"{TAG} [7/7] Seeding demo match history...")
+  try:
+    net_crushers = teams[7]
+    sand_smashers = teams[8]
+    volleyball = _get_or_create_sport("Volleyball", 6, 14)
+    _seed_demo_matches(net_crushers, sand_smashers, volleyball)
+  except Exception as e:
+    print(f"{TAG} ERROR seeding demo matches: {e}")
+    db.session.rollback()
+    raise
+
+  print(f"{TAG} [7/7] Demo match history OK")
 
   #  Commit
   print(f"{TAG} Committing to database...")

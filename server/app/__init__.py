@@ -22,6 +22,7 @@ from server.app.models.page_text import PageText
 from server.seeds.seed_teams_and_users import seed_teams_and_users
 from server.app.models.account_role import AccountRole
 from server.app.models.ladder import MatchRuleSet, LadderRatingFunction, Ladder
+from server.app.models.match import MatchStatus, MatchProposal, MatchPlayed
 from sqlalchemy import text
 
 

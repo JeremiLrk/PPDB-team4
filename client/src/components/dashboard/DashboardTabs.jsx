@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import formStyles from "@/style/common/Forms.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import dashStyles from "@/style/ClubSettings.module.css";
+import dashboardStyles from "@/style/Dashboard.module.css";
 
 import TeamCard from "@/components/dashboard/TeamCard.jsx";
 import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js";
@@ -686,5 +687,207 @@ export function AvailabilityTab({
                 ) : null}
             </article>
         </section>
+    )
+}
+
+// Achievements Tab
+
+const ACHIEVEMENT_DEFINITIONS = [
+    {
+        id: "first_steps",
+        icon: "★",
+        name: "First Steps",
+        description: "Created your account",
+        check: () => true,
+    },
+    {
+        id: "club_member",
+        icon: "⬡",
+        name: "Club Member",
+        description: "Joined your first club",
+        check: ({ myClubs }) => myClubs.length >= 1,
+    },
+    {
+        id: "social_butterfly",
+        icon: "◈",
+        name: "Social Butterfly",
+        description: "Member of 3 or more clubs",
+        check: ({ myClubs }) => myClubs.length >= 3,
+    },
+    {
+        id: "team_player",
+        icon: "▲",
+        name: "Team Player",
+        description: "Part of your first team",
+        check: ({ teams }) => teams.length >= 1,
+    },
+    {
+        id: "squad_goals",
+        icon: "◆",
+        name: "Squad Goals",
+        description: "Part of 3 or more teams",
+        check: ({ teams }) => teams.length >= 3,
+    },
+    {
+        id: "trailblazer",
+        icon: "→",
+        name: "Trailblazer",
+        description: "Submitted your first join request",
+        check: ({ myRequests }) => myRequests.length >= 1,
+    },
+    {
+        id: "networker",
+        icon: "⬟",
+        name: "Networker",
+        description: "Submitted 5 or more join requests",
+        check: ({ myRequests }) => myRequests.length >= 5,
+    },
+    {
+        id: "club_leader",
+        icon: "♛",
+        name: "Club Leader",
+        description: "Own and manage a club",
+        check: ({ isClubOwner }) => isClubOwner,
+    },
+    {
+        id: "first_victory",
+        icon: "✦",
+        name: "First Victory",
+        description: "Won your first match",
+        check: ({ wins }) => wins >= 1,
+    },
+    {
+        id: "hat_trick",
+        icon: "◉",
+        name: "Hat Trick",
+        description: "Won 3 or more matches",
+        check: ({ wins }) => wins >= 3,
+    },
+    {
+        id: "champion",
+        icon: "♔",
+        name: "Champion",
+        description: "Won 10 or more matches",
+        check: ({ wins }) => wins >= 10,
+    },
+    {
+        id: "on_fire",
+        icon: "↑",
+        name: "On Fire",
+        description: "Won 3 matches in a row",
+        check: ({ currentStreak }) => currentStreak >= 3,
+    },
+    {
+        id: "unstoppable",
+        icon: "⬆",
+        name: "Unstoppable",
+        description: "Best win streak of 5 or more",
+        check: ({ bestStreak }) => bestStreak >= 5,
+    },
+]
+
+const EMPTY_STATS = { wins: 0, current_streak: 0, best_streak: 0, total_matches: 0 }
+
+export function AchievementsTab({ myClubs, myRequests, teams, isClubOwner, texts }) {
+    const [stats, setStats] = useState(EMPTY_STATS)
+    const [statsLoading, setStatsLoading] = useState(true)
+
+    useEffect(() => {
+        fetch("/api/me/achievements", { credentials: "include" })
+            .then((res) => res.ok ? res.json() : EMPTY_STATS)
+            .then((data) => setStats(data))
+            .catch(() => setStats(EMPTY_STATS))
+            .finally(() => setStatsLoading(false))
+    }, [])
+
+    const ctx = {
+        myClubs,
+        myRequests,
+        teams,
+        isClubOwner,
+        wins: stats.wins,
+        currentStreak: stats.current_streak,
+        bestStreak: stats.best_streak,
+    }
+
+    const achievements = useMemo(
+        () => ACHIEVEMENT_DEFINITIONS.map((def) => ({ ...def, unlocked: def.check(ctx) })),
+        [myClubs.length, myRequests.length, teams.length, isClubOwner, stats],
+    )
+
+    const unlockedCount = achievements.filter((a) => a.unlocked).length
+    const winRate = stats.total_matches > 0
+        ? Math.round((stats.wins / stats.total_matches) * 100)
+        : 0
+
+    return (
+        <div className={`${styles.contentGrid} ${styles.contentFade}`}>
+            <article className={styles.panel}>
+                <h3 className={styles.panelTitle}>{texts?.match_stats || "Match Stats"}</h3>
+                {statsLoading ? (
+                    <p className={styles.muted}>{texts?.loading || "Loading..."}</p>
+                ) : (
+                    <div className={styles.metrics}>
+                        <div className={styles.metricCard}>
+                            <p className={styles.metricLabel}>{texts?.total_wins || "Total Wins"}</p>
+                            <p className={styles.metricValue}>{stats.wins}</p>
+                        </div>
+                        <div className={styles.metricCard}>
+                            <p className={styles.metricLabel}>{texts?.total_matches || "Matches Played"}</p>
+                            <p className={styles.metricValue}>{stats.total_matches}</p>
+                        </div>
+                        <div className={styles.metricCard}>
+                            <p className={styles.metricLabel}>{texts?.win_rate || "Win Rate"}</p>
+                            <p className={styles.metricValue}>{winRate}%</p>
+                        </div>
+                        <div className={styles.metricCard}>
+                            <p className={styles.metricLabel}>{texts?.current_streak || "Current Streak"}</p>
+                            <p className={styles.metricValue}>{stats.current_streak}</p>
+                        </div>
+                        <div className={styles.metricCard}>
+                            <p className={styles.metricLabel}>{texts?.best_streak || "Best Streak"}</p>
+                            <p className={styles.metricValue}>{stats.best_streak}</p>
+                        </div>
+                    </div>
+                )}
+            </article>
+
+            <article className={`${styles.panel}`}>
+                <div className={styles.panelTopRow}>
+                    <h3 className={styles.panelTitle}>{texts?.achievements || "Achievements"}</h3>
+                    <span className={styles.counter}>{unlockedCount} / {achievements.length}</span>
+                </div>
+                <p className={styles.muted} style={{ marginBottom: "1rem" }}>
+                    {texts?.achievements_subtitle || "Milestones you have reached on your journey."}
+                </p>
+                <div className={dashboardStyles.achievementGrid}>
+                    {achievements.map((achievement) => (
+                        <div
+                            key={achievement.id}
+                            className={`${dashboardStyles.achievementCard} ${
+                                achievement.unlocked
+                                    ? dashboardStyles.achievementCardUnlocked
+                                    : dashboardStyles.achievementCardLocked
+                            }`}
+                        >
+                            <span className={dashboardStyles.achievementIcon}>{achievement.icon}</span>
+                            <p className={dashboardStyles.achievementName}>{achievement.name}</p>
+                            <p className={dashboardStyles.achievementDesc}>{achievement.description}</p>
+                            <span
+                                className={`${dashboardStyles.achievementBadge} ${
+                                    achievement.unlocked
+                                        ? dashboardStyles.achievementBadgeUnlocked
+                                        : dashboardStyles.achievementBadgeLocked
+                                }`}
+                            >
+                                {achievement.unlocked
+                                    ? (texts?.unlocked || "Unlocked")
+                                    : (texts?.locked || "Locked")}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </article>
+        </div>
     )
 }

@@ -2,7 +2,7 @@ import styles from "@/style/Dashboard.module.css";
 import formStyles from "@/style/common/Forms.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
-import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab, ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
+import { AvailabilityTab, AchievementsTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab, ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
 import { useLangContext } from "@/context/useLangContext.js";
 import { usePageTexts } from "@/hooks/usePageTexts.js";
 
@@ -129,6 +129,16 @@ function Dashboard({ currentUser, setUser }) {
                         decideJoinrequest={workspace.decideJoinrequest}
                         isClubOwner={workspace.isClubOwner}
                         onGoSettings={workspace.onGoSettings}
+                        texts={dashboardTexts}
+                    />
+                ) : null}
+
+                {workspace.activeTab === "achievements" ? (
+                    <AchievementsTab
+                        myClubs={workspace.myClubs}
+                        myRequests={workspace.myRequests}
+                        teams={workspace.myTeams}
+                        isClubOwner={workspace.isClubOwner}
                         texts={dashboardTexts}
                     />
                 ) : null}

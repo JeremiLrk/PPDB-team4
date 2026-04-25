@@ -9,6 +9,7 @@ export function getDashboardTabs(texts) {
         { id: "teams",      label: texts.tab_teams       || "My Teams" },
         { id: "createClub", label: texts.tab_create_club || "Add your own club" },
         { id: "manageClubs", label: texts.tab_manage_club || "Manage your clubs"},
+        { id: "achievements", label: texts.tab_achievements || "Achievements" },
     ]
 }
 
