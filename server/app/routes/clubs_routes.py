@@ -7,6 +7,7 @@ from server.app.models.account import Account
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
 from server.app.models.club_player import ClubPlayer
+from server.app.models.team import TeamManager
 from server.app.routes.dashboard_routes import _get_current_user_id_from_cookie
 
 clubs_bp = Blueprint("clubs", __name__, url_prefix="/api")
@@ -59,22 +60,60 @@ def create_club():
     if not account:
         return jsonify({"message": "Je moet ingelogd zijn om een club te maken"}), 401
 
-    # 2. Haal de naam van de club uit de request van de frontend
-    data = request.get_json()
-    club_name = data.get("name")
+    # 2. Read payload
+    data = request.get_json() or {}
+    club_name = (data.get("name") or "").strip()
 
     if not club_name:
         return jsonify({"message": "Clubnaam is verplicht"}), 400
 
-    # 3. Maak de nieuwe club aan
-    new_club = Club(name=club_name)
+    city = (data.get("city") or "Unknown").strip() or "Unknown"
+    description = (data.get("description") or "Club created by user").strip() or "Club created by user"
+    sport_type_id = data.get("sport_type_id")
+    sport_name = data.get("sport")
 
-    # 4. De Magie: Voeg de maker direct toe als manager! 
-    # SQLAlchemy snapt dit dankzij onze club_owner_club tabel fix.
-    new_club.managers.append(account)
+    # Ensure the account can own clubs: team_manager -> club_owner chain.
+    team_manager = TeamManager.query.filter_by(id=account.id).first()
+    if not team_manager:
+        team_manager = TeamManager(id=account.id)
+        db.session.add(team_manager)
+        db.session.flush()
 
-    # 5. Opslaan in de database
+    club_owner = ClubOwner.query.filter_by(id=account.id).first()
+    if not club_owner:
+        club_owner = ClubOwner(id=account.id)
+        db.session.add(club_owner)
+        db.session.flush()
+
+    # 3. Create club (all required fields present)
+    new_club = Club(
+        name=club_name,
+        description=description,
+        city=city,
+        sport_type_id=sport_type_id,
+    )
+    if not sport_type_id and sport_name:
+        new_club.sport = sport_name
+
     db.session.add(new_club)
+    db.session.flush()
+
+    owner_link = ClubOwnerClub.query.filter_by(club_owner_id=club_owner.id, club_id=new_club.id).first()
+    if not owner_link:
+        db.session.add(
+            ClubOwnerClub(
+                club_owner_id=club_owner.id,
+                club_id=new_club.id,
+                can_rename=True,
+                can_change_description=True,
+                can_manage_match=True,
+                can_add_club_players=True,
+                can_add_club_owners=True,
+                can_add_club_rule=True,
+            )
+        )
+
+    # 5. Persist
     db.session.commit()
 
     return jsonify({

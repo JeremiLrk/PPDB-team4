@@ -3,6 +3,7 @@ import resend
 from pathlib import Path
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, make_response
+from flask import current_app
 
 from server.app.decorators.login_required import login_required
 from server.app.models.account import Account
@@ -74,18 +75,20 @@ def login():
         ),
         200,
     )
-    response.set_cookie("access_token", token, httponly=True, secure=True, samesite="Lax")
+    secure_cookie = current_app.testing or (not current_app.debug and request.is_secure)
+    response.set_cookie("access_token", token, httponly=True, secure=secure_cookie, samesite="Lax")
     return response
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
     response = make_response(jsonify({"message": "Successfully logged out."}), 200)
+    secure_cookie = current_app.testing or (not current_app.debug and request.is_secure)
     response.set_cookie(
         "access_token",
         "",
         expires=0,
         httponly=True,
-        secure=True,
+        secure=secure_cookie,
         samesite="Lax"
     )
     return response

@@ -26,7 +26,7 @@ def reset_database_once():
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def app():
     flask_app = create_app()
     flask_app.config.update(
@@ -35,12 +35,12 @@ def app():
             "SECRET_KEY": "test_secret_key",
         }
     )
+    yield flask_app
 
-    # Weekly proposal tests rely on seeded demo users/teams/ladders.
-    seed_db(flask_app, verbose=False)
 
-    with flask_app.app_context():
-        yield flask_app
+@pytest.fixture(autouse=True)
+def clean_database(app):
+    with app.app_context():
         try:
             db.session.execute(
                 db.text(f"TRUNCATE TABLE {_TEST_TABLES} RESTART IDENTITY CASCADE")
@@ -48,10 +48,23 @@ def app():
             db.session.commit()
         except Exception:
             db.session.rollback()
+            raise
         finally:
             db.session.remove()
+    yield
+
+
+@pytest.fixture
+def seeded_app(app):
+    seed_db(app, verbose=False)
+    return app
 
 
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+@pytest.fixture
+def seeded_client(seeded_app):
+    return seeded_app.test_client()

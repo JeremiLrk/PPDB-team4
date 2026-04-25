@@ -21,12 +21,13 @@ from server.app.services.weekly_match_proposal_service import (
     generate_weekly_match_proposals,
     next_week_start,
 )
+from server.app.services.elo_service import apply_elo_for_match_result
 from server.extensions import db
 
 match_proposals_bp = Blueprint("match_proposals", __name__, url_prefix="/api/matches")
 
 
-def _proposal_payload(proposal: MatchProposal):
+def proposal_payload(proposal: MatchProposal):
     return {
         "id": proposal.id,
         "proposed_by_user_id": proposal.proposed_by_user_id,
@@ -48,7 +49,7 @@ def _proposal_payload(proposal: MatchProposal):
     }
 
 
-def _parse_timestamp(value):
+def parse_timestamp(value):
     if not isinstance(value, str):
         return None
     try:
@@ -63,7 +64,7 @@ def _parse_timestamp(value):
         return None
 
 
-def _parse_date(value):
+def parse_date(value):
     if not isinstance(value, str):
         return None
     try:
@@ -72,17 +73,17 @@ def _parse_date(value):
         return None
 
 
-def _week_start_for(timestamp):
+def week_start_for(timestamp):
     return (timestamp - timedelta(days=timestamp.weekday())).date()
 
 
-def _resolve_status(name):
+def resolve_status(name):
     if not name:
         return None
     return MatchStatus.query.filter(func.lower(MatchStatus.name) == name.lower()).first()
 
 
-def _resolve_managed_team_ids(account):
+def resolve_managed_team_ids(account):
     resolved = account.resolved_role
     if isinstance(resolved, Administrator):
         return None
@@ -105,8 +106,8 @@ def _resolve_managed_team_ids(account):
     return set()
 
 
-def _resolve_visible_team_ids(account):
-    managed_ids = _resolve_managed_team_ids(account)
+def resolve_visible_team_ids(account):
+    managed_ids = resolve_managed_team_ids(account)
     if managed_ids is None:
         return None
 
@@ -118,7 +119,7 @@ def _resolve_visible_team_ids(account):
     return visible_ids
 
 
-def _can_manage_team(account, team):
+def can_manage_team(account, team):
     resolved = account.resolved_role
     if isinstance(resolved, Administrator):
         return True
@@ -134,14 +135,14 @@ def _can_manage_team(account, team):
     return False
 
 
-def _is_player_on_team(account, team):
+def is_player_on_team(account, team):
     return account.player is not None and team in account.player.teams
 
 
-def _can_respond_to_proposal(account, team1, team2):
+def can_respond_to_proposal(account, team1, team2):
     return (
-        (team1 and (_can_manage_team(account, team1) or _is_player_on_team(account, team1)))
-        or (team2 and (_can_manage_team(account, team2) or _is_player_on_team(account, team2)))
+        (team1 and (can_manage_team(account, team1) or is_player_on_team(account, team1)))
+        or (team2 and (can_manage_team(account, team2) or is_player_on_team(account, team2)))
     )
 
 
@@ -169,20 +170,20 @@ def create_match_proposal(account):
     if not team1 or not team2:
         return jsonify({"message": "One or both teams were not found."}), 404
 
-    can_manage_either_team = _can_manage_team(account, team1) or _can_manage_team(account, team2)
+    can_manage_either_team = can_manage_team(account, team1) or can_manage_team(account, team2)
     if not can_manage_either_team:
         return jsonify({"message": "Forbidden: you must manage at least one of the teams."}), 403
 
-    proposed_start_at = _parse_timestamp(data.get("proposed_start_at"))
-    proposed_end_at = _parse_timestamp(data.get("proposed_end_at"))
+    proposed_start_at = parse_timestamp(data.get("proposed_start_at"))
+    proposed_end_at = parse_timestamp(data.get("proposed_end_at"))
     if not proposed_start_at or not proposed_end_at:
         return jsonify({"message": "Invalid timestamp format for proposed_start_at/proposed_end_at."}), 422
     if proposed_start_at >= proposed_end_at:
         return jsonify({"message": "proposed_start_at must be before proposed_end_at."}), 422
 
-    week_start_date = _parse_date(data.get("week_start_date"))
+    week_start_date = parse_date(data.get("week_start_date"))
     if not week_start_date:
-        week_start_date = _week_start_for(proposed_start_at)
+        week_start_date = week_start_for(proposed_start_at)
 
     week_end_date = week_start_date + timedelta(days=6)
     if not (week_start_date <= proposed_start_at.date() <= week_end_date):
@@ -197,7 +198,7 @@ def create_match_proposal(account):
     if team2.sport_type_id and int(sport_type_id) != int(team2.sport_type_id):
         return jsonify({"message": "sport_type_id must match team2 sport type."}), 422
 
-    status_pending = _resolve_status("pending")
+    status_pending = resolve_status("pending")
     if not status_pending:
         return jsonify({"message": "Missing reference data: match status 'pending' was not seeded."}), 500
 
@@ -233,14 +234,14 @@ def create_match_proposal(account):
         db.session.rollback()
         return jsonify({"message": "A proposal for this team pair and week already exists."}), 409
 
-    return jsonify({"proposal": _proposal_payload(proposal)}), 201
+    return jsonify({"proposal": proposal_payload(proposal)}), 201
 
 
 @match_proposals_bp.get("/proposals")
 @login_required
 def list_match_proposals(account):
     query = MatchProposal.query
-    visible_team_ids = _resolve_visible_team_ids(account)
+    visible_team_ids = resolve_visible_team_ids(account)
 
     if visible_team_ids is not None:
         if not visible_team_ids:
@@ -262,7 +263,7 @@ def list_match_proposals(account):
 
     week_start_date = request.args.get("week_start_date")
     if week_start_date:
-        parsed_week = _parse_date(week_start_date)
+        parsed_week = parse_date(week_start_date)
         if not parsed_week:
             return jsonify({"message": "week_start_date must be YYYY-MM-DD."}), 422
         query = query.filter(MatchProposal.week_start_date == parsed_week)
@@ -274,7 +275,7 @@ def list_match_proposals(account):
             MatchProposal.id.asc(),
         ).all()
     )
-    return jsonify({"proposals": [_proposal_payload(proposal) for proposal in proposals], "total": len(proposals)}), 200
+    return jsonify({"proposals": [proposal_payload(proposal) for proposal in proposals], "total": len(proposals)}), 200
 
 
 @match_proposals_bp.post("/proposals/generate-weekly")
@@ -282,7 +283,7 @@ def list_match_proposals(account):
 def generate_weekly_proposals(account):
     data = request.get_json() or {}
 
-    week_start_date = _parse_date(data.get("week_start_date")) if data.get("week_start_date") else next_week_start()
+    week_start_date = parse_date(data.get("week_start_date")) if data.get("week_start_date") else next_week_start()
     if not week_start_date:
         return jsonify({"message": "week_start_date must be YYYY-MM-DD."}), 422
 
@@ -301,7 +302,7 @@ def generate_weekly_proposals(account):
     if duration_minutes <= 0:
         return jsonify({"message": "duration_minutes must be greater than zero."}), 422
 
-    managed_team_ids = _resolve_managed_team_ids(account)
+    managed_team_ids = resolve_managed_team_ids(account)
     result = generate_weekly_match_proposals(
         proposed_by_user_id=account.id,
         week_start_date=week_start_date,
@@ -316,13 +317,13 @@ def generate_weekly_proposals(account):
 @match_proposals_bp.patch("/proposals/<int:proposal_id>/status")
 @login_required
 def update_match_proposal_status(account, proposal_id):
-    proposal = db.session.get(MatchProposal, proposal_id)
+    proposal = MatchProposal.query.filter_by(id=proposal_id).with_for_update().first()
     if not proposal:
         return jsonify({"message": "Match proposal not found."}), 404
 
     team1 = db.session.get(Team, proposal.team1_id)
     team2 = db.session.get(Team, proposal.team2_id)
-    can_respond = _can_respond_to_proposal(account, team1, team2)
+    can_respond = can_respond_to_proposal(account, team1, team2)
     is_proposer = proposal.proposed_by_user_id == account.id
     is_admin = isinstance(account.resolved_role, Administrator)
 
@@ -334,14 +335,16 @@ def update_match_proposal_status(account, proposal_id):
     if not status_name:
         return jsonify({"message": "status is required."}), 422
 
-    next_status = _resolve_status(status_name)
+    next_status = resolve_status(status_name)
     if not next_status:
         return jsonify({"message": f"Unknown status '{status_name}'."}), 422
 
-    proposal.status_id = next_status.id
-    proposal.updated_at = datetime.utcnow()
+    current_status_name = proposal.status.name.lower() if proposal.status else None
 
     normalized_status = next_status.name.lower()
+    if current_status_name == "played" and normalized_status != "played":
+        return jsonify({"message": "Played matches are immutable and cannot change status."}), 409
+
     if normalized_status == "accepted":
         accepted = db.session.get(MatchAccepted, proposal.id)
         if not accepted:
@@ -363,6 +366,11 @@ def update_match_proposal_status(account, proposal_id):
             db.session.add(cancelled)
         cancelled.reason = data.get("reason")
     elif normalized_status == "played":
+        if current_status_name == "played":
+            existing_played = db.session.get(MatchPlayed, proposal.id)
+            if not existing_played:
+                return jsonify({"message": "Proposal is already in played status."}), 409
+
         score_team1 = data.get("score_team1")
         score_team2 = data.get("score_team2")
         if score_team1 is None or score_team2 is None:
@@ -377,18 +385,52 @@ def update_match_proposal_status(account, proposal_id):
         if score_team1 < 0 or score_team2 < 0:
             return jsonify({"message": "Scores must be >= 0."}), 422
 
-        played = db.session.get(MatchPlayed, proposal.id)
-        if not played:
-            played = MatchPlayed(id=proposal.id, score_team1=score_team1, score_team2=score_team2)
-            db.session.add(played)
-        else:
-            played.score_team1 = score_team1
-            played.score_team2 = score_team2
+        parsed_rating = None
         if data.get("rating") is not None:
             try:
-                played.rating = int(data.get("rating"))
+                parsed_rating = int(data.get("rating"))
             except ValueError:
                 return jsonify({"message": "rating must be an integer."}), 422
 
+        existing_played = db.session.get(MatchPlayed, proposal.id)
+        if existing_played:
+            same_result = (
+                existing_played.score_team1 == score_team1
+                and existing_played.score_team2 == score_team2
+                and existing_played.rating == parsed_rating
+            )
+            if same_result:
+                proposal.status_id = next_status.id
+                proposal.updated_at = datetime.utcnow()
+                db.session.commit()
+                return (
+                    jsonify(
+                        {
+                            "proposal": proposal_payload(proposal),
+                            "message": "Result already recorded; treated as idempotent retry.",
+                        }
+                    ),
+                    200,
+                )
+
+            return jsonify({"message": "A different played result already exists for this proposal."}), 409
+
+        played = MatchPlayed(
+            id=proposal.id,
+            score_team1=score_team1,
+            score_team2=score_team2,
+            rating=parsed_rating,
+        )
+        db.session.add(played)
+
+        apply_elo_for_match_result(
+            team1_id=proposal.team1_id,
+            team2_id=proposal.team2_id,
+            score_team1=score_team1,
+            score_team2=score_team2,
+        )
+
+    proposal.status_id = next_status.id
+    proposal.updated_at = datetime.utcnow()
     db.session.commit()
-    return jsonify({"proposal": _proposal_payload(proposal)}), 200
+    return jsonify({"proposal": proposal_payload(proposal)}), 200

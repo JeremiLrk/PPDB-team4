@@ -20,6 +20,7 @@ from server.app.models.match import (
     MatchCancelled,
     MatchStatus,
 )
+from server.app.services.elo_service import apply_elo_for_match_result
 
 
 matches_core_bp = Blueprint("matches_core", __name__)
@@ -237,10 +238,9 @@ def submit_match_result(account: Account, match_id: int) -> tuple[Response, int]
     Allowed for: managers of team1 or team2, Administrator.
     """
     resolved = account.resolved_role
-    proposal = _get_proposal_or_404(match_id)
-
-    if proposal.status_id != MatchStatus.ACCEPTED:
-        abort(409, description=f"Match is not in 'accepted' state (current: {proposal.status.name}).")
+    proposal = MatchProposal.query.filter_by(id=match_id).with_for_update().first()
+    if not proposal:
+        abort(404, description="Match proposal not found.")
 
     team1 = _get_team_or_404(proposal.team1_id)
     team2 = _get_team_or_404(proposal.team2_id)
@@ -261,20 +261,43 @@ def submit_match_result(account: Account, match_id: int) -> tuple[Response, int]
         abort(422, description="Scores must be non-negative.")
 
     rating = data.get("rating")
+    if rating is not None and not isinstance(rating, int):
+        abort(422, description="Field 'rating' must be an integer.")
 
-    # Overwrite existing entry if present, otherwise create new
-    if proposal.played:
-        proposal.played.score_team1 = score_team1
-        proposal.played.score_team2 = score_team2
-        proposal.played.rating      = rating
-    else:
-        played = MatchPlayed(
-            id          = proposal.id,
-            score_team1 = score_team1,
-            score_team2 = score_team2,
-            rating      = rating,
+    if proposal.status_id == MatchStatus.PLAYED:
+        if not proposal.played:
+            abort(409, description="Match is already played.")
+
+        same_result = (
+            proposal.played.score_team1 == score_team1
+            and proposal.played.score_team2 == score_team2
+            and proposal.played.rating == rating
         )
-        db.session.add(played)
+        if same_result:
+            return jsonify({
+                "message": "Result already recorded; treated as idempotent retry.",
+                "match": proposal.to_dict_full(),
+            }), 200
+
+        abort(409, description="A different result is already recorded for this match.")
+
+    if proposal.status_id != MatchStatus.ACCEPTED:
+        abort(409, description=f"Match is not in 'accepted' state (current: {proposal.status.name}).")
+
+    played = MatchPlayed(
+        id=proposal.id,
+        score_team1=score_team1,
+        score_team2=score_team2,
+        rating=rating,
+    )
+    db.session.add(played)
+
+    apply_elo_for_match_result(
+        team1_id=proposal.team1_id,
+        team2_id=proposal.team2_id,
+        score_team1=score_team1,
+        score_team2=score_team2,
+    )
 
     proposal.status_id = MatchStatus.PLAYED
     db.session.commit()
@@ -325,6 +348,4 @@ def cancel_match(account: Account, match_id: int) -> tuple[Response, int]:
         "message": "Match cancelled.",
         "match":   proposal.to_dict_full(),
     }), 200
-
-
 
