@@ -25,7 +25,8 @@ from server.app.routes.team._permissions import (
     _can_delete,
     _can_edit_players,
     _can_edit_managers,
-    _is_admin_or_club_owner_of,
+    _is_admin,
+    _is_owner_of_team_club,
     _get_permissions,
 )
 from server.app.routes.team._helpers import _parse_pagination, _search_accounts
@@ -93,32 +94,37 @@ def _make_assoc(tm: TeamManager, team: Team, *,
     return a
 
 
-
-
-
 # ===========================================================================
 # _permissions.py — unit tests without HTTP
 # ===========================================================================
 
-class TestIsAdminOrClubOwnerOf:
-    """_is_admin_or_club_owner_of(resolved, team)"""
+class TestIsAdmin:
+    """_is_admin(resolved)"""
 
-    def test_administrator_always_true(self, app):
+    def test_administrator_returns_true(self, app):
         with app.app_context():
-            team = _make_team(name="Perm Team 1")
             admin = MagicMock(spec=Administrator)
             admin.__class__ = Administrator
-            assert _is_admin_or_club_owner_of(admin, team) is True
-            db.session.rollback()
+            assert _is_admin(admin) is True
+
+    def test_non_admin_returns_false(self, app):
+        with app.app_context():
+            owner = MagicMock(spec=ClubOwner)
+            owner.__class__ = ClubOwner
+            assert _is_admin(owner) is False
+
+            tm = MagicMock(spec=TeamManager)
+            tm.__class__ = TeamManager
+            assert _is_admin(tm) is False
+
+
+class TestIsOwnerOfTeamClub:
+    """_is_owner_of_team_club(resolved, team)"""
 
     def test_club_owner_with_matching_club_is_true(self, app):
         with app.app_context():
             from server.app.models.club import Club
-            club = Club(
-                name="Test Club Perm",
-                description = "test",
-                city = "Test city"
-            )
+            club = Club(name="Test Club Perm", description="test", city="Test city")
             db.session.add(club)
             db.session.flush()
             team = _make_team(name="Club Perm Team", club_id=club.id)
@@ -127,22 +133,14 @@ class TestIsAdminOrClubOwnerOf:
             owner = MagicMock(spec=ClubOwner)
             owner.__class__ = ClubOwner
             owner.clubs = [club]
-            assert _is_admin_or_club_owner_of(owner, team) is True
+            assert _is_owner_of_team_club(owner, team) is True
             db.session.rollback()
 
-    def test_club_owner_without_club_is_false(self, app):
+    def test_club_owner_of_different_club_is_false(self, app):
         with app.app_context():
             from server.app.models.club import Club
-            club1 = Club(
-                name="Club Owner Has",
-                description = "test",
-                city = "Test city"
-            )
-            club2 = Club(
-                name="Club Team Has",
-                description = "test",
-                city = "Test city"
-            )
+            club1 = Club(name="Club Owner Has", description="test", city="Test city")
+            club2 = Club(name="Club Team Has",  description="test", city="Test city")
             db.session.add_all([club1, club2])
             db.session.flush()
             team = _make_team(name="Not My Club Team", club_id=club2.id)
@@ -151,7 +149,83 @@ class TestIsAdminOrClubOwnerOf:
             owner = MagicMock(spec=ClubOwner)
             owner.__class__ = ClubOwner
             owner.clubs = [club1]
-            assert _is_admin_or_club_owner_of(owner, team) is False
+            assert _is_owner_of_team_club(owner, team) is False
+            db.session.rollback()
+
+    def test_team_without_club_is_false(self, app):
+        with app.app_context():
+            team = _make_team(name="No Club Team")
+            team.club = None
+
+            owner = MagicMock(spec=ClubOwner)
+            owner.__class__ = ClubOwner
+            owner.clubs = []
+            assert _is_owner_of_team_club(owner, team) is False
+            db.session.rollback()
+
+    def test_administrator_is_false(self, app):
+        """_is_owner_of_team_club is strictly about ClubOwner — admins are handled separately."""
+        with app.app_context():
+            team = _make_team(name="Admin Club Check")
+            admin = MagicMock(spec=Administrator)
+            admin.__class__ = Administrator
+            assert _is_owner_of_team_club(admin, team) is False
+            db.session.rollback()
+
+    def test_club_owner_of_other_club_falls_through_to_manager_perms(self, app):
+        """
+        ClubOwner who does NOT own this team's club should fall through
+        to their TeamManager association rights — not be hard-blocked.
+
+        ClubOwner is NOT a Python subclass of TeamManager (shared-PK joined table),
+        so _permissions.py delegates via resolved.team_manager back-reference.
+        We use real DB objects to avoid MRO issues with MagicMock.
+        """
+        with app.app_context():
+            from server.app.models.club import Club
+            from server.app.models.club_owner import ClubOwner as RealClubOwner
+            from server.app.models.club_owner_club import ClubOwnerClub
+
+            club1 = Club(name="Owner Club CO", description="test", city="Test city")
+            club2 = Club(name="Team Club CO",  description="test", city="Test city")
+            db.session.add_all([club1, club2])
+            db.session.flush()
+
+            # Account → TeamManager → ClubOwner (real DB chain)
+            acc = _make_account(email="co_fallthrough@t.com")
+            tm  = _make_team_manager(acc)
+            co  = RealClubOwner(id=tm.id)
+            db.session.add(co)
+            db.session.flush()
+
+            # ClubOwner owns club1, NOT club2
+            co_club = ClubOwnerClub(club_owner_id=co.id, club_id=club1.id)
+            db.session.add(co_club)
+            db.session.flush()
+
+            # Team belongs to club2
+            team = _make_team(name="CO Fallthrough Team", club_id=club2.id)
+            db.session.flush()
+            # Attach the real Club object so team.club is not None
+            team.club = club2
+
+            # Give the underlying TeamManager granular rights on this team
+            _make_assoc(tm, team, can_rename=True, can_delete=False,
+                        can_edit_players=True, can_edit_managers=False)
+
+            # Expire all cached state so relationships load fresh from DB
+            db.session.expire_all()
+            co   = db.session.get(RealClubOwner, tm.id)
+            team = db.session.get(Team, team.id)
+
+            # Sanity: co is a ClubOwner that owns club1 but NOT club2
+            assert _is_owner_of_team_club(co, team) is False
+
+            # Falls through to TeamManager association rights
+            assert _can_rename(co, team)        is True
+            assert _can_delete(co, team)        is False
+            assert _can_edit_players(co, team)  is True
+            assert _can_edit_managers(co, team) is False
             db.session.rollback()
 
 
@@ -173,7 +247,6 @@ class TestCanPermissions:
             db.session.refresh(tm)
 
             assert perm_fn(tm, team) is True
-
 
             assoc = next(a for a in tm.team_associations if a.team_id == team.id)
             setattr(assoc, assoc_kwarg, False)
@@ -328,8 +401,8 @@ class TestGetTeamsByClub:
             from server.app.models.club import Club
             club = Club(
                 name="Test Club By",
-                description = "test",
-                city = "Test city"
+                description="test",
+                city="Test city"
             )
             db.session.add(club)
             db.session.commit()
@@ -349,7 +422,7 @@ class TestCreateTeam:
         assert resp.status_code == 401
 
     @pytest.mark.parametrize("payload,expected_status", [
-        ({},              400),   # no body
+        ({},              400),
         ({"name": ""},    422),
         ({"name": "  "}, 422),
         ({"name": "OK"},  201),
@@ -584,7 +657,6 @@ class TestAddPlayerToTeam:
             tm     = _make_team_manager(acc)
             team   = _make_team(name="Add Player 409")
             _make_assoc(tm, team, can_edit_players=True)
-            # додаємо гравця вручну
             player = Player(id=target.id)
             db.session.add(player)
             db.session.flush()
@@ -727,7 +799,7 @@ class TestAddManagerToTeam:
             tm2    = _make_team_manager(target)
             team   = _make_team(name="Add Mgr 409")
             _make_assoc(tm, team, can_edit_managers=True)
-            _make_assoc(tm2, team)  # target вже менеджер
+            _make_assoc(tm2, team)
             db.session.commit()
             team_id   = team.id
             acc_id    = acc.id

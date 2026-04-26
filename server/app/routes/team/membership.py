@@ -68,9 +68,12 @@ def add_manager_to_team(account: Account, team_id: int) -> tuple[Response, int]:
 @login_required
 def remove_manager_from_team(account: Account, team_id: int, account_id: int):
     """DELETE /api/teams/<team_id>/managers/<account_id>."""
+
+    resolved = account.resolved_role
+
     team = _get_team_or_404(team_id)
 
-    _can_edit_managers_or_403(account.resolved_role, team)
+    _can_edit_managers_or_403(resolved, team)
 
     target = _resolve_target(account_id)
 

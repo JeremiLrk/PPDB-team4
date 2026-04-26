@@ -33,22 +33,38 @@ def _get_manager_assoc(resolved, team: Team) -> TeamManagerTeam | None:
     """
     Returns the TeamManagerTeam record for *resolved* relative to *team*,
     or None if resolved is not a manager of that team.
+
+    ClubOwner is NOT a Python subclass of TeamManager (shared-PK DB relation),
+    so we handle it explicitly via its .team_manager back-reference.
     """
-    if not isinstance(resolved, TeamManager):
-        return None
-    return next(
-        (a for a in resolved.team_associations if a.team_id == team.id),
-        None,
-    )
-
-
-def _is_admin_or_club_owner_of(resolved, team: Team) -> bool:
-    """True if resolved is an Administrator, or a ClubOwner of the team's club."""
-    if isinstance(resolved, Administrator):
-        return True
     if isinstance(resolved, ClubOwner):
-        return team.club is not None and team.club in resolved.clubs
-    return False
+        tm = resolved.team_manager
+        if tm is None:
+            return None
+        return next(
+            (a for a in tm.team_associations if a.team_id == team.id),
+            None,
+        )
+    if isinstance(resolved, TeamManager):
+        return next(
+            (a for a in resolved.team_associations if a.team_id == team.id),
+            None,
+        )
+    return None
+
+
+def _is_admin(resolved) -> bool:
+    """True if resolved is an Administrator."""
+    return isinstance(resolved, Administrator)
+
+
+def _is_owner_of_team_club(resolved, team: Team) -> bool:
+    """True if resolved is a ClubOwner AND owns the club this team belongs to."""
+    return (
+        isinstance(resolved, ClubOwner)
+        and team.club is not None
+        and team.club in resolved.clubs
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -56,32 +72,45 @@ def _is_admin_or_club_owner_of(resolved, team: Team) -> bool:
 # ---------------------------------------------------------------------------
 
 def _can_rename(resolved, team: Team) -> bool:
-    if _is_admin_or_club_owner_of(resolved, team):
+    if _is_admin(resolved) or _is_owner_of_team_club(resolved, team):
         return True
+    # ClubOwner is NOT a Python subclass of TeamManager — delegate via back-ref
+    if isinstance(resolved, ClubOwner):
+        tm = resolved.team_manager
+        return tm is not None and tm.can_rename_team(team)
     if isinstance(resolved, TeamManager):
         return resolved.can_rename_team(team)
     return False
 
 
 def _can_delete(resolved, team: Team) -> bool:
-    if _is_admin_or_club_owner_of(resolved, team):
+    if _is_admin(resolved) or _is_owner_of_team_club(resolved, team):
         return True
+    if isinstance(resolved, ClubOwner):
+        tm = resolved.team_manager
+        return tm is not None and tm.can_delete_team(team)
     if isinstance(resolved, TeamManager):
         return resolved.can_delete_team(team)
     return False
 
 
 def _can_edit_players(resolved, team: Team) -> bool:
-    if _is_admin_or_club_owner_of(resolved, team):
+    if _is_admin(resolved) or _is_owner_of_team_club(resolved, team):
         return True
+    if isinstance(resolved, ClubOwner):
+        tm = resolved.team_manager
+        return tm is not None and tm.can_edit_players_of(team)
     if isinstance(resolved, TeamManager):
         return resolved.can_edit_players_of(team)
     return False
 
 
 def _can_edit_managers(resolved, team: Team) -> bool:
-    if _is_admin_or_club_owner_of(resolved, team):
+    if _is_admin(resolved) or _is_owner_of_team_club(resolved, team):
         return True
+    if isinstance(resolved, ClubOwner):
+        tm = resolved.team_manager
+        return tm is not None and tm.can_edit_managers_of(team)
     if isinstance(resolved, TeamManager):
         return resolved.can_edit_managers_of(team)
     return False
@@ -139,9 +168,9 @@ def _make_team_permission_decorator(check_fn, *, team_id_kwarg: str = "team_id")
     return decorator
 
 
-require_can_rename_team = _make_team_permission_decorator(_can_rename)
-require_can_delete_team = _make_team_permission_decorator(_can_delete)
-require_can_edit_players = _make_team_permission_decorator(_can_edit_players)
+require_can_rename_team   = _make_team_permission_decorator(_can_rename)
+require_can_delete_team   = _make_team_permission_decorator(_can_delete)
+require_can_edit_players  = _make_team_permission_decorator(_can_edit_players)
 require_can_edit_managers = _make_team_permission_decorator(_can_edit_managers)
 
 
@@ -150,7 +179,7 @@ require_can_edit_managers = _make_team_permission_decorator(_can_edit_managers)
 # ---------------------------------------------------------------------------
 
 def _get_permissions(resolved, team: Team) -> dict:
-    if _is_admin_or_club_owner_of(resolved, team):
+    if _is_admin(resolved) or _is_owner_of_team_club(resolved, team):
         return {
             "canRename":       True,
             "canDelete":       True,
