@@ -12,9 +12,11 @@ from werkzeug.security import generate_password_hash
 from server.extensions import db
 from server.app.models.availability_block import AvailabilityBlock
 from server.app.models.sport_type import SportType
+from server.app.models.match_rule import MatchRuleSet
 from server.app.models.account import Account, TeamManager
 from server.app.models.account_role import AccountRole
 from server.app.models.club import Club
+from server.app.models.club_join_request import ClubJoinRequest
 from server.app.models.club_player import ClubPlayer
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
@@ -124,12 +126,34 @@ def make_team(name: str, sport: SportType, club_id=None, verbose: bool = True) -
   return team, True
 
 
-def get_or_create_club(name: str, sport_type_id: int | None = None) -> tuple:
+def get_or_create_club(
+    name: str,
+    sport_type_id: int | None = None,
+    description: str | None = None,
+    city: str | None = None,
+) -> tuple:
   """Returns (club, created: bool)."""
   existing = Club.query.filter_by(name=name).first()
   if existing:
+    updated = False
+    if sport_type_id is not None and existing.sport_type_id != sport_type_id:
+      existing.sport_type_id = sport_type_id
+      updated = True
+    if description is not None and existing.description != description:
+      existing.description = description
+      updated = True
+    if city is not None and existing.city != city:
+      existing.city = city
+      updated = True
+    if updated:
+      db.session.flush()
     return existing, False
-  club = Club(name=name, description="test club", sport_type_id=sport_type_id, city="Antwerp")
+  club = Club(
+    name=name,
+    description=description or "Demo club",
+    sport_type_id=sport_type_id,
+    city=city or "Antwerp",
+  )
   db.session.add(club)
   db.session.flush()
   return club, True
@@ -236,30 +260,80 @@ def ensure_team_players_in_club(team: Team, club: Club) -> int:
 
 
 def ensure_default_ladder_rating_function() -> int:
+  elo = LadderRatingFunction.query.filter(
+    db.func.lower(LadderRatingFunction.name) == "elo"
+  ).first()
+  if elo:
+    return int(elo.id)
+
   existing = LadderRatingFunction.query.order_by(LadderRatingFunction.id.asc()).first()
   if existing:
+    existing.name = "ELO"
+    db.session.flush()
     return int(existing.id)
+
   created = LadderRatingFunction(name="ELO")
   db.session.add(created)
   db.session.flush()
   return int(created.id)
 
 
-def get_or_create_ladder(club_id, name, description, sport_type_id, ladder_rating_function_id) -> tuple:
+def ensure_default_match_ruleset() -> int | None:
+  existing = MatchRuleSet.query.order_by(MatchRuleSet.id.asc()).first()
+  if existing:
+    return int(existing.id)
+  return None
+
+
+def get_or_create_ladder(
+    club_id,
+    name,
+    description,
+    sport_type_id,
+    ladder_rating_function_id,
+    ruleset_id=None,
+) -> tuple:
   existing = Ladder.query.filter_by(club_id=club_id, name=name).first()
   if existing:
+    updated = False
+    if description is not None and existing.description != description:
+      existing.description = description
+      updated = True
+    if sport_type_id is not None and existing.sport_type_id != sport_type_id:
+      existing.sport_type_id = sport_type_id
+      updated = True
+    if ladder_rating_function_id is not None and existing.ladder_rating_function_id != ladder_rating_function_id:
+      existing.ladder_rating_function_id = ladder_rating_function_id
+      updated = True
+    if existing.ruleset_id != ruleset_id:
+      existing.ruleset_id = ruleset_id
+      updated = True
+    if updated:
+      db.session.flush()
     return existing, False
   ladder = Ladder(
     club_id=club_id,
     name=name,
     description=description,
     sport_type_id=sport_type_id,
-    ruleset_id=None,
+    ruleset_id=ruleset_id,
     ladder_rating_function_id=ladder_rating_function_id,
   )
   db.session.add(ladder)
   db.session.flush()
   return ladder, True
+
+
+def upsert_club_join_request(club_id: int, user_id: int, days_ago: int = 0) -> bool:
+  existing = ClubJoinRequest.query.filter_by(club_id=club_id, user_id=user_id).first()
+  requested_at = datetime.datetime.now(datetime.UTC) - datetime.timedelta(days=days_ago)
+  if existing:
+    existing.date = requested_at
+    db.session.flush()
+    return False
+  db.session.add(ClubJoinRequest(club_id=club_id, user_id=user_id, date=requested_at))
+  db.session.flush()
+  return True
 
 
 def get_or_create_ladder_team(ladder_id, team_id, rank, rating, matches_played) -> tuple:
@@ -459,6 +533,7 @@ def seed_teams_and_users(verbose: bool = True):
     basketball = get_or_create_sport("Basketball",  5, 12, verbose)
     volleyball = get_or_create_sport("Volleyball",  6, 14, verbose)
     tennis     = get_or_create_sport("Tennis",      1,  4, verbose)
+    padel      = get_or_create_sport("Padel",       2,  4, verbose)
     hockey     = get_or_create_sport("Hockey",     11, 22, verbose)
   except Exception as e:
     print(f"{TAG} ERROR seeding sport types: {e}")
@@ -644,6 +719,9 @@ def seed_teams_and_users(verbose: bool = True):
   # 6. Demo club + ladders
   log(f"{TAG} [6/6] Seeding demo club data...", verbose)
   try:
+    rating_fn_id = ensure_default_ladder_rating_function()
+    ruleset_id = ensure_default_match_ruleset()
+
     demo_acc, demo_acc_created = make_account(
       "Jeremi",
       "Lorek",
@@ -663,246 +741,154 @@ def seed_teams_and_users(verbose: bool = True):
     demo_owner, demo_owner_created = make_club_owner(demo_tm)
     log(f"{TAG}   demo club_owner {'created' if demo_owner_created else 'already exists'} (id={demo_owner.id})", verbose)
 
-    demo_club, demo_club_created = get_or_create_club("NetRank Club", sport_type_id=tennis.id)
+    assistant_acc, _ = make_account(
+      "Nina",
+      "Jacobs",
+      "nina.jacobs@example.com",
+      role=role_manager,
+    )
+    assistant_tm, _ = make_manager(assistant_acc)
+    assistant_owner, _ = make_club_owner(assistant_tm)
+
+    demo_club, demo_club_created = get_or_create_club(
+      "NetRank Club",
+      sport_type_id=tennis.id,
+      description="Premium club for competitive and academy tennis programs.",
+      city="Antwerp",
+    )
     log(f"{TAG}   demo club {'created' if demo_club_created else 'already exists'} (id={demo_club.id})", verbose)
+    padel_club, _ = get_or_create_club(
+      "Antwerp Padel House",
+      sport_type_id=padel.id,
+      description="Professional padel venue with league and community ladders.",
+      city="Antwerp",
+    )
+    player_demo_club, _ = get_or_create_club(
+      "Player Demo Club",
+      sport_type_id=tennis.id,
+      description="Player-focused club for match request and acceptance demo.",
+      city="Ghent",
+    )
 
     if ensure_owner_of_club(demo_owner, demo_club):
       log(f"{TAG}   linked owner {demo_owner.id} -> club {demo_club.id}", verbose)
+    ensure_owner_of_club(assistant_owner, demo_club)
+    ensure_owner_of_club(demo_owner, padel_club)
+    ensure_owner_of_club(assistant_owner, padel_club)
 
-    men_team,    _ = make_team("NetRank Aces",    tennis, club_id=demo_club.id, verbose=verbose)
+    men_team, _ = make_team("NetRank Aces", tennis, club_id=demo_club.id, verbose=verbose)
     junior_team, _ = make_team("NetRank Juniors", tennis, club_id=demo_club.id, verbose=verbose)
+    challenger_team, _ = make_team("NetRank Challengers", tennis, club_id=demo_club.id, verbose=verbose)
 
     assign_manager_to_team(demo_tm, men_team)
     assign_manager_to_team(demo_tm, junior_team)
+    assign_manager_to_team(assistant_tm, challenger_team)
 
-    rating_fn_id = ensure_default_ladder_rating_function()
-    men_ladder,    _ = get_or_create_ladder(demo_club.id, "Men's Singles", "Demo ladder for men's singles", tennis.id, rating_fn_id)
-    junior_ladder, _ = get_or_create_ladder(demo_club.id, "U14 Singles",   "Demo ladder for U14 singles",   tennis.id, rating_fn_id)
-
-    get_or_create_ladder_team(men_ladder.id,    men_team.id,    rank=1, rating=1260, matches_played=15)
-    get_or_create_ladder_team(men_ladder.id,    junior_team.id, rank=2, rating=1180, matches_played=12)
-    get_or_create_ladder_team(junior_ladder.id, junior_team.id, rank=1, rating=1215, matches_played=10)
-    get_or_create_ladder_team(junior_ladder.id, men_team.id,    rank=2, rating=1100, matches_played=8)
-    log(f"{TAG}   demo ladder standings upserted", verbose)
-
-    demo_week_start = next_week_start()
-    avail_start = datetime.datetime.combine(
-      demo_week_start + datetime.timedelta(days=1),
-      datetime.time(hour=18, minute=0),
-    )
-    avail_end = avail_start + datetime.timedelta(hours=2)
-
-    player_demo_club, _ = get_or_create_club("Player Demo Club", sport_type_id=tennis.id)
-    player_demo_a, _ = make_team("Player Demo A", tennis, club_id=player_demo_club.id, verbose=verbose)
-    player_demo_b, _ = make_team("Player Demo B", tennis, club_id=player_demo_club.id, verbose=verbose)
-
-    player_demo_ladder, _ = get_or_create_ladder(
-      player_demo_club.id,
-      "Player Demo Singles",
-      "Demo ladder where Jeremi is only a player",
-      tennis.id,
-      rating_fn_id,
-    )
-    get_or_create_ladder_team(player_demo_ladder.id, player_demo_a.id, rank=1, rating=1110, matches_played=3)
-    get_or_create_ladder_team(player_demo_ladder.id, player_demo_b.id, rank=2, rating=1090, matches_played=3)
-
-    demo_player, _ = make_player(demo_acc)
-    assign_player_to_team(demo_player, player_demo_a)
-
-    opponent_acc, _ = make_account("Robin", "Vermeulen", "robin.vermeulen@example.com", role_player)
-    opponent_player, _ = make_player(opponent_acc)
-    assign_player_to_team(opponent_player, player_demo_b)
-
-    get_or_create_availability_block(demo_acc.id, avail_start, avail_end)
-    get_or_create_availability_block(
-      opponent_acc.id,
-      avail_start + datetime.timedelta(minutes=30),
-      avail_end,
-    )
-
-    generation_result = generate_weekly_match_proposals(
-      proposed_by_user_id=demo_acc.id,
-      week_start_date=demo_week_start,
-      ladder_id=player_demo_ladder.id,
-      managed_team_ids=None,
-      duration_minutes=60,
-      location="Player Demo Court 1",
-    )
-    reset_proposal_to_pending(
-      week_start_date=demo_week_start,
-      team1_id=player_demo_a.id,
-      team2_id=player_demo_b.id,
-    )
-    log(
-      f"{TAG}   player-demo weekly proposals generated: "
-      f"created={generation_result['created_count']}, skipped={generation_result['skipped_count']}",
-      verbose,
-    )
-
-    demo_week_start = next_week_start()
-    demo_availability_start = datetime.datetime.combine(
-      demo_week_start + datetime.timedelta(days=1),
-      datetime.time(hour=18, minute=0),
-    )
-    demo_availability_end = demo_availability_start + datetime.timedelta(hours=2)
-
-    aces_player_acc, _ = make_account(
-      first="Nora",
-      last="Vandenberg",
-      email="nora.vandenberg@example.com",
-      role=role_player,
-    )
-    juniors_player_acc, _ = make_account(
-      first="Milo",
-      last="Peeters",
-      email="milo.peeters@example.com",
-      role=role_player,
-    )
+    aces_player_acc, _ = make_account("Nora", "Vandenberg", "nora.vandenberg@example.com", role_player)
+    juniors_player_acc, _ = make_account("Milo", "Peeters", "milo.peeters@example.com", role_player)
+    challengers_player_acc, _ = make_account("Lars", "Dekker", "lars.dekker@example.com", role_player)
     ensure_player_on_team(aces_player_acc, men_team)
     ensure_player_on_team(juniors_player_acc, junior_team)
+    ensure_player_on_team(challengers_player_acc, challenger_team)
+    ensure_team_players_in_club(men_team, demo_club)
+    ensure_team_players_in_club(junior_team, demo_club)
+    ensure_team_players_in_club(challenger_team, demo_club)
 
-    club_player_count = 0
-    club_player_count += ensure_team_players_in_club(men_team, demo_club)
-    club_player_count += ensure_team_players_in_club(junior_team, demo_club)
-    print(f"{TAG}   demo club memberships upserted for team players (added={club_player_count})")
+    men_ladder, _ = get_or_create_ladder(
+      demo_club.id,
+      "Men's Singles",
+      "Primary competitive singles ladder using ELO.",
+      tennis.id,
+      rating_fn_id,
+      ruleset_id=ruleset_id,
+    )
+    junior_ladder, _ = get_or_create_ladder(
+      demo_club.id,
+      "U14 Singles",
+      "Junior development ladder with weekly fixtures.",
+      tennis.id,
+      rating_fn_id,
+      ruleset_id=ruleset_id,
+    )
+    get_or_create_ladder_team(men_ladder.id, men_team.id, rank=1, rating=1290, matches_played=18)
+    get_or_create_ladder_team(men_ladder.id, challenger_team.id, rank=2, rating=1230, matches_played=15)
+    get_or_create_ladder_team(men_ladder.id, junior_team.id, rank=3, rating=1190, matches_played=13)
+    get_or_create_ladder_team(junior_ladder.id, junior_team.id, rank=1, rating=1220, matches_played=11)
+    get_or_create_ladder_team(junior_ladder.id, challenger_team.id, rank=2, rating=1160, matches_played=8)
 
-    get_or_create_availability_block(
-      user_id=aces_player_acc.id,
-      start_at=demo_availability_start,
-      end_at=demo_availability_end,
-    )
-    get_or_create_availability_block(
-      user_id=juniors_player_acc.id,
-      start_at=demo_availability_start + datetime.timedelta(minutes=30),
-      end_at=demo_availability_end,
-    )
-    print(
-      f"{TAG}   demo availability added for weekly match generation "
-      f"({demo_availability_start.isoformat()} -> {demo_availability_end.isoformat()})"
-    )
+    padel_alpha, _ = make_team("Antwerp Padel Elite", padel, club_id=padel_club.id, verbose=verbose)
+    padel_bravo, _ = make_team("Scheldt Smashers", padel, club_id=padel_club.id, verbose=verbose)
+    padel_charlie, _ = make_team("South Court Pairs", padel, club_id=padel_club.id, verbose=verbose)
+    assign_manager_to_team(demo_tm, padel_alpha)
+    assign_manager_to_team(assistant_tm, padel_bravo)
+    assign_manager_to_team(assistant_tm, padel_charlie)
 
-    db.session.flush()
-    generation_result = generate_weekly_match_proposals(
-      proposed_by_user_id=demo_acc.id,
-      week_start_date=demo_week_start,
-      ladder_id=men_ladder.id,
-      managed_team_ids=None,
-      duration_minutes=60,
-      location="NetRank Court 1",
-    )
-    reset_demo_match_proposal_to_pending(
-      week_start_date=demo_week_start,
-      team1_id=men_team.id,
-      team2_id=junior_team.id,
-    )
-    print(
-      f"{TAG}   weekly match proposals generated: "
-      f"created={generation_result['created_count']}, skipped={generation_result['skipped_count']}"
-    )
+    padel_player_one, _ = make_account("Emma", "Claes", "emma.claes@example.com", role_player)
+    padel_player_two, _ = make_account("Pieter", "Maes", "pieter.maes@example.com", role_player)
+    padel_player_three, _ = make_account("Sanne", "Verhoeven", "sanne.verhoeven@example.com", role_player)
+    ensure_player_on_team(padel_player_one, padel_alpha)
+    ensure_player_on_team(padel_player_two, padel_bravo)
+    ensure_player_on_team(padel_player_three, padel_charlie)
+    ensure_team_players_in_club(padel_alpha, padel_club)
+    ensure_team_players_in_club(padel_bravo, padel_club)
+    ensure_team_players_in_club(padel_charlie, padel_club)
 
-    old_player_demo_team = Team.query.filter_by(
-      name="NetRank Challengers",
-      club_id=demo_club.id,
-    ).first()
-    if demo_acc.player and old_player_demo_team in demo_acc.player.teams:
-      demo_acc.player.teams.remove(old_player_demo_team)
-      print(f"{TAG}   removed demo player from old owned-club player-only team")
-    if demo_acc.player and men_team in demo_acc.player.teams:
-      demo_acc.player.teams.remove(men_team)
-      print(f"{TAG}   removed demo player from managed NetRank team")
-    if old_player_demo_team:
-      delete_demo_match_proposal(
-        week_start_date=demo_week_start,
-        team1_id=old_player_demo_team.id,
-        team2_id=junior_team.id,
-      )
-
-    player_demo_club, player_demo_club_created = get_or_create_club("Player Demo Club")
-    if player_demo_club_created:
-      print(f"{TAG}   player demo club created (id={player_demo_club.id})")
-    else:
-      print(f"{TAG}   player demo club already exists (id={player_demo_club.id}), skipping")
-
-    player_demo_team, player_demo_team_created = make_team(
-      "Player Demo A",
-      tennis,
-      club_id=player_demo_club.id,
+    padel_ladder, _ = get_or_create_ladder(
+      padel_club.id,
+      "Padel Premier Ladder",
+      "Top padel ladder for advanced doubles teams.",
+      padel.id,
+      rating_fn_id,
+      ruleset_id=ruleset_id,
     )
-    if player_demo_team_created:
-      print(f"{TAG}   team '{player_demo_team.name}' created in player demo club")
-    else:
-      print(f"{TAG}   team '{player_demo_team.name}' already exists in player demo club, skipping")
-
-    player_demo_opponent, player_demo_opponent_created = make_team(
-      "Player Demo B",
-      tennis,
-      club_id=player_demo_club.id,
+    community_padel_ladder, _ = get_or_create_ladder(
+      padel_club.id,
+      "Padel Community Ladder",
+      "Community padel ladder for requests and friendly challenges.",
+      padel.id,
+      rating_fn_id,
+      ruleset_id=ruleset_id,
     )
-    if player_demo_opponent_created:
-      print(f"{TAG}   team '{player_demo_opponent.name}' created in player demo club")
-    else:
-      print(f"{TAG}   team '{player_demo_opponent.name}' already exists in player demo club, skipping")
+    get_or_create_ladder_team(padel_ladder.id, padel_alpha.id, rank=1, rating=1310, matches_played=16)
+    get_or_create_ladder_team(padel_ladder.id, padel_bravo.id, rank=2, rating=1275, matches_played=14)
+    get_or_create_ladder_team(padel_ladder.id, padel_charlie.id, rank=3, rating=1210, matches_played=10)
+    get_or_create_ladder_team(community_padel_ladder.id, padel_bravo.id, rank=1, rating=1185, matches_played=6)
+    get_or_create_ladder_team(community_padel_ladder.id, padel_charlie.id, rank=2, rating=1150, matches_played=5)
 
-    player_demo_ladder, player_demo_ladder_created = get_or_create_ladder(
+    player_demo_team, _ = make_team("Player Demo A", tennis, club_id=player_demo_club.id, verbose=verbose)
+    player_demo_opponent, _ = make_team("Player Demo B", tennis, club_id=player_demo_club.id, verbose=verbose)
+    assign_manager_to_team(assistant_tm, player_demo_team)
+    assign_manager_to_team(assistant_tm, player_demo_opponent)
+
+    player_demo_ladder, _ = get_or_create_ladder(
       club_id=player_demo_club.id,
       name="Player Demo Singles",
-      description="Demo ladder where Jeremi is only a player",
+      description="Demo ladder where Jeremi is only a player.",
       sport_type_id=tennis.id,
       ladder_rating_function_id=rating_fn_id,
+      ruleset_id=ruleset_id,
     )
-    if player_demo_ladder_created:
-      print(f"{TAG}   ladder '{player_demo_ladder.name}' created")
-    else:
-      print(f"{TAG}   ladder '{player_demo_ladder.name}' already exists, skipping")
+    get_or_create_ladder_team(player_demo_ladder.id, player_demo_team.id, rank=1, rating=1110, matches_played=3)
+    get_or_create_ladder_team(player_demo_ladder.id, player_demo_opponent.id, rank=2, rating=1090, matches_played=3)
 
-    get_or_create_ladder_team(
-      ladder_id=player_demo_ladder.id,
-      team_id=player_demo_team.id,
-      rank=1,
-      rating=1110,
-      matches_played=3,
-    )
-    get_or_create_ladder_team(
-      ladder_id=player_demo_ladder.id,
-      team_id=player_demo_opponent.id,
-      rank=2,
-      rating=1090,
-      matches_played=3,
-    )
-
-    opponent_acc, _ = make_account(
-      first="Robin",
-      last="Vermeulen",
-      email="robin.vermeulen@example.com",
-      role=role_player,
-    )
+    opponent_acc, _ = make_account("Robin", "Vermeulen", "robin.vermeulen@example.com", role_player)
     ensure_player_on_team(demo_acc, player_demo_team)
     ensure_player_on_team(opponent_acc, player_demo_opponent)
     ensure_team_players_in_club(player_demo_team, player_demo_club)
     ensure_team_players_in_club(player_demo_opponent, player_demo_club)
 
+    demo_week_start = next_week_start()
     player_demo_weeks = [demo_week_start + datetime.timedelta(days=7 * i) for i in range(3)]
     total_created = 0
     total_skipped = 0
-
     for week_start in player_demo_weeks:
       weekly_start = datetime.datetime.combine(
         week_start + datetime.timedelta(days=1),
         datetime.time(hour=18, minute=0),
       )
       weekly_end = weekly_start + datetime.timedelta(hours=2)
-
-      get_or_create_availability_block(
-        user_id=demo_acc.id,
-        start_at=weekly_start,
-        end_at=weekly_end,
-      )
-      get_or_create_availability_block(
-        user_id=opponent_acc.id,
-        start_at=weekly_start + datetime.timedelta(minutes=15),
-        end_at=weekly_end,
-      )
-
+      get_or_create_availability_block(demo_acc.id, weekly_start, weekly_end)
+      get_or_create_availability_block(opponent_acc.id, weekly_start + datetime.timedelta(minutes=15), weekly_end)
       player_demo_generation_result = generate_weekly_match_proposals(
         proposed_by_user_id=demo_acc.id,
         week_start_date=week_start,
@@ -919,189 +905,40 @@ def seed_teams_and_users(verbose: bool = True):
       total_created += player_demo_generation_result["created_count"]
       total_skipped += player_demo_generation_result["skipped_count"]
 
-    print(
-      f"{TAG}   player-only weekly match proposals generated for {len(player_demo_weeks)} weeks: "
-      f"created={total_created}, skipped={total_skipped}"
+    log(
+      f"{TAG}   player demo proposals generated for {len(player_demo_weeks)} weeks: "
+      f"created={total_created}, skipped={total_skipped}",
+      verbose,
     )
 
-    # Deterministic demo scenarios for manual UI testing with Jeremi's account:
-    # 1) Pending proposal (proposed by opponent) that Jeremi can accept manually.
-    # 2) Already accepted proposal (accepted by opponent) visible in Upcoming Matches.
     if player_demo_weeks:
       pending_week = player_demo_weeks[0]
       accepted_week = player_demo_weeks[1] if len(player_demo_weeks) > 1 else player_demo_weeks[0]
-
-      if set_match_proposal_pending(
+      set_match_proposal_pending(
         week_start_date=pending_week,
         team1_id=player_demo_team.id,
         team2_id=player_demo_opponent.id,
         proposed_by_user_id=opponent_acc.id,
-      ):
-        log(
-          f"{TAG}   ensured pending player-demo request (opponent proposed) for week {pending_week.isoformat()}",
-          verbose,
-        )
-
-      if set_match_proposal_accepted(
+      )
+      set_match_proposal_accepted(
         week_start_date=accepted_week,
         team1_id=player_demo_team.id,
         team2_id=player_demo_opponent.id,
         accepted_by_user_id=opponent_acc.id,
-        response_text="Accepted by opponent for demo upcoming-matches visibility",
-      ):
-        log(
-          f"{TAG}   ensured accepted player-demo request for week {accepted_week.isoformat()}",
-          verbose,
-        )
+        response_text="Accepted by opponent for dashboard upcoming matches demo",
+      )
 
-    # ------------------------------------------------------------------
-    # Additional fictional clubs / ladders / players for richer demo data
-    # ------------------------------------------------------------------
-    typo_acc, _ = make_account(
-      first="Jeremi",
-      last="Lorek",
-      email="jeremilorek@ooutlo.com",
-      role=role_manager,
-      password="qwertyuiop",
-      force_password_update=True,
-    )
-    if not typo_acc.is_verified:
-      typo_acc.is_verified = True
-    typo_tm, _ = make_manager(typo_acc)
-    typo_owner, _ = make_club_owner(typo_tm)
+    owner_requester_one, _ = make_account("Victor", "Reynders", "victor.reynders@example.com", role_player)
+    owner_requester_two, _ = make_account("Noemie", "Aerts", "noemie.aerts@example.com", role_player)
+    owner_requester_three, _ = make_account("Tom", "Lenaerts", "tom.lenaerts@example.com", role_player)
+    make_player(owner_requester_one)
+    make_player(owner_requester_two)
+    make_player(owner_requester_three)
+    upsert_club_join_request(demo_club.id, owner_requester_one.id, days_ago=2)
+    upsert_club_join_request(demo_club.id, owner_requester_two.id, days_ago=1)
+    upsert_club_join_request(padel_club.id, owner_requester_three.id, days_ago=0)
 
-    harbor_club, _ = get_or_create_club("Harbor City Racquet Club", sport_type_id=tennis.id)
-    quayside_club, _ = get_or_create_club("Quayside Smash Society", sport_type_id=tennis.id)
-    summit_club, _ = get_or_create_club("Summit Hoops Collective", sport_type_id=basketball.id)
-
-    ensure_owner_of_club(demo_owner, harbor_club)
-    ensure_owner_of_club(demo_owner, quayside_club)
-    ensure_owner_of_club(typo_owner, harbor_club)
-    ensure_owner_of_club(typo_owner, summit_club)
-
-    harbor_aces, _ = make_team("Harbor Aces", tennis, club_id=harbor_club.id, verbose=verbose)
-    dockside_topspin, _ = make_team("Dockside Topspin", tennis, club_id=harbor_club.id, verbose=verbose)
-    marina_smash, _ = make_team("Marina Smash", tennis, club_id=harbor_club.id, verbose=verbose)
-    pierline_rally, _ = make_team("Pierline Rally", tennis, club_id=harbor_club.id, verbose=verbose)
-
-    quayside_comets, _ = make_team("Quayside Comets", tennis, club_id=quayside_club.id, verbose=verbose)
-    shipyard_spinners, _ = make_team("Shipyard Spinners", tennis, club_id=quayside_club.id, verbose=verbose)
-    tidecourt_titans, _ = make_team("Tidecourt Titans", tennis, club_id=quayside_club.id, verbose=verbose)
-    harborline_blitz, _ = make_team("Harborline Blitz", tennis, club_id=quayside_club.id, verbose=verbose)
-
-    summit_stars, _ = make_team("Summit Stars", basketball, club_id=summit_club.id, verbose=verbose)
-    ridge_runners, _ = make_team("Ridge Runners", basketball, club_id=summit_club.id, verbose=verbose)
-    apex_allstars, _ = make_team("Apex All-Stars", basketball, club_id=summit_club.id, verbose=verbose)
-    terrace_tornadoes, _ = make_team("Terrace Tornadoes", basketball, club_id=summit_club.id, verbose=verbose)
-
-    assign_manager_to_team(demo_tm, harbor_aces)
-    assign_manager_to_team(demo_tm, marina_smash)
-    assign_manager_to_team(typo_tm, dockside_topspin)
-    assign_manager_to_team(typo_tm, summit_stars)
-
-    harbor_open_ladder, _ = get_or_create_ladder(
-      harbor_club.id,
-      "Harbor Open Singles",
-      "Competitive singles ladder for Harbor club",
-      tennis.id,
-      rating_fn_id,
-    )
-    harbor_community_ladder, _ = get_or_create_ladder(
-      harbor_club.id,
-      "Harbor Community Singles",
-      "Community ladder with matchmaking requests",
-      tennis.id,
-      rating_fn_id,
-    )
-    quayside_ladder, _ = get_or_create_ladder(
-      quayside_club.id,
-      "Quayside Sunday Singles",
-      "Sunday challenge ladder",
-      tennis.id,
-      rating_fn_id,
-    )
-    summit_ladder, _ = get_or_create_ladder(
-      summit_club.id,
-      "Summit 5v5 League",
-      "Basketball league ladder",
-      basketball.id,
-      rating_fn_id,
-    )
-
-    get_or_create_ladder_team(harbor_open_ladder.id, harbor_aces.id, rank=1, rating=1325, matches_played=17)
-    get_or_create_ladder_team(harbor_open_ladder.id, dockside_topspin.id, rank=2, rating=1288, matches_played=14)
-    get_or_create_ladder_team(harbor_open_ladder.id, marina_smash.id, rank=3, rating=1245, matches_played=12)
-    get_or_create_ladder_team(harbor_open_ladder.id, pierline_rally.id, rank=4, rating=1205, matches_played=10)
-
-    get_or_create_ladder_team(harbor_community_ladder.id, dockside_topspin.id, rank=1, rating=1170, matches_played=4)
-    get_or_create_ladder_team(harbor_community_ladder.id, marina_smash.id, rank=2, rating=1140, matches_played=4)
-
-    get_or_create_ladder_team(quayside_ladder.id, quayside_comets.id, rank=1, rating=1260, matches_played=9)
-    get_or_create_ladder_team(quayside_ladder.id, shipyard_spinners.id, rank=2, rating=1220, matches_played=9)
-    get_or_create_ladder_team(quayside_ladder.id, tidecourt_titans.id, rank=3, rating=1180, matches_played=8)
-    get_or_create_ladder_team(quayside_ladder.id, harborline_blitz.id, rank=4, rating=1150, matches_played=8)
-
-    get_or_create_ladder_team(summit_ladder.id, summit_stars.id, rank=1, rating=1300, matches_played=11)
-    get_or_create_ladder_team(summit_ladder.id, ridge_runners.id, rank=2, rating=1260, matches_played=11)
-    get_or_create_ladder_team(summit_ladder.id, apex_allstars.id, rank=3, rating=1215, matches_played=10)
-    get_or_create_ladder_team(summit_ladder.id, terrace_tornadoes.id, rank=4, rating=1180, matches_played=10)
-
-    # Ensure both of your accounts are present in club contexts.
-    ensure_player_on_team(demo_acc, harbor_aces)
-    ensure_player_on_team(typo_acc, dockside_topspin)
-
-    rival_acc, _ = make_account(
-      first="Sophie",
-      last="Lambert",
-      email="sophie.lambert@example.com",
-      role=role_player,
-    )
-    ensure_player_on_team(rival_acc, marina_smash)
-
-    ensure_team_players_in_club(harbor_aces, harbor_club)
-    ensure_team_players_in_club(dockside_topspin, harbor_club)
-    ensure_team_players_in_club(marina_smash, harbor_club)
-    ensure_team_players_in_club(pierline_rally, harbor_club)
-
-    request_week = next_week_start()
-    request_start = datetime.datetime.combine(
-      request_week + datetime.timedelta(days=2),
-      datetime.time(hour=19, minute=0),
-    )
-    request_end = request_start + datetime.timedelta(hours=2)
-
-    get_or_create_availability_block(typo_acc.id, request_start, request_end)
-    get_or_create_availability_block(rival_acc.id, request_start + datetime.timedelta(minutes=20), request_end)
-
-    harbor_request_result = generate_weekly_match_proposals(
-      proposed_by_user_id=demo_acc.id,
-      week_start_date=request_week,
-      ladder_id=harbor_community_ladder.id,
-      managed_team_ids=None,
-      duration_minutes=60,
-      location="Harbor Court 2",
-    )
-    reset_proposal_to_pending(
-      week_start_date=request_week,
-      team1_id=dockside_topspin.id,
-      team2_id=marina_smash.id,
-    )
-    if ensure_pending_proposal(
-      week_start_date=request_week,
-      team1_id=dockside_topspin.id,
-      team2_id=marina_smash.id,
-      proposed_by_user_id=demo_acc.id,
-      sport_type_id=tennis.id,
-      proposed_start_at=request_start,
-      proposed_end_at=request_start + datetime.timedelta(minutes=60),
-      location="Harbor Court 2",
-    ):
-      log(f"{TAG}   ensured pending harbor request for Dockside Topspin vs Marina Smash", verbose)
-    log(
-      f"{TAG}   harbor community proposals generated: "
-      f"created={harbor_request_result['created_count']}, skipped={harbor_request_result['skipped_count']}",
-      verbose,
-    )
+    log(f"{TAG}   seeded professional tennis and padel demo clubs with owners, ladders, requests and match flows", verbose)
 
   except Exception as e:
     print(f"{TAG} ERROR seeding demo club data: {e}")

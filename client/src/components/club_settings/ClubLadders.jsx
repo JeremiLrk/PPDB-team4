@@ -3,7 +3,7 @@ import { useSportTypes } from "@/hooks/useSportTypes";
 import styles from "@/style/ClubSettings.module.css";
 
 export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], ruleSets = [] }) {
-    const { sportTypes, loading: sportsLoading } = useSportTypes();
+    const { sportTypes } = useSportTypes();
 
     const [form, setForm] = useState({
         name: "",
