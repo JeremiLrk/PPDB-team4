@@ -22,10 +22,10 @@ const PERMISSION_KEYS = [
 ];
 
 const PERMISSION_FALLBACKS = {
-    canRename:       "Rename team",
-    canDelete:       "Delete team",
-    canEditPlayers:  "Edit players",
-    canEditManagers: "Edit managers",
+    canRename:       "Team hernoemen",
+    canDelete:       "Team verwijderen",
+    canEditPlayers:  "Spelers beheren",
+    canEditManagers: "Beheerders beheren",
 };
 
 /**
@@ -90,8 +90,8 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
 
     return (
         <FormPanel
-            title={t("add_manager_title", "Add Manager")}
-            triggerContent={<><PlusIcon rotated={isOpen} /> {t("add_manager_btn", "Add Manager")}</>}
+            title={t("add_manager_title", "Beheerder toevoegen")}
+            triggerContent={<><PlusIcon rotated={isOpen} /> {t("add_manager_btn", "Beheerder toevoegen")}</>}
 
             isOpen={isOpen}
             openPanel={openPanel}
@@ -105,13 +105,13 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
 
             isLoading={!!addingId}
             isSuccess={isSuccess}
-            successLabel={t("manager_added_success", "Manager added!")}
+            successLabel={t("manager_added_success", "Beheerder toegevoegd!")}
 
-            submitLabel={t("confirm_add_manager", "Add Manager")}
+            submitLabel={t("confirm_add_manager", "Beheerder toevoegen")}
             canNext={step === 1}
 
             error={addErr || searchErr || null}
-            ariaLabel={t("add_manager_aria", "Add manager to team")}
+            ariaLabel={t("add_manager_aria", "Beheerder aan team toevoegen")}
             panelClassName={teamStyles.addPlayerPanel}
         >
             {/* ── Сторінка 0: пошук акаунту ── */}
@@ -122,7 +122,7 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
                         ref={inputRef}
                         className={formStyles.formInput}
                         type="text"
-                        placeholder={t("search_placeholder", "Name, email, or ID…")}
+                        placeholder={t("search_placeholder", "Naam, e-mail of ID…")}
                         value={query}
                         onChange={e => setQuery(e.target.value)}
                     />
@@ -133,13 +133,13 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
 
                 {!query.trim() && (
                     <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
-                        {t("search_hint", "Type to search accounts.")}
+                        {t("search_hint", "Typ om accounts te zoeken.")}
                     </p>
                 )}
 
                 {!searching && !searchErr && query.trim() && results.length === 0 && (
                     <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
-                        {t("no_results", "No accounts found.")}
+                        {t("no_results", "Geen accounts gevonden.")}
                     </p>
                 )}
 
@@ -149,7 +149,7 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
                             <SearchResultCard
                                 key={account.id}
                                 account={account}
-                                selectLabel={t("select_btn", "Select")}
+                                selectLabel={t("select_btn", "Selecteren")}
                                 onSelect={() => selectAccount(account)}
                             />
                         ))}
@@ -163,13 +163,13 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
                 {selected && (
                     <SelectedAccountBadge
                         account={selected}
-                        label={t("selected_account_label", "Adding as manager:")}
+                        label={t("selected_account_label", "Wordt toegevoegd als beheerder:")}
                     />
                 )}
 
                 <p className={`${commonStyles.muted} ${teamStyles.noResults}`}
                    style={{ marginBottom: "0.5rem" }}>
-                    {t("permissions_label", "Permissions for this manager:")}
+                    {t("permissions_label", "Rechten voor deze beheerder:")}
                 </p>
 
                 <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>

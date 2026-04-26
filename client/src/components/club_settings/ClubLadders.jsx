@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSportTypes } from "@/hooks/useSportTypes"; 
 import styles from "@/style/ClubSettings.module.css";
 
-export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], ruleSets = [] }) {
+export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], ruleSets = [], texts = {} }) {
     const { sportTypes } = useSportTypes();
 
     const [form, setForm] = useState({
@@ -25,7 +25,7 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
     const handleCreate = async () => {
         // Basic validation
         if (!form.name.trim() || !form.sport_type_id || !form.rule_set_id || !form.ladder_rating_function_id) {
-            alert("Please fill in all required fields");
+            alert(texts.fill_all_required_fields || "Vul alle verplichte velden in.");
             return;
         }
 
@@ -47,20 +47,20 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
     return (
         <div className={`${styles.contentGrid} ${styles.contentFade}`}>
             <article className={styles.panel}>
-                <h3 className={styles.panelTitle}>Create Ladder</h3>
+                <h3 className={styles.panelTitle}>{texts.ladder_create_title || "Ladder aanmaken"}</h3>
 
                 <div className={styles.form}>
                     <input
                         className={styles.formInput}
                         name="name"
-                        placeholder="Ladder name"
+                        placeholder={texts.ladder_name_placeholder || "Laddernaam"}
                         value={form.name}
                         onChange={handleChange}
                     />
 
                     {/* Sport Type Dropdown */}
                     <select className={styles.formInput} name="sport_type_id" value={form.sport_type_id} onChange={handleChange}>
-                        <option value="" disabled>Select Sport Type</option>
+                        <option value="" disabled>{texts.choose_sport_type || "Kies een sporttype"}</option>
                         {sportTypes.map(s => (
                             <option key={s.id} value={s.id}>{s.name}</option>
                         ))}
@@ -68,7 +68,7 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
 
                     {/* Rule Set Dropdown - User sees Name, Form gets ID */}
                     <select className={styles.formInput} name="rule_set_id" value={form.rule_set_id} onChange={handleChange}>
-                        <option value="" disabled>Select Rule Set</option>
+                        <option value="" disabled>{texts.choose_rule_set || "Kies een regelset"}</option>
                         {ruleSets.map(r => (
                             <option key={r.id} value={r.id}>{r.name}</option>
                         ))}
@@ -76,7 +76,7 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
 
                     {/* Rating Function Dropdown - User sees Name, Form gets ID */}
                     <select className={styles.formInput} name="ladder_rating_function_id" value={form.ladder_rating_function_id} onChange={handleChange}>
-                        <option value="" disabled>Select Rating System</option>
+                        <option value="" disabled>{texts.choose_rating_function || "Kies ratingsysteem"}</option>
                         {ratingFunctions.map(rf => (
                             <option key={rf.id} value={rf.id}>{rf.name}</option>
                         ))}
@@ -85,7 +85,7 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
                     <textarea
                         className={styles.formTextarea}
                         name="description"
-                        placeholder="Description"
+                        placeholder={texts.ladder_description_placeholder || "Omschrijving"}
                         value={form.description}
                         onChange={handleChange}
                         rows={3}
@@ -96,17 +96,17 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
                         onClick={handleCreate}
                         disabled={submitting}
                     >
-                        {submitting ? "Creating..." : "Create Ladder"}
+                        {submitting ? (texts.creating_ladder || "Aanmaken...") : (texts.create_ladder || "Ladder aanmaken")}
                     </button>
                 </div>
             </article>
 
             {/* List */}
             <article className={styles.panel}>
-                <h3 className={styles.panelTitle}>Ladders</h3>
+                <h3 className={styles.panelTitle}>{texts.ladders_title || "Ladders"}</h3>
 
                 {ladders.length === 0 ? (
-                    <p className={styles.muted}>No ladders yet.</p>
+                    <p className={styles.muted}>{texts.no_ladders || "Nog geen ladders."}</p>
                 ) : (
                     <ul className={styles.list}>
                         {ladders.map(l => (
@@ -114,7 +114,7 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
                                 <div>
                                     <p className={styles.primaryText}>{l.name}</p>
                                     <p className={styles.secondaryText}>
-                                        {l.description || "No description"}
+                                        {l.description || texts.no_ladder_description || "Geen omschrijving"}
                                     </p>
                                 </div>
                             </li>

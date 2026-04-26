@@ -10,6 +10,8 @@ export default function MatchProposalList({
     submitting,
     onReload,
     onStatusChange,
+    texts = {},
+    statusTexts = {},
 }) {
     return (
         <>
@@ -17,15 +19,15 @@ export default function MatchProposalList({
                 <div style={{ display: "grid", gap: "0.7rem" }}>
                     <p className={commonStyles.muted}>{error}</p>
                     <button className={buttonStyles.primaryButton} type="button" onClick={onReload}>
-                        Retry
+                        {texts.retry || "Retry"}
                     </button>
                 </div>
             ) : null}
 
-            {loading ? <p className={commonStyles.muted}>Loading match proposals...</p> : null}
+            {loading ? <p className={commonStyles.muted}>{texts.loading || "Match proposals loading..."}</p> : null}
 
             {!loading && !error && proposals.length === 0 ? (
-                <p className={commonStyles.muted}>No match proposals yet.</p>
+                <p className={commonStyles.muted}>{texts.empty || "No match proposals yet."}</p>
             ) : null}
 
             {!loading && proposals.length > 0 ? (
@@ -36,6 +38,8 @@ export default function MatchProposalList({
                             proposal={proposal}
                             disabled={submitting}
                             onStatusChange={onStatusChange}
+                            texts={texts}
+                            statusTexts={statusTexts}
                         />
                     ))}
                 </ul>

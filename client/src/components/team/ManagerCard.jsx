@@ -1,6 +1,8 @@
 import commonStyles      from "@/style/common/Common.module.css";
 import ItemCard           from "@/components/common/ItemCard.jsx";
 import DeleteManagerButton from "@/components/team/DeleteManagerButton.jsx";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 /**
  * ManagerCard — one line of the manager in the team list.
@@ -12,6 +14,8 @@ import DeleteManagerButton from "@/components/team/DeleteManagerButton.jsx";
  * onDeleted — callback after deletion
  */
 export default function ManagerCard({ manager, teamId, canDelete, onDeleted }) {
+    const { lang } = useLangContext();
+    const texts = usePageTexts("team_settings", lang);
     const fullName = [manager.firstName, manager.lastName]
         .filter(Boolean).join(" ") || "-";
 
@@ -29,7 +33,7 @@ export default function ManagerCard({ manager, teamId, canDelete, onDeleted }) {
                 flexShrink: 0,
             }}>
                 {/* Бейдж прав — компактний список */}
-                <PermissionsBadge permissions={manager.permissions} />
+                <PermissionsBadge permissions={manager.permissions} texts={texts} />
 
                 <span className={commonStyles.muted}
                       style={{ fontSize: "0.78rem", whiteSpace: "nowrap" }}>
@@ -51,13 +55,13 @@ export default function ManagerCard({ manager, teamId, canDelete, onDeleted }) {
 /* -- Minimalist badge with rights icons -------------------------------- */
 
 const PERM_ICONS = [
-    { key: "canRename",       icon: "✏️", title: "Can rename"        },
-    { key: "canDelete",       icon: "🗑️", title: "Can delete"        },
-    { key: "canEditPlayers",  icon: "👥", title: "Can edit players"  },
-    { key: "canEditManagers", icon: "🔑", title: "Can edit managers" },
+    { key: "canRename",       icon: "✏️", textKey: "perm_can_rename" },
+    { key: "canDelete",       icon: "🗑️", textKey: "perm_can_delete" },
+    { key: "canEditPlayers",  icon: "👥", textKey: "perm_can_edit_players" },
+    { key: "canEditManagers", icon: "🔑", textKey: "perm_can_edit_managers" },
 ];
 
-function PermissionsBadge({ permissions }) {
+function PermissionsBadge({ permissions, texts = {} }) {
     if (!permissions) return null;
 
     return (
@@ -66,10 +70,10 @@ function PermissionsBadge({ permissions }) {
             gap:          "0.15rem",
             alignItems:   "center",
         }}>
-            {PERM_ICONS.map(({ key, icon, title }) => (
+            {PERM_ICONS.map(({ key, icon, textKey }) => (
                 <span
                     key={key}
-                    title={title}
+                    title={texts[textKey] || ""}
                     style={{
                         fontSize:  "0.78rem",
                         opacity:   permissions[key] ? 1 : 0.2,

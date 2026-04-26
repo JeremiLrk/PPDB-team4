@@ -4,6 +4,7 @@ from flask.testing import FlaskClient
 
 from server.app.models.account import Account
 from server.app.models.ladder import Ladder
+from server.app.services.availability_service import list_blocks_for_user
 from server.app.services.weekly_match_proposal_service import (
     generate_weekly_match_proposals,
     next_week_start,
@@ -37,6 +38,21 @@ def test_weekly_availability_round_trip(seeded_client: FlaskClient):
     assert list_response.status_code == 200
     availability = list_response.get_json()["availability"]
     assert any(item["weekday"] == 2 and item["start_time"] == "18:00" for item in availability)
+
+
+def test_seeded_demo_availability_uses_weekly_recurrence(seeded_app):
+    with seeded_app.app_context():
+        account = Account.query.filter_by(email="jeremilorek@outlook.com").first()
+        assert account is not None
+
+        blocks = list_blocks_for_user(account.id)
+        assert blocks
+        assert any(
+            block["weekday"] is not None
+            and block["start_time"] is not None
+            and block["end_time"] is not None
+            for block in blocks
+        )
 
 
 def test_weekly_availability_still_drives_match_generation(seeded_app):

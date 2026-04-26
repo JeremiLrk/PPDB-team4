@@ -4,6 +4,8 @@ import { Field }     from "@/components/forms/Field.jsx";
 import { PencilIcon } from "@/components/icon/PencilIcon.jsx";
 import { useRenameTeam } from "@/hooks/teams/useRenameTeam.js";
 import styles from "@/style/common/Forms.module.css";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 /**
  * RenameTeamButton — pencil icon that opens a rename panel.
@@ -14,6 +16,8 @@ import styles from "@/style/common/Forms.module.css";
  *   onRenamed   {(team: object) => void}
  */
 export default function RenameTeamButton({ teamId, currentName, onRenamed }) {
+    const { lang } = useLangContext();
+    const texts = usePageTexts("team_settings", lang);
     const {
         newName, setNewName,
         step,
@@ -25,7 +29,7 @@ export default function RenameTeamButton({ teamId, currentName, onRenamed }) {
 
     return (
         <FormPanel
-            title="Rename Team"
+            title={texts.rename_team_title || "Rename Team"}
             triggerContent={<PencilIcon />}
 
             isOpen={isOpen}
@@ -40,14 +44,14 @@ export default function RenameTeamButton({ teamId, currentName, onRenamed }) {
 
             isLoading={isLoading}
             isSuccess={isSuccess}
-            successLabel="Team renamed!"
+            successLabel={texts.rename_team_success || "Team renamed!"}
             error={error}
 
-            submitLabel="Rename"
+            submitLabel={texts.rename_team_submit || "Rename"}
             canNext={canSubmit}
         >
             <FormPage active={!isSuccess}>
-                <Field label="New Name">
+                <Field label={texts.rename_team_new_name || "New Name"}>
                     <input
                         className={styles.formInput}
                         type="text"

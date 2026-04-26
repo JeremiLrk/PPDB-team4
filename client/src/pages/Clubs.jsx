@@ -3,11 +3,15 @@ import styles from "@/style/Clubs.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import useClubs from "@/hooks/useClubs";
 import { useSportTypes } from "@/hooks/useSportTypes";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 function Clubs() {
   const navigate = useNavigate();
+  const { lang } = useLangContext();
+  const texts = usePageTexts("clubs", lang);
   const { clubs = [], loading: clubsLoading, error: clubsError } = useClubs();
-  const { sportTypes = [], loading: sportsLoading, error: sportsError } = useSportTypes();
+  const { sportTypes = [], error: sportsError } = useSportTypes();
 
   const loading = clubsLoading;
   const error = clubsError;
@@ -15,14 +19,14 @@ function Clubs() {
   if (loading) {
     return (
       <section className={styles.container}>
-        <p className={commonStyles.info}>Clubs laden...</p>
+        <p className={commonStyles.info}>{texts.loading || "Loading clubs..."}</p>
       </section>
     );
   }
   return (
     <section className={styles.container}>
-      <h2 className={styles.title}>All Clubs</h2>
-      <p className={styles.subtitle}>Kies een club om de club-homepage te openen, of start je eigen club!</p>
+      <h2 className={styles.title}>{texts.title || "All clubs"}</h2>
+      <p className={styles.subtitle}>{texts.subtitle || "Choose a club to open the club homepage, or start your own club!"}</p>
 
       {error ? <p className={commonStyles.error}>{error}</p> : null}
       {sportsError ? <p className={commonStyles.error}>{sportsError}</p> : null}
@@ -42,7 +46,10 @@ function Clubs() {
                   className={styles.clubButton}
                 >
                   <span className={styles.clubName}>{club.name}</span>
-                  <span>{club.city}</span>
+                  <div className={styles.clubMeta}>
+                    <span>{club.city || texts.unknown_city || "Unknown city"}</span>
+                    <span>{club.sport || texts.sport_not_set || "Sport not set"}</span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -57,7 +64,10 @@ function Clubs() {
               className={styles.clubButton}
             >
               <span className={styles.clubName}>{club.name}</span>
-              <span>{club.city}</span>
+              <div className={styles.clubMeta}>
+                <span>{club.city || texts.unknown_city || "Unknown city"}</span>
+                <span>{club.sport || texts.sport_not_set || "Sport not set"}</span>
+              </div>
             </button>
           ))}
         </div>

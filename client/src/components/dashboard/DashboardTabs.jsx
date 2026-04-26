@@ -30,18 +30,18 @@ function formatLocalTimestamp(value) {
 }
 
 const WEEKDAY_LABELS = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
+    "Maandag",
+    "Dinsdag",
+    "Woensdag",
+    "Donderdag",
+    "Vrijdag",
+    "Zaterdag",
+    "Zondag",
 ]
 
 function formatWeeklyAvailability(block) {
     const weekdayIndex = Number(block?.weekday)
-    const weekdayLabel = block?.weekday_label || WEEKDAY_LABELS[weekdayIndex] || "Day"
+    const weekdayLabel = block?.weekday_label || WEEKDAY_LABELS[weekdayIndex] || "Dag"
     const startTime = block?.start_time || "--:--"
     const endTime = block?.end_time || "--:--"
 
@@ -75,10 +75,10 @@ function formatUpcomingMatchDate(match, texts) {
     }
 
     if (match?.weekStartDate) {
-        return `${texts?.week_of || "Week of"} ${match.weekStartDate}`
+        return `${texts?.week_of || "Week van"} ${match.weekStartDate}`
     }
 
-    return texts?.date_tbd || "Date/time TBD"
+    return texts?.date_tbd || "Datum/tijd volgt"
 }
 
 const styles = { ...formStyles, ...commonStyles, ...dashStyles };
@@ -135,7 +135,7 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                 type: "error",
                 text:
                     texts?.profile_required_fields ||
-                    "First name and last name are required.",
+                    "Voornaam en achternaam zijn verplicht.",
             });
             return;
         }
@@ -160,7 +160,7 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                 throw new Error(
                     body?.message ||
                         texts?.profile_update_failed ||
-                        "Could not update profile.",
+                        "Profiel kon niet worden bijgewerkt.",
                 );
             }
 
@@ -173,7 +173,7 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                 type: "success",
                 text:
                     texts?.profile_updated_success ||
-                    "Profile updated successfully.",
+                    "Profiel succesvol bijgewerkt.",
             });
         } catch (error) {
             setMessage({
@@ -181,7 +181,7 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                 text:
                     error?.message ||
                     texts?.profile_update_failed ||
-                    "Could not update profile.",
+                    "Profiel kon niet worden bijgewerkt.",
             });
         } finally {
             setSubmitting(false);
@@ -197,7 +197,7 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                 type: "error",
                 text:
                     texts?.current_and_new_password_required ||
-                    "Current password and new password are required.",
+                    "Huidig wachtwoord en nieuw wachtwoord zijn verplicht.",
             });
             return;
         }
@@ -207,7 +207,7 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                 type: "error",
                 text:
                     texts?.passwords_do_not_match ||
-                    "Passwords do not match.",
+                    "Wachtwoorden komen niet overeen.",
             });
             return;
         }
@@ -236,7 +236,7 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                 throw new Error(
                     body?.message ||
                         texts?.password_update_failed ||
-                        "Could not update password.",
+                        "Wachtwoord kon niet worden bijgewerkt.",
                 );
             }
 
@@ -249,7 +249,7 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                 type: "success",
                 text:
                     texts?.password_updated_success ||
-                    "Password updated successfully.",
+                    "Wachtwoord succesvol bijgewerkt.",
             });
         } catch (error) {
             setPasswordMessage({
@@ -257,7 +257,7 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                 text:
                     error?.message ||
                     texts?.password_update_failed ||
-                    "Could not update password.",
+                    "Wachtwoord kon niet worden bijgewerkt.",
             });
         } finally {
             setPasswordSubmitting(false);
@@ -265,89 +265,91 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
     }
 
     return (
-        <article className={`${styles.panel} ${styles.contentFade}`}>
-            <h3 className={styles.panelTitle}>
-                {texts?.profile_title || "My Profile"}
-            </h3>
-            <p className={styles.muted}>
-                {texts?.profile_description ||
-                    "Update your personal information."}
-            </p>
-
-            <form className={styles.form} onSubmit={onSubmit}>
-                <div className={styles.formRow}>
-                    <label className={styles.formLabel}>
-                        {texts?.first_name || "First name"}
-                        <input
-                            className={styles.formInput}
-                            type="text"
-                            name="firstName"
-                            value={form.firstName}
-                            onChange={onFieldChange}
-                            required
-                        />
-                    </label>
-
-                    <label className={styles.formLabel}>
-                        {texts?.last_name || "Last name"}
-                        <input
-                            className={styles.formInput}
-                            type="text"
-                            name="lastName"
-                            value={form.lastName}
-                            onChange={onFieldChange}
-                            required
-                        />
-                    </label>
-                </div>
-
-                <div className={styles.formRow}>
-                    <label className={styles.formLabel}>
-                        {texts?.email || "Email"}
-                        <input
-                            className={styles.formInput}
-                            type="email"
-                            value={currentUser?.email || ""}
-                            disabled
-                        />
-                    </label>
-
-                    <label className={styles.formLabel}>
-                        {texts?.date_of_birth || "Date of birth"}
-                        <input
-                            className={styles.formInput}
-                            type="date"
-                            name="dateOfBirth"
-                            value={form.dateOfBirth || ""}
-                            onChange={onFieldChange}
-                        />
-                    </label>
-                </div>
-
-                <div className={styles.formActions}>
-                    <button
-                        className={styles.submitButton}
-                        type="submit"
-                        disabled={submitting}
-                    >
-                        {submitting
-                            ? texts?.saving || "Saving..."
-                            : texts?.save_changes || "Save changes"}
-                    </button>
-                </div>
-            </form>
-
-            {message.text ? (
-                <p
-                    className={`${styles.notice} ${
-                        message.type === "error"
-                            ? styles.noticeError
-                            : styles.noticeSuccess
-                    }`}
-                >
-                    {message.text}
+        <div className={`${styles.profileStack} ${styles.contentFade}`}>
+            <article className={styles.panel}>
+                <h3 className={styles.panelTitle}>
+                    {texts?.profile_title || "My Profile"}
+                </h3>
+                <p className={styles.muted}>
+                    {texts?.profile_description ||
+                        "Update your personal information."}
                 </p>
-            ) : null}
+
+                <form className={styles.form} onSubmit={onSubmit}>
+                    <div className={styles.formRow}>
+                        <label className={styles.formLabel}>
+                            {texts?.first_name || "First name"}
+                            <input
+                                className={styles.formInput}
+                                type="text"
+                                name="firstName"
+                                value={form.firstName}
+                                onChange={onFieldChange}
+                                required
+                            />
+                        </label>
+
+                        <label className={styles.formLabel}>
+                            {texts?.last_name || "Last name"}
+                            <input
+                                className={styles.formInput}
+                                type="text"
+                                name="lastName"
+                                value={form.lastName}
+                                onChange={onFieldChange}
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <div className={styles.formRow}>
+                        <label className={styles.formLabel}>
+                            {texts?.email || "Email"}
+                            <input
+                                className={styles.formInput}
+                                type="email"
+                                value={currentUser?.email || ""}
+                                disabled
+                            />
+                        </label>
+
+                        <label className={styles.formLabel}>
+                            {texts?.date_of_birth || "Date of birth"}
+                            <input
+                                className={styles.formInput}
+                                type="date"
+                                name="dateOfBirth"
+                                value={form.dateOfBirth || ""}
+                                onChange={onFieldChange}
+                            />
+                        </label>
+                    </div>
+
+                    <div className={styles.formActions}>
+                        <button
+                            className={styles.submitButton}
+                            type="submit"
+                            disabled={submitting}
+                        >
+                            {submitting
+                                ? texts?.saving || "Saving..."
+                                : texts?.save_changes || "Save changes"}
+                        </button>
+                    </div>
+                </form>
+
+                {message.text ? (
+                    <p
+                        className={`${styles.notice} ${
+                            message.type === "error"
+                                ? styles.noticeError
+                                : styles.noticeSuccess
+                        }`}
+                    >
+                        {message.text}
+                    </p>
+                ) : null}
+            </article>
 
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>
@@ -420,13 +422,19 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                     </p>
                 ) : null}
             </article>
-        </article>
+        </div>
     );
 }
 
 //  Overview Tab
 
-export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, clubCreationRequests, texts }) {
+export function OverviewTab({
+    myClubs,
+    myRequests,
+    pendingJoinRequestClubIds,
+    incomingJoinRequests,
+    texts,
+}) {
     return (
         <div className={`${styles.contentGrid} ${styles.contentFade}`}>
             <article className={styles.panel}>
@@ -447,7 +455,7 @@ export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, cl
                                         </p>
                                     </div>
                                     <Link className={styles.linkButton} to={`/clubs/${clubId}`}>
-                                        {texts?.open || "Open"}
+                                        {texts?.open || "Openen"}
                                     </Link>
                                 </li>
                             );
@@ -457,21 +465,23 @@ export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, cl
             </article>
 
             <article className={styles.panel}>
-                <h3 className={styles.panelTitle}>{texts?.quick_highlights || "Quick Highlights"}</h3>
+                <h3 className={styles.panelTitle}>{texts?.quick_highlights || "Request Overview"}</h3>
                 <div className={styles.metrics}>
                     <div className={styles.metricCard}>
-                        <p className={styles.metricLabel}>{texts?.join_requests || "Join requests"}</p>
+                        <p className={styles.metricLabel}>{texts?.requests_i_sent || "Requests I sent"}</p>
                         <p className={styles.metricValue}>{myRequests.length}</p>
                     </div>
                     <div className={styles.metricCard}>
-                        <p className={styles.metricLabel}>{texts?.pending_join_requests || "Pending join requests"}</p>
+                        <p className={styles.metricLabel}>
+                            {texts?.pending_join_requests || "Aanvraag in afwachting van clubgoedkeuring"}
+                        </p>
                         <p className={styles.metricValue}>{pendingJoinRequestClubIds.size}</p>
                     </div>
                     <div className={styles.metricCard}>
                         <p className={styles.metricLabel}>
-                            {texts?.club_registration_requests || "Club registration requests"}
+                            {texts?.incoming_join_requests || "Incoming requests to review"}
                         </p>
-                        <p className={styles.metricValue}>{clubCreationRequests.length}</p>
+                        <p className={styles.metricValue}>{incomingJoinRequests.length}</p>
                     </div>
                 </div>
             </article>
@@ -508,12 +518,12 @@ export function SearchTab({
                 aria-label={texts?.search_clubs || "Search clubs"}
             />
 
-            {discoverLoading ? <p className={styles.muted}>{texts?.loading_clubs || "Loading clubs..."}</p> : null}
+            {discoverLoading ? <p className={styles.muted}>{texts?.loading_clubs || "Clubs laden..."}</p> : null}
             {discoverError ? <p className={styles.warning}>{discoverError}</p> : null}
 
             {!discoverLoading && !discoverError ? (
                 filteredDiscoverClubs.length === 0 ? (
-                    <p className={styles.muted}>{texts?.no_clubs_found || "No clubs found."}</p>
+                    <p className={styles.muted}>{texts?.no_clubs_found || "Geen clubs gevonden."}</p>
                 ) : (
                     <div className={styles.discoverGrid}>
                         {filteredDiscoverClubs.map((club) => {
@@ -528,13 +538,13 @@ export function SearchTab({
                                     <div className={styles.actionRow}>
                                         {isJoined ? (
                                             <span className={`${styles.statusPill} ${styles.statusApproved}`}>
-                                                {texts?.joined || "Joined"}
+                                                {texts?.joined || "Lid"}
                                             </span>
                                         ) : null}
 
                                         {!isJoined && hasPendingRequest ? (
                                             <span className={`${styles.statusPill} ${styles.statusPending}`}>
-                                                {texts?.status_pending || "Pending"}
+                                                {texts?.status_pending || "In afwachting"}
                                             </span>
                                         ) : null}
 
@@ -543,7 +553,7 @@ export function SearchTab({
                                                     className={styles.primaryButton}
                                                     type="button"
                                                     onClick={(e) => {clubJoinrequest(clubId);e.currentTarget.disabled = true;}}>
-                                                    {texts?.request_to_join || "Request to Join"}
+                                                    {texts?.request_to_join || "Lidmaatschap aanvragen"}
                                                 </button>
                                         ) : null}
                                     </div>
@@ -704,7 +714,6 @@ export function ManageClubsTab({
     if (!isClubOwner && ownedClubs.length === 0) {
         return (
             <div className={styles.panel} style={{ textAlign: 'center', padding: '40px' }}>
-                <h3 className={styles.panelTitle}>{texts?.manage_clubs_title || "Club Administration"}</h3>
                 <p className={styles.muted}>
                     {texts?.no_clubs_owned || "You don't own any clubs yet."}
                 </p>
@@ -713,92 +722,88 @@ export function ManageClubsTab({
     }
 
     return (
-        <div className={`${commonStyles.noStylePleaseFixMe} ${styles.contentFade}`}>
-            <h2 className={styles.panelTitle}>{texts?.manage_clubs_title || "Club Administration"}</h2>
+        <div className={`${styles.contentFade} ${styles.manageClubsLayout}`}>
+            <article className={styles.panel}>
+                <div className={styles.panelTopRow}>
+                    <h3 className={styles.panelTitle}>{texts?.your_clubs || "Jouw eigen clubs"}</h3>
+                    <span className={styles.counter}>{ownedClubs.length}</span>
+                </div>
 
-            <div className={commonStyles.noStylePleaseFixMe}>
-                <section className={commonStyles.noStylePleaseFixMe}>
-                    <article className={styles.panel}>
-                        <h3 className={styles.panelTitle}>{texts?.your_clubs || "Your Owned Clubs"}</h3>
+                {ownedClubs.length === 0 ? (
+                    <p className={styles.muted}>{texts?.no_clubs_owned || "You don't own any clubs yet."}</p>
+                ) : (
+                    <ul className={styles.list}>
+                        {ownedClubs.map(club => (
+                            <li key={club.id} className={styles.listItem}>
+                                <div>
+                                    <p className={styles.primaryText}>{club.name}</p>
+                                    <p className={styles.secondaryText}>
+                                        {club.city || texts?.unknown_city || "Unknown city"}
+                                        {club.sport || club.sport_type_id ? ` · ${club.sport || `${texts?.sport_prefix || "Sport"} #${club.sport_type_id}`}` : ""}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => onGoSettings(club.id)}
+                                    className={styles.linkButton}
+                                >
+                                    {texts?.settings || "Settings"}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </article>
 
-                        {ownedClubs.length === 0 ? (
-                            <p className={styles.muted}>You haven't been assigned as an owner to any clubs yet.</p>
-                        ) : (
-                            <ul className={styles.list}>
-                                {ownedClubs.map(club => (
-                                    <li key={club.id} className={styles.listItem}>
-                                        <div>
-                                            <p className={styles.primaryText}>{club.name}</p>
-                                            <p className={styles.secondaryText}>
-                                                {club.city} - {club.sport_type_id}
-                                            </p>
-                                        </div>
-                                        <button
-                                        onClick={() => onGoSettings(club.id)}
-                                        className={styles.linkButton}>
-                                            Settings
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </article>
-                </section>
+            <article className={styles.panel}>
+                <div className={styles.panelTopRow}>
+                    <h3 className={styles.panelTitle}>
+                        {texts?.incoming_join_requests || "Binnenkomende aanmeldverzoeken"}
+                    </h3>
+                    <span className={styles.counter}>{incomingJoinRequests.length}</span>
+                </div>
 
-                <aside className={commonStyles.noStylePleaseFixMe}>
-                    <article className={styles.panel}>
-                        <div className={styles.panelTopRow}>
-                            <h3 className={styles.panelTitle}>
-                                {texts?.incoming_join_requests || "Incoming Join Requests"}
-                            </h3>
-                            <span className={styles.counter}>{incomingJoinRequests.length}</span>
-                        </div>
+                {incomingJoinRequests.length === 0 ? (
+                    <p className={styles.muted}>{texts?.no_incoming_requests || "No incoming requests yet."}</p>
+                ) : (
+                    <ul className={styles.requestList}>
+                        {incomingJoinRequests.map((req, index) => (
+                            <li className={styles.requestCard} key={`${req.club_id}-${req.user_id}-${index}`}>
+                                <div className={styles.requestContent}>
+                                    <p className={styles.primaryText}>
+                                        <strong>{req.user_name}</strong> {texts?.wants_to_join || "wants to join"} <strong>{req.club_name}</strong>
+                                    </p>
+                                </div>
+                                <div className={styles.requestActions}>
+                                    <button
+                                        className={styles.submitButton}
+                                        type="button"
+                                        onClick={(e) => {
+                                            const row = e.currentTarget.closest(`.${styles.requestCard}`);
+                                            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                                            decideJoinrequest(req.club_id, req.user_id, "approved");
+                                        }}
+                                    >
+                                        {texts?.approve || "Goedkeuren"}
+                                    </button>
 
-                        {incomingJoinRequests.length === 0 ? (
-                            <p className={styles.muted}>No pending join requests.</p>
-                        ) : (
-                            <ul className={styles.list}>
-                                {incomingJoinRequests.map((req, index) => (
-                                    <li className={styles.listItem} key={index}>
-                                        <div>
-                                            <p className={styles.primaryText}>
-                                                <strong>{req.user_name}</strong> wants to join <strong>{req.club_name}</strong>
-                                            </p>
-                                        </div>
-                                        <div className={styles.actionRow} style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                                            <button
-                                            className={styles.submitButton}
-                                            type="button"
-                                            onClick={(e) => {
-                                                // Find all buttons in this specific div and disable them
-                                                const row = e.currentTarget.closest(`.${commonStyles.noStylePleaseFixMe}`);
-                                                row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-
-                                                decideJoinrequest(req.club_id, req.user_id, "approved");
-                                            }}>
-                                            {texts?.approve || "Approve"}
-                                        </button>
-
-                                        <button
-                                            className={styles.submitButton}
-                                            type="button"
-                                            style={{ filter: 'grayscale(1) brightness(0.7)' }}
-                                            onClick={(e) => {
-                                                const row = e.currentTarget.closest(`.${commonStyles.noStylePleaseFixMe}`);
-                                                row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-
-                                                decideJoinrequest(req.club_id, req.user_id, "rejected");
-                                            }}>
-                                            {texts?.reject || "Reject"}
-                                        </button>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </article>
-                </aside>
-            </div>
+                                    <button
+                                        className={styles.submitButton}
+                                        type="button"
+                                        style={{ filter: 'grayscale(1) brightness(0.7)' }}
+                                        onClick={(e) => {
+                                            const row = e.currentTarget.closest(`.${styles.requestCard}`);
+                                            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                                            decideJoinrequest(req.club_id, req.user_id, "rejected");
+                                        }}
+                                    >
+                                        {texts?.reject || "Afwijzen"}
+                                    </button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </article>
         </div>
     );
 }
@@ -822,12 +827,12 @@ export function AvailabilityTab({
         <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>
-                    {texts?.availability_title || "My Availability"}
+                        {texts?.availability_title || "Mijn beschikbaarheid"}
                 </h3>
                 <form className={styles.form} onSubmit={onAvailabilitySubmit}>
                     <div className={styles.formRow}>
                         <label className={styles.formLabel}>
-                            {texts?.weekday || "Weekday"}
+                            {texts?.weekday || "Weekdag"}
                             <select
                                 className={styles.formInput}
                                 name="weekday"
@@ -835,7 +840,7 @@ export function AvailabilityTab({
                                 onChange={onAvailabilityFieldChange}
                                 required
                             >
-                                <option value="">{texts?.select_weekday || "Select weekday"}</option>
+                                <option value="">{texts?.select_weekday || "Kies een weekdag"}</option>
                                 {(weekdayOptions || WEEKDAY_LABELS.map((label, index) => ({ value: String(index), label }))).map((option) => (
                                     <option key={option.value} value={option.value}>
                                         {option.label}
@@ -844,7 +849,7 @@ export function AvailabilityTab({
                             </select>
                         </label>
                         <label className={styles.formLabel}>
-                            {texts?.start_time || "Start time"}
+                            {texts?.start_time || "Starttijd"}
                             <input
                                 className={styles.formInput}
                                 type="time"
@@ -857,7 +862,7 @@ export function AvailabilityTab({
                     </div>
 
                     <label className={styles.formLabel}>
-                        {texts?.end_time || "End time"}
+                        {texts?.end_time || "Eindtijd"}
                         <input
                             className={styles.formInput}
                             type="time"
@@ -875,8 +880,8 @@ export function AvailabilityTab({
                             disabled={availabilitySubmitting}
                         >
                             {availabilitySubmitting
-                                ? texts?.adding || "Adding..."
-                                : texts?.add_availability_block || "Add availability block"}
+                                ? texts?.adding || "Toevoegen..."
+                                : texts?.add_availability_block || "Beschikbaarheidsblok toevoegen"}
                         </button>
                     </div>
                 </form>
@@ -896,32 +901,35 @@ export function AvailabilityTab({
                 ) : null}
             </article>
 
-            <div className={commonStyles.noStylePleaseFixMe}>
+            <div className={styles.availabilityStack}>
                 <article className={styles.panel}>
                     <div className={styles.panelTopRow}>
                         <h3 className={styles.panelTitle}>
-                            {texts?.availability_blocks || "Your blocks"}
+                            {texts?.availability_blocks || "Jouw blokken"}
                         </h3>
                         <span className={styles.counter}>{availabilityBlocks.length}</span>
                     </div>
 
                     {availabilityLoading ? (
-                        <p className={styles.muted}>{texts?.loading || "Loading..."}</p>
+                        <p className={styles.muted}>{texts?.loading || "Laden..."}</p>
                     ) : null}
 
                     {!availabilityLoading && availabilityBlocks.length === 0 ? (
                         <p className={styles.muted}>
-                            {texts?.no_availability_blocks || "No availability blocks yet."}
+                            {texts?.no_availability_blocks || "Nog geen beschikbaarheidsblokken."}
                         </p>
                     ) : null}
 
                     {!availabilityLoading && availabilityBlocks.length > 0 ? (
-                        <ul className={styles.list}>
+                        <ul className={styles.availabilityList}>
                             {availabilityBlocks.map((block) => (
-                                <li className={styles.listItem} key={block.id}>
+                                <li className={styles.availabilityCard} key={block.id}>
                                     <div>
                                         <p className={styles.primaryText}>
                                             {formatWeeklyAvailability(block)}
+                                        </p>
+                                        <p className={styles.secondaryText}>
+                                            {texts?.availability_block_detail || "Wekelijks terugkerend blok"}
                                         </p>
                                     </div>
                                     <button
@@ -929,7 +937,7 @@ export function AvailabilityTab({
                                         type="button"
                                         onClick={() => onAvailabilityDelete(block.id)}
                                     >
-                                        {texts?.delete || "Delete"}
+                                        {texts?.delete || "Verwijderen"}
                                     </button>
                                 </li>
                             ))}
@@ -940,30 +948,30 @@ export function AvailabilityTab({
                 <article className={styles.panel}>
                     <div className={styles.panelTopRow}>
                         <h3 className={styles.panelTitle}>
-                            {texts?.availability_upcoming_matches || "Upcoming matches"}
+                            {texts?.availability_upcoming_matches || "Aankomende wedstrijden"}
                         </h3>
                         <span className={styles.counter}>{upcomingMatches.length}</span>
                     </div>
 
                     {upcomingMatches.length === 0 ? (
                         <p className={styles.muted}>
-                            {texts?.no_upcoming_matches || "No upcoming matches scheduled."}
+                            {texts?.no_upcoming_matches || "Er staan nog geen aankomende wedstrijden gepland."}
                         </p>
                     ) : (
-                        <ul className={styles.list}>
+                        <ul className={styles.availabilityList}>
                             {upcomingMatches.map((match) => (
-                                <li className={styles.listItem} key={match.id}>
+                                <li className={styles.availabilityCard} key={match.id}>
                                     <div>
                                         <p className={styles.primaryText}>{formatMatchTitle(match)}</p>
                                         <p className={styles.secondaryText}>
                                             {formatUpcomingMatchDate(match, texts)}
                                         </p>
                                         <p className={styles.secondaryText}>
-                                            {match.location || texts?.unknown_location || "Unknown location"}
+                                            {match.location || texts?.unknown_location || "Onbekende locatie"}
                                         </p>
                                     </div>
                                     <span className={`${styles.statusPill} ${styles.statusApproved}`}>
-                                        {match.status?.name || texts?.status_accepted || "Accepted"}
+                                        {match.status?.name || texts?.status_accepted || "Geaccepteerd"}
                                     </span>
                                 </li>
                             ))}

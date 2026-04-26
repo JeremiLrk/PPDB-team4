@@ -1,32 +1,32 @@
 import styles from "@/style/ClubSettings.module.css";
 
-export function ClubOverview({ club }) {
+export function ClubOverview({ club, texts = {} }) {
     return (
         <div className={`${styles.contentGrid} ${styles.contentFade}`}>
 
             {/* Club Info */}
             <article className={styles.panel}>
-                <h3 className={styles.panelTitle}>Club Info</h3>
+                <h3 className={styles.panelTitle}>{texts.overview_title || "Clubinformatie"}</h3>
 
                 <ul className={styles.list}>
                     <li className={styles.listItem}>
                         <div>
                             <p className={styles.primaryText}>{club?.name}</p>
-                            <p className={styles.secondaryText}>Name</p>
+                            <p className={styles.secondaryText}>{texts.overview_name_label || "Naam"}</p>
                         </div>
                     </li>
 
                     <li className={styles.listItem}>
                         <div>
                             <p className={styles.primaryText}>{club?.city}</p>
-                            <p className={styles.secondaryText}>City</p>
+                            <p className={styles.secondaryText}>{texts.overview_city_label || "Stad"}</p>
                         </div>
                     </li>
 
                     <li className={styles.listItem}>
                         <div>
                             <p className={styles.primaryText}>{club?.sport}</p>
-                            <p className={styles.secondaryText}>Sport</p>
+                            <p className={styles.secondaryText}>{texts.overview_sport_label || "Sport"}</p>
                         </div>
                     </li>
                 </ul>
@@ -34,10 +34,10 @@ export function ClubOverview({ club }) {
 
             {/* Description */}
             <article className={styles.panel}>
-                <h3 className={styles.panelTitle}>Description</h3>
+                <h3 className={styles.panelTitle}>{texts.overview_description_title || "Omschrijving"}</h3>
 
                 <p className={styles.secondaryText}>
-                    {club?.description || "No description provided."}
+                    {club?.description || texts.overview_no_description || "Geen omschrijving opgegeven."}
                 </p>
             </article>
 

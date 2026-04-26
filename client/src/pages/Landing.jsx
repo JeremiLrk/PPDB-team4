@@ -8,6 +8,10 @@ function Landing() {
     const { lang } = useLangContext();
     const landingTexts = usePageTexts("landing", lang);
 
+    if (!landingTexts.explore_clubs) {
+        return <div className={styles.page} />;
+    }
+
     const playerSteps = [
         {
             title: landingTexts.player_step_1_title || "Create account",

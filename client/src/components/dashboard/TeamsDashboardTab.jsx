@@ -12,10 +12,9 @@ import { useMyTeams } from "@/hooks/dashboard/useMyTeams.js";
 import { useMyClubs } from "@/hooks/useMyClubs.js";
 
 
-const SORT_OPTIONS      = [{ value: "id", label: "By ID" }, { value: "name", label: "By Name" }];
 const PAGE_SIZE_OPTIONS = [6, 12, 24];
 
-export function TeamsTab({ texts }) {
+export function TeamsTab({ texts, theme }) {
 
     const { currentUser } = useCurrentUserContext();
 
@@ -59,7 +58,10 @@ export function TeamsTab({ texts }) {
                             onChange={e => void load({ sort: e.target.value, pageSize })}
                             disabled={loading}
                         >
-                            {SORT_OPTIONS.map(o => (
+                            {[
+                                { value: "id", label: texts?.sort_id || "By ID" },
+                                { value: "name", label: texts?.sort_name || "By name" },
+                            ].map(o => (
                                 <option key={o.value} value={o.value}>{o.label}</option>
                             ))}
                         </select>
@@ -72,11 +74,11 @@ export function TeamsTab({ texts }) {
                             disabled={loading}
                         >
                             {PAGE_SIZE_OPTIONS.map(n => (
-                                <option key={n} value={n}>{n} per load</option>
+                            <option key={n} value={n}>{n} {texts?.per_page || "per page"}</option>
                             ))}
                         </select>
 
-                        <CreateTeamButton clubs={myClubs} onCreated={handleTeamCreated} />
+                        <CreateTeamButton clubs={myClubs} onCreated={handleTeamCreated} theme={theme} texts={texts}/>
                     </div>
                 </div>
 
@@ -86,7 +88,7 @@ export function TeamsTab({ texts }) {
                 {/* Empty state */}
                 {!loading && !error && teams.length === 0 && (
                     <p className={commonStyles.muted}>
-                        {texts?.no_teams_yet || "You are not a member of any team yet."}
+                        {texts?.no_teams_yet || "Je bent nog geen lid van een team."}
                     </p>
                 )}
 
@@ -101,17 +103,17 @@ export function TeamsTab({ texts }) {
 
                 {/* Loading */}
                 {loading && (
-                    <p className={commonStyles.muted}>{texts?.loading_teams || "Loading teams…"}</p>
+                    <p className={commonStyles.muted}>{texts?.loading_teams || "Teams laden…"}</p>
                 )}
 
                 {/* Load more */}
                 {!loading && hasMore && teams.length > 0 && (
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <span className={commonStyles.muted} style={{ fontSize: "0.82rem" }}>
-                            {texts?.showing || "Showing"} {teams.length}{total !== null ? ` / ${total}` : ""}
+                            {texts?.showing || "Weergegeven"} {teams.length}{total !== null ? ` / ${total}` : ""}
                         </span>
                         <button className={buttonStyles.primaryButton} onClick={() => void loadMore()}>
-                            {texts?.load_more || "Load more"}
+                            {texts?.load_more || "Meer laden"}
                         </button>
                     </div>
                 )}

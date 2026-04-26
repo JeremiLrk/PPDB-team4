@@ -386,19 +386,49 @@ def get_or_create_availability_block(
   if weekday is None or start_time is None or end_time is None or start_at is None or end_at is None:
     raise ValueError("Availability block requires either datetimes or weekly recurrence fields.")
 
+  normalized_start_time = start_time.replace(microsecond=0)
+  normalized_end_time = end_time.replace(microsecond=0)
+
   existing = AvailabilityBlock.query.filter_by(
     user_id=user_id,
     weekday=weekday,
-    start_time=start_time,
-    end_time=end_time,
+    start_time=normalized_start_time,
+    end_time=normalized_end_time,
   ).first()
   if existing:
+    if (
+      existing.start_at != start_at
+      or existing.end_at != end_at
+      or existing.start_time != normalized_start_time
+      or existing.end_time != normalized_end_time
+    ):
+      existing.weekday = weekday
+      existing.start_time = normalized_start_time
+      existing.end_time = normalized_end_time
+      existing.start_at = start_at
+      existing.end_at = end_at
+      db.session.flush()
     return existing, False
+
+  legacy_existing = AvailabilityBlock.query.filter_by(
+    user_id=user_id,
+    start_at=start_at,
+    end_at=end_at,
+  ).first()
+  if legacy_existing:
+    legacy_existing.weekday = weekday
+    legacy_existing.start_time = normalized_start_time
+    legacy_existing.end_time = normalized_end_time
+    legacy_existing.start_at = start_at
+    legacy_existing.end_at = end_at
+    db.session.flush()
+    return legacy_existing, False
+
   block = AvailabilityBlock(
     user_id=user_id,
     weekday=weekday,
-    start_time=start_time,
-    end_time=end_time,
+    start_time=normalized_start_time,
+    end_time=normalized_end_time,
     start_at=start_at,
     end_at=end_at,
   )

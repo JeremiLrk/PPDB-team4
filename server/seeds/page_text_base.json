@@ -2,8 +2,21 @@
   {"page": "base", "key": "hero_title", "language": "en", "value": "Welcome"},
   {"page": "base", "key": "hero_title", "language": "nl", "value": "Van harte welkom"},
 
+  {"page": "base", "key": "clubs", "language": "en", "value": "Clubs"},
+  {"page": "base", "key": "clubs", "language": "nl", "value": "Clubs"},
+  {"page": "base", "key": "teams", "language": "en", "value": "Teams"},
+  {"page": "base", "key": "teams", "language": "nl", "value": "Teams"},
+  {"page": "base", "key": "dashboard", "language": "en", "value": "Dashboard"},
+  {"page": "base", "key": "dashboard", "language": "nl", "value": "Dashboard"},
+
   {"page": "base", "key": "pending", "language": "en", "value": "Pending"},
   {"page": "base", "key": "pending", "language": "nl", "value": "In behandeling"},
+  {"page": "base", "key": "checking", "language": "en", "value": "Checking…"},
+  {"page": "base", "key": "checking", "language": "nl", "value": "Controleren…"},
+  {"page": "base", "key": "online", "language": "en", "value": "Online"},
+  {"page": "base", "key": "online", "language": "nl", "value": "Online"},
+  {"page": "base", "key": "offline", "language": "en", "value": "Offline"},
+  {"page": "base", "key": "offline", "language": "nl", "value": "Offline"},
   {"page": "base", "key": "e404", "language": "en", "value": "404 - Page Not Found"},
   {"page": "base", "key": "e404", "language": "nl", "value": "404 - Pagina niet gevonden"}
 

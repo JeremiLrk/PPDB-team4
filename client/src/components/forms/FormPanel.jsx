@@ -48,6 +48,7 @@ export function FormPanel({
     triggerContent,
     triggerClassName,
     triggerOpenClassName,
+    theme,
 
     isOpen,
     openPanel,
@@ -97,6 +98,43 @@ export function FormPanel({
     }, [isOpen, closePanel]);
 
     const isLastStep = step === totalSteps - 1;
+    const themeVars = theme === "light"
+        ? {
+            "--text-primary": "#0f172a",
+            "--text-secondary": "#475569",
+            "--text-heading": "#020617",
+            "--surface-bg-soft": "rgba(241, 245, 249, 0.96)",
+            "--surface-border": "rgba(71, 85, 105, 0.26)",
+            "--muted-border": "rgba(71, 85, 105, 0.24)",
+            "--input-bg": "rgba(255, 255, 255, 0.98)",
+            "--input-border": "rgba(71, 85, 105, 0.38)",
+            "--action-text": "#0f172a",
+            "--action-bg": "linear-gradient(120deg, rgba(186, 230, 253, 0.86), rgba(153, 246, 228, 0.68))",
+            "--action-border": "rgba(6, 182, 212, 0.6)",
+            "--action-hover-bg": "linear-gradient(120deg, rgba(147, 197, 253, 0.78), rgba(94, 234, 212, 0.72))",
+            "--action-hover-border": "rgba(8, 145, 178, 0.72)",
+            "--danger-bg": "rgba(254, 226, 226, 0.92)",
+            "--danger-border": "rgba(239, 68, 68, 0.42)",
+            "--danger-text": "#7f1d1d",
+        }
+        : {
+            "--text-primary": "#e2e8f0",
+            "--text-secondary": "#94a3b8",
+            "--text-heading": "#f8fafc",
+            "--surface-bg-soft": "rgba(15, 23, 42, 0.96)",
+            "--surface-border": "rgba(148, 163, 184, 0.24)",
+            "--muted-border": "rgba(148, 163, 184, 0.2)",
+            "--input-bg": "rgba(15, 23, 42, 0.95)",
+            "--input-border": "rgba(148, 163, 184, 0.42)",
+            "--action-text": "#ecfeff",
+            "--action-bg": "linear-gradient(120deg, rgba(14, 116, 144, 0.45), rgba(16, 185, 129, 0.38))",
+            "--action-border": "rgba(45, 212, 191, 0.62)",
+            "--action-hover-bg": "linear-gradient(120deg, rgba(14, 165, 233, 0.52), rgba(20, 184, 166, 0.42))",
+            "--action-hover-border": "rgba(110, 231, 183, 0.8)",
+            "--danger-bg": "rgba(127, 29, 29, 0.34)",
+            "--danger-border": "rgba(248, 113, 113, 0.4)",
+            "--danger-text": "#fecaca",
+        };
 
     // --- Navigation footer ----------------------------------------------------
     const navigationFooter = !isSuccess && (
@@ -160,6 +198,7 @@ export function FormPanel({
                     aria-label={ariaLabel ?? title}
                     aria-modal="true"
                     className={`${panelStyles.dropdownPanel} ${panelClassName ?? ""} ${isOpen ? panelStyles.dropdownPanelOpen : ""}`}
+                    style={themeVars}
                 >
                     {/* Title */}
                     <div className={panelStyles.dropdownPanelHeader}>

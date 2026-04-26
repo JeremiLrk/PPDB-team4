@@ -109,6 +109,68 @@
     box-shadow: 0 10px 20px rgba(20, 184, 166, 0.18);
 }
 
+.createTeamTrigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+    padding: 0.42rem 0.78rem;
+    border-radius: 0.66rem;
+    border: 1px solid var(--action-border);
+    background: var(--action-bg);
+    color: var(--action-text);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.createTeamTrigger:hover {
+    color: var(--action-text);
+    border-color: var(--action-hover-border);
+    background: var(--action-hover-bg);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(20, 184, 166, 0.18);
+}
+
+.createTeamTriggerOpen {
+    color: var(--action-text);
+    border-color: var(--action-hover-border);
+    background: var(--action-hover-bg);
+}
+
+.createTeamPanel {
+    width: 336px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.96));
+    border-color: rgba(148, 163, 184, 0.26);
+    box-shadow:
+        0 24px 58px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(56, 189, 248, 0.07);
+}
+
+.createTeamPanel :global(.formLabel) {
+    color: #e2e8f0;
+}
+
+.createTeamPanel :global(.formInput),
+.createTeamPanel :global(.formSelect) {
+    background: rgba(15, 23, 42, 0.98);
+    color: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.34);
+}
+
+.createTeamPanel :global(.formInput::placeholder) {
+    color: #64748b;
+}
+
+.createTeamPanel :global(.formSelect) {
+    color: #f8fafc;
+}
+
+.createTeamPanel :global(.formSelect option) {
+    color: #0f172a;
+}
+
 /* Close button */
 
 .closeBtn {

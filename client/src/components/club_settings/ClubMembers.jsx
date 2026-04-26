@@ -1,15 +1,15 @@
 import styles from "@/style/ClubSettings.module.css";
 
-export function ClubMembers({ members, onRemove }) {
+export function ClubMembers({ members, onRemove, texts = {} }) {
     return (
         <article className={`${styles.panel} ${styles.contentFade}`}>
             <div className={styles.panelTopRow}>
-                <h3 className={styles.panelTitle}>Members</h3>
+                <h3 className={styles.panelTitle}>{texts.members_title || "Leden"}</h3>
                 <span className={styles.counter}>{members.length}</span>
             </div>
 
             {members.length === 0 ? (
-                <p className={styles.muted}>No members yet.</p>
+                <p className={styles.muted}>{texts.no_members || "Nog geen leden."}</p>
             ) : (
                 <ul className={styles.list}>
                     {members.map(m => (
@@ -22,7 +22,7 @@ export function ClubMembers({ members, onRemove }) {
                                 onClick={() => onRemove(m.id)}
                                 className={styles.linkButton}
                             >
-                                Remove
+                                {texts.remove || "Verwijderen"}
                             </button>
                         </li>
                     ))}

@@ -1,9 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useLadder, useLadderPlayers } from "@/hooks/useLadder";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 function Ladder() {
     const { clubId, ladderId } = useParams();
     const navigate = useNavigate();
+    const { lang } = useLangContext();
+    const texts = usePageTexts("ladder", lang);
 
     // Note: ensure these variable names match what the hook returns 
     // (In your previous hook they were just called 'loading')
@@ -19,7 +23,7 @@ function Ladder() {
                     onClick={() => navigate(`/clubs/${clubId}`)}
                     className="mb-4 flex items-center gap-2 text-sm text-slate-400 hover:text-white transition"
                 >
-                    ← Back to club
+                    ← {texts.back_to_club || "Back to club"}
                 </button>
 
                 {l_loading ? (
@@ -28,7 +32,7 @@ function Ladder() {
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-3">
                             <h1 className="text-3xl font-semibold">
-                                {ladder?.name || "Ladder Rankings"}
+                                {ladder?.name || (texts.ladder_rankings || "Ladder Rankings")}
                             </h1>
                             {ladder?.sport_type && (
                                 <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-400 border border-blue-500/20">
@@ -45,10 +49,10 @@ function Ladder() {
                         
                         <div className="flex gap-4 mt-2 text-xs text-slate-500">
                              {ladder?.ruleset && (
-                                <span>Ruleset: <span className="text-slate-300">{ladder.ruleset}</span></span>
+                                <span>{texts.ruleset_label || "Ruleset"}: <span className="text-slate-300">{ladder.ruleset}</span></span>
                              )}
                              {ladder?.rating_function && (
-                                <span>System: <span className="text-slate-300">{ladder.rating_function}</span></span>
+                                <span>{texts.system_label || "System"}: <span className="text-slate-300">{ladder.rating_function}</span></span>
                              )}
                         </div>
                     </div>
@@ -58,16 +62,16 @@ function Ladder() {
             {/* Ladder Table */}
             <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
                 {p_loading ? (
-                    <p className="p-6 text-slate-400">Loading rankings...</p>
+                    <p className="p-6 text-slate-400">{texts.loading_rankings || "Loading rankings..."}</p>
                 ) : players.length === 0 ? (
-                    <p className="p-6 text-slate-400 text-center">No players in this ladder yet.</p>
+                    <p className="p-6 text-slate-400 text-center">{texts.no_players || "No players in this ladder yet."}</p>
                 ) : (
                     <table className="w-full text-left">
                         <thead className="border-b border-white/10 text-slate-400 text-sm uppercase tracking-wider">
                             <tr>
-                                <th className="p-4 font-medium">Rank</th>
-                                <th className="p-4 font-medium">Player</th>
-                                <th className="p-4 font-medium">Rating</th>
+                                <th className="p-4 font-medium">{texts.rank || "Rank"}</th>
+                                <th className="p-4 font-medium">{texts.player || "Player"}</th>
+                                <th className="p-4 font-medium">{texts.rating || "Rating"}</th>
                             </tr>
                         </thead>
 

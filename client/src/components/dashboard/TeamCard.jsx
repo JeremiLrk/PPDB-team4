@@ -40,7 +40,7 @@ export default function TeamCard({ team, texts, currentUser, onClick }) {
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                 <TeamSettingsLink currentUser={currentUser} team={team} />
                 <button className={buttonStyles.linkButton} onClick={handleOpen}>
-                    {texts?.open || "Open"}
+                    {texts?.open || "Openen"}
                 </button>
             </div>
         </ItemCard>

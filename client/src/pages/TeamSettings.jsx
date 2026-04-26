@@ -5,6 +5,8 @@ import { useTeam }           from "@/hooks/teams/useTeam.js";
 import { useTeamPlayers }    from "@/hooks/teams/useTeamPlayers.js";
 import { useTeamManagers }   from "@/hooks/teams/useTeamManagers.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 import AddPlayerButton   from "@/components/team/AddPlayerButton.jsx";
 import AddManagerButton  from "@/components/team/AddManagerButton.jsx";
@@ -19,10 +21,10 @@ import commonStyles from "@/style/common/Common.module.css";
 import panelStyles  from "@/style/common/Panel.module.css";
 
 /**
- * Перевірка can_edit_managers на фронтенді.
- * Відзеркалює _can_edit_managers() на сервері.
- * Administrator / ClubOwner — завжди true.
- * TeamManager — через managerPermissions або managedTeamIds як fallback.
+ * Check can_edit_managers on the frontend.
+ * Mirrors _can_edit_managers() on the server.
+ * Administrator / ClubOwner — always true.
+ * TeamManager — via managerPermissions or managedTeamIds as a fallback.
  */
 function userCanEditManagers(account, team) {
     if (!account || !team) return false;
@@ -43,7 +45,9 @@ function userCanEditManagers(account, team) {
 export default function TeamSettings() {
     const { teamId }      = useParams();
     const { currentUser } = useCurrentUserContext();
+    const { lang } = useLangContext();
     const navigate        = useNavigate();
+    const texts = usePageTexts("team_settings", lang);
 
     const { team,    loading: teamLoading,    error: teamError    } = useTeam(teamId);
     const { players, loading: playersLoading, error: playersError,
@@ -59,7 +63,7 @@ export default function TeamSettings() {
         return (
             <div className={styles.state}>
                 <div className={styles.spinner} />
-                <span>Loading team…</span>
+                <span>{texts.loading_team || "Team loading..."}</span>
             </div>
         );
     }
@@ -70,7 +74,7 @@ export default function TeamSettings() {
             <div className={styles.state}>
                 <p className={styles.error}>{teamError}</p>
                 <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                    &lt;- Back to teams
+                    &lt;- {texts.back_to_teams || "Back to teams"}
                 </button>
             </div>
         );
@@ -82,8 +86,8 @@ export default function TeamSettings() {
     if (!currentUser) {
         return (
             <div className={styles.state}>
-                <p className={styles.error}>You must be logged in to access this page.</p>
-                <Link to="/login" className={styles.backBtn}>→ Log in</Link>
+                <p className={styles.error}>{texts.login_required || "You must be logged in to open this page."}</p>
+                <Link to="/login" className={styles.backBtn}>→ {texts.login_button || "Log in"}</Link>
             </div>
         );
     }
@@ -92,10 +96,10 @@ export default function TeamSettings() {
         return (
             <div className={styles.state}>
                 <p className={styles.error}>
-                    Access denied. You do not have permission to manage this team.
+                    {texts.access_denied || "Access denied. You do not have permission to manage this team."}
                 </p>
                 <button className={styles.backBtn} onClick={() => navigate(`/teams/${teamId}`)}>
-                    &lt;- Back to team
+                    &lt;- {texts.back_to_team || "Back to team"}
                 </button>
             </div>
         );
@@ -113,7 +117,7 @@ export default function TeamSettings() {
                     &lt;- {teamName}
                 </button>
                 <span className={styles.breadcrumbSep}>/</span>
-                <span className={styles.breadcrumbCurrent}>Settings</span>
+                <span className={styles.breadcrumbCurrent}>{texts.breadcrumb_settings || "Settings"}</span>
             </div>
 
             {/* Hero */}
@@ -131,13 +135,13 @@ export default function TeamSettings() {
                                 />
                             </div>
                             <div className={styles.tags}>
-                                <Tag label="Settings" accent />
-                                <Tag label={team.clubName  ? team.clubName   : "Independent"} muted={!team.clubId} />
+                                <Tag label={texts.settings_title || "Team settings"} accent />
+                                <Tag label={team.clubName  ? team.clubName   : texts.independent_team || "Independent")} muted={!team.clubId} />
                                 <Tag label={team.sportName ? team.sportName  : "No sport"}    muted={!team.sportTypeId} />
-                                <Tag label={`ID: ${team.id}`} muted />
+
                             </div>
                         </div>
-                        <GearIcon size={32} title="Team settings" className={styles.settingsIcon} />
+                        <GearIcon size={32} title={texts.settings_title || "Team settings"} className={styles.settingsIcon} />
                     </div>
                 </div>
             </div>
@@ -146,7 +150,7 @@ export default function TeamSettings() {
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleRow}>
-                        <h2 className={styles.sectionTitle}>Managers</h2>
+                        <h2 className={styles.sectionTitle}>{texts.managers_title || "Managers"}</h2>
                         {managersTotal !== null && (
                             <span className={panelStyles.panelCounter}>{managersTotal}</span>
                         )}
@@ -161,19 +165,19 @@ export default function TeamSettings() {
                 {managersLoading && (
                     <div className={styles.inlineState}>
                         <div className={styles.spinner} />
-                        <span>Loading managers…</span>
+                        <span>{texts.loading_managers || "Managers loading..."}</span>
                     </div>
                 )}
 
                 {!managersLoading && managersError && (
                     <div className={styles.inlineState}>
                         <p className={styles.error}>{managersError}</p>
-                        <button className={styles.retryBtn} onClick={reloadManagers}>Retry</button>
+                        <button className={styles.retryBtn} onClick={reloadManagers}>{texts.retry || "Retry"}</button>
                     </div>
                 )}
 
                 {!managersLoading && !managersError && managers.length === 0 && (
-                    <p className={commonStyles.muted}>No managers in this team yet.</p>
+                    <p className={commonStyles.muted}>{texts.no_managers || "No managers in this team yet."}</p>
                 )}
 
                 {!managersLoading && !managersError && managers.length > 0 && (
@@ -195,7 +199,7 @@ export default function TeamSettings() {
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleRow}>
-                        <h2 className={styles.sectionTitle}>Players</h2>
+                        <h2 className={styles.sectionTitle}>{texts.players_title || "Players"}</h2>
                         {playersTotal !== null && (
                             <span className={panelStyles.panelCounter}>{playersTotal}</span>
                         )}
@@ -206,19 +210,19 @@ export default function TeamSettings() {
                 {playersLoading && (
                     <div className={styles.inlineState}>
                         <div className={styles.spinner} />
-                        <span>Loading players…</span>
+                        <span>{texts.loading_players || "Players loading..."}</span>
                     </div>
                 )}
 
                 {!playersLoading && playersError && (
                     <div className={styles.inlineState}>
                         <p className={styles.error}>{playersError}</p>
-                        <button className={styles.retryBtn} onClick={reloadPlayers}>Retry</button>
+                        <button className={styles.retryBtn} onClick={reloadPlayers}>{texts.retry || "Retry"}</button>
                     </div>
                 )}
 
                 {!playersLoading && !playersError && players.length === 0 && (
-                    <p className={commonStyles.muted}>No players in this team yet. Add some above.</p>
+                    <p className={commonStyles.muted}>{texts.no_players || "No players in this team yet. Add one above."}</p>
                 )}
 
                 {!playersLoading && !playersError && players.length > 0 && (

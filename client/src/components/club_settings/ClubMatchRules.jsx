@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import styles from "@/style/ClubSettings.module.css";
 
 const EMPTY_RULE_FORM = {
@@ -20,7 +20,7 @@ function normalizeList(payload, key) {
     return [];
 }
 
-export default function ClubMatchRules({ clubId }) {
+export default function ClubMatchRules({ clubId, texts = {} }) {
     const [rules, setRules] = useState([]);
     const [ruleSets, setRuleSets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -30,13 +30,7 @@ export default function ClubMatchRules({ clubId }) {
     const [ruleForm, setRuleForm] = useState(EMPTY_RULE_FORM);
     const [ruleSetForm, setRuleSetForm] = useState(EMPTY_RULESET_FORM);
 
-    useEffect(() => {
-        void (async () => {
-            await fetchData();
-        })();
-    }, []);
-
-    async function fetchData() {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         setError("");
         try {
@@ -49,20 +43,24 @@ export default function ClubMatchRules({ clubId }) {
             const ruleSetsData = await ruleSetsRes.json().catch(() => ({}));
 
             if (!rulesRes.ok) {
-                throw new Error(rulesData?.message || "Could not load rules.");
+                throw new Error(rulesData?.message || texts.could_not_load_rules || "Regels konden niet worden geladen.");
             }
             if (!ruleSetsRes.ok) {
-                throw new Error(ruleSetsData?.message || "Could not load rule sets.");
+                throw new Error(ruleSetsData?.message || texts.could_not_load_rules || "Regelsets konden niet worden geladen.");
             }
 
             setRules(normalizeList(rulesData, "rules"));
             setRuleSets(normalizeList(ruleSetsData, "ruleSets"));
         } catch (err) {
-            setError(err?.message || "Could not load rules.");
+            setError(err?.message || texts.could_not_load_rules || "Regels konden niet worden geladen.");
         } finally {
             setLoading(false);
         }
-    }
+    }, [texts]);
+
+    useEffect(() => {
+        void fetchData();
+    }, [fetchData]);
 
     function updateRuleForm(field, value) {
         setRuleForm(prev => ({ ...prev, [field]: value }));
@@ -103,13 +101,13 @@ export default function ClubMatchRules({ clubId }) {
 
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                throw new Error(data?.message || "Could not create rule.");
+                throw new Error(data?.message || texts.could_not_create_rule || "Regel kon niet worden aangemaakt.");
             }
 
             setRuleForm(EMPTY_RULE_FORM);
             await fetchData();
         } catch (err) {
-            setError(err?.message || "Could not create rule.");
+            setError(err?.message || texts.could_not_create_rule || "Regel kon niet worden aangemaakt.");
         } finally {
             setSubmitting(false);
         }
@@ -138,7 +136,7 @@ export default function ClubMatchRules({ clubId }) {
 
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                throw new Error(data?.message || "Could not create rule set.");
+                throw new Error(data?.message || texts.could_not_create_rule_set || "Regelset kon niet worden aangemaakt.");
             }
 
             const createdRuleSetId = data?.ruleSet?.id;
@@ -152,7 +150,7 @@ export default function ClubMatchRules({ clubId }) {
                     });
                     const attachData = await attachRes.json().catch(() => ({}));
                     if (!attachRes.ok) {
-                        throw new Error(attachData?.message || "Could not attach rule to set.");
+                        throw new Error(attachData?.message || texts.could_not_attach_rule || "Regel kon niet aan de set worden gekoppeld.");
                     }
                 }
             }
@@ -161,7 +159,7 @@ export default function ClubMatchRules({ clubId }) {
             setSelectedRuleIds([]);
             await fetchData();
         } catch (err) {
-            setError(err?.message || "Could not create rule set.");
+            setError(err?.message || texts.could_not_create_rule_set || "Regelset kon niet worden aangemaakt.");
         } finally {
             setSubmitting(false);
         }
@@ -171,8 +169,8 @@ export default function ClubMatchRules({ clubId }) {
         return (
             <div className={`${styles.contentGrid} ${styles.contentFade}`}>
                 <article className={styles.panel}>
-                    <h3 className={styles.panelTitle}>Match Rules</h3>
-                    <p className={styles.muted}>Loading rules…</p>
+                    <h3 className={styles.panelTitle}>{texts.rules_loading_title || "Wedstrijdregels"}</h3>
+                    <p className={styles.muted}>{texts.rules_loading_text || "Regels laden..."}</p>
                 </article>
             </div>
         );
@@ -181,18 +179,18 @@ export default function ClubMatchRules({ clubId }) {
     return (
         <div className={`${styles.contentGrid} ${styles.contentFade}`}>
             <article className={styles.panel}>
-                <h3 className={styles.panelTitle}>Rule Library</h3>
+                <h3 className={styles.panelTitle}>{texts.rules_library_title || "Regelbibliotheek"}</h3>
 
                 <div className={styles.form}>
                     <input
                         className={styles.formInput}
-                        placeholder="Rule name"
+                        placeholder={texts.rule_name_placeholder || "Regelnaam"}
                         value={ruleForm.name}
                         onChange={(e) => updateRuleForm("name", e.target.value)}
                     />
                     <textarea
                         className={styles.formTextarea}
-                        placeholder="Description"
+                        placeholder={texts.rule_description_placeholder || "Omschrijving"}
                         value={ruleForm.description}
                         onChange={(e) => updateRuleForm("description", e.target.value)}
                         rows={3}
@@ -203,7 +201,7 @@ export default function ClubMatchRules({ clubId }) {
                             checked={ruleForm.canBeUsedByOthers}
                             onChange={(e) => updateRuleForm("canBeUsedByOthers", e.target.checked)}
                         />
-                        Usable by others
+                        {texts.use_by_others || "Door anderen te gebruiken"}
                     </label>
                     <button
                         className={styles.submitButton}
@@ -211,12 +209,12 @@ export default function ClubMatchRules({ clubId }) {
                         disabled={submitting}
                         type="button"
                     >
-                        {submitting ? "Creating..." : "Add Rule"}
+                        {submitting ? (texts.adding_rule || "Bezig met aanmaken...") : (texts.add_rule || "Regel toevoegen")}
                     </button>
                 </div>
 
                 <div className="mt-6">
-                    <h4 className={styles.secondaryText}>Available Rules</h4>
+                    <h4 className={styles.secondaryText}>{texts.available_rules || "Beschikbare regels"}</h4>
                     <ul className={styles.list} style={{ marginTop: "10px" }}>
                         {rules.map(rule => (
                             <li key={rule.id} className={styles.listItem} style={{ padding: "8px" }}>
@@ -234,7 +232,7 @@ export default function ClubMatchRules({ clubId }) {
                         ))}
                         {rules.length === 0 && (
                             <li className={styles.listItem} style={{ padding: "8px" }}>
-                                <p className={styles.secondaryText}>No rules yet.</p>
+                                <p className={styles.secondaryText}>{texts.no_rules || "Nog geen regels."}</p>
                             </li>
                         )}
                     </ul>
@@ -242,18 +240,18 @@ export default function ClubMatchRules({ clubId }) {
             </article>
 
             <article className={styles.panel}>
-                <h3 className={styles.panelTitle}>Rule Set Builder</h3>
+                <h3 className={styles.panelTitle}>{texts.build_rule_set_title || "Regelset samenstellen"}</h3>
 
                 <div className={styles.form}>
                     <input
                         className={styles.formInput}
-                        placeholder="Rule set name"
+                        placeholder={texts.rule_set_name_placeholder || "Naam van regelset"}
                         value={ruleSetForm.name}
                         onChange={(e) => updateRuleSetForm("name", e.target.value)}
                     />
                     <textarea
                         className={styles.formTextarea}
-                        placeholder="Description"
+                        placeholder={texts.rule_description_placeholder || "Omschrijving"}
                         value={ruleSetForm.description}
                         onChange={(e) => updateRuleSetForm("description", e.target.value)}
                         rows={3}
@@ -264,11 +262,11 @@ export default function ClubMatchRules({ clubId }) {
                             checked={ruleSetForm.canBeUsedByOthers}
                             onChange={(e) => updateRuleSetForm("canBeUsedByOthers", e.target.checked)}
                         />
-                        Usable by others
+                        Door anderen te gebruiken
                     </label>
                     <div className="my-4" style={{ maxHeight: "220px", overflowY: "auto" }}>
                         <p className={styles.secondaryText} style={{ marginBottom: "8px" }}>
-                            Select rules to include
+                        {texts.select_rules || "Selecteer regels om op te nemen"}
                         </p>
                         {rules.map(rule => (
                             <label
@@ -292,12 +290,12 @@ export default function ClubMatchRules({ clubId }) {
                         disabled={submitting}
                         type="button"
                     >
-                        {submitting ? "Saving..." : "Save Rule Set"}
+                        {submitting ? (texts.saving_rule_set || "Bezig met opslaan...") : (texts.save_rule_set || "Regelset opslaan")}
                     </button>
                 </div>
 
                 <div className="mt-6">
-                    <h4 className={styles.secondaryText}>Existing Rule Sets</h4>
+                    <h4 className={styles.secondaryText}>{texts.existing_rule_sets || "Bestaande regelsets"}</h4>
                     <ul className={styles.list} style={{ marginTop: "10px" }}>
                         {ruleSets.map(ruleSet => (
                             <li
@@ -307,7 +305,7 @@ export default function ClubMatchRules({ clubId }) {
                             >
                                 <p className={styles.primaryText}>{ruleSet.name}</p>
                                 <p className={styles.secondaryText} style={{ fontSize: "0.75rem" }}>
-                                    Contains {ruleSet.rules?.length || 0} rules
+                                    {texts.contains_rules || "Bevat"} {ruleSet.rules?.length || 0} {texts.rules_count_suffix || "regels"}
                                 </p>
                                 {ruleSet.description && (
                                     <p className={styles.secondaryText} style={{ fontSize: "0.75rem" }}>
@@ -318,7 +316,7 @@ export default function ClubMatchRules({ clubId }) {
                         ))}
                         {ruleSets.length === 0 && (
                             <li className={styles.listItem} style={{ padding: "8px" }}>
-                                <p className={styles.secondaryText}>No rule sets yet.</p>
+                                <p className={styles.secondaryText}>{texts.no_rule_sets || "Nog geen regelsets."}</p>
                             </li>
                         )}
                     </ul>

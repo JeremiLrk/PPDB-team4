@@ -1,14 +1,14 @@
 import { useNavigate, useParams } from "react-router-dom";
 import styles from "@/style/Home.module.css";
 
-function ClubSidebar({ activeTab, onTabChange }) {
+function ClubSidebar({ activeTab, onTabChange, texts = {} }) {
     const { clubId } = useParams();
     const navigate = useNavigate();
 
     return (
         <aside className={styles.ladderAside}>
             <section className={styles.ladderContainer}>
-                <h2 className={styles.ladderContainerText}>Settings</h2>
+                <h2 className={styles.ladderContainerText}>{texts.sidebar_title || "Instellingen"}</h2>
 
                 <div className={styles.ladderCard}>
                     <button
@@ -17,7 +17,7 @@ function ClubSidebar({ activeTab, onTabChange }) {
                         }`}
                         onClick={() => onTabChange("general")}
                     >
-                        General Info
+                        {texts.tab_general || "Algemene info"}
                     </button>
 
                     <button
@@ -26,7 +26,7 @@ function ClubSidebar({ activeTab, onTabChange }) {
                         }`}
                         onClick={() => onTabChange("ladders")}
                     >
-                        Ladders
+                        {texts.tab_ladders || "Ladders"}
                     </button>
 
                     <button
@@ -35,7 +35,7 @@ function ClubSidebar({ activeTab, onTabChange }) {
                         }`}
                         onClick={() => onTabChange("members")}
                     >
-                        Members
+                        {texts.tab_members || "Leden"}
                     </button>
 
                     <button
@@ -44,7 +44,7 @@ function ClubSidebar({ activeTab, onTabChange }) {
                         }`}
                         onClick={() => onTabChange("rules")}
                     >
-                        Match Rules
+                        {texts.tab_rules || "Wedstrijdregels"}
                     </button>
 
                     <button
@@ -53,14 +53,14 @@ function ClubSidebar({ activeTab, onTabChange }) {
                         }`}
                         onClick={() => onTabChange("owners")}
                     >
-                        owners
+                        {texts.tab_owners || "Eigenaren"}
                     </button>
 
                     <button
                         className={styles.ladderButton}
                         onClick={() => navigate(`/clubs/${clubId}`)}
                     >
-                        Go to Club Home
+                        {texts.tab_home || "Naar clubhome"}
                     </button>
                 </div>
             </section>

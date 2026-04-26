@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard.js";
 import useClubs from "@/hooks/useClubs.js";
@@ -23,26 +23,18 @@ const EMPTY_AVAILABILITY_FORM = {
 }
 
 const WEEKDAY_OPTIONS = [
-    { value: "0", label: "Monday" },
-    { value: "1", label: "Tuesday" },
-    { value: "2", label: "Wednesday" },
-    { value: "3", label: "Thursday" },
-    { value: "4", label: "Friday" },
-    { value: "5", label: "Saturday" },
-    { value: "6", label: "Sunday" },
+    { value: "0", label: "Maandag" },
+    { value: "1", label: "Dinsdag" },
+    { value: "2", label: "Woensdag" },
+    { value: "3", label: "Donderdag" },
+    { value: "4", label: "Vrijdag" },
+    { value: "5", label: "Zaterdag" },
+    { value: "6", label: "Zondag" },
 ]
 
 function normalizeRequests(dashboardData) {
     return Array.isArray(dashboardData?.pending_requests?.my_requests)
         ? dashboardData.pending_requests.my_requests
-        : []
-}
-
-function normalizeClubCreationRequests(dashboardData) {
-    return Array.isArray(
-        dashboardData?.pending_requests?.my_club_creation_requests,
-    )
-        ? dashboardData.pending_requests.my_club_creation_requests
         : []
 }
 
@@ -79,8 +71,8 @@ function normalizePendingJoinRequestClubIds(myRequests) {
 export function useDashboardWorkspace(setUser, texts = {}) {
     const navigate = useNavigate();
     const { dashboardData, loading, error } = useDashboard();
-    const { currentUser, setCurrentUser } = useCurrentUserContext();
-    const { sportTypes, loading: sloading, error: serror } = useSportTypes();
+    const { setCurrentUser } = useCurrentUserContext();
+    const { sportTypes } = useSportTypes();
     const {
         clubs: discoverClubs,
         loading: discoverLoading,
@@ -116,14 +108,6 @@ export function useDashboardWorkspace(setUser, texts = {}) {
 
     const myClubs = useMemo(() => normalizeClubs(dashboardData), [dashboardData]);
     const myRequests = useMemo(() => normalizeRequests(dashboardData), [dashboardData]);
-
-    const initialClubCreationRequests = useMemo(
-        () => normalizeClubCreationRequests(dashboardData),
-        [dashboardData],
-    )
-    const [clubCreationRequests, setClubCreationRequests] = useState(
-        initialClubCreationRequests,
-    )
 
     const myClubIds = useMemo(() => normalizeClubIds(myClubs), [myClubs])
     const upcomingMatches = useMemo(
@@ -161,15 +145,6 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         localStorage.setItem(THEME_STORAGE_KEY, theme)
     }, [theme])
 
-    // Keep local list in sync when backend payload shape changes.
-    useEffect(() => {
-        setClubCreationRequests(initialClubCreationRequests)
-    }, [initialClubCreationRequests])
-
-    useEffect(() => {
-        fetchAvailability()
-    }, [])
-
     function onThemeToggle() {
         setTheme((previousTheme) =>
             previousTheme === "dark" ? "light" : "dark",
@@ -197,15 +172,15 @@ export function useDashboardWorkspace(setUser, texts = {}) {
 
             const data = await response.json();
             if (!response.ok) {
-                throw new Error(data?.message || "Logout failed");
+                throw new Error(data?.message || "Uitloggen mislukt");
             }
 
             setCurrentUser(null);
-            notify.success("Logout successful");
+            notify.success("Uitloggen gelukt");
             navigate("/");
         } catch (err) {
-            console.error(err?.message || "Logout failed");
-            notify.error(err?.message || "Logout failed");
+            console.error(err?.message || "Uitloggen mislukt");
+            notify.error(err?.message || "Uitloggen mislukt");
         }
     }
 
@@ -219,7 +194,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         setAvailabilityForm((previous) => ({ ...previous, [name]: value }))
     }
 
-    async function fetchAvailability() {
+    const fetchAvailability = useCallback(async () => {
         setAvailabilityLoading(true)
         try {
             const response = await fetch("/api/me/availability", {
@@ -257,7 +232,11 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         } finally {
             setAvailabilityLoading(false)
         }
-    }
+    }, [texts.could_not_load_availability])
+
+    useEffect(() => {
+        fetchAvailability()
+    }, [fetchAvailability])
 
     async function onAvailabilitySubmit(event) {
         event.preventDefault()
@@ -489,38 +468,12 @@ export function useDashboardWorkspace(setUser, texts = {}) {
                 );
             }
 
-            const requestRecord = {
-                id: responseBody?.club?.id || `club-request-${Date.now()}`,
-                name: responseBody?.request?.name || payload.name,
-                city: responseBody?.request?.city || payload.city,
-                sport: responseBody?.request?.sport || payload.sport,
-                status: responseBody?.request?.status || "pending",
-                requested_at:
-                    responseBody?.request?.requested_at ||
-                    new Date().toISOString(),
-            }
-
-            setClubCreationRequests((previous) => [requestRecord, ...previous])
             setClubRequestForm(EMPTY_CLUB_REQUEST_FORM)
             setClubRequestMessage({
                 type: "success",
                 text: texts.club_request_submitted || "Club request submitted.",
             })
         } catch {
-            // Temporary optimistic fallback while backend endpoint is still being merged.
-            const fallbackRequest = {
-                id: `local-club-request-${Date.now()}`,
-                name: payload.name,
-                city: payload.city,
-                sport: payload.sport,
-                status: "pending",
-                requested_at: new Date().toISOString(),
-            }
-
-            setClubCreationRequests((previous) => [
-                fallbackRequest,
-                ...previous,
-            ])
             setClubRequestForm(EMPTY_CLUB_REQUEST_FORM)
         } finally {
             setClubRequestSubmitting(false)
@@ -542,7 +495,6 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         filteredDiscoverClubs,
         discoverLoading,
         discoverError,
-        clubCreationRequests,
         clubRequestForm,
         clubRequestSubmitting,
         clubRequestMessage,

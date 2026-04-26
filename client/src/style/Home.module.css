@@ -1,23 +1,55 @@
 @reference "tailwindcss";
 
 
+.page {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.pageBackdrop {
+    position: fixed;
+    inset: 0;
+    background-color: #020617;
+    background-image: var(--club-home-bg, none);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: scale(1.02);
+}
+
+.pageOverlay {
+    position: fixed;
+    inset: 0;
+    background:
+        linear-gradient(180deg, rgba(14, 165, 233, 0.42) 0%, rgba(14, 165, 233, 0.28) 22%, rgba(8, 145, 178, 0.18) 40%, rgba(2, 6, 23, 0.3) 62%, rgba(2, 6, 23, 0.86) 100%),
+        linear-gradient(90deg, rgba(8, 47, 73, 0.18), rgba(2, 6, 23, 0.04));
+}
+
 .container{
-    @apply grid gap-10 lg:grid-cols-[1fr_2fr_1fr] items-start
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: grid;
+    gap: 1rem;
+    padding: 1rem clamp(0.9rem, 1.7vw, 1.8rem) 1.25rem;
+    grid-template-columns: minmax(15rem, 0.95fr) minmax(0, 2.45fr) minmax(15rem, 0.95fr);
+    align-items: start;
 }
 
 .ladderAside{
-    @apply flex flex-col gap-6;
+    @apply flex flex-col gap-4;
 }
 .ladderContainer{
-    @apply rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur h-fit;
+    @apply rounded-3xl border border-white/10 bg-white/12 p-5 backdrop-blur h-fit;
 }
 .ladderContainerText{
-    @apply text-xl font-semibold mb-6;
+    @apply text-xl font-semibold mb-3;
 }
 .ladderCard {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0.7rem;
 }
 .ladderButton{
     @apply text-left rounded-xl border border-white/10 px-4 py-3 hover:bg-white/10 transition;
@@ -27,23 +59,103 @@
 
 /* RIGHT — SCOREBOARDS */
 .scoreboardAside{
-    @apply flex flex-col gap-8;
+    @apply flex flex-col gap-4;
 }
 
 .scoreboardContainer{
-    @apply rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur h-fit;
+    @apply rounded-3xl border border-white/10 bg-white/12 p-5 backdrop-blur h-fit;
 }
 
 .scoreboardContainerText{
-    @apply text-xl font-semibold mb-6;
+    @apply text-xl font-semibold mb-3;
 }
 
 .scoreboardCard{
-    @apply space-y-4 text-sm;
+    @apply space-y-2.5 text-sm;
 }
 .scoreboardCardTeam{
-    @apply flex justify-between;
+    @apply flex justify-between gap-3 rounded-xl bg-white/6 px-3 py-2;
 }
 .scoreboardCardMatch{
     @apply flex justify-between;
+}
+
+.clubMain {
+    @apply flex flex-col gap-5 items-center justify-start;
+    min-height: 100vh;
+    padding-top: 0.55rem;
+    padding-bottom: 0.75rem;
+}
+
+.heroPanel {
+    max-width: 60rem;
+    width: 100%;
+    min-height: 28rem;
+    border-radius: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(2, 6, 23, 0.12);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 24px 56px rgba(2, 6, 23, 0.32);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 2.2rem 2rem;
+    text-align: center;
+}
+
+.clubTitle {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.clubDescription {
+    margin: 0;
+    max-width: 56ch;
+    font-size: 1.05rem;
+    color: rgba(226, 232, 240, 0.9);
+}
+
+.heroActions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.primaryAction,
+.secondaryAction,
+.manageButton {
+    border-radius: 9999px;
+    padding: 0.85rem 1.25rem;
+    font-weight: 700;
+    transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.primaryAction {
+    background: linear-gradient(120deg, rgba(59, 130, 246, 0.95), rgba(34, 197, 94, 0.86));
+    color: #eff6ff;
+}
+
+.secondaryAction {
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(15, 23, 42, 0.34);
+    color: #f8fafc;
+}
+
+.manageButton {
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    background: rgba(251, 191, 36, 0.14);
+    color: #fbbf24;
+}
+
+.primaryAction:hover,
+.secondaryAction:hover,
+.manageButton:hover {
+    transform: translateY(-1px);
 }
