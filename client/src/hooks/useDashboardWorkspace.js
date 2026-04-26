@@ -22,7 +22,17 @@ const EMPTY_AVAILABILITY_FORM = {
     endTime: "",
 }
 
-const WEEKDAY_OPTIONS = [
+const WEEKDAY_OPTIONS_EN = [
+    { value: "0", label: "Monday" },
+    { value: "1", label: "Tuesday" },
+    { value: "2", label: "Wednesday" },
+    { value: "3", label: "Thursday" },
+    { value: "4", label: "Friday" },
+    { value: "5", label: "Saturday" },
+    { value: "6", label: "Sunday" },
+]
+
+const WEEKDAY_OPTIONS_NL = [
     { value: "0", label: "Maandag" },
     { value: "1", label: "Dinsdag" },
     { value: "2", label: "Woensdag" },
@@ -68,7 +78,7 @@ function normalizePendingJoinRequestClubIds(myRequests) {
     )
 }
 
-export function useDashboardWorkspace(setUser, texts = {}) {
+export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     const navigate = useNavigate();
     const { dashboardData, loading, error } = useDashboard();
     const { setCurrentUser } = useCurrentUserContext();
@@ -105,6 +115,10 @@ export function useDashboardWorkspace(setUser, texts = {}) {
     })
 
     const [isClubOwner, setIsClubOwner] = useState(false);
+    const weekdayOptions = useMemo(
+        () => (String(lang).toLowerCase().startsWith("nl") ? WEEKDAY_OPTIONS_NL : WEEKDAY_OPTIONS_EN),
+        [lang],
+    )
 
     const myClubs = useMemo(() => normalizeClubs(dashboardData), [dashboardData]);
     const myRequests = useMemo(() => normalizeRequests(dashboardData), [dashboardData]);
@@ -527,6 +541,6 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         onAvailabilitySubmit,
         onAvailabilityDelete,
         sportTypes,
-        WEEKDAY_OPTIONS,
+        weekdayOptions,
     };
 }

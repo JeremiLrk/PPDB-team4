@@ -22,8 +22,8 @@
     position: fixed;
     inset: 0;
     background:
-        linear-gradient(180deg, rgba(14, 165, 233, 0.42) 0%, rgba(14, 165, 233, 0.28) 22%, rgba(8, 145, 178, 0.18) 40%, rgba(2, 6, 23, 0.3) 62%, rgba(2, 6, 23, 0.86) 100%),
-        linear-gradient(90deg, rgba(8, 47, 73, 0.18), rgba(2, 6, 23, 0.04));
+        linear-gradient(180deg, rgba(6, 56, 118, 0.9) 0%, rgba(5, 44, 98, 0.88) 24%, rgba(4, 31, 74, 0.84) 52%, rgba(2, 10, 30, 0.84) 76%, rgba(2, 6, 23, 0.98) 100%),
+        linear-gradient(90deg, rgba(4, 54, 104, 0.7), rgba(2, 6, 23, 0.22));
 }
 
 .container{

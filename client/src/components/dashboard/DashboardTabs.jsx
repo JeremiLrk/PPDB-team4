@@ -20,16 +20,26 @@ function parseUtcTimestamp(value) {
     return parsed
 }
 
-function formatLocalTimestamp(value) {
+function formatLocalTimestamp(value, locale = "en-US") {
     const parsed = parseUtcTimestamp(value)
     if (!parsed) {
         return value || "-"
     }
 
-    return parsed.toLocaleString()
+    return parsed.toLocaleString(locale)
 }
 
-const WEEKDAY_LABELS = [
+const EN_WEEKDAY_LABELS = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+]
+
+const NL_WEEKDAY_LABELS = [
     "Maandag",
     "Dinsdag",
     "Woensdag",
@@ -39,9 +49,18 @@ const WEEKDAY_LABELS = [
     "Zondag",
 ]
 
-function formatWeeklyAvailability(block) {
+function isDutchLang(lang) {
+    return (lang || "").toLowerCase().startsWith("nl")
+}
+
+function defaultText(lang, english, dutch) {
+    return isDutchLang(lang) ? dutch : english
+}
+
+function formatWeeklyAvailability(block, lang) {
     const weekdayIndex = Number(block?.weekday)
-    const weekdayLabel = block?.weekday_label || WEEKDAY_LABELS[weekdayIndex] || "Dag"
+    const weekdayLabels = isDutchLang(lang) ? NL_WEEKDAY_LABELS : EN_WEEKDAY_LABELS
+    const weekdayLabel = weekdayLabels[weekdayIndex] || block?.weekday_label || defaultText(lang, "Day", "Dag")
     const startTime = block?.start_time || "--:--"
     const endTime = block?.end_time || "--:--"
 
@@ -50,7 +69,8 @@ function formatWeeklyAvailability(block) {
     }
 
     if (block?.start_at && block?.end_at) {
-        return `${formatLocalTimestamp(block.start_at)} - ${formatLocalTimestamp(block.end_at)}`
+        const locale = isDutchLang(lang) ? "nl-BE" : "en-US"
+        return `${formatLocalTimestamp(block.start_at, locale)} - ${formatLocalTimestamp(block.end_at, locale)}`
     }
 
     return "-"
@@ -62,9 +82,10 @@ function formatMatchTitle(match) {
     return `${team1} vs ${team2}`
 }
 
-function formatUpcomingMatchDate(match, texts) {
-    const start = formatLocalTimestamp(match?.proposedStartAt)
-    const end = formatLocalTimestamp(match?.proposedEndAt)
+function formatUpcomingMatchDate(match, texts, lang) {
+    const locale = isDutchLang(lang) ? "nl-BE" : "en-US"
+    const start = formatLocalTimestamp(match?.proposedStartAt, locale)
+    const end = formatLocalTimestamp(match?.proposedEndAt, locale)
 
     if (match?.proposedStartAt && match?.proposedEndAt) {
         return `${start} - ${end}`
@@ -75,10 +96,10 @@ function formatUpcomingMatchDate(match, texts) {
     }
 
     if (match?.weekStartDate) {
-        return `${texts?.week_of || "Week van"} ${match.weekStartDate}`
+        return `${texts?.week_of || defaultText(lang, "Week of", "Week van")} ${match.weekStartDate}`
     }
 
-    return texts?.date_tbd || "Datum/tijd volgt"
+    return texts?.date_tbd || defaultText(lang, "Date/time TBD", "Datum/tijd volgt")
 }
 
 const styles = { ...formStyles, ...commonStyles, ...dashStyles };
@@ -434,6 +455,7 @@ export function OverviewTab({
     pendingJoinRequestClubIds,
     incomingJoinRequests,
     texts,
+    lang = "en",
 }) {
     return (
         <div className={`${styles.contentGrid} ${styles.contentFade}`}>
@@ -455,7 +477,7 @@ export function OverviewTab({
                                         </p>
                                     </div>
                                     <Link className={styles.linkButton} to={`/clubs/${clubId}`}>
-                                        {texts?.open || "Openen"}
+                                        {texts?.open || defaultText(lang, "Open", "Openen")}
                                     </Link>
                                 </li>
                             );
@@ -465,21 +487,21 @@ export function OverviewTab({
             </article>
 
             <article className={styles.panel}>
-                <h3 className={styles.panelTitle}>{texts?.quick_highlights || "Request Overview"}</h3>
+                <h3 className={styles.panelTitle}>{texts?.quick_highlights || defaultText(lang, "Request Overview", "Aanvragen overzicht")}</h3>
                 <div className={styles.metrics}>
                     <div className={styles.metricCard}>
-                        <p className={styles.metricLabel}>{texts?.requests_i_sent || "Requests I sent"}</p>
+                        <p className={styles.metricLabel}>{texts?.requests_i_sent || defaultText(lang, "Requests I sent", "Mijn ingediende aanvragen")}</p>
                         <p className={styles.metricValue}>{myRequests.length}</p>
                     </div>
                     <div className={styles.metricCard}>
                         <p className={styles.metricLabel}>
-                            {texts?.pending_join_requests || "Aanvraag in afwachting van clubgoedkeuring"}
+                            {texts?.pending_join_requests || defaultText(lang, "Pending join requests", "Aanvraag in afwachting van clubgoedkeuring")}
                         </p>
                         <p className={styles.metricValue}>{pendingJoinRequestClubIds.size}</p>
                     </div>
                     <div className={styles.metricCard}>
                         <p className={styles.metricLabel}>
-                            {texts?.incoming_join_requests || "Incoming requests to review"}
+                            {texts?.incoming_join_requests || defaultText(lang, "Incoming requests to review", "Binnenkomende aanvragen om te beoordelen")}
                         </p>
                         <p className={styles.metricValue}>{incomingJoinRequests.length}</p>
                     </div>
@@ -501,11 +523,12 @@ export function SearchTab({
     pendingJoinRequestClubIds,
     clubJoinrequest,
     texts,
+    lang = "en",
 }) {
     return (
         <article className={`${styles.panel} ${styles.contentFade}`}>
             <div className={styles.panelTopRow}>
-                <h3 className={styles.panelTitle}>{texts?.search_clubs || "Search Clubs"}</h3>
+                <h3 className={styles.panelTitle}>{texts?.search_clubs || defaultText(lang, "Search Clubs", "Zoek clubs")}</h3>
                 <span className={styles.counter}>{filteredDiscoverClubs.length}</span>
             </div>
 
@@ -514,16 +537,16 @@ export function SearchTab({
                 type="search"
                 value={searchTerm}
                 onChange={(event) => onSearchChange(event.target.value)}
-                placeholder={texts?.search_by_name || "Search by club name"}
-                aria-label={texts?.search_clubs || "Search clubs"}
+                placeholder={texts?.search_by_name || defaultText(lang, "Search by club name", "Zoek op clubnaam")}
+                aria-label={texts?.search_clubs || defaultText(lang, "Search clubs", "Zoek clubs")}
             />
 
-            {discoverLoading ? <p className={styles.muted}>{texts?.loading_clubs || "Clubs laden..."}</p> : null}
+            {discoverLoading ? <p className={styles.muted}>{texts?.loading_clubs || defaultText(lang, "Loading clubs...", "Clubs laden...")}</p> : null}
             {discoverError ? <p className={styles.warning}>{discoverError}</p> : null}
 
             {!discoverLoading && !discoverError ? (
                 filteredDiscoverClubs.length === 0 ? (
-                    <p className={styles.muted}>{texts?.no_clubs_found || "Geen clubs gevonden."}</p>
+                    <p className={styles.muted}>{texts?.no_clubs_found || defaultText(lang, "No clubs found.", "Geen clubs gevonden.")}</p>
                 ) : (
                     <div className={styles.discoverGrid}>
                         {filteredDiscoverClubs.map((club) => {
@@ -538,13 +561,13 @@ export function SearchTab({
                                     <div className={styles.actionRow}>
                                         {isJoined ? (
                                             <span className={`${styles.statusPill} ${styles.statusApproved}`}>
-                                                {texts?.joined || "Lid"}
+                                                {texts?.joined || defaultText(lang, "Joined", "Lid")}
                                             </span>
                                         ) : null}
 
                                         {!isJoined && hasPendingRequest ? (
                                             <span className={`${styles.statusPill} ${styles.statusPending}`}>
-                                                {texts?.status_pending || "In afwachting"}
+                                                {texts?.status_pending || defaultText(lang, "Pending", "In afwachting")}
                                             </span>
                                         ) : null}
 
@@ -553,7 +576,7 @@ export function SearchTab({
                                                     className={styles.primaryButton}
                                                     type="button"
                                                     onClick={(e) => {clubJoinrequest(clubId);e.currentTarget.disabled = true;}}>
-                                                    {texts?.request_to_join || "Lidmaatschap aanvragen"}
+                                                    {texts?.request_to_join || defaultText(lang, "Request to Join", "Lidmaatschap aanvragen")}
                                                 </button>
                                         ) : null}
                                     </div>
@@ -569,17 +592,18 @@ export function SearchTab({
 
 export function RequestsTab({
     myRequests,
-    texts
+    texts,
+    lang = "en",
 }) {
     return (
         <article className={`${styles.panel} ${styles.contentFade}`}>
             <div className={styles.panelTopRow}>
-                <h3 className={styles.panelTitle}>{texts?.my_join_requests || "My Join Requests"}</h3>
+                <h3 className={styles.panelTitle}>{texts?.my_join_requests || defaultText(lang, "My Join Requests", "Mijn aanvragen")}</h3>
                 <span className={styles.counter}>{myRequests.length}</span>
             </div>
 
             {myRequests.length === 0 ? (
-                <p className={styles.muted}>{texts?.no_join_requests_yet || "No join requests yet."}</p>
+                <p className={styles.muted}>{texts?.no_join_requests_yet || defaultText(lang, "No join requests yet.", "Nog geen aanvragen.")}</p>
             ) : (
                 <ul className={styles.list}>
                     {myRequests.map((request) => {
@@ -590,10 +614,10 @@ export function RequestsTab({
                             <li key={requestId} className={styles.listItem}>
                                 <div>
                                     <p className={styles.primaryText}>
-                                        {request?.club_name || request?.club?.name || texts?.unknown_club || "Unknown club"}
+                                        {request?.club_name || request?.club?.name || texts?.unknown_club || defaultText(lang, "Unknown club", "Onbekende club")}
                                     </p>
                                     <p className={styles.secondaryText}>
-                                        {(texts?.requested_prefix || "Requested") + ":"} {request?.requested_at || "-"}
+                                        {(texts?.requested_prefix || defaultText(lang, "Requested", "Aangevraagd")) + ":"} {request?.requested_at || "-"}
                                     </p>
                                 </div>
 
@@ -618,43 +642,44 @@ export function CreateClubTab({
     onFieldChange,
     onSubmit,
     texts,
-    sportTypes = []
+    sportTypes = [],
+    lang = "en",
 }) {
     return (
         /* Removed the sidebar logic entirely */
         <section className={`${styles.singleColumnLayout} ${styles.contentFade}`}>
             <article className={styles.fullWidthPanel}>
-                <h3 className={styles.panelTitle}>{texts?.request_your_club || "Request Your Own Club"}</h3>
+                <h3 className={styles.panelTitle}>{texts?.request_your_club || defaultText(lang, "Request Your Own Club", "Vraag je eigen club aan")}</h3>
                 <form className={styles.form} onSubmit={onSubmit}>
                     <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>{texts?.club_name || "Club Name"}</label>
+                        <label className={styles.formLabel}>{texts?.club_name || defaultText(lang, "Club Name", "Clubnaam")}</label>
                         <input
                             className={styles.formInput}
                             type="text"
                             name="name"
                             value={clubRequestForm.name}
                             onChange={onFieldChange}
-                            placeholder={texts?.club_name_placeholder || "What is your club's name?"}
+                            placeholder={texts?.club_name_placeholder || defaultText(lang, "What is your club's name?", "Wat is de naam van je club?")}
                             required
                         />
                     </div>
 
                     <div className={styles.formRow}>
                         <div className={styles.formGroup}>
-                            <label className={styles.formLabel}>{texts?.city || "City"}</label>
+                            <label className={styles.formLabel}>{texts?.city || defaultText(lang, "City", "Stad")}</label>
                             <input
                                 className={styles.formInput}
                                 type="text"
                                 name="city"
                                 value={clubRequestForm.city}
                                 onChange={onFieldChange}
-                                placeholder={texts?.city_placeholder || "City where your club is based"}
+                                placeholder={texts?.city_placeholder || defaultText(lang, "City where your club is based", "Stad waar je club gevestigd is")}
                                 required
                             />
                         </div>
 
                         <div className={styles.formGroup}>
-                            <label className={styles.formLabel}>{texts?.main_sport || "Main Sport"}</label>
+                            <label className={styles.formLabel}>{texts?.main_sport || defaultText(lang, "Main Sport", "Hoofdsport")}</label>
                             <select
                                 className={styles.formInput}
                                 name="sport_type_id" 
@@ -662,7 +687,7 @@ export function CreateClubTab({
                                 onChange={onFieldChange}
                                 required
                             >
-                                <option value="" disabled>{texts?.select_sport_placeholder || "Select a sport"}</option>
+                                <option value="" disabled>{texts?.select_sport_placeholder || defaultText(lang, "Select a sport", "Selecteer een sport")}</option>
                                 {sportTypes.map((sport) => (
                                     <option key={sport.id} value={sport.id}>{sport.name}</option>
                                 ))}
@@ -671,13 +696,13 @@ export function CreateClubTab({
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>{texts?.description || "Description"}</label>
+                        <label className={styles.formLabel}>{texts?.description || defaultText(lang, "Description", "Beschrijving")}</label>
                         <textarea
                             className={styles.formTextarea}
                             name="description"
                             value={clubRequestForm.description}
                             onChange={onFieldChange}
-                            placeholder={texts?.description_placeholder || "Tell us about your club..."}
+                            placeholder={texts?.description_placeholder || defaultText(lang, "Tell us about your club...", "Vertel ons over je club...")}
                             rows={6} // Made slightly taller since we have more room
                             required
                         />
@@ -707,7 +732,8 @@ export function ManageClubsTab({
     decideJoinrequest,
     isClubOwner,
     onGoSettings,
-    texts
+    texts,
+    lang = "en",
 }) {
     const ownedClubs = myClubs.filter(club => club.membership_status === "owner");
 
@@ -715,7 +741,7 @@ export function ManageClubsTab({
         return (
             <div className={styles.panel} style={{ textAlign: 'center', padding: '40px' }}>
                 <p className={styles.muted}>
-                    {texts?.no_clubs_owned || "You don't own any clubs yet."}
+                    {texts?.no_clubs_owned || defaultText(lang, "You don't own any clubs yet.", "Je bent nog geen eigenaar van een club.")}
                 </p>
             </div>
         );
@@ -725,12 +751,12 @@ export function ManageClubsTab({
         <div className={`${styles.contentFade} ${styles.manageClubsLayout}`}>
             <article className={styles.panel}>
                 <div className={styles.panelTopRow}>
-                    <h3 className={styles.panelTitle}>{texts?.your_clubs || "Jouw eigen clubs"}</h3>
+                    <h3 className={styles.panelTitle}>{texts?.your_clubs || defaultText(lang, "Your clubs", "Jouw eigen clubs")}</h3>
                     <span className={styles.counter}>{ownedClubs.length}</span>
                 </div>
 
                 {ownedClubs.length === 0 ? (
-                    <p className={styles.muted}>{texts?.no_clubs_owned || "You don't own any clubs yet."}</p>
+                    <p className={styles.muted}>{texts?.no_clubs_owned || defaultText(lang, "You don't own any clubs yet.", "Je bent nog geen eigenaar van een club.")}</p>
                 ) : (
                     <ul className={styles.list}>
                         {ownedClubs.map(club => (
@@ -738,15 +764,15 @@ export function ManageClubsTab({
                                 <div>
                                     <p className={styles.primaryText}>{club.name}</p>
                                     <p className={styles.secondaryText}>
-                                        {club.city || texts?.unknown_city || "Unknown city"}
-                                        {club.sport || club.sport_type_id ? ` · ${club.sport || `${texts?.sport_prefix || "Sport"} #${club.sport_type_id}`}` : ""}
+                                        {club.city || texts?.unknown_city || defaultText(lang, "Unknown city", "Onbekende stad")}
+                                        {club.sport || club.sport_type_id ? ` · ${club.sport || `${texts?.sport_prefix || defaultText(lang, "Sport", "Sport")} #${club.sport_type_id}`}` : ""}
                                     </p>
                                 </div>
                                 <button
                                     onClick={() => onGoSettings(club.id)}
                                     className={styles.linkButton}
                                 >
-                                    {texts?.settings || "Settings"}
+                                    {texts?.settings || defaultText(lang, "Settings", "Instellingen")}
                                 </button>
                             </li>
                         ))}
@@ -757,20 +783,20 @@ export function ManageClubsTab({
             <article className={styles.panel}>
                 <div className={styles.panelTopRow}>
                     <h3 className={styles.panelTitle}>
-                        {texts?.incoming_join_requests || "Binnenkomende aanmeldverzoeken"}
+                        {texts?.incoming_join_requests || defaultText(lang, "Incoming join requests", "Binnenkomende aanmeldverzoeken")}
                     </h3>
                     <span className={styles.counter}>{incomingJoinRequests.length}</span>
                 </div>
 
                 {incomingJoinRequests.length === 0 ? (
-                    <p className={styles.muted}>{texts?.no_incoming_requests || "No incoming requests yet."}</p>
+                    <p className={styles.muted}>{texts?.no_incoming_requests || defaultText(lang, "No incoming requests yet.", "Nog geen binnenkomende aanvragen.")}</p>
                 ) : (
                     <ul className={styles.requestList}>
                         {incomingJoinRequests.map((req, index) => (
                             <li className={styles.requestCard} key={`${req.club_id}-${req.user_id}-${index}`}>
                                 <div className={styles.requestContent}>
                                     <p className={styles.primaryText}>
-                                        <strong>{req.user_name}</strong> {texts?.wants_to_join || "wants to join"} <strong>{req.club_name}</strong>
+                                        <strong>{req.user_name}</strong> {texts?.wants_to_join || defaultText(lang, "wants to join", "wil lid worden van")} <strong>{req.club_name}</strong>
                                     </p>
                                 </div>
                                 <div className={styles.requestActions}>
@@ -783,7 +809,7 @@ export function ManageClubsTab({
                                             decideJoinrequest(req.club_id, req.user_id, "approved");
                                         }}
                                     >
-                                        {texts?.approve || "Goedkeuren"}
+                                        {texts?.approve || defaultText(lang, "Approve", "Goedkeuren")}
                                     </button>
 
                                     <button
@@ -796,7 +822,7 @@ export function ManageClubsTab({
                                             decideJoinrequest(req.club_id, req.user_id, "rejected");
                                         }}
                                     >
-                                        {texts?.reject || "Afwijzen"}
+                                        {texts?.reject || defaultText(lang, "Reject", "Afwijzen")}
                                     </button>
                                 </div>
                             </li>
@@ -822,17 +848,18 @@ export function AvailabilityTab({
     onAvailabilityDelete,
     weekdayOptions,
     texts,
+    lang = "en",
 }) {
     return (
         <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>
-                        {texts?.availability_title || "Mijn beschikbaarheid"}
+                        {texts?.availability_title || defaultText(lang, "My Availability", "Mijn beschikbaarheid")}
                 </h3>
                 <form className={styles.form} onSubmit={onAvailabilitySubmit}>
                     <div className={styles.formRow}>
                         <label className={styles.formLabel}>
-                            {texts?.weekday || "Weekdag"}
+                            {texts?.weekday || defaultText(lang, "Weekday", "Weekdag")}
                             <select
                                 className={styles.formInput}
                                 name="weekday"
@@ -840,8 +867,8 @@ export function AvailabilityTab({
                                 onChange={onAvailabilityFieldChange}
                                 required
                             >
-                                <option value="">{texts?.select_weekday || "Kies een weekdag"}</option>
-                                {(weekdayOptions || WEEKDAY_LABELS.map((label, index) => ({ value: String(index), label }))).map((option) => (
+                                <option value="">{texts?.select_weekday || defaultText(lang, "Choose a weekday", "Kies een weekdag")}</option>
+                                {(weekdayOptions || (isDutchLang(lang) ? NL_WEEKDAY_LABELS : EN_WEEKDAY_LABELS).map((label, index) => ({ value: String(index), label }))).map((option) => (
                                     <option key={option.value} value={option.value}>
                                         {option.label}
                                     </option>
@@ -849,7 +876,7 @@ export function AvailabilityTab({
                             </select>
                         </label>
                         <label className={styles.formLabel}>
-                            {texts?.start_time || "Starttijd"}
+                            {texts?.start_time || defaultText(lang, "Start time", "Starttijd")}
                             <input
                                 className={styles.formInput}
                                 type="time"
@@ -862,7 +889,7 @@ export function AvailabilityTab({
                     </div>
 
                     <label className={styles.formLabel}>
-                        {texts?.end_time || "Eindtijd"}
+                        {texts?.end_time || defaultText(lang, "End time", "Eindtijd")}
                         <input
                             className={styles.formInput}
                             type="time"
@@ -880,8 +907,8 @@ export function AvailabilityTab({
                             disabled={availabilitySubmitting}
                         >
                             {availabilitySubmitting
-                                ? texts?.adding || "Toevoegen..."
-                                : texts?.add_availability_block || "Beschikbaarheidsblok toevoegen"}
+                                ? texts?.adding || defaultText(lang, "Adding...", "Toevoegen...")
+                                : texts?.add_availability_block || defaultText(lang, "Add availability block", "Beschikbaarheidsblok toevoegen")}
                         </button>
                     </div>
                 </form>
@@ -905,18 +932,18 @@ export function AvailabilityTab({
                 <article className={styles.panel}>
                     <div className={styles.panelTopRow}>
                         <h3 className={styles.panelTitle}>
-                            {texts?.availability_blocks || "Jouw blokken"}
+                            {texts?.availability_blocks || defaultText(lang, "Your blocks", "Jouw blokken")}
                         </h3>
                         <span className={styles.counter}>{availabilityBlocks.length}</span>
                     </div>
 
                     {availabilityLoading ? (
-                        <p className={styles.muted}>{texts?.loading || "Laden..."}</p>
+                        <p className={styles.muted}>{texts?.loading || defaultText(lang, "Loading...", "Laden...")}</p>
                     ) : null}
 
                     {!availabilityLoading && availabilityBlocks.length === 0 ? (
                         <p className={styles.muted}>
-                            {texts?.no_availability_blocks || "Nog geen beschikbaarheidsblokken."}
+                            {texts?.no_availability_blocks || defaultText(lang, "No availability blocks yet.", "Nog geen beschikbaarheidsblokken.")}
                         </p>
                     ) : null}
 
@@ -926,10 +953,10 @@ export function AvailabilityTab({
                                 <li className={styles.availabilityCard} key={block.id}>
                                     <div>
                                         <p className={styles.primaryText}>
-                                            {formatWeeklyAvailability(block)}
+                                            {formatWeeklyAvailability(block, lang)}
                                         </p>
                                         <p className={styles.secondaryText}>
-                                            {texts?.availability_block_detail || "Wekelijks terugkerend blok"}
+                                            {texts?.availability_block_detail || defaultText(lang, "Weekly recurring block", "Wekelijks terugkerend blok")}
                                         </p>
                                     </div>
                                     <button
@@ -937,7 +964,7 @@ export function AvailabilityTab({
                                         type="button"
                                         onClick={() => onAvailabilityDelete(block.id)}
                                     >
-                                        {texts?.delete || "Verwijderen"}
+                                        {texts?.delete || defaultText(lang, "Delete", "Verwijderen")}
                                     </button>
                                 </li>
                             ))}
@@ -948,14 +975,14 @@ export function AvailabilityTab({
                 <article className={styles.panel}>
                     <div className={styles.panelTopRow}>
                         <h3 className={styles.panelTitle}>
-                            {texts?.availability_upcoming_matches || "Aankomende wedstrijden"}
+                            {texts?.availability_upcoming_matches || defaultText(lang, "Upcoming matches", "Aankomende wedstrijden")}
                         </h3>
                         <span className={styles.counter}>{upcomingMatches.length}</span>
                     </div>
 
                     {upcomingMatches.length === 0 ? (
                         <p className={styles.muted}>
-                            {texts?.no_upcoming_matches || "Er staan nog geen aankomende wedstrijden gepland."}
+                            {texts?.no_upcoming_matches || defaultText(lang, "No upcoming matches scheduled.", "Er staan nog geen aankomende wedstrijden gepland.")}
                         </p>
                     ) : (
                         <ul className={styles.availabilityList}>
@@ -964,14 +991,14 @@ export function AvailabilityTab({
                                     <div>
                                         <p className={styles.primaryText}>{formatMatchTitle(match)}</p>
                                         <p className={styles.secondaryText}>
-                                            {formatUpcomingMatchDate(match, texts)}
+                                            {formatUpcomingMatchDate(match, texts, lang)}
                                         </p>
                                         <p className={styles.secondaryText}>
-                                            {match.location || texts?.unknown_location || "Onbekende locatie"}
+                                            {match.location || texts?.unknown_location || defaultText(lang, "Unknown location", "Onbekende locatie")}
                                         </p>
                                     </div>
                                     <span className={`${styles.statusPill} ${styles.statusApproved}`}>
-                                        {match.status?.name || texts?.status_accepted || "Geaccepteerd"}
+                                        {match.status?.name || texts?.status_accepted || defaultText(lang, "Accepted", "Geaccepteerd")}
                                     </span>
                                 </li>
                             ))}

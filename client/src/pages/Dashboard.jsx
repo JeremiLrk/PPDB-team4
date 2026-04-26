@@ -26,7 +26,7 @@ function Dashboard() {
     const { currentUser, setCurrentUser } = useCurrentUserContext();
     const { lang } = useLangContext()
     const dashboardTexts = usePageTexts("dashboard", lang)
-    const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts)
+    const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts, lang)
 
     // Sync theme to <body> so portals rendered via createPortal inherit CSS variables
     useEffect(() => {
@@ -75,6 +75,7 @@ function Dashboard() {
                         }
                         incomingJoinRequests={workspace.incomingJoinRequests}
                         texts={dashboardTexts}
+                        lang={lang}
                     />
                 ) : null}
 
@@ -97,6 +98,7 @@ function Dashboard() {
                         pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
                         clubJoinrequest={workspace.clubJoinrequest}
                         texts={dashboardTexts}
+                        lang={lang}
                     />
                 ) : null}
 
@@ -115,8 +117,9 @@ function Dashboard() {
                         }
                         onAvailabilitySubmit={workspace.onAvailabilitySubmit}
                         onAvailabilityDelete={workspace.onAvailabilityDelete}
-                        weekdayOptions={workspace.WEEKDAY_OPTIONS}
+                        weekdayOptions={workspace.weekdayOptions}
                         texts={dashboardTexts}
+                        lang={lang}
                     />
                 ) : null}
 
@@ -124,6 +127,7 @@ function Dashboard() {
                     <RequestsTab 
                         myRequests={workspace.myRequests} 
                         texts={dashboardTexts} 
+                        lang={lang}
                         />
                 ) : null}
 
@@ -147,6 +151,7 @@ function Dashboard() {
                         onSubmit={workspace.onClubRequestSubmit}
                         texts={dashboardTexts}
                         sportTypes={workspace.sportTypes}
+                        lang={lang}
                     />
                 ) : null}
 
@@ -158,6 +163,7 @@ function Dashboard() {
                         isClubOwner={workspace.isClubOwner}
                         onGoSettings={workspace.onGoSettings}
                         texts={dashboardTexts}
+                        lang={lang}
                     />
                 ) : null}
             </div>

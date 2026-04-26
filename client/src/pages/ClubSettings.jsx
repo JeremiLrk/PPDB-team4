@@ -83,6 +83,7 @@ function ClubSettings() {
                         onRemove={settings.removeOwner}
                         searchAccounts={settings.searchAccounts}
                         texts={texts}
+                        lang={lang}
                     />
                 )}
 
