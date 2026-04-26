@@ -7,11 +7,15 @@ import {useTeamPlayers} from "@/hooks/teams/useTeamPlayers.js";
 import PlayerCard from "@/components/team/PlayerCard.jsx";
 import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 export default function TeamDetail() {
     const { teamId } = useParams();
     const navigate   = useNavigate();
+    const { lang } = useLangContext();
     const { currentUser } = useCurrentUserContext();
+    const texts = usePageTexts("team_detail", lang);
     const { team, loading, error } = useTeam(teamId);
     const { players, loading: playersLoading, error: playersError, total, reload} = useTeamPlayers(teamId);
 
@@ -19,7 +23,7 @@ export default function TeamDetail() {
         return (
             <div className={styles.state}>
                 <div className={styles.spinner} />
-                <span>Team laden…</span>
+                <span>{texts.loading_team || "Team loading..."}</span>
             </div>
         );
     }
@@ -29,7 +33,7 @@ export default function TeamDetail() {
             <div className={styles.state}>
                 <p className={styles.error}>{error}</p>
                 <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                    &lt;- Terug naar teams
+                    &lt;- {texts.back_to_teams || "Back to teams"}
                 </button>
             </div>
         );
@@ -42,7 +46,7 @@ export default function TeamDetail() {
 
             {/* Back */}
             <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                &lt;- Alle teams
+                &lt;- {texts.back_to_teams || "Back to teams"}
             </button>
 
             {/* Hero */}
@@ -52,8 +56,8 @@ export default function TeamDetail() {
                     <div>
                         <h1 className={styles.name}>{team.name}</h1>
                         <div className={styles.tags}>
-                            <Tag label={team.clubId     ? `Club #${team.clubId}`        : "Onafhankelijk"} muted={!team.clubId} />
-                            <Tag label={team.sportTypeId ? `Sport #${team.sportTypeId}` : "Geen sport"}    muted={!team.sportTypeId} />
+                            <Tag label={team.clubId ? `${texts.club_label || "Club"} #${team.clubId}` : (texts.independent_team || "Independent")} muted={!team.clubId} />
+                            <Tag label={team.sportTypeId ? `${texts.sport_label || "Sport"} #${team.sportTypeId}` : (texts.no_sport || "No sport")} muted={!team.sportTypeId} />
                             <Tag label={`ID: ${team.id}`} muted />
                         </div>
                     </div>
@@ -63,15 +67,15 @@ export default function TeamDetail() {
 
             {/* Details grid */}
             <div className={styles.grid}>
-                <InfoCard label="Club" value={team.clubId     ? `#${team.clubId}`      : "—"} />
-                <InfoCard label="Sporttype" value={team.sportTypeId ? `#${team.sportTypeId}` : "—"} />
-                <InfoCard label="Team-ID" value={`#${team.id}`} />
+                <InfoCard label={texts.club_label || "Club"} value={team.clubId ? `#${team.clubId}` : "—"} />
+                <InfoCard label={texts.sport_label || "Sport"} value={team.sportTypeId ? `#${team.sportTypeId}` : "—"} />
+                <InfoCard label={texts.team_id_label || "Team ID"} value={`#${team.id}`} />
             </div>
 
             {/* Players */}
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
-                    <h2 className={styles.sectionTitle}>Spelers</h2>
+                    <h2 className={styles.sectionTitle}>{texts.players_title || "Players"}</h2>
                     {total !== null && (
                         <span className={panelStyles.panelCounter}>{total}</span>
                     )}
@@ -80,19 +84,19 @@ export default function TeamDetail() {
                 {playersLoading && (
                     <div className={styles.inlineState}>
                         <div className={styles.spinner} />
-                        <span>Spelers laden…</span>
+                        <span>{texts.loading_players || "Players loading..."}</span>
                     </div>
                 )}
 
                 {!playersLoading && playersError && (
                     <div className={styles.inlineState}>
                         <p className={styles.error}>{playersError}</p>
-                        <button className={styles.retryBtn} onClick={reload}>Opnieuw proberen</button>
+                        <button className={styles.retryBtn} onClick={reload}>{texts.retry || "Retry"}</button>
                     </div>
                 )}
 
                 {!playersLoading && !playersError && players.length === 0 && (
-                    <p className={commonStyles.muted}>Nog geen spelers in dit team.</p>
+                    <p className={commonStyles.muted}>{texts.no_players || "No players in this team yet."}</p>
                 )}
 
                 {!playersLoading && !playersError && players.length > 0 && (

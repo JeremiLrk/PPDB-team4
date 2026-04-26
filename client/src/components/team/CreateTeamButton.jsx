@@ -6,9 +6,13 @@ import { useCreateTeam } from "@/hooks/teams/useCreateTeam.js";
 import { useSportTypes } from "@/hooks/useSportTypes.js";
 import styles     from "@/style/common/Forms.module.css";
 import buttonStyles from "@/style/common/Buttons.module.css";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 
-export default function CreateTeamButton({ clubs = [], onCreated, theme }) {
+export default function CreateTeamButton({ clubs = [], onCreated, theme, texts: providedTexts }) {
+    const { lang } = useLangContext();
+    const fallbackTexts = usePageTexts("dashboard", lang);
     const {
         form, step,
         openForm, closeForm, updateField, submit,
@@ -17,14 +21,15 @@ export default function CreateTeamButton({ clubs = [], onCreated, theme }) {
     } = useCreateTeam({ onCreated });
 
     const { sportTypes, loading: sportTypesLoading } = useSportTypes();
+    const texts = { ...fallbackTexts, ...(providedTexts || {}) };
 
     // Validation: "Next" is only available if the name is filled in
     const canNext = step === 0 ? !!form.name.trim() : true;
 
     return (
         <FormPanel
-            title="Create Team"
-            triggerContent={<><PlusIcon rotated={isOpen} /> New Team</>}
+            title={texts.create_team_title || "Create Team"}
+            triggerContent={<><PlusIcon rotated={isOpen} /> {texts.new_team || "New Team"}</>}
             triggerClassName={buttonStyles.createTeamTrigger}
             triggerOpenClassName={buttonStyles.createTeamTriggerOpen}
             panelClassName={buttonStyles.createTeamPanel}
@@ -42,18 +47,18 @@ export default function CreateTeamButton({ clubs = [], onCreated, theme }) {
 
             isLoading={isLoading}
             isSuccess={isSuccess}
-            successLabel="Team created!"
+            successLabel={texts.team_created || "Team created!"}
             error={error}
 
-            submitLabel="Create Team"
+            submitLabel={texts.create_team || "Create Team"}
             canNext={canNext}
         >
             <FormPage active={step === 0}>
-                <Field label="Team Name *">
+                <Field label={texts.team_name || "Team Name *"}>
                     <input
                         className={styles.formInput}
                         type="text"
-                        placeholder="e.g. Red Hawks"
+                        placeholder={texts.team_name_placeholder || "e.g. Red Hawks"}
                         value={form.name}
                         onChange={e => updateField("name", e.target.value)}
                         onKeyDown={e => e.key === "Enter" && canNext && nextStep()}
@@ -63,14 +68,14 @@ export default function CreateTeamButton({ clubs = [], onCreated, theme }) {
                 </Field>
 
                 {clubs.length > 0 && (
-                    <Field label="Club (optional)">
+                    <Field label={texts.club_optional || "Club (optional)"}>
                         <select
                             className={styles.formSelect}
                             value={form.clubId}
                             onChange={e => updateField("clubId", e.target.value)}
                             disabled={isLoading}
                         >
-                            <option value="">- No club -</option>
+                            <option value="">{texts.no_club || "- No club -"}</option>
                             {clubs.map(c => (
                                 <option key={c.id} value={c.id}>{c.name}</option>
                             ))}
@@ -78,7 +83,7 @@ export default function CreateTeamButton({ clubs = [], onCreated, theme }) {
                     </Field>
                 )}
 
-                <Field label="Sport (optional)">
+                <Field label={texts.sport_optional || "Sport (optional)"}>
                     <select
                         className={styles.formSelect}
                         value={form.sportTypeId}
@@ -86,7 +91,7 @@ export default function CreateTeamButton({ clubs = [], onCreated, theme }) {
                         disabled={isLoading || sportTypesLoading}
                     >
                         <option value="">
-                            {sportTypesLoading ? "Loading…" : "- Any sport -"}
+                            {sportTypesLoading ? (texts.loading_sport || "Loading…") : (texts.any_sport || "- Any sport -")}
                         </option>
                         {sportTypes.map(s => (
                             <option key={s.id} value={s.id}>{s.name}</option>

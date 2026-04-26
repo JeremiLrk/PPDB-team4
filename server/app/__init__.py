@@ -209,7 +209,12 @@ def _seed_page_texts():
         "server/seeds/page_text_dashboard.json",
         "server/seeds/page_text_landing.json",
         "server/seeds/page_text_club_home.json",
+        "server/seeds/page_text_clubs.json",
+        "server/seeds/page_text_teams.json",
+        "server/seeds/page_text_team_detail.json",
+        "server/seeds/page_text_team_settings.json",
         "server/seeds/page_text_club_settings.json",
+        "server/seeds/page_text_matches.json",
     ]
     for path in page_text_files:
         seed_table(

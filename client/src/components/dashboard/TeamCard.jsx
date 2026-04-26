@@ -32,9 +32,9 @@ export default function TeamCard({ team, texts, currentUser, onClick }) {
                 <p className={commonStyles.primaryText}>{team.name}</p>
                 <p className={commonStyles.secondaryText}>
                     {team.clubId
-                        ? `Club #${team.clubId}`
-                        : texts?.independent_team || "Onafhankelijk"}
-                    {team.sportTypeId ? ` · Sport #${team.sportTypeId}` : ""}
+                        ? `${texts?.club_prefix || "Club"} #${team.clubId}`
+                        : texts?.independent_team || "Independent"}
+                    {team.sportTypeId ? ` · ${texts?.sport_prefix || "Sport"} #${team.sportTypeId}` : ""}
                 </p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>

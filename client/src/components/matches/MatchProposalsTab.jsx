@@ -3,8 +3,13 @@ import buttonStyles from "@/style/common/Buttons.module.css";
 import panelStyles from "@/style/common/Panel.module.css";
 import { useMatchProposals } from "@/hooks/useMatchProposals.js";
 import MatchProposalList from "@/components/matches/MatchProposalList.jsx";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 export default function MatchProposalsTab() {
+    const { lang } = useLangContext();
+    const texts = usePageTexts("matches", lang);
+    const dashboardTexts = usePageTexts("dashboard", lang);
     const {
         proposals,
         loading,
@@ -29,7 +34,7 @@ export default function MatchProposalsTab() {
                 }}
             >
                 <h3 className={panelStyles.panelTitle} style={{ margin: 0 }}>
-                    Weekly Match Proposals
+                    {texts.title || "Weekly Match Proposals"}
                     <span className={panelStyles.panelCounter} style={{ marginLeft: "0.6rem" }}>
                         {proposals.length}
                     </span>
@@ -41,7 +46,7 @@ export default function MatchProposalsTab() {
                     onClick={load}
                     disabled={loading}
                 >
-                    Refresh
+                    {texts.refresh || "Refresh"}
                 </button>
             </div>
 
@@ -52,6 +57,8 @@ export default function MatchProposalsTab() {
                 submitting={submitting}
                 onReload={load}
                 onStatusChange={setProposalStatus}
+                texts={texts}
+                statusTexts={dashboardTexts}
             />
         </article>
     );

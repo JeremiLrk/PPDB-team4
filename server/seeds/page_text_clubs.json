@@ -1,0 +1,12 @@
+[
+  { "page": "clubs", "key": "loading", "language": "en", "value": "Loading clubs..." },
+  { "page": "clubs", "key": "loading", "language": "nl", "value": "Clubs laden..." },
+  { "page": "clubs", "key": "title", "language": "en", "value": "All clubs" },
+  { "page": "clubs", "key": "title", "language": "nl", "value": "Alle clubs" },
+  { "page": "clubs", "key": "subtitle", "language": "en", "value": "Choose a club to open the club homepage, or start your own club!" },
+  { "page": "clubs", "key": "subtitle", "language": "nl", "value": "Kies een club om de club-homepage te openen, of start je eigen club!" },
+  { "page": "clubs", "key": "unknown_city", "language": "en", "value": "Unknown city" },
+  { "page": "clubs", "key": "unknown_city", "language": "nl", "value": "Onbekende stad" },
+  { "page": "clubs", "key": "sport_not_set", "language": "en", "value": "Sport not set" },
+  { "page": "clubs", "key": "sport_not_set", "language": "nl", "value": "Sport niet ingesteld" }
+]

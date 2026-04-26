@@ -48,14 +48,14 @@ export default function Header({ status }) {
                 data = {};
             }
             if (!response.ok) {
-                throw new Error(data?.message || "Uitloggen mislukt");
+                throw new Error(data?.message || authTexts.log_out_failed || "Uitloggen mislukt");
             }
 
-            notify.success("Uitloggen gelukt");
+            notify.success(authTexts.log_out_success || "Uitgelogd");
             navigate("/");
         } catch (err) {
             // Local logout already happened; backend failure should not keep user stuck.
-            console.error(err?.message || "Uitlogverzoek mislukt");
+            console.error(err?.message || (authTexts.log_out_failed || "Uitloggen mislukt"));
             navigate("/");
         }
     }
@@ -125,14 +125,14 @@ export default function Header({ status }) {
                                 <div className={styles.userDropdown}>
                                     <ul className={styles.userDropdownList}>
                                         <li>
-                                            <button
+                                        <button
                                                 className={styles.userDropdownItem}
                                                 onClick={() => {
                                                     setMenuOpen(false);
                                                     navigate("/dashboard");
                                                 }}
                                             >
-                                                Dashboard
+                                                {baseTexts.dashboard || "Dashboard"}
                                             </button>
                                         </li>
                                         <li>

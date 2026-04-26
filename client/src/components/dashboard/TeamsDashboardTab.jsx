@@ -11,7 +11,6 @@ import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 import { useMyTeams } from "@/hooks/dashboard/useMyTeams.js";
 
 
-const SORT_OPTIONS      = [{ value: "id", label: "Op ID" }, { value: "name", label: "Op naam" }];
 const PAGE_SIZE_OPTIONS = [6, 12, 24];
 
 export function TeamsTab({ texts, theme }) {
@@ -56,7 +55,10 @@ export function TeamsTab({ texts, theme }) {
                             onChange={e => void load({ sort: e.target.value, pageSize })}
                             disabled={loading}
                         >
-                            {SORT_OPTIONS.map(o => (
+                            {[
+                                { value: "id", label: texts?.sort_id || "By ID" },
+                                { value: "name", label: texts?.sort_name || "By name" },
+                            ].map(o => (
                                 <option key={o.value} value={o.value}>{o.label}</option>
                             ))}
                         </select>
@@ -69,11 +71,11 @@ export function TeamsTab({ texts, theme }) {
                             disabled={loading}
                         >
                             {PAGE_SIZE_OPTIONS.map(n => (
-                            <option key={n} value={n}>{n} per keer laden</option>
+                            <option key={n} value={n}>{n} {texts?.per_page || "per page"}</option>
                             ))}
                         </select>
 
-                        <CreateTeamButton onCreated={handleTeamCreated} theme={theme} />
+                        <CreateTeamButton onCreated={handleTeamCreated} theme={theme} texts={texts} />
                     </div>
                 </div>
 

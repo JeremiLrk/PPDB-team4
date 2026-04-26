@@ -5,6 +5,8 @@ import { useTeam }           from "@/hooks/teams/useTeam.js";
 import { useTeamPlayers }    from "@/hooks/teams/useTeamPlayers.js";
 import { useTeamManagers }   from "@/hooks/teams/useTeamManagers.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 import AddPlayerButton   from "@/components/team/AddPlayerButton.jsx";
 import AddManagerButton  from "@/components/team/AddManagerButton.jsx";
@@ -43,7 +45,9 @@ function userCanEditManagers(account, team) {
 export default function TeamSettings() {
     const { teamId }      = useParams();
     const { currentUser } = useCurrentUserContext();
+    const { lang } = useLangContext();
     const navigate        = useNavigate();
+    const texts = usePageTexts("team_settings", lang);
 
     const { team,    loading: teamLoading,    error: teamError    } = useTeam(teamId);
     const { players, loading: playersLoading, error: playersError,
@@ -59,7 +63,7 @@ export default function TeamSettings() {
         return (
             <div className={styles.state}>
                 <div className={styles.spinner} />
-                <span>Team laden…</span>
+                <span>{texts.loading_team || "Team loading..."}</span>
             </div>
         );
     }
@@ -70,7 +74,7 @@ export default function TeamSettings() {
             <div className={styles.state}>
                 <p className={styles.error}>{teamError}</p>
                 <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                    &lt;- Terug naar teams
+                    &lt;- {texts.back_to_teams || "Back to teams"}
                 </button>
             </div>
         );
@@ -82,8 +86,8 @@ export default function TeamSettings() {
     if (!currentUser) {
         return (
             <div className={styles.state}>
-                <p className={styles.error}>Je moet ingelogd zijn om deze pagina te openen.</p>
-                <Link to="/login" className={styles.backBtn}>→ Inloggen</Link>
+                <p className={styles.error}>{texts.login_required || "You must be logged in to open this page."}</p>
+                <Link to="/login" className={styles.backBtn}>→ {texts.login_button || "Log in"}</Link>
             </div>
         );
     }
@@ -92,10 +96,10 @@ export default function TeamSettings() {
         return (
             <div className={styles.state}>
                 <p className={styles.error}>
-                    Toegang geweigerd. Je hebt geen rechten om dit team te beheren.
+                    {texts.access_denied || "Access denied. You do not have permission to manage this team."}
                 </p>
                 <button className={styles.backBtn} onClick={() => navigate(`/teams/${teamId}`)}>
-                    &lt;- Terug naar team
+                    &lt;- {texts.back_to_team || "Back to team"}
                 </button>
             </div>
         );
@@ -113,7 +117,7 @@ export default function TeamSettings() {
                     &lt;- {teamName}
                 </button>
                 <span className={styles.breadcrumbSep}>/</span>
-                <span className={styles.breadcrumbCurrent}>Instellingen</span>
+                <span className={styles.breadcrumbCurrent}>{texts.breadcrumb_settings || "Settings"}</span>
             </div>
 
             {/* Hero */}
@@ -131,12 +135,12 @@ export default function TeamSettings() {
                                 />
                             </div>
                             <div className={styles.tags}>
-                                <Tag label="Instellingen" accent />
-                                <Tag label={team.clubId ? `Club #${team.clubId}` : "Onafhankelijk"} muted={!team.clubId} />
+                                <Tag label={texts.settings_title || "Team settings"} accent />
+                                <Tag label={team.clubId ? `${texts.club_label || "Club"} #${team.clubId}` : (texts.independent_team || "Independent")} muted={!team.clubId} />
                                 <Tag label={`ID: ${team.id}`} muted />
                             </div>
                         </div>
-                        <GearIcon size={32} title="Teaminstellingen" className={styles.settingsIcon} />
+                        <GearIcon size={32} title={texts.settings_title || "Team settings"} className={styles.settingsIcon} />
                     </div>
                 </div>
             </div>
@@ -145,7 +149,7 @@ export default function TeamSettings() {
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleRow}>
-                        <h2 className={styles.sectionTitle}>Beheerders</h2>
+                        <h2 className={styles.sectionTitle}>{texts.managers_title || "Managers"}</h2>
                         {managersTotal !== null && (
                             <span className={panelStyles.panelCounter}>{managersTotal}</span>
                         )}
@@ -160,19 +164,19 @@ export default function TeamSettings() {
                 {managersLoading && (
                     <div className={styles.inlineState}>
                         <div className={styles.spinner} />
-                        <span>Beheerders laden…</span>
+                        <span>{texts.loading_managers || "Managers loading..."}</span>
                     </div>
                 )}
 
                 {!managersLoading && managersError && (
                     <div className={styles.inlineState}>
                         <p className={styles.error}>{managersError}</p>
-                        <button className={styles.retryBtn} onClick={reloadManagers}>Opnieuw proberen</button>
+                        <button className={styles.retryBtn} onClick={reloadManagers}>{texts.retry || "Retry"}</button>
                     </div>
                 )}
 
                 {!managersLoading && !managersError && managers.length === 0 && (
-                    <p className={commonStyles.muted}>Nog geen beheerders in dit team.</p>
+                    <p className={commonStyles.muted}>{texts.no_managers || "No managers in this team yet."}</p>
                 )}
 
                 {!managersLoading && !managersError && managers.length > 0 && (
@@ -194,7 +198,7 @@ export default function TeamSettings() {
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleRow}>
-                        <h2 className={styles.sectionTitle}>Spelers</h2>
+                        <h2 className={styles.sectionTitle}>{texts.players_title || "Players"}</h2>
                         {playersTotal !== null && (
                             <span className={panelStyles.panelCounter}>{playersTotal}</span>
                         )}
@@ -205,19 +209,19 @@ export default function TeamSettings() {
                 {playersLoading && (
                     <div className={styles.inlineState}>
                         <div className={styles.spinner} />
-                        <span>Spelers laden…</span>
+                        <span>{texts.loading_players || "Players loading..."}</span>
                     </div>
                 )}
 
                 {!playersLoading && playersError && (
                     <div className={styles.inlineState}>
                         <p className={styles.error}>{playersError}</p>
-                        <button className={styles.retryBtn} onClick={reloadPlayers}>Opnieuw proberen</button>
+                        <button className={styles.retryBtn} onClick={reloadPlayers}>{texts.retry || "Retry"}</button>
                     </div>
                 )}
 
                 {!playersLoading && !playersError && players.length === 0 && (
-                    <p className={commonStyles.muted}>Nog geen spelers in dit team. Voeg er hierboven toe.</p>
+                    <p className={commonStyles.muted}>{texts.no_players || "No players in this team yet. Add one above."}</p>
                 )}
 
                 {!playersLoading && !playersError && players.length > 0 && (

@@ -9,7 +9,8 @@ import { Spinner }      from "@/components/forms/Spinner.jsx";
 import { FormPanel }    from "@/components/forms/FormPanel.jsx";
 import { FormPage }     from "@/components/forms/FormPage.jsx";
 import ItemCard         from "@/components/common/ItemCard.jsx";
-import { useRef } from "react";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 /**
  * AddPlayerButton - dropdown panel for searching and adding players to a team.
@@ -19,6 +20,8 @@ import { useRef } from "react";
  *   onAdded   {() => void}     - called after a player is successfully added
  */
 export default function AddPlayerButton({ teamId, onAdded }) {
+    const { lang } = useLangContext();
+    const texts = usePageTexts("team_settings", lang);
     const {
         isOpen, openPanel, closePanel,
         query, setQuery,
@@ -29,8 +32,8 @@ export default function AddPlayerButton({ teamId, onAdded }) {
 
     return (
         <FormPanel
-            title="Add Player"
-            triggerContent={<><PlusIcon rotated={isOpen} /> Add Player</>}
+            title={texts.add_player_title || "Add Player"}
+            triggerContent={<><PlusIcon rotated={isOpen} /> {texts.add_player_btn || "Add Player"}</>}
 
             isOpen={isOpen}
             openPanel={openPanel}
@@ -51,7 +54,7 @@ export default function AddPlayerButton({ teamId, onAdded }) {
             error={addErr || searchErr || null}
 
             panelClassName={teamStyles.addPlayerPanel}
-            ariaLabel="Add player to team"
+            ariaLabel={texts.add_player_aria || "Add player to team"}
 
         >
             {/* --- Page 0: search and results ------------------------- */}
@@ -59,14 +62,14 @@ export default function AddPlayerButton({ teamId, onAdded }) {
 
                 {/* Search input */}
                 <div className={teamStyles.searchRow}>
-                    <input
-                        ref={inputRef}
-                        className={formStyles.formInput}
-                        type="text"
-                        placeholder="Name, email, or ID…"
-                        value={query}
-                        onChange={e => setQuery(e.target.value)}
-                    />
+                        <input
+                            ref={inputRef}
+                            className={formStyles.formInput}
+                            type="text"
+                            placeholder={texts.add_player_search_placeholder || "Name, email, or ID…"}
+                            value={query}
+                            onChange={e => setQuery(e.target.value)}
+                        />
                     {searching && (
                         <span className={teamStyles.searchSpinner}>
                             <Spinner />
@@ -77,14 +80,14 @@ export default function AddPlayerButton({ teamId, onAdded }) {
                 {/* Hint if nothing is entered */}
                 {!query.trim() && (
                     <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
-                        Type to search accounts.
+                        {texts.add_player_search_hint || "Type to search accounts."}
                     </p>
                 )}
 
                 {/* Empty result */}
                 {!searching && !searchErr && query.trim() && results.length === 0 && (
                     <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
-                        No accounts found.
+                        {texts.add_player_no_results || "No accounts found."}
                     </p>
                 )}
 
@@ -98,6 +101,7 @@ export default function AddPlayerButton({ teamId, onAdded }) {
                                 isAdding={addingId === account.id}
                                 isAdded={addedIds.has(account.id)}
                                 onAdd={() => addPlayer(account.id)}
+                                texts={texts}
                             />
                         ))}
                     </ul>
@@ -110,7 +114,7 @@ export default function AddPlayerButton({ teamId, onAdded }) {
 
 /* -- Search result card ------------------------------------------------------- */
 
-function SearchResultCard({ account, isAdding, isAdded, onAdd }) {
+function SearchResultCard({ account, isAdding, isAdded, onAdd, texts = {} }) {
     const fullName = [account.firstName, account.lastName].filter(Boolean).join(" ") || "-";
 
     return (
@@ -123,7 +127,7 @@ function SearchResultCard({ account, isAdding, isAdded, onAdd }) {
                 className={`${teamStyles.addBtn} ${isAdded ? teamStyles.addBtnDone : ""}`}
                 onClick={onAdd}
                 disabled={isAdding || isAdded}
-                aria-label={isAdded ? "Added" : `Add ${fullName}`}
+                aria-label={isAdded ? (texts.added_label || "Added") : `${texts.add_player_btn || "Add"} ${fullName}`}
             >
                 {isAdding ? <Spinner /> : isAdded ? "✓" : <PlusIcon />}
             </button>

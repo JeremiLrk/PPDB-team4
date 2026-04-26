@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import styles from "@/style/TeamSettingsLink.module.css";
 import GearIcon from "@/components/icon/GearIcon.jsx";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 /**
  * Returns true if the user can open the team settings page.
@@ -45,20 +47,22 @@ export function canManageTeam(account, team) {
  */
 export default function TeamSettingsLink({ currentUser, team, size = 18 }) {
     const navigate = useNavigate();
+    const { lang } = useLangContext();
+    const texts = usePageTexts("team_settings", lang);
 
     if (!canManageTeam(currentUser, team)) return null;
 
     return (
         <button
             className={styles.gearBtn}
-            title="Teaminstellingen"
-            aria-label={`Instellingen voor ${team.name}`}
+            title={texts.settings_title || "Team settings"}
+            aria-label={`${texts.settings_aria || "Settings for"} ${team.name}`}
             onClick={e => {
                 e.stopPropagation();
                 navigate(`/teams/${team.id}/settings`);
             }}
         >
-            <GearIcon size={size} title="Teaminstellingen" />
+            <GearIcon size={size} title={texts.settings_title || "Team settings"} />
         </button>
     );
 }

@@ -730,7 +730,7 @@ export function ManageClubsTab({
                 </div>
 
                 {ownedClubs.length === 0 ? (
-                    <p className={styles.muted}>Je bent nog niet als eigenaar toegewezen aan een club.</p>
+                    <p className={styles.muted}>{texts?.no_clubs_owned || "You don't own any clubs yet."}</p>
                 ) : (
                     <ul className={styles.list}>
                         {ownedClubs.map(club => (
@@ -738,15 +738,15 @@ export function ManageClubsTab({
                                 <div>
                                     <p className={styles.primaryText}>{club.name}</p>
                                     <p className={styles.secondaryText}>
-                                        {club.city || "Onbekende stad"}
-                                        {club.sport || club.sport_type_id ? ` · ${club.sport || `Sport #${club.sport_type_id}`}` : ""}
+                                        {club.city || texts?.unknown_city || "Unknown city"}
+                                        {club.sport || club.sport_type_id ? ` · ${club.sport || `${texts?.sport_prefix || "Sport"} #${club.sport_type_id}`}` : ""}
                                     </p>
                                 </div>
                                 <button
                                     onClick={() => onGoSettings(club.id)}
                                     className={styles.linkButton}
                                 >
-                                    Instellingen
+                                    {texts?.settings || "Settings"}
                                 </button>
                             </li>
                         ))}
@@ -763,14 +763,14 @@ export function ManageClubsTab({
                 </div>
 
                 {incomingJoinRequests.length === 0 ? (
-                    <p className={styles.muted}>Geen openstaande aanmeldverzoeken.</p>
+                    <p className={styles.muted}>{texts?.no_incoming_requests || "No incoming requests yet."}</p>
                 ) : (
                     <ul className={styles.requestList}>
                         {incomingJoinRequests.map((req, index) => (
                             <li className={styles.requestCard} key={`${req.club_id}-${req.user_id}-${index}`}>
                                 <div className={styles.requestContent}>
                                     <p className={styles.primaryText}>
-                                        <strong>{req.user_name}</strong> wil lid worden van <strong>{req.club_name}</strong>
+                                        <strong>{req.user_name}</strong> {texts?.wants_to_join || "wants to join"} <strong>{req.club_name}</strong>
                                     </p>
                                 </div>
                                 <div className={styles.requestActions}>

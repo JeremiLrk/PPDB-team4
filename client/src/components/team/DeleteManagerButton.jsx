@@ -4,6 +4,8 @@ import { FormPanel }        from "@/components/forms/FormPanel.jsx";
 import { FormPage }         from "@/components/forms/FormPage.jsx";
 import { TrashIcon }        from "@/components/icon/TrashIcon.jsx";
 import teamStyles           from "@/style/TeamSettings.module.css";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 /**
  * DeleteManagerButton — a trash can with confirmation of manager deletion.
@@ -14,6 +16,8 @@ import teamStyles           from "@/style/TeamSettings.module.css";
  * onDeleted {() => void}
  */
 export default function DeleteManagerButton({ teamId, managerId, onDeleted }) {
+    const { lang } = useLangContext();
+    const texts = usePageTexts("team_settings", lang);
     const {
         isOpen, openDialog, closeDialog,
         confirmDelete, loading, error,
@@ -21,7 +25,7 @@ export default function DeleteManagerButton({ teamId, managerId, onDeleted }) {
 
     return (
         <FormPanel
-            title="Remove Manager"
+            title={texts.remove_manager_title || "Remove Manager"}
             triggerContent={<TrashIcon />}
             triggerClassName={teamStyles.deleteBtn}
             triggerOpenClassName={teamStyles.deleteBtnOpen}
@@ -39,17 +43,17 @@ export default function DeleteManagerButton({ teamId, managerId, onDeleted }) {
             isLoading={loading}
             isSuccess={false}
 
-            submitLabel={loading ? <><Spinner /> Removing…</> : "Remove"}
+            submitLabel={loading ? <><Spinner /> {texts.removing || "Removing…"}</> : (texts.remove_manager_submit || "Remove")}
             canNext={!loading}
 
             error={error}
 
             panelClassName={teamStyles.confirmPanel}
-            ariaLabel="Confirm manager removal"
+            ariaLabel={texts.confirm_remove_manager || "Confirm manager removal"}
         >
             <FormPage active={true}>
                 <p className={teamStyles.confirmText}>
-                    Are you sure you want to remove this manager from the team?
+                    {texts.confirm_remove_manager_text || "Are you sure you want to remove this manager from the team?"}
                 </p>
             </FormPage>
         </FormPanel>
