@@ -1,5 +1,6 @@
 import os
 import resend
+from datetime import date
 from pathlib import Path
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, make_response
@@ -7,7 +8,8 @@ from flask import current_app
 
 from server.app.decorators.login_required import login_required
 from server.app.models.account import Account
-from server.app.services.auth_service import register_user, login_user, verify_user, generate_reset_token, verify_reset_token, update_password, generate_verification_token, verify_email_token, mark_user_as_verified
+from server.app.services.auth_service import register_user, login_user, generate_reset_token, verify_reset_token, update_password, generate_verification_token, verify_email_token, mark_user_as_verified, change_password
+from server.extensions import db
 
 env_path = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -96,7 +98,79 @@ def logout():
 @auth_bp.route("/me", methods=["GET"])
 @login_required
 def me(account: Account):
+    base = account.to_dict()
+
+    managed_team_ids = []
+    if account.team_manager:
+        managed_team_ids = [t.id for t in account.team_manager.teams]
+
+    base["managedTeamIds"] = managed_team_ids
+
+    club_ids = []
+    if account.team_manager and account.team_manager.club_owner:
+        club_ids = [c.id for c in account.team_manager.club_owner.clubs]
+    base["clubIds"] =club_ids
+
+    return jsonify({
+        "account": base
+         }), 200
+
+
+@auth_bp.route("/me", methods=["PATCH"])
+@login_required
+def update_me(account: Account):
+    data = request.get_json() or {}
+
+    first_name = (data.get("firstName") or "").strip()
+    last_name = (data.get("lastName") or "").strip()
+    date_of_birth_raw = data.get("dateOfBirth")
+
+    if not first_name or not last_name:
+        return jsonify({"message": "First name and last name are required."}), 400
+
+    parsed_date_of_birth = account.date_of_birth
+    if date_of_birth_raw in (None, ""):
+        parsed_date_of_birth = None
+    else:
+        try:
+            parsed_date_of_birth = date.fromisoformat(str(date_of_birth_raw))
+        except ValueError:
+            return jsonify({"message": "dateOfBirth must be a valid ISO date (YYYY-MM-DD)."}), 400
+
+    account.first_name = first_name
+    account.last_name = last_name
+    account.date_of_birth = parsed_date_of_birth
+
+    db.session.add(account)
+    db.session.commit()
+
     return jsonify({"account": account.to_dict()}), 200
+
+
+@auth_bp.route("/me/password", methods=["PATCH"])
+@login_required
+def update_my_password(account: Account):
+    data = request.get_json() or {}
+    current_password = data.get("currentPassword") or ""
+    new_password = data.get("password") or ""
+    repeat_password = data.get("repeatPassword")
+
+    try:
+        change_password(account, current_password, new_password, repeat_password)
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
+
+    return jsonify({"message": "Password updated successfully."}), 200
+
+
+@auth_bp.route("/me/details", methods=["GET"])
+@login_required
+def me_details(account: Account):
+    base = account.to_dict(include=["team_manager", "club_owner", "player", "administrator"])
+
+    return jsonify({
+        "account": base
+    }), 200
 
 @auth_bp.route("/forgot-password", methods=["POST"])
 def forgot_password():

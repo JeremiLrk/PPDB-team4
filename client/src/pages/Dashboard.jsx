@@ -6,7 +6,15 @@ import workspaceStyles from "@/style/dashboard/Workspace.module.css";
 import formStyles from "@/style/common/Forms.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
-import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab,ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
+import {
+    AvailabilityTab,
+    CreateClubTab,
+    ManageClubsTab,
+    OverviewTab,
+    ProfileTab,
+    RequestsTab,
+    SearchTab,
+} from "@/components/dashboard/DashboardTabs.jsx";
 import MatchProposalsTab from "@/components/matches/MatchProposalsTab.jsx";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import {useCurrentUserContext} from "@/context/useCurrentUserContext.jsx";
@@ -55,6 +63,14 @@ function Dashboard() {
                             workspace.pendingJoinRequestClubIds
                         }
                         clubCreationRequests={workspace.clubCreationRequests}
+                        texts={dashboardTexts}
+                    />
+                ) : null}
+
+                {workspace.activeTab === "profile" ? (
+                    <ProfileTab
+                        currentUser={currentUser}
+                        setCurrentUser={setCurrentUser}
                         texts={dashboardTexts}
                     />
                 ) : null}

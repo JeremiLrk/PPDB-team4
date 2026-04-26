@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link} from "react-router-dom";
 import formStyles from "@/style/common/Forms.module.css";
 import commonStyles from "@/style/common/Common.module.css";
@@ -29,6 +30,347 @@ function formatLocalTimestamp(value) {
 }
 
 const styles = { ...formStyles, ...commonStyles, ...dashStyles };
+
+export function ProfileTab({ currentUser, setCurrentUser, texts }) {
+    const [form, setForm] = useState({
+        firstName: currentUser?.firstName || "",
+        lastName: currentUser?.lastName || "",
+        dateOfBirth: currentUser?.dateOfBirth || "",
+    });
+    const [submitting, setSubmitting] = useState(false);
+    const [message, setMessage] = useState({ type: "", text: "" });
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: "",
+        newPassword: "",
+        repeatPassword: "",
+    });
+    const [passwordSubmitting, setPasswordSubmitting] = useState(false);
+    const [passwordMessage, setPasswordMessage] = useState({
+        type: "",
+        text: "",
+    });
+
+    useEffect(() => {
+        setForm({
+            firstName: currentUser?.firstName || "",
+            lastName: currentUser?.lastName || "",
+            dateOfBirth: currentUser?.dateOfBirth || "",
+        });
+    }, [currentUser?.firstName, currentUser?.lastName, currentUser?.dateOfBirth]);
+
+    function onFieldChange(event) {
+        const { name, value } = event.target;
+        setForm((previous) => ({ ...previous, [name]: value }));
+    }
+
+    function onPasswordFieldChange(event) {
+        const { name, value } = event.target;
+        setPasswordForm((previous) => ({ ...previous, [name]: value }));
+    }
+
+    async function onSubmit(event) {
+        event.preventDefault();
+        setMessage({ type: "", text: "" });
+
+        const payload = {
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+            dateOfBirth: form.dateOfBirth || null,
+        };
+
+        if (!payload.firstName || !payload.lastName) {
+            setMessage({
+                type: "error",
+                text:
+                    texts?.profile_required_fields ||
+                    "First name and last name are required.",
+            });
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const response = await fetch("/api/me", {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            let body = {};
+            try {
+                body = await response.json();
+            } catch {
+                body = {};
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    body?.message ||
+                        texts?.profile_update_failed ||
+                        "Could not update profile.",
+                );
+            }
+
+            const updatedAccount = body?.account;
+            if (updatedAccount) {
+                setCurrentUser?.(updatedAccount);
+            }
+
+            setMessage({
+                type: "success",
+                text:
+                    texts?.profile_updated_success ||
+                    "Profile updated successfully.",
+            });
+        } catch (error) {
+            setMessage({
+                type: "error",
+                text:
+                    error?.message ||
+                    texts?.profile_update_failed ||
+                    "Could not update profile.",
+            });
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    async function onPasswordSubmit(event) {
+        event.preventDefault();
+        setPasswordMessage({ type: "", text: "" });
+
+        if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+            setPasswordMessage({
+                type: "error",
+                text:
+                    texts?.current_and_new_password_required ||
+                    "Current password and new password are required.",
+            });
+            return;
+        }
+
+        if (passwordForm.newPassword !== passwordForm.repeatPassword) {
+            setPasswordMessage({
+                type: "error",
+                text:
+                    texts?.passwords_do_not_match ||
+                    "Passwords do not match.",
+            });
+            return;
+        }
+
+        setPasswordSubmitting(true);
+        try {
+            const response = await fetch("/api/me/password", {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    currentPassword: passwordForm.currentPassword,
+                    password: passwordForm.newPassword,
+                    repeatPassword: passwordForm.repeatPassword,
+                }),
+            });
+
+            let body = {};
+            try {
+                body = await response.json();
+            } catch {
+                body = {};
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    body?.message ||
+                        texts?.password_update_failed ||
+                        "Could not update password.",
+                );
+            }
+
+            setPasswordForm({
+                currentPassword: "",
+                newPassword: "",
+                repeatPassword: "",
+            });
+            setPasswordMessage({
+                type: "success",
+                text:
+                    texts?.password_updated_success ||
+                    "Password updated successfully.",
+            });
+        } catch (error) {
+            setPasswordMessage({
+                type: "error",
+                text:
+                    error?.message ||
+                    texts?.password_update_failed ||
+                    "Could not update password.",
+            });
+        } finally {
+            setPasswordSubmitting(false);
+        }
+    }
+
+    return (
+        <article className={`${styles.panel} ${styles.contentFade}`}>
+            <h3 className={styles.panelTitle}>
+                {texts?.profile_title || "My Profile"}
+            </h3>
+            <p className={styles.muted}>
+                {texts?.profile_description ||
+                    "Update your personal information."}
+            </p>
+
+            <form className={styles.form} onSubmit={onSubmit}>
+                <div className={styles.formRow}>
+                    <label className={styles.formLabel}>
+                        {texts?.first_name || "First name"}
+                        <input
+                            className={styles.formInput}
+                            type="text"
+                            name="firstName"
+                            value={form.firstName}
+                            onChange={onFieldChange}
+                            required
+                        />
+                    </label>
+
+                    <label className={styles.formLabel}>
+                        {texts?.last_name || "Last name"}
+                        <input
+                            className={styles.formInput}
+                            type="text"
+                            name="lastName"
+                            value={form.lastName}
+                            onChange={onFieldChange}
+                            required
+                        />
+                    </label>
+                </div>
+
+                <div className={styles.formRow}>
+                    <label className={styles.formLabel}>
+                        {texts?.email || "Email"}
+                        <input
+                            className={styles.formInput}
+                            type="email"
+                            value={currentUser?.email || ""}
+                            disabled
+                        />
+                    </label>
+
+                    <label className={styles.formLabel}>
+                        {texts?.date_of_birth || "Date of birth"}
+                        <input
+                            className={styles.formInput}
+                            type="date"
+                            name="dateOfBirth"
+                            value={form.dateOfBirth || ""}
+                            onChange={onFieldChange}
+                        />
+                    </label>
+                </div>
+
+                <div className={styles.formActions}>
+                    <button
+                        className={styles.submitButton}
+                        type="submit"
+                        disabled={submitting}
+                    >
+                        {submitting
+                            ? texts?.saving || "Saving..."
+                            : texts?.save_changes || "Save changes"}
+                    </button>
+                </div>
+            </form>
+
+            {message.text ? (
+                <p
+                    className={`${styles.notice} ${
+                        message.type === "error"
+                            ? styles.noticeError
+                            : styles.noticeSuccess
+                    }`}
+                >
+                    {message.text}
+                </p>
+            ) : null}
+
+            <article className={styles.panel}>
+                <h3 className={styles.panelTitle}>
+                    {texts?.change_password_title || "Change password"}
+                </h3>
+
+                <form className={styles.form} onSubmit={onPasswordSubmit}>
+                    <label className={styles.formLabel}>
+                        {texts?.current_password || "Current password"}
+                        <input
+                            className={styles.formInput}
+                            type="password"
+                            name="currentPassword"
+                            value={passwordForm.currentPassword}
+                            onChange={onPasswordFieldChange}
+                            required
+                        />
+                    </label>
+
+                    <div className={styles.formRow}>
+                        <label className={styles.formLabel}>
+                            {texts?.new_password || "New password"}
+                            <input
+                                className={styles.formInput}
+                                type="password"
+                                name="newPassword"
+                                value={passwordForm.newPassword}
+                                onChange={onPasswordFieldChange}
+                                minLength={6}
+                                required
+                            />
+                        </label>
+
+                        <label className={styles.formLabel}>
+                            {texts?.repeat_password || "Repeat password"}
+                            <input
+                                className={styles.formInput}
+                                type="password"
+                                name="repeatPassword"
+                                value={passwordForm.repeatPassword}
+                                onChange={onPasswordFieldChange}
+                                minLength={6}
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <div className={styles.formActions}>
+                        <button
+                            className={styles.submitButton}
+                            type="submit"
+                            disabled={passwordSubmitting}
+                        >
+                            {passwordSubmitting
+                                ? texts?.saving || "Saving..."
+                                : texts?.update_password || "Update password"}
+                        </button>
+                    </div>
+                </form>
+
+                {passwordMessage.text ? (
+                    <p
+                        className={`${styles.notice} ${
+                            passwordMessage.type === "error"
+                                ? styles.noticeError
+                                : styles.noticeSuccess
+                        }`}
+                    >
+                        {passwordMessage.text}
+                    </p>
+                ) : null}
+            </article>
+        </article>
+    );
+}
 
 //  Overview Tab
 

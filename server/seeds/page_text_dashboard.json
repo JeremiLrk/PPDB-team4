@@ -63,6 +63,18 @@
     },
     {
         "page": "dashboard",
+        "key": "tab_profile",
+        "language": "en",
+        "value": "My Profile"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_profile",
+        "language": "nl",
+        "value": "Mijn profiel"
+    },
+    {
+        "page": "dashboard",
         "key": "tab_availability",
         "language": "en",
         "value": "Availability Calendar"
@@ -853,5 +865,221 @@
         "key": "club_request_submitted",
         "language": "nl",
         "value": "Clubaanvraag verzonden."
+    },
+    {
+        "page": "dashboard",
+        "key": "profile_title",
+        "language": "en",
+        "value": "My Profile"
+    },
+    {
+        "page": "dashboard",
+        "key": "profile_title",
+        "language": "nl",
+        "value": "Mijn profiel"
+    },
+    {
+        "page": "dashboard",
+        "key": "profile_description",
+        "language": "en",
+        "value": "Update your personal information."
+    },
+    {
+        "page": "dashboard",
+        "key": "profile_description",
+        "language": "nl",
+        "value": "Werk je persoonlijke informatie bij."
+    },
+    {
+        "page": "dashboard",
+        "key": "first_name",
+        "language": "en",
+        "value": "First name"
+    },
+    {
+        "page": "dashboard",
+        "key": "first_name",
+        "language": "nl",
+        "value": "Voornaam"
+    },
+    {
+        "page": "dashboard",
+        "key": "last_name",
+        "language": "en",
+        "value": "Last name"
+    },
+    {
+        "page": "dashboard",
+        "key": "last_name",
+        "language": "nl",
+        "value": "Achternaam"
+    },
+    {
+        "page": "dashboard",
+        "key": "date_of_birth",
+        "language": "en",
+        "value": "Date of birth"
+    },
+    {
+        "page": "dashboard",
+        "key": "date_of_birth",
+        "language": "nl",
+        "value": "Geboortedatum"
+    },
+    {
+        "page": "dashboard",
+        "key": "save_changes",
+        "language": "en",
+        "value": "Save changes"
+    },
+    {
+        "page": "dashboard",
+        "key": "save_changes",
+        "language": "nl",
+        "value": "Wijzigingen opslaan"
+    },
+    {
+        "page": "dashboard",
+        "key": "profile_required_fields",
+        "language": "en",
+        "value": "First name and last name are required."
+    },
+    {
+        "page": "dashboard",
+        "key": "profile_required_fields",
+        "language": "nl",
+        "value": "Voornaam en achternaam zijn verplicht."
+    },
+    {
+        "page": "dashboard",
+        "key": "profile_updated_success",
+        "language": "en",
+        "value": "Profile updated successfully."
+    },
+    {
+        "page": "dashboard",
+        "key": "profile_updated_success",
+        "language": "nl",
+        "value": "Profiel succesvol bijgewerkt."
+    },
+    {
+        "page": "dashboard",
+        "key": "profile_update_failed",
+        "language": "en",
+        "value": "Could not update profile."
+    },
+    {
+        "page": "dashboard",
+        "key": "profile_update_failed",
+        "language": "nl",
+        "value": "Kon profiel niet bijwerken."
+    },
+    {
+        "page": "dashboard",
+        "key": "change_password_title",
+        "language": "en",
+        "value": "Change password"
+    },
+    {
+        "page": "dashboard",
+        "key": "change_password_title",
+        "language": "nl",
+        "value": "Wachtwoord wijzigen"
+    },
+    {
+        "page": "dashboard",
+        "key": "current_password",
+        "language": "en",
+        "value": "Current password"
+    },
+    {
+        "page": "dashboard",
+        "key": "current_password",
+        "language": "nl",
+        "value": "Huidig wachtwoord"
+    },
+    {
+        "page": "dashboard",
+        "key": "new_password",
+        "language": "en",
+        "value": "New password"
+    },
+    {
+        "page": "dashboard",
+        "key": "new_password",
+        "language": "nl",
+        "value": "Nieuw wachtwoord"
+    },
+    {
+        "page": "dashboard",
+        "key": "repeat_password",
+        "language": "en",
+        "value": "Repeat password"
+    },
+    {
+        "page": "dashboard",
+        "key": "repeat_password",
+        "language": "nl",
+        "value": "Herhaal wachtwoord"
+    },
+    {
+        "page": "dashboard",
+        "key": "update_password",
+        "language": "en",
+        "value": "Update password"
+    },
+    {
+        "page": "dashboard",
+        "key": "update_password",
+        "language": "nl",
+        "value": "Wachtwoord bijwerken"
+    },
+    {
+        "page": "dashboard",
+        "key": "password_updated_success",
+        "language": "en",
+        "value": "Password updated successfully."
+    },
+    {
+        "page": "dashboard",
+        "key": "password_updated_success",
+        "language": "nl",
+        "value": "Wachtwoord succesvol bijgewerkt."
+    },
+    {
+        "page": "dashboard",
+        "key": "password_update_failed",
+        "language": "en",
+        "value": "Could not update password."
+    },
+    {
+        "page": "dashboard",
+        "key": "password_update_failed",
+        "language": "nl",
+        "value": "Kon wachtwoord niet bijwerken."
+    },
+    {
+        "page": "dashboard",
+        "key": "current_and_new_password_required",
+        "language": "en",
+        "value": "Current password and new password are required."
+    },
+    {
+        "page": "dashboard",
+        "key": "current_and_new_password_required",
+        "language": "nl",
+        "value": "Huidig wachtwoord en nieuw wachtwoord zijn verplicht."
+    },
+    {
+        "page": "dashboard",
+        "key": "passwords_do_not_match",
+        "language": "en",
+        "value": "Passwords do not match."
+    },
+    {
+        "page": "dashboard",
+        "key": "passwords_do_not_match",
+        "language": "nl",
+        "value": "Wachtwoorden komen niet overeen."
     }
 ]

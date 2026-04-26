@@ -96,6 +96,7 @@ function App() {
                     <main className={mainClass}>
                         <AppRoutes />
                     </main>
+                    <Toaster position="top-center" />
                 </LangContext.Provider>
             </CurrentUserProvider>
         </div>
