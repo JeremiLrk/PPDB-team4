@@ -47,6 +47,12 @@ function normalizeClubIds(clubs) {
     )
 }
 
+function normalizeUpcomingMatches(dashboardData) {
+    return Array.isArray(dashboardData?.upcoming_matches)
+        ? dashboardData.upcoming_matches
+        : []
+}
+
 function normalizePendingJoinRequestClubIds(myRequests) {
     return new Set(
         myRequests
@@ -108,6 +114,10 @@ export function useDashboardWorkspace(setUser, texts = {}) {
     )
 
     const myClubIds = useMemo(() => normalizeClubIds(myClubs), [myClubs])
+    const upcomingMatches = useMemo(
+        () => normalizeUpcomingMatches(dashboardData),
+        [dashboardData],
+    )
     const pendingJoinRequestClubIds = useMemo(
         () => normalizePendingJoinRequestClubIds(myRequests),
         [myRequests],
@@ -551,6 +561,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         decideJoinrequest,
         clubJoinrequest,
         availabilityBlocks,
+        upcomingMatches,
         availabilityForm,
         availabilityLoading,
         availabilitySubmitting,

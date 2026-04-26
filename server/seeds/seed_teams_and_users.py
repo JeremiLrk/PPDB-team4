@@ -355,6 +355,68 @@ def reset_demo_match_proposal_to_pending(week_start_date: datetime.date, team1_i
   reset_proposal_to_pending(week_start_date=week_start_date, team1_id=team1_id, team2_id=team2_id)
 
 
+def find_match_proposal(week_start_date: datetime.date, team1_id: int, team2_id: int):
+  ordered_team1_id, ordered_team2_id = sorted((team1_id, team2_id))
+  return MatchProposal.query.filter_by(
+    week_start_date=week_start_date,
+    team1_id=ordered_team1_id,
+    team2_id=ordered_team2_id,
+  ).first()
+
+
+def set_match_proposal_pending(
+    *,
+    week_start_date: datetime.date,
+    team1_id: int,
+    team2_id: int,
+    proposed_by_user_id: int | None = None,
+):
+  proposal = find_match_proposal(week_start_date=week_start_date, team1_id=team1_id, team2_id=team2_id)
+  if not proposal:
+    return False
+
+  proposal.status_id = MatchStatus.PENDING
+  if proposed_by_user_id is not None:
+    proposal.proposed_by_user_id = proposed_by_user_id
+
+  for model in (MatchAccepted, MatchRejected, MatchCancelled):
+    row = db.session.get(model, proposal.id)
+    if row:
+      db.session.delete(row)
+  db.session.flush()
+  return True
+
+
+def set_match_proposal_accepted(
+    *,
+    week_start_date: datetime.date,
+    team1_id: int,
+    team2_id: int,
+    accepted_by_user_id: int,
+    response_text: str | None = None,
+):
+  proposal = find_match_proposal(week_start_date=week_start_date, team1_id=team1_id, team2_id=team2_id)
+  if not proposal:
+    return False
+
+  proposal.status_id = MatchStatus.ACCEPTED
+
+  accepted = db.session.get(MatchAccepted, proposal.id)
+  if not accepted:
+    accepted = MatchAccepted(id=proposal.id)
+    db.session.add(accepted)
+  accepted.response_by_user_id = accepted_by_user_id
+  accepted.response_text = response_text
+
+  for model in (MatchRejected, MatchCancelled):
+    row = db.session.get(model, proposal.id)
+    if row:
+      db.session.delete(row)
+
+  db.session.flush()
+  return True
+
+
 def delete_demo_match_proposal(week_start_date: datetime.date, team1_id: int, team2_id: int):
   ordered_team1_id, ordered_team2_id = sorted((team1_id, team2_id))
   proposal = MatchProposal.query.filter_by(
@@ -861,6 +923,36 @@ def seed_teams_and_users(verbose: bool = True):
       f"{TAG}   player-only weekly match proposals generated for {len(player_demo_weeks)} weeks: "
       f"created={total_created}, skipped={total_skipped}"
     )
+
+    # Deterministic demo scenarios for manual UI testing with Jeremi's account:
+    # 1) Pending proposal (proposed by opponent) that Jeremi can accept manually.
+    # 2) Already accepted proposal (accepted by opponent) visible in Upcoming Matches.
+    if player_demo_weeks:
+      pending_week = player_demo_weeks[0]
+      accepted_week = player_demo_weeks[1] if len(player_demo_weeks) > 1 else player_demo_weeks[0]
+
+      if set_match_proposal_pending(
+        week_start_date=pending_week,
+        team1_id=player_demo_team.id,
+        team2_id=player_demo_opponent.id,
+        proposed_by_user_id=opponent_acc.id,
+      ):
+        log(
+          f"{TAG}   ensured pending player-demo request (opponent proposed) for week {pending_week.isoformat()}",
+          verbose,
+        )
+
+      if set_match_proposal_accepted(
+        week_start_date=accepted_week,
+        team1_id=player_demo_team.id,
+        team2_id=player_demo_opponent.id,
+        accepted_by_user_id=opponent_acc.id,
+        response_text="Accepted by opponent for demo upcoming-matches visibility",
+      ):
+        log(
+          f"{TAG}   ensured accepted player-demo request for week {accepted_week.isoformat()}",
+          verbose,
+        )
 
     # ------------------------------------------------------------------
     # Additional fictional clubs / ladders / players for richer demo data

@@ -5,6 +5,7 @@ from server.app.models.club_join_request import ClubJoinRequest
 from server.app.models.club import Club
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
+from server.app.models.match import MatchProposal, MatchStatus
 from server.app.models.player import Player
 from server.app.models.club_player import ClubPlayer
 from server.extensions import db
@@ -28,6 +29,55 @@ def _get_current_user_id_from_cookie():
         return payload.get("user_id")
     except jwt.PyJWTError:
         return None
+
+
+def _serialize_upcoming_matches(account):
+    player = getattr(account, "player", None)
+    if not player:
+        return []
+
+    team_ids = [team.id for team in player.teams]
+    if not team_ids:
+        return []
+
+    accepted_status = MatchStatus.query.filter(
+        db.func.lower(MatchStatus.name) == "accepted"
+    ).first()
+    if not accepted_status:
+        return []
+
+    matches = (
+        MatchProposal.query.filter(
+            MatchProposal.status_id == accepted_status.id,
+            db.or_(
+                MatchProposal.team1_id.in_(team_ids),
+                MatchProposal.team2_id.in_(team_ids),
+            ),
+        )
+        .order_by(MatchProposal.id.desc())
+        .all()
+    )
+
+    upcoming_matches = []
+    for match in matches:
+        upcoming_matches.append(
+            {
+                "id": match.id,
+                "status": match.status.to_dict() if match.status else None,
+                "location": match.location,
+                "team1Id": match.team1_id,
+                "team1Name": match.team1.name if match.team1 else None,
+                "team1ClubName": match.team1.club.name if match.team1 and match.team1.club else None,
+                "team2Id": match.team2_id,
+                "team2Name": match.team2.name if match.team2 else None,
+                "team2ClubName": match.team2.club.name if match.team2 and match.team2.club else None,
+                "weekStartDate": match.week_start_date.isoformat() if match.week_start_date else None,
+                "proposedStartAt": match.proposed_start_at.isoformat() + "Z" if match.proposed_start_at else None,
+                "proposedEndAt": match.proposed_end_at.isoformat() + "Z" if match.proposed_end_at else None,
+            }
+        )
+
+    return upcoming_matches
 
 
 @dashboard_bp.get("/me/dashboard")
@@ -79,6 +129,7 @@ def get_my_dashboard():
         "account": {"id": account.id, "email": account.email},
         "roles": [getattr(account, "role", "user")],
         "clubs": list(clubs_map.values()),
+        "upcoming_matches": _serialize_upcoming_matches(account),
         "pending_requests": {
             "my_requests": [r.serialize() for r in join_requests],
             "my_club_creation_requests": [],

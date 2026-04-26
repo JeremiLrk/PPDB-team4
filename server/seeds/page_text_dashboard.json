@@ -478,6 +478,54 @@
     },
     {
         "page": "dashboard",
+        "key": "availability_upcoming_matches",
+        "language": "en",
+        "value": "Upcoming matches"
+    },
+    {
+        "page": "dashboard",
+        "key": "availability_upcoming_matches",
+        "language": "nl",
+        "value": "Komende wedstrijden"
+    },
+    {
+        "page": "dashboard",
+        "key": "no_upcoming_matches",
+        "language": "en",
+        "value": "No upcoming matches scheduled."
+    },
+    {
+        "page": "dashboard",
+        "key": "no_upcoming_matches",
+        "language": "nl",
+        "value": "Geen komende wedstrijden gepland."
+    },
+    {
+        "page": "dashboard",
+        "key": "week_of",
+        "language": "en",
+        "value": "Week of"
+    },
+    {
+        "page": "dashboard",
+        "key": "week_of",
+        "language": "nl",
+        "value": "Week van"
+    },
+    {
+        "page": "dashboard",
+        "key": "date_tbd",
+        "language": "en",
+        "value": "Date/time TBD"
+    },
+    {
+        "page": "dashboard",
+        "key": "date_tbd",
+        "language": "nl",
+        "value": "Datum/tijd nog te bepalen"
+    },
+    {
+        "page": "dashboard",
         "key": "loading",
         "language": "en",
         "value": "Loading..."
