@@ -1,7 +1,9 @@
-from flask import abort
-from server.app.models.account import Account, AccountRole
+from flask import jsonify
+
+from server.app.models.account import Account
+from server.app.models.account_role import AccountRole 
 from server.app.models.player import Player
-from server.app.models.team import TeamManager
+from server.app.models.account import TeamManager
 from server.extensions import db
 
 
@@ -30,10 +32,14 @@ def promote_to_player(target: Account) -> None:
     # on next access, ensuring target.player reflects the newly inserted row.
     db.session.expire(target)
 
-    if not target.player:
-        abort(500, description="Player entity was not created.")
-    return None
+def promote_to_team_manager(target: Account):
+  """Promotes an account to TeamManager if it is not already one."""
+  if target.team_manager:
+    return None  # already exists
 
+  tm_role = AccountRole.query.filter_by(name="team_manager").first()
+  if not tm_role:
+    return jsonify({"message": "Role 'team_manager' not found in DB."}), 500
 
 def promote_to_team_manager(target: Account) -> None:
     """Promotes an account to TeamManager if it is not already one."""

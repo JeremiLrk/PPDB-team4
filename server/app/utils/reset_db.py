@@ -17,7 +17,14 @@ from pathlib import Path
 
 # ── resolve project root so the script works regardless of cwd ───────────────
 PROJECT_ROOT = Path(__file__).resolve().parents[3]   # .../PPDB-team4/
-SCHEMA_FILE  = PROJECT_ROOT / "server" / "sql" / "schema.sql"
+DEFAULT_SCHEMA_FILES = [
+    PROJECT_ROOT / "server" / "sql" / "infrastructure.sql",
+    PROJECT_ROOT / "server" / "sql" / "account.sql",
+    PROJECT_ROOT / "server" / "sql" / "club_and_team.sql",
+    PROJECT_ROOT / "server" / "sql" / "match_rules.sql",
+    PROJECT_ROOT / "server" / "sql" / "schema.sql",
+    PROJECT_ROOT / "server" / "sql" / "triggers.sql",
+]
 
 
 def _get_connection():
@@ -106,7 +113,7 @@ def main(argv=None) -> None:
             if args.schemas:
                 schema_files = [PROJECT_ROOT / s for s in args.schemas]
             else:
-                schema_files = [SCHEMA_FILE]
+                schema_files = DEFAULT_SCHEMA_FILES
 
             apply_schemas(conn, schema_files)
 

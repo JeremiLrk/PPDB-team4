@@ -1,8 +1,17 @@
-import os
 import json
+from pathlib import Path
 from typing import Type
 from server.extensions import db
 from sqlalchemy import inspect
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _resolve_seed_path(seeds_file: str) -> Path:
+    candidate = Path(seeds_file)
+    if candidate.is_absolute():
+        return candidate
+    return PROJECT_ROOT / candidate
 
 
 def seed_table(
@@ -26,11 +35,13 @@ def seed_table(
     print(f"Exists: {os.path.exists(seeds_file)}")        # Does the file exist?
     """
 
-    if not os.path.exists(seeds_file):
+    resolved_path = _resolve_seed_path(seeds_file)
+
+    if not resolved_path.exists():
         print(f"[{model.__tablename__}] seed file not found: {seeds_file}")
         return
 
-    with open(seeds_file, encoding="utf-8") as f:
+    with open(resolved_path, encoding="utf-8") as f:
         data = json.load(f)
 
     added = 0

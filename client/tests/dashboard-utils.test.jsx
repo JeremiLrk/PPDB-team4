@@ -22,6 +22,7 @@ describe("dashboardUtils", () => {
       { id: "search", label: "Zoek clubs" },
       { id: "requests", label: "Mijn aanvragen" },
       { id: "teams", label: "Mijn teams" },
+      { id: "matches", label: "Matches" },
       { id: "createClub", label: "Voeg je eigen club toe" },
       { id: "manageClubs", label: "Beheer je clubs" },
     ]);
