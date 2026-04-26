@@ -478,7 +478,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         }
 
         try {
-            const response = await fetch("/api/club/add-club", {
+            const response = await fetch("/api/clubs", {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },

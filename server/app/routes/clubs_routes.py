@@ -107,8 +107,6 @@ def create_club():
         city=city,
         sport_type_id=sport_type_id,
     )
-    if not sport_type_id and sport_name:
-        new_club.sport = sport_name
 
     db.session.add(new_club)
     db.session.flush()
