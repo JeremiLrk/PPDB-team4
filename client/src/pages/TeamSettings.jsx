@@ -136,10 +136,7 @@ export default function TeamSettings() {
                             </div>
                             <div className={styles.tags}>
                                 <Tag label={texts.settings_title || "Team settings"} accent />
-                                <Tag
-                                    label={team.clubName ? team.clubName : (texts.independent_team || "Independent")}
-                                    muted={!team.clubId}
-                                />
+                                <Tag label={team.clubName ? team.clubName : (texts.independent_team || "Independent")} muted={!team.clubId} />
                                 <Tag label={team.sportName ? team.sportName  : "No sport"}    muted={!team.sportTypeId} />
 
                             </div>
