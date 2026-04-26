@@ -7,7 +7,7 @@ import { useSportTypes } from "@/hooks/useSportTypes";
 function Clubs() {
   const navigate = useNavigate();
   const { clubs = [], loading: clubsLoading, error: clubsError } = useClubs();
-  const { sportTypes = [], loading: sportsLoading, error: sportsError } = useSportTypes();
+  const { sportTypes = [], error: sportsError } = useSportTypes();
 
   const loading = clubsLoading;
   const error = clubsError;
@@ -21,7 +21,7 @@ function Clubs() {
   }
   return (
     <section className={styles.container}>
-      <h2 className={styles.title}>All Clubs</h2>
+      <h2 className={styles.title}>Alle clubs</h2>
       <p className={styles.subtitle}>Kies een club om de club-homepage te openen, of start je eigen club!</p>
 
       {error ? <p className={commonStyles.error}>{error}</p> : null}
@@ -42,7 +42,10 @@ function Clubs() {
                   className={styles.clubButton}
                 >
                   <span className={styles.clubName}>{club.name}</span>
-                  <span>{club.city}</span>
+                  <div className={styles.clubMeta}>
+                    <span>{club.city || "Onbekende stad"}</span>
+                    <span>{club.sport || "Sport niet ingesteld"}</span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -57,7 +60,10 @@ function Clubs() {
               className={styles.clubButton}
             >
               <span className={styles.clubName}>{club.name}</span>
-              <span>{club.city}</span>
+              <div className={styles.clubMeta}>
+                <span>{club.city || "Onbekende stad"}</span>
+                <span>{club.sport || "Sport niet ingesteld"}</span>
+              </div>
             </button>
           ))}
         </div>

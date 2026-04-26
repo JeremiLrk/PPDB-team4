@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { test } from "vitest";
+import { test, beforeEach, afterEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -7,8 +7,16 @@ import { MemoryRouter } from "react-router-dom";
 import App from "../src/app/App.jsx";
 import { mockApi } from "./testApiMock.js";
 
+beforeEach(() => {
+    localStorage.setItem("app_lang", "nl");
+});
+
+afterEach(() => {
+    localStorage.removeItem("app_lang");
+});
+
 // Verifies header Log in button navigates to the login page.
-test("header Log in button navigates to /login", async () => {
+test("header Inloggen button navigates to /login", async () => {
     mockApi();
     const account = userEvent.setup();
 
@@ -19,13 +27,13 @@ test("header Log in button navigates to /login", async () => {
     );
 
     const banner = screen.getByRole("banner");
-    await account.click(within(banner).getByRole("button", { name: "Log in" }));
+    await account.click(within(banner).getByRole("button", { name: "Inloggen" }));
 
-    expect(await screen.findByRole("heading", { name: "Log in" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Inloggen" })).toBeInTheDocument();
 });
 
 // Verifies header Register button navigates to the register page.
-test("header Register button navigates to /register", async () => {
+test("header Registreren button navigates to /register", async () => {
     mockApi();
     const account = userEvent.setup();
 
@@ -36,9 +44,9 @@ test("header Register button navigates to /register", async () => {
     );
 
     const banner = screen.getByRole("banner");
-    await account.click(within(banner).getByRole("button", { name: "Register" }));
+    await account.click(within(banner).getByRole("button", { name: "Registreren" }));
 
-    expect(await screen.findByRole("heading", { name: "Register" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Registreren" })).toBeInTheDocument();
 });
 
 // Verifies landing Explore clubs button opens the clubs overview page.
@@ -52,9 +60,9 @@ test("landing Explore clubs button navigates to /clubs", async () => {
         </MemoryRouter>
     );
 
-    await account.click(screen.getByRole("button", { name: "Explore clubs" }));
+    await account.click(await screen.findByRole("button", { name: "Verken clubs" }));
 
-    expect(await screen.findByRole("heading", { name: "All Clubs" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Alle clubs" })).toBeInTheDocument();
 });
 
 // Verifies dashboard button redirects anonymous users to login.
@@ -68,8 +76,8 @@ test("landing Open dashboard sends anonymous account to /login", async () => {
         </MemoryRouter>
     );
 
-    await account.click(screen.getByRole("button", { name: "Open dashboard" }));
-    expect(await screen.findByRole("heading", { name: "Log in" })).toBeInTheDocument();
+    await account.click(await screen.findByRole("button", { name: "Open dashboard" }));
+    expect(await screen.findByRole("heading", { name: "Inloggen" })).toBeInTheDocument();
 });
 
 // Verifies register page guest link returns to landing page.
@@ -83,8 +91,8 @@ test("register Continue as guest navigates back to landing", async () => {
         </MemoryRouter>
     );
 
-    await account.click(await screen.findByRole("link", { name: "Continue as guest" }));
-    expect(await screen.findByRole("heading", { name: "How NetRank works" })).toBeInTheDocument();
+    await account.click(await screen.findByRole("link", { name: "Doorgaan als gast" }));
+    expect(await screen.findByRole("heading", { name: "Hoe NetRank werkt" })).toBeInTheDocument();
 });
 
 // Verifies login page guest link returns to landing page.
@@ -98,8 +106,8 @@ test("login Continue as guest navigates back to landing", async () => {
         </MemoryRouter>
     );
 
-    await account.click(await screen.findByRole("link", { name: "Continue as guest" }));
-    expect(await screen.findByRole("heading", { name: "How NetRank works" })).toBeInTheDocument();
+    await account.click(await screen.findByRole("link", { name: "Doorgaan als gast" }));
+    expect(await screen.findByRole("heading", { name: "Hoe NetRank werkt" })).toBeInTheDocument();
 });
 
 // Verifies header Teams button opens the teams list page.
@@ -156,7 +164,7 @@ test("team detail settings gear navigates to /teams/:teamId/settings", async () 
         </MemoryRouter>
     );
 
-    await user.click(await screen.findByRole("button", { name: "Settings for NetRank Aces" }));
+    await user.click(await screen.findByRole("button", { name: "Instellingen voor NetRank Aces" }));
     expect(await screen.findByRole("button", { name: /<- NetRank Aces/i })).toBeInTheDocument();
 });
 
@@ -180,9 +188,9 @@ test("dashboard teams tab open button navigates to /teams/:teamId", async () => 
         </MemoryRouter>
     );
 
-    await user.click(screen.getByRole("button", { name: "Open dashboard" }));
-    await user.click(await screen.findByRole("button", { name: "My Teams" }));
-    await user.click(await screen.findByRole("button", { name: "Open" }));
+    await user.click(await screen.findByRole("button", { name: "Open dashboard" }));
+    await user.click(await screen.findByRole("button", { name: "Mijn teams" }));
+    await user.click(await screen.findByRole("button", { name: "Openen" }));
 
     expect(await screen.findByRole("heading", { name: "NetRank Aces" })).toBeInTheDocument();
 });

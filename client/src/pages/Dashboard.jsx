@@ -1,4 +1,3 @@
-import styles from "@/style/dashboard/Dashboard.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import workspaceStyles from "@/style/dashboard/Workspace.module.css";
 
@@ -27,7 +26,7 @@ function Dashboard() {
     const dashboardTexts = usePageTexts("dashboard", lang)
     const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts)
 
-    if (workspace.loading) {
+    if (workspace.loading || !dashboardTexts.tab_overview) {
         return (
             <div className={commonStyles.loading}>
                 {dashboardTexts.loading_dashboard || "Loading dashboard..."}
@@ -62,7 +61,7 @@ function Dashboard() {
                         pendingJoinRequestClubIds={
                             workspace.pendingJoinRequestClubIds
                         }
-                        clubCreationRequests={workspace.clubCreationRequests}
+                        incomingJoinRequests={workspace.incomingJoinRequests}
                         texts={dashboardTexts}
                     />
                 ) : null}
@@ -119,6 +118,7 @@ function Dashboard() {
                 {workspace.activeTab === "teams" ? (
                     <TeamsTab
                         texts={dashboardTexts}
+                        theme={workspace.theme}
                     />
                 ) : null}
 
@@ -128,17 +128,12 @@ function Dashboard() {
 
                 {workspace.activeTab === "createClub" ? (
                     <CreateClubTab
-                        clubCreaterequest={workspace.clubCreaterequest}
                         clubRequestForm={workspace.clubRequestForm}
                         clubRequestSubmitting={workspace.clubRequestSubmitting}
                         clubRequestMessage={workspace.clubRequestMessage}
-                        clubCreationRequests={workspace.clubCreationRequests}
                         onFieldChange={workspace.onClubRequestFieldChange}
                         onSubmit={workspace.onClubRequestSubmit}
                         texts={dashboardTexts}
-                        incomingJoinRequests={workspace.incomingJoinRequests}
-                        decideJoinrequest={workspace.decideJoinrequest}
-                        isClubOwner={workspace.isClubOwner}
                         sportTypes={workspace.sportTypes}
                     />
                 ) : null}

@@ -1,6 +1,7 @@
 import commonStyles from "@/style/common/Common.module.css";
 import styles from "@/style/matches/MatchProposalCard.module.css";
 import ItemCard from "@/components/common/ItemCard.jsx";
+import { statusLabel } from "@/components/dashboard/dashboardUtils.js";
 
 function parseDate(value) {
     if (!value) return null;
@@ -55,7 +56,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange }
                 className={styles.actionRow}
             >
                 <span className={`${commonStyles.statusPill} ${statusClass(proposal.status)}`}>
-                    {proposal.status}
+                    {statusLabel(proposal.status)}
                 </span>
 
                 {canRespond ? (
@@ -66,7 +67,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange }
                             disabled={disabled}
                             onClick={() => onStatusChange(proposal.id, "accepted")}
                         >
-                            Accept
+                            Accepteren
                         </button>
                         <button
                             className={styles.rejectButton}
@@ -74,7 +75,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange }
                             disabled={disabled}
                             onClick={() => onStatusChange(proposal.id, "rejected")}
                         >
-                            Reject
+                            Weigeren
                         </button>
                         <button
                             className={styles.cancelButton}
@@ -82,7 +83,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange }
                             disabled={disabled}
                             onClick={() => onStatusChange(proposal.id, "cancelled")}
                         >
-                            Cancel
+                            Annuleren
                         </button>
                     </>
                 ) : null}
@@ -94,7 +95,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange }
                         disabled={disabled}
                         onClick={() => onStatusChange(proposal.id, "pending")}
                     >
-                        Set Pending
+                        Opnieuw in afwachting zetten
                     </button>
                 ) : null}
             </div>

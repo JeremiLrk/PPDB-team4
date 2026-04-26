@@ -33,14 +33,14 @@ export default function TeamCard({ team, texts, currentUser, onClick }) {
                 <p className={commonStyles.secondaryText}>
                     {team.clubId
                         ? `Club #${team.clubId}`
-                        : texts?.independent_team || "Independent"}
+                        : texts?.independent_team || "Onafhankelijk"}
                     {team.sportTypeId ? ` · Sport #${team.sportTypeId}` : ""}
                 </p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                 <TeamSettingsLink currentUser={currentUser} team={team} />
                 <button className={buttonStyles.linkButton} onClick={handleOpen}>
-                    {texts?.open || "Open"}
+                    {texts?.open || "Openen"}
                 </button>
             </div>
         </ItemCard>

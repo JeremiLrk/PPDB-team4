@@ -4,8 +4,8 @@ import styles from "@/style/Teams.module.css";
 import { useTeams } from "@/hooks/teams/useTeams.js";
 
 const SORT_OPTIONS = [
-    { value: "id",   label: "By ID" },
-    { value: "name", label: "By Name" },
+    { value: "id",   label: "Op ID" },
+    { value: "name", label: "Op naam" },
 ];
 
 const PAGE_SIZE_OPTIONS = [6, 12, 24, 48];
@@ -39,13 +39,13 @@ export default function Teams() {
                     <h1 className={styles.title}>Teams</h1>
                     <p className={styles.subtitle}>
                         {total !== null
-                            ? `${total} team${total !== 1 ? "s" : ""} found`
-                            : "Loading…"}
+                            ? `${total} team${total !== 1 ? "s" : ""} gevonden`
+                            : "Laden…"}
                     </p>
                 </div>
 
                 <div className={styles.controls}>
-                    <span className={styles.controlLabel}>Sort</span>
+                    <span className={styles.controlLabel}>Sorteren</span>
                     <select
                         className={styles.select}
                         value={sort}
@@ -59,7 +59,7 @@ export default function Teams() {
 
                     <div className={styles.divider} />
 
-                    <span className={styles.controlLabel}>Per load</span>
+                    <span className={styles.controlLabel}>Per keer laden</span>
                     <select
                         className={styles.select}
                         value={pageSize}
@@ -91,14 +91,14 @@ export default function Teams() {
 
             {/* ── Empty ── */}
             {!loading && !error && teams.length === 0 && (
-                <p className={styles.emptyState}>No teams found.</p>
+                <p className={styles.emptyState}>Geen teams gevonden.</p>
             )}
 
             {/* ── Loading indicator (initial or mid-page) ── */}
             {loading && (
                 <div className={styles.stateRow}>
                     <div className={styles.spinner} />
-                    <span>Loading teams…</span>
+                    <span>Teams laden…</span>
                 </div>
             )}
 
@@ -106,7 +106,7 @@ export default function Teams() {
             {teams.length > 0 && (
                 <div className={styles.footer}>
                     <span className={styles.counter}>
-                        Showing {teams.length}{total !== null ? ` of ${total}` : ""}
+                        Weergegeven {teams.length}{total !== null ? ` van ${total}` : ""}
                     </span>
 
                     <div className={styles.footerRight}>
@@ -116,7 +116,7 @@ export default function Teams() {
                                 onClick={loadMore}
                                 disabled={loading}
                             >
-                                {loading ? "Loading…" : `Load ${pageSize} more`}
+                                {loading ? "Laden…" : `${pageSize} meer laden`}
                             </button>
                         )}
                     </div>
@@ -135,12 +135,12 @@ function TeamCard({ team, onClick }) {
                 {team.sportTypeId ? (
                     <span className={styles.badge}>#{team.sportTypeId}</span>
                 ) : (
-                    <span className={`${styles.badge} ${styles.badgeMuted}`}>No sport</span>
+                    <span className={`${styles.badge} ${styles.badgeMuted}`}>Geen sport</span>
                 )}
                 {team.clubId ? (
                     <span className={styles.badge}>Club #{team.clubId}</span>
                 ) : (
-                    <span className={`${styles.badge} ${styles.badgeMuted}`}>Independent</span>
+                    <span className={`${styles.badge} ${styles.badgeMuted}`}>Onafhankelijk</span>
                 )}
             </div>
         </button>

@@ -51,10 +51,10 @@ export default function ManagerCard({ manager, teamId, canDelete, onDeleted }) {
 /* -- Minimalist badge with rights icons -------------------------------- */
 
 const PERM_ICONS = [
-    { key: "canRename",       icon: "✏️", title: "Can rename"        },
-    { key: "canDelete",       icon: "🗑️", title: "Can delete"        },
-    { key: "canEditPlayers",  icon: "👥", title: "Can edit players"  },
-    { key: "canEditManagers", icon: "🔑", title: "Can edit managers" },
+    { key: "canRename",       icon: "✏️", title: "Team hernoemen"        },
+    { key: "canDelete",       icon: "🗑️", title: "Team verwijderen"        },
+    { key: "canEditPlayers",  icon: "👥", title: "Spelers beheren"  },
+    { key: "canEditManagers", icon: "🔑", title: "Beheerders beheren" },
 ];
 
 function PermissionsBadge({ permissions }) {

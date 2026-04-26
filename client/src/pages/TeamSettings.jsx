@@ -59,7 +59,7 @@ export default function TeamSettings() {
         return (
             <div className={styles.state}>
                 <div className={styles.spinner} />
-                <span>Loading team…</span>
+                <span>Team laden…</span>
             </div>
         );
     }
@@ -70,7 +70,7 @@ export default function TeamSettings() {
             <div className={styles.state}>
                 <p className={styles.error}>{teamError}</p>
                 <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                    &lt;- Back to teams
+                    &lt;- Terug naar teams
                 </button>
             </div>
         );
@@ -82,8 +82,8 @@ export default function TeamSettings() {
     if (!currentUser) {
         return (
             <div className={styles.state}>
-                <p className={styles.error}>You must be logged in to access this page.</p>
-                <Link to="/login" className={styles.backBtn}>→ Log in</Link>
+                <p className={styles.error}>Je moet ingelogd zijn om deze pagina te openen.</p>
+                <Link to="/login" className={styles.backBtn}>→ Inloggen</Link>
             </div>
         );
     }
@@ -92,10 +92,10 @@ export default function TeamSettings() {
         return (
             <div className={styles.state}>
                 <p className={styles.error}>
-                    Access denied. You do not have permission to manage this team.
+                    Toegang geweigerd. Je hebt geen rechten om dit team te beheren.
                 </p>
                 <button className={styles.backBtn} onClick={() => navigate(`/teams/${teamId}`)}>
-                    &lt;- Back to team
+                    &lt;- Terug naar team
                 </button>
             </div>
         );
@@ -113,7 +113,7 @@ export default function TeamSettings() {
                     &lt;- {teamName}
                 </button>
                 <span className={styles.breadcrumbSep}>/</span>
-                <span className={styles.breadcrumbCurrent}>Settings</span>
+                <span className={styles.breadcrumbCurrent}>Instellingen</span>
             </div>
 
             {/* Hero */}
@@ -131,12 +131,12 @@ export default function TeamSettings() {
                                 />
                             </div>
                             <div className={styles.tags}>
-                                <Tag label="Settings" accent />
-                                <Tag label={team.clubId ? `Club #${team.clubId}` : "Independent"} muted={!team.clubId} />
+                                <Tag label="Instellingen" accent />
+                                <Tag label={team.clubId ? `Club #${team.clubId}` : "Onafhankelijk"} muted={!team.clubId} />
                                 <Tag label={`ID: ${team.id}`} muted />
                             </div>
                         </div>
-                        <GearIcon size={32} title="Team settings" className={styles.settingsIcon} />
+                        <GearIcon size={32} title="Teaminstellingen" className={styles.settingsIcon} />
                     </div>
                 </div>
             </div>
@@ -145,7 +145,7 @@ export default function TeamSettings() {
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleRow}>
-                        <h2 className={styles.sectionTitle}>Managers</h2>
+                        <h2 className={styles.sectionTitle}>Beheerders</h2>
                         {managersTotal !== null && (
                             <span className={panelStyles.panelCounter}>{managersTotal}</span>
                         )}
@@ -160,19 +160,19 @@ export default function TeamSettings() {
                 {managersLoading && (
                     <div className={styles.inlineState}>
                         <div className={styles.spinner} />
-                        <span>Loading managers…</span>
+                        <span>Beheerders laden…</span>
                     </div>
                 )}
 
                 {!managersLoading && managersError && (
                     <div className={styles.inlineState}>
                         <p className={styles.error}>{managersError}</p>
-                        <button className={styles.retryBtn} onClick={reloadManagers}>Retry</button>
+                        <button className={styles.retryBtn} onClick={reloadManagers}>Opnieuw proberen</button>
                     </div>
                 )}
 
                 {!managersLoading && !managersError && managers.length === 0 && (
-                    <p className={commonStyles.muted}>No managers in this team yet.</p>
+                    <p className={commonStyles.muted}>Nog geen beheerders in dit team.</p>
                 )}
 
                 {!managersLoading && !managersError && managers.length > 0 && (
@@ -194,7 +194,7 @@ export default function TeamSettings() {
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <div className={styles.sectionTitleRow}>
-                        <h2 className={styles.sectionTitle}>Players</h2>
+                        <h2 className={styles.sectionTitle}>Spelers</h2>
                         {playersTotal !== null && (
                             <span className={panelStyles.panelCounter}>{playersTotal}</span>
                         )}
@@ -205,19 +205,19 @@ export default function TeamSettings() {
                 {playersLoading && (
                     <div className={styles.inlineState}>
                         <div className={styles.spinner} />
-                        <span>Loading players…</span>
+                        <span>Spelers laden…</span>
                     </div>
                 )}
 
                 {!playersLoading && playersError && (
                     <div className={styles.inlineState}>
                         <p className={styles.error}>{playersError}</p>
-                        <button className={styles.retryBtn} onClick={reloadPlayers}>Retry</button>
+                        <button className={styles.retryBtn} onClick={reloadPlayers}>Opnieuw proberen</button>
                     </div>
                 )}
 
                 {!playersLoading && !playersError && players.length === 0 && (
-                    <p className={commonStyles.muted}>No players in this team yet. Add some above.</p>
+                    <p className={commonStyles.muted}>Nog geen spelers in dit team. Voeg er hierboven toe.</p>
                 )}
 
                 {!playersLoading && !playersError && players.length > 0 && (

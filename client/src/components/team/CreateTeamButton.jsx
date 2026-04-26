@@ -5,9 +5,10 @@ import { PlusIcon }  from "@/components/icon/PlusIcon.jsx";
 import { useCreateTeam } from "@/hooks/teams/useCreateTeam.js";
 import { useSportTypes } from "@/hooks/useSportTypes.js";
 import styles     from "@/style/common/Forms.module.css";
+import buttonStyles from "@/style/common/Buttons.module.css";
 
 
-export default function CreateTeamButton({ clubs = [], onCreated }) {
+export default function CreateTeamButton({ clubs = [], onCreated, theme }) {
     const {
         form, step,
         openForm, closeForm, updateField, submit,
@@ -24,6 +25,10 @@ export default function CreateTeamButton({ clubs = [], onCreated }) {
         <FormPanel
             title="Create Team"
             triggerContent={<><PlusIcon rotated={isOpen} /> New Team</>}
+            triggerClassName={buttonStyles.createTeamTrigger}
+            triggerOpenClassName={buttonStyles.createTeamTriggerOpen}
+            panelClassName={buttonStyles.createTeamPanel}
+            theme={theme}
 
             isOpen={isOpen}
             openPanel={openForm}

@@ -121,6 +121,42 @@
         "language": "nl",
         "value": "Voeg je eigen club toe"
     },
+    {
+        "page": "dashboard",
+        "key": "tab_teams",
+        "language": "en",
+        "value": "My Teams"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_teams",
+        "language": "nl",
+        "value": "Mijn teams"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_matches",
+        "language": "en",
+        "value": "Matches"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_matches",
+        "language": "nl",
+        "value": "Wedstrijden"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_manage_club",
+        "language": "en",
+        "value": "Manage your clubs"
+    },
+    {
+        "page": "dashboard",
+        "key": "tab_manage_club",
+        "language": "nl",
+        "value": "Beheer je clubs"
+    },
 
     {
         "page": "dashboard",

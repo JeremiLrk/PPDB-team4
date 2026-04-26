@@ -30,20 +30,20 @@ export function useRegister(setUser) {
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data?.message || "Registration failed")
+                throw new Error(data?.message || "Registratie mislukt")
             }
 
             setUser(null)
 
             notify.success(
                 data?.message ||
-                    "Registration successful. Please verify your email.",
+                    "Registratie gelukt. Controleer je e-mail om je account te verifiëren.",
             )
 
             navigate("/login")
         } catch (err) {
-            console.error(err.message || "Registration failed")
-            notify.error(err.message || "Registration failed")
+            console.error(err.message || "Registratie mislukt")
+            notify.error(err.message || "Registratie mislukt")
         }
     }
 

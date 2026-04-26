@@ -48,14 +48,14 @@ export default function Header({ status }) {
                 data = {};
             }
             if (!response.ok) {
-                throw new Error(data?.message || "Logout failed");
+                throw new Error(data?.message || "Uitloggen mislukt");
             }
 
-            notify.success("Logout successful");
+            notify.success("Uitloggen gelukt");
             navigate("/");
         } catch (err) {
             // Local logout already happened; backend failure should not keep user stuck.
-            console.error(err?.message || "Logout request failed");
+            console.error(err?.message || "Uitlogverzoek mislukt");
             navigate("/");
         }
     }
@@ -104,13 +104,13 @@ export default function Header({ status }) {
                                 onClick={() => navigate("/login")}
                                 className={styles.headerButton}
                             >
-                                {authTexts.log_in || "Log in"}
+                                {authTexts.log_in || "Inloggen"}
                             </button>
                             <button
                                 onClick={() => navigate("/register")}
                                 className={styles.headerPrimaryButton}
                             >
-                                {authTexts.register || "Register"}
+                                {authTexts.register || "Registreren"}
                             </button>
                         </>
                     ) : (
@@ -140,7 +140,7 @@ export default function Header({ status }) {
                                                 className={styles.userDropdownItem}
                                                 onClick={handleLogout}
                                             >
-                                                {authTexts.log_out || "Log out"}
+                                                {authTexts.log_out || "Uitloggen"}
                                             </button>
                                         </li>
                                     </ul>

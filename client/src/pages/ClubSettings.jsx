@@ -1,6 +1,8 @@
 import styles from "@/style/ClubSettings.module.css";
 import { useParams } from "react-router-dom";
 import { useClubSettings } from "@/hooks/useClubSettings";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 import ClubSidebar from "@/components/club_settings/ClubSidebar.jsx";
 import ClubOverview from "@/components/club_settings/ClubOverview.jsx";
@@ -13,11 +15,16 @@ import ClubOwners from "@/components/club_settings/ClubOwners.jsx";
 
 function ClubSettings() {
     const { clubId } = useParams();
-    const settings = useClubSettings(clubId);
-    console.log("Rendering ClubGeneral with formData:", settings.formData);
+    const { lang } = useLangContext();
+    const texts = usePageTexts("club_settings", lang);
+    const settings = useClubSettings(clubId, texts);
+
+    if (!texts.sidebar_title) {
+        return <div className={styles.loading}>{texts.loading || "Club laden..."}</div>;
+    }
 
     if (settings.loading) {
-        return <div className={styles.loading}>Loading club...</div>;
+        return <div className={styles.loading}>{texts.loading || "Club laden..."}</div>;
     }
 
     return (
@@ -25,12 +32,13 @@ function ClubSettings() {
             <ClubSidebar
                 activeTab={settings.activeTab}
                 onTabChange={settings.setActiveTab}
+                texts={texts}
             />
 
             <div className={styles.settings}>
 
                 {settings.activeTab === "overview" && (
-                    <ClubOverview club={settings.club} />
+                    <ClubOverview club={settings.club} texts={texts} />
                 )}
 
                 {settings.activeTab === "general" && (
@@ -41,6 +49,7 @@ function ClubSettings() {
                         updating={settings.updating}
                         updateMessage={settings.updateMessage}
                         sportTypes={settings.sportTypes}
+                        texts={texts}
                     />
                 )}
 
@@ -50,6 +59,7 @@ function ClubSettings() {
                         onCreate={settings.createLadder}
                         ratingFunctions={settings.ratingFunctions}
                         ruleSets={settings.ruleSets}
+                        texts={texts}
                     />
                 )}
 
@@ -58,11 +68,12 @@ function ClubSettings() {
                         members={settings.members}
                         onAdd={settings.addMember}
                         onRemove={settings.removeMember}
+                        texts={texts}
                     />
                 )}
 
                 {settings.activeTab === "rules" && (
-                    <ClubMatchRules clubId={clubId} />
+                    <ClubMatchRules clubId={clubId} texts={texts} />
                 )}
 
                 {settings.activeTab === "owners" && (
@@ -71,6 +82,7 @@ function ClubSettings() {
                         onAdd={settings.addOwner}
                         onRemove={settings.removeOwner}
                         searchAccounts={settings.searchAccounts}
+                        texts={texts}
                     />
                 )}
 

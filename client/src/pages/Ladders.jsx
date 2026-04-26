@@ -13,10 +13,10 @@ const Ladders = () => {
             {/* Header */}
             <div className="mb-12">
                 <h1 className="text-4xl font-semibold tracking-tight">
-                    Available Ladders
+                    Beschikbare ladders
                 </h1>
                 {!loading && ladders.length === 0 && (
-                    <p className="p-6 text-slate-400">No ladder available for this club.</p>
+                    <p className="p-6 text-slate-400">Er zijn geen ladders beschikbaar voor deze club.</p>
                 )}
             </div>
 
@@ -24,7 +24,7 @@ const Ladders = () => {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
 
                 {loading && (
-                    <p className="text-slate-400">Loading ladders...</p>
+                    <p className="text-slate-400">Ladders laden...</p>
                 )}
 
                 {!loading && ladders.map((ladder) => (

@@ -20,15 +20,15 @@ export function useLogin(setUser) {
 
             const data = await response.json();
             if (!response.ok) {
-                throw new Error(data?.message || "Login failed");
+                throw new Error(data?.message || "Inloggen mislukt");
             }
 
             setUser(data.account);
-            notify.success("Login successful");
+            notify.success("Inloggen gelukt");
             navigate("/dashboard");
         } catch (err) {
-            console.error(err?.message || "Login failed");
-            notify.error(err?.message || "Login failed");
+            console.error(err?.message || "Inloggen mislukt");
+            notify.error(err?.message || "Inloggen mislukt");
         }
     };
 

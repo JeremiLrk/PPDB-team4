@@ -19,7 +19,7 @@ export default function TeamDetail() {
         return (
             <div className={styles.state}>
                 <div className={styles.spinner} />
-                <span>Loading team…</span>
+                <span>Team laden…</span>
             </div>
         );
     }
@@ -29,7 +29,7 @@ export default function TeamDetail() {
             <div className={styles.state}>
                 <p className={styles.error}>{error}</p>
                 <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                    &lt;- Back to teams
+                    &lt;- Terug naar teams
                 </button>
             </div>
         );
@@ -42,7 +42,7 @@ export default function TeamDetail() {
 
             {/* Back */}
             <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                &lt;- All Teams
+                &lt;- Alle teams
             </button>
 
             {/* Hero */}
@@ -52,8 +52,8 @@ export default function TeamDetail() {
                     <div>
                         <h1 className={styles.name}>{team.name}</h1>
                         <div className={styles.tags}>
-                            <Tag label={team.clubId     ? `Club #${team.clubId}`        : "Independent"} muted={!team.clubId} />
-                            <Tag label={team.sportTypeId ? `Sport #${team.sportTypeId}` : "No sport"}    muted={!team.sportTypeId} />
+                            <Tag label={team.clubId     ? `Club #${team.clubId}`        : "Onafhankelijk"} muted={!team.clubId} />
+                            <Tag label={team.sportTypeId ? `Sport #${team.sportTypeId}` : "Geen sport"}    muted={!team.sportTypeId} />
                             <Tag label={`ID: ${team.id}`} muted />
                         </div>
                     </div>
@@ -64,14 +64,14 @@ export default function TeamDetail() {
             {/* Details grid */}
             <div className={styles.grid}>
                 <InfoCard label="Club" value={team.clubId     ? `#${team.clubId}`      : "—"} />
-                <InfoCard label="Sport Type" value={team.sportTypeId ? `#${team.sportTypeId}` : "—"} />
-                <InfoCard label="Team ID" value={`#${team.id}`} />
+                <InfoCard label="Sporttype" value={team.sportTypeId ? `#${team.sportTypeId}` : "—"} />
+                <InfoCard label="Team-ID" value={`#${team.id}`} />
             </div>
 
             {/* Players */}
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
-                    <h2 className={styles.sectionTitle}>Players</h2>
+                    <h2 className={styles.sectionTitle}>Spelers</h2>
                     {total !== null && (
                         <span className={panelStyles.panelCounter}>{total}</span>
                     )}
@@ -80,19 +80,19 @@ export default function TeamDetail() {
                 {playersLoading && (
                     <div className={styles.inlineState}>
                         <div className={styles.spinner} />
-                        <span>Loading players…</span>
+                        <span>Spelers laden…</span>
                     </div>
                 )}
 
                 {!playersLoading && playersError && (
                     <div className={styles.inlineState}>
                         <p className={styles.error}>{playersError}</p>
-                        <button className={styles.retryBtn} onClick={reload}>Retry</button>
+                        <button className={styles.retryBtn} onClick={reload}>Opnieuw proberen</button>
                     </div>
                 )}
 
                 {!playersLoading && !playersError && players.length === 0 && (
-                    <p className={commonStyles.muted}>No players in this team yet.</p>
+                    <p className={commonStyles.muted}>Nog geen spelers in dit team.</p>
                 )}
 
                 {!playersLoading && !playersError && players.length > 0 && (

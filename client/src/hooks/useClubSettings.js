@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSportTypes } from "@/hooks/useSportTypes.js"
 
-export function useClubSettings(clubId) {
+export function useClubSettings(clubId, texts = {}) {
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
@@ -100,9 +100,9 @@ export function useClubSettings(clubId) {
             if (!res.ok) throw new Error(data.message);
 
             setClub(prev => ({ ...prev, ...formData }));
-            setUpdateMessage({ type: "success", text: "Saved successfully" });
+            setUpdateMessage({ type: "success", text: texts.saved_successfully || "Saved successfully" });
         } catch (err) {
-            setUpdateMessage({ type: "error", text: err.message });
+            setUpdateMessage({ type: "error", text: err.message || texts.could_not_save_club || "Could not save club." });
         } finally {
             setUpdating(false);
         }
@@ -125,7 +125,7 @@ export function useClubSettings(clubId) {
 
             setLadders(prev => [...prev, data.ladder]);
         } catch (err) {
-            setError(err.message);
+            setError(err.message || texts.could_not_create_ladder || "Could not create ladder.");
         }
     };
 
@@ -146,7 +146,7 @@ export function useClubSettings(clubId) {
 
             setMembers(prev => [...prev, data.Member]);
         } catch (err) {
-            setError(err.message);
+            setError(err.message || texts.could_not_add_member || "Could not add member.");
         }
     };
 
@@ -161,7 +161,7 @@ export function useClubSettings(clubId) {
 
             setMembers(prev => prev.filter(p => p.id !== MemberId));
         } catch (err) {
-            setError(err.message);
+            setError(err.message || texts.could_not_remove_member || "Could not remove member.");
         }
     };
 
@@ -179,7 +179,7 @@ export function useClubSettings(clubId) {
             // Refresh owners list or append the new one
             setOwners(prev => [...prev, data.owner]);
         } catch (err) {
-            setError(err.message);
+            setError(err.message || texts.could_not_add_owner || "Could not add owner.");
         }
     };
 
@@ -195,7 +195,7 @@ export function useClubSettings(clubId) {
             }
             setOwners(prev => prev.filter(o => o.id !== ownerId));
         } catch (err) {
-            alert(err.message); // Use alert for specific owner errors (like self-deletion)
+            alert(err.message || texts.could_not_remove_owner || "Could not remove owner."); // Use alert for specific owner errors (like self-deletion)
         }
     };
 

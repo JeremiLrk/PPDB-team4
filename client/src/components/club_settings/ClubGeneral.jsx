@@ -7,15 +7,16 @@ export function ClubGeneral({
     updating,
     updateMessage,
     sportTypes = [], // Default to empty array to avoid map errors
+    texts = {},
 }) {
     return (
         <article className={`${styles.panel} ${styles.contentFade}`}>
-            <h3 className={styles.panelTitle}>General Settings</h3>
+            <h3 className={styles.panelTitle}>{texts.general_title || "Algemene instellingen"}</h3>
 
             <form className={styles.form} onSubmit={onSubmit}>
                 {/* CLUB NAME */}
                 <label className={styles.formLabel}>
-                    Club Name
+                    {texts.club_name || "Clubnaam"}
                     <input
                         className={styles.formInput}
                         type="text"
@@ -29,7 +30,7 @@ export function ClubGeneral({
                 <div className={styles.formRow}>
                     {/* CITY */}
                     <label className={styles.formLabel}>
-                        City
+                        {texts.city || "Stad"}
                         <input
                             className={styles.formInput}
                             type="text"
@@ -41,7 +42,7 @@ export function ClubGeneral({
 
                     {/* SPORT SELECTION (Dropdown) */}
                     <label className={styles.formLabel}>
-                        Sport
+                            {texts.sport || "Sport"}
                         <select
                             className={styles.formInput}
                             name="sport_type_id"
@@ -50,7 +51,7 @@ export function ClubGeneral({
                             required
                         >
                             <option value="" disabled>
-                                Select a sport
+                                {texts.choose_sport || "Kies een sport"}
                             </option>
                             {sportTypes.map((sport) => (
                                 <option key={sport.id} value={sport.id}>
@@ -63,7 +64,7 @@ export function ClubGeneral({
 
                 {/* DESCRIPTION */}
                 <label className={styles.formLabel}>
-                    Description
+                    {texts.description || "Omschrijving"}
                     <textarea
                         className={styles.formTextarea}
                         name="description"
@@ -80,7 +81,7 @@ export function ClubGeneral({
                         className={styles.submitButton}
                         disabled={updating}
                     >
-                        {updating ? "Saving..." : "Save Changes"}
+                        {updating ? (texts.saving || "Opslaan...") : (texts.save_changes || "Wijzigingen opslaan")}
                     </button>
                 </div>
             </form>

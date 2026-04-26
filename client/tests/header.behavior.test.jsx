@@ -20,7 +20,7 @@ vi.mock("@/hooks/common/usePageTexts.js", () => ({
     if (page === "base") {
       return { net_rank: "NetRank", clubs: "Clubs", teams: "Teams" };
     }
-    return { log_out: "Log out", user: "User" };
+    return { log_out: "Uitloggen", user: "User" };
   },
 }));
 
@@ -79,7 +79,7 @@ test("logout clears local auth state and returns to landing page", async () => {
   });
 
   await user.click(screen.getByRole("button", { name: "Demo User ▾" }));
-  await user.click(screen.getByRole("button", { name: "Log out" }));
+  await user.click(screen.getByRole("button", { name: "Uitloggen" }));
 
   await waitFor(() => {
     expect(global.fetch).toHaveBeenCalledWith(

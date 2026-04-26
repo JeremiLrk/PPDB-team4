@@ -10,6 +10,7 @@ import GearIcon from "@/components/icon/GearIcon.jsx";
  *
  * The logic mirrors _can_edit_team() on the server and canManageTeam() in TeamSettings.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function canManageTeam(account, team) {
     if (!account || !team) return false;
     const roles = Array.isArray(account.roles)
@@ -50,14 +51,14 @@ export default function TeamSettingsLink({ currentUser, team, size = 18 }) {
     return (
         <button
             className={styles.gearBtn}
-            title="Team settings"
-            aria-label={`Settings for ${team.name}`}
+            title="Teaminstellingen"
+            aria-label={`Instellingen voor ${team.name}`}
             onClick={e => {
                 e.stopPropagation();
                 navigate(`/teams/${team.id}/settings`);
             }}
         >
-            <GearIcon size={size} title="Team settings" />
+            <GearIcon size={size} title="Teaminstellingen" />
         </button>
     );
 }

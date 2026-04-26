@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import background from "@/assets/background.webp"
+import tennisBackground from "@/assets/tennis.jpg"
 import styles from "@/style/Home.module.css"
 
 
@@ -16,7 +16,7 @@ function Home() {
         onClick={() => navigate("/admin")}
         className="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-xs font-medium hover:bg-white/10 transition mb-2"
     >
-        ⚙️ Admin Dashboard
+        ⚙️ Beheerdersdashboard
     </button>
 
                 <section className={styles.ladderContainer}>
@@ -28,14 +28,14 @@ function Home() {
                             onClick={() => navigate("/ladder")}
                             className={styles.ladderButton}
                         >
-                            Men’s Tennis
+                            Heren tennis
                         </button>
 
                         <button
                             onClick={() => navigate("/ladder")}
                             className={styles.ladderButton}
                         >
-                            Women’s Tennis
+                            Dames tennis
                         </button>
 
                         <button
@@ -49,7 +49,7 @@ function Home() {
                             onClick={() => navigate("/ladder")}
                             className={styles.ladderButton}
                         >
-                            Juniors
+                            Junioren
                         </button>
 
                         <div className={styles.ladderCard}>
@@ -70,27 +70,27 @@ function Home() {
             NetRank
             </h1>
 
-            <img src={background} alt="Tennis match" className="mt-6 rounded-2xl w-full"/>
+            <img src={tennisBackground} alt="Tennis match" className="mt-6 rounded-2xl w-full"/>
 
             <p className="mt-6 text-lg text-slate-300/70">
-            Compete. Challenge. Climb the ladder.
+            Speel. Daag uit. Klim op de ladder.
             </p>
 
             <p className="mt-2 text-sm text-slate-400">
-            The competitive ranking system for tennis and padel clubs.
+            Het competitieve rankingsysteem voor tennis- en padelclubs.
             </p>
 
             <div className="mt-10 flex justify-center gap-4">
             <button
                 onClick={() => navigate("/register")}
                 className="rounded-xl bg-indigo-500 px-6 py-3 font-medium hover:bg-indigo-400 transition">
-                Join the Ladder
+                Sluit je aan bij de ladder
             </button>
 
             <button
                 onClick={() => navigate("/login")}
                 className="rounded-xl border border-white/20 px-6 py-3 hover:bg-white/10 transition">
-                Login
+                Inloggen
             </button>
             </div>
         </section>
@@ -99,7 +99,7 @@ function Home() {
         {/* RIGHT — SCOREBOARDS */}
         <aside className= {styles.scoreboardAside}>
             <section className={styles.scoreboardContainer}>
-                <h2 className={styles.scoreboardContainerText}>Top Players</h2>
+                <h2 className={styles.scoreboardContainerText}>Topspelers</h2>
 
                 <div className={styles.scoreboardCard}>
                     <div className={styles.scoreboardCardTeam}>
@@ -117,20 +117,20 @@ function Home() {
                 </div>
             </section>
             <section className={styles.scoreboardContainer}>
-                <h2 className={styles.scoreboardContainerText}>Top Matches</h2>
+                <h2 className={styles.scoreboardContainerText}>Topwedstrijden</h2>
 
                 <div className={styles.scoreboardCard}>
                     <div className={styles.scoreboardCardMatch}>
                         <span>Lorem vs Ipsum</span>
-                        <span>Pending</span>
+                        <span>In afwachting</span>
                     </div>
                     <div className={styles.scoreboardCardMatch}>
                         <span>Dolor vs Sit</span>
-                        <span>Pending</span>
+                        <span>In afwachting</span>
                     </div>
                     <div className={styles.scoreboardCardMatch}>
                         <span>Amet vs Consectetur</span>
-                        <span>Pending</span>
+                        <span>In afwachting</span>
                     </div>
                 </div>
             </section>

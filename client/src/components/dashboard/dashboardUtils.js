@@ -3,11 +3,11 @@ import styles from "@/style/common/Common.module.css";
 export function getDashboardTabs(texts) {
     return [
         { id: "overview", label: texts.tab_overview || "Overview" },
-        { id: "profile", label: texts.tab_profile || "My Profile" },
+        { id: "profile", label: texts.tab_profile || "My profile" },
         { id: "availability", label: texts.tab_availability || "Availability" },
-        { id: "search", label: texts.tab_search || "Search Clubs" },
-        { id: "requests", label: texts.tab_requests || "My Requests" },
-        { id: "teams",      label: texts.tab_teams       || "My Teams" },
+        { id: "search", label: texts.tab_search || "Search clubs" },
+        { id: "requests", label: texts.tab_requests || "My requests" },
+        { id: "teams",      label: texts.tab_teams       || "My teams" },
         { id: "matches", label: texts.tab_matches || "Matches" },
         { id: "createClub", label: texts.tab_create_club || "Add your own club" },
         { id: "manageClubs", label: texts.tab_manage_club || "Manage your clubs"},
