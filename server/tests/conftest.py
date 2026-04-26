@@ -1,6 +1,7 @@
 import pytest
+import sys
 
-from server.app import create_app
+from server.app import create_app, seed_db
 from server.extensions import db
 import subprocess
 
@@ -20,12 +21,12 @@ _TEST_TABLES = (
 @pytest.fixture(scope="session", autouse=True)
 def reset_database_once():
     subprocess.run(
-        ["python", "-m", "server.app.utils.reset_db", "--no-schema"],
+        [sys.executable, "-m", "server.app.utils.reset_db", "--no-schema"],
         check=True
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def app():
     flask_app = create_app()
     flask_app.config.update(
@@ -34,9 +35,12 @@ def app():
             "SECRET_KEY": "test_secret_key",
         }
     )
+    yield flask_app
 
-    with flask_app.app_context():
-        yield flask_app
+
+@pytest.fixture(autouse=True)
+def clean_database(app):
+    with app.app_context():
         try:
             db.session.execute(
                 db.text(f"TRUNCATE TABLE {_TEST_TABLES} RESTART IDENTITY CASCADE")
@@ -44,10 +48,23 @@ def app():
             db.session.commit()
         except Exception:
             db.session.rollback()
+            raise
         finally:
             db.session.remove()
+    yield
+
+
+@pytest.fixture
+def seeded_app(app):
+    seed_db(app, verbose=False)
+    return app
 
 
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+@pytest.fixture
+def seeded_client(seeded_app):
+    return seeded_app.test_client()

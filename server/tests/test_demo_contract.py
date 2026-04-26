@@ -16,14 +16,14 @@ def _get_netrank_club_id(client: FlaskClient) -> int:
     return target["id"]
 
 
-def test_demo_club_exists_in_clubs_endpoint(client: FlaskClient):
-    club_id = _get_netrank_club_id(client)
+def test_demo_club_exists_in_clubs_endpoint(seeded_client: FlaskClient):
+    club_id = _get_netrank_club_id(seeded_client)
     assert club_id > 0
 
 
-def test_demo_ladders_include_expected_names(client: FlaskClient):
-    club_id = _get_netrank_club_id(client)
-    response = client.get(f"/api/clubs/{club_id}/ladders")
+def test_demo_ladders_include_expected_names(seeded_client: FlaskClient):
+    club_id = _get_netrank_club_id(seeded_client)
+    response = seeded_client.get(f"/api/clubs/{club_id}/ladders")
     assert response.status_code == 200
 
     payload = response.get_json()
@@ -37,9 +37,9 @@ def test_demo_ladders_include_expected_names(client: FlaskClient):
     assert "U14 Singles" in ladder_names
 
 
-def test_top_players_contract_and_sorting(client: FlaskClient):
-    club_id = _get_netrank_club_id(client)
-    response = client.get(f"/api/clubs/{club_id}/top-players")
+def test_top_players_contract_and_sorting(seeded_client: FlaskClient):
+    club_id = _get_netrank_club_id(seeded_client)
+    response = seeded_client.get(f"/api/clubs/{club_id}/top-players")
     assert response.status_code == 200
 
     payload = response.get_json()
@@ -58,9 +58,9 @@ def test_top_players_contract_and_sorting(client: FlaskClient):
     assert ratings == sorted(ratings, reverse=True)
 
 
-def test_ladder_detail_contract(client: FlaskClient):
-    club_id = _get_netrank_club_id(client)
-    ladders_response = client.get(f"/api/clubs/{club_id}/ladders")
+def test_ladder_detail_contract(seeded_client: FlaskClient):
+    club_id = _get_netrank_club_id(seeded_client)
+    ladders_response = seeded_client.get(f"/api/clubs/{club_id}/ladders")
     assert ladders_response.status_code == 200
     ladders_payload = ladders_response.get_json()
     assert isinstance(ladders_payload, dict)
@@ -69,7 +69,7 @@ def test_ladder_detail_contract(client: FlaskClient):
     assert len(ladders) > 0
 
     ladder_id = ladders[0]["id"]
-    detail_response = client.get(f"/api/clubs/{club_id}/ladders/{ladder_id}")
+    detail_response = seeded_client.get(f"/api/clubs/{club_id}/ladders/{ladder_id}")
     assert detail_response.status_code == 200
 
     rows = detail_response.get_json()

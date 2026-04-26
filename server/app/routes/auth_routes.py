@@ -3,10 +3,11 @@ import resend
 from pathlib import Path
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, make_response
+from flask import current_app
 
 from server.app.decorators.login_required import login_required
 from server.app.models.account import Account
-from server.app.services.auth_service import register_user, login_user, generate_reset_token, verify_reset_token, update_password, generate_verification_token, verify_email_token, mark_user_as_verified
+from server.app.services.auth_service import register_user, login_user, verify_user, generate_reset_token, verify_reset_token, update_password, generate_verification_token, verify_email_token, mark_user_as_verified
 
 env_path = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -74,18 +75,20 @@ def login():
         ),
         200,
     )
-    response.set_cookie("access_token", token, httponly=True, secure=True, samesite="Lax")
+    secure_cookie = current_app.testing or (not current_app.debug and request.is_secure)
+    response.set_cookie("access_token", token, httponly=True, secure=secure_cookie, samesite="Lax")
     return response
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
     response = make_response(jsonify({"message": "Successfully logged out."}), 200)
+    secure_cookie = current_app.testing or (not current_app.debug and request.is_secure)
     response.set_cookie(
         "access_token",
         "",
         expires=0,
         httponly=True,
-        secure=True,
+        secure=secure_cookie,
         samesite="Lax"
     )
     return response
@@ -93,33 +96,7 @@ def logout():
 @auth_bp.route("/me", methods=["GET"])
 @login_required
 def me(account: Account):
-    base = account.to_dict()
-
-    managed_team_ids = []
-    if account.team_manager:
-        managed_team_ids = [t.id for t in account.team_manager.teams]
-
-    base["managedTeamIds"] = managed_team_ids
-
-    club_ids = []
-    if account.team_manager and account.team_manager.club_owner:
-        club_ids = [c.id for c in account.team_manager.club_owner.clubs]
-    base["clubIds"] =club_ids
-
-    return jsonify({
-        "account": base
-         }), 200
-
-
-@auth_bp.route("/me/details", methods=["GET"])
-@login_required
-def me_details(account: Account):
-    base = account.to_dict(include=["team_manager", "club_owner", "player", "administrator"])
-
-    return jsonify({
-        "account": base
-    }), 200
-
+    return jsonify({"account": account.to_dict()}), 200
 
 @auth_bp.route("/forgot-password", methods=["POST"])
 def forgot_password():

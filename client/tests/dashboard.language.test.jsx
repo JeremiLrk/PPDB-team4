@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import Dashboard from "../src/pages/Dashboard.jsx";
-import { LangContext } from "../src/context/useLangContext.js";
+import { LangContext } from "../src/context/useLangContext.jsx";
 import CurrentUserContext from "../src/context/useCurrentUserContext.jsx";
 import { mockApi } from "./testApiMock.js";
 

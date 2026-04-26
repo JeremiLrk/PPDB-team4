@@ -7,9 +7,10 @@ import formStyles from "@/style/common/Forms.module.css";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
 import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab,ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
+import MatchProposalsTab from "@/components/matches/MatchProposalsTab.jsx";
 import { useLangContext } from "@/context/useLangContext.jsx";
-import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 import {useCurrentUserContext} from "@/context/useCurrentUserContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 import {TeamsTab} from "@/components/dashboard/TeamsDashboardTab.jsx";
 
 function Dashboard() {
@@ -101,6 +102,10 @@ function Dashboard() {
                     <TeamsTab
                         texts={dashboardTexts}
                     />
+                ) : null}
+
+                {workspace.activeTab === "matches" ? (
+                    <MatchProposalsTab />
                 ) : null}
 
                 {workspace.activeTab === "createClub" ? (

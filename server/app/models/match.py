@@ -53,6 +53,11 @@ class MatchProposal(db.Model):
     __tablename__ = "match_proposal"
 
     id            = db.Column(db.BigInteger, primary_key=True)
+    proposed_by_user_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey("account.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
     sport_type_id = db.Column(
         db.BigInteger,
         db.ForeignKey("sport_type.id", ondelete="RESTRICT"),
@@ -80,6 +85,11 @@ class MatchProposal(db.Model):
         nullable=False,
         default=MatchStatus.PENDING,
     )
+    week_start_date = db.Column(db.Date, nullable=True)
+    proposed_start_at = db.Column(db.DateTime, nullable=True)
+    proposed_end_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now(), onupdate=db.func.now())
     location      = db.Column(db.String(256), nullable=True)
     venue_type_id = db.Column(
         db.BigInteger,
@@ -89,6 +99,7 @@ class MatchProposal(db.Model):
 
     # Relationships
     status     = db.relationship("MatchStatus",    back_populates="proposals")
+    proposed_by = db.relationship("Account", foreign_keys=[proposed_by_user_id])
     sport_type = db.relationship("SportType",      backref="match_proposals")
     ruleset    = db.relationship("MatchRuleSet",   backref="match_proposals")
     team1      = db.relationship("Team", foreign_keys=[team1_id], backref="home_proposals")
@@ -108,7 +119,16 @@ class MatchProposal(db.Model):
             "rulesetId":    self.ruleset_id,
             "team1Id":      self.team1_id,
             "team2Id":      self.team2_id,
+            "proposedByUserId": self.proposed_by_user_id,
             "status":       self.status.to_dict() if self.status else None,
+            "statusName":   self.status.name if self.status else None,
+            "weekStartDate": self.week_start_date.isoformat() if self.week_start_date else None,
+            "proposedStartAt": self.proposed_start_at.isoformat() + "Z" if self.proposed_start_at else None,
+            "proposedEndAt": self.proposed_end_at.isoformat() + "Z" if self.proposed_end_at else None,
+            "createdAt": self.created_at.isoformat() + "Z" if self.created_at else None,
+            "updatedAt": self.updated_at.isoformat() + "Z" if self.updated_at else None,
+            "team1Name": self.team1.name if self.team1 else None,
+            "team2Name": self.team2.name if self.team2 else None,
             "location":     self.location,
             "venueTypeId":  self.venue_type_id,
             "ruleSnapshot": self.rule_snapshot,
