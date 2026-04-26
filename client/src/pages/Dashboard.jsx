@@ -4,6 +4,7 @@ import workspaceStyles from "@/style/dashboard/Workspace.module.css";
 
 
 import formStyles from "@/style/common/Forms.module.css";
+import { useEffect } from "react";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
 import {
@@ -26,6 +27,16 @@ function Dashboard() {
     const { lang } = useLangContext()
     const dashboardTexts = usePageTexts("dashboard", lang)
     const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts)
+
+    // Sync theme to <body> so portals rendered via createPortal inherit CSS variables
+    useEffect(() => {
+        if (workspace.theme === "light") {
+            document.body.classList.add(commonStyles.light);
+        } else {
+            document.body.classList.remove(commonStyles.light);
+        }
+        return () => document.body.classList.remove(commonStyles.light);
+    }, [workspace.theme, commonStyles.light]);
 
     if (workspace.loading) {
         return (

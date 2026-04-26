@@ -4,6 +4,38 @@
     padding: 1.5rem;
 }
 
+/*  Dark theme variables on :root so portals rendered at <body> inherit them  */
+
+:root {
+    --app-bg: radial-gradient(circle at 8% 8%, #22d3ee 0%, #0f172a 36%, #020617 100%);
+    --app-bg-accent: radial-gradient(circle at 88% 14%, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0));
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-heading: #f8fafc;
+    --shell-border: rgba(148, 163, 184, 0.28);
+    --sidebar-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.86));
+    --workspace-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.72));
+    --surface-bg: rgba(15, 23, 42, 0.46);
+    --surface-bg-soft: rgba(15, 23, 42, 0.62);
+    --surface-border: rgba(148, 163, 184, 0.24);
+    --soft-border: rgba(148, 163, 184, 0.27);
+    --muted-border: rgba(148, 163, 184, 0.2);
+    --nav-hover: rgba(14, 116, 144, 0.35);
+    --nav-active-bg: linear-gradient(90deg, rgba(14, 165, 233, 0.33), rgba(16, 185, 129, 0.24));
+    --nav-active-border: rgba(56, 189, 248, 0.55);
+    --input-bg: rgba(15, 23, 42, 0.95);
+    --input-border: rgba(148, 163, 184, 0.42);
+    --action-bg: linear-gradient(120deg, rgba(14, 116, 144, 0.45), rgba(16, 185, 129, 0.38));
+    --action-border: rgba(45, 212, 191, 0.62);
+    --action-text: #ecfeff;
+    --action-hover-bg: linear-gradient(120deg, rgba(14, 165, 233, 0.52), rgba(20, 184, 166, 0.42));
+    --action-hover-border: rgba(110, 231, 183, 0.8);
+    --danger-bg: rgba(127, 29, 29, 0.34);
+    --danger-border: rgba(248, 113, 113, 0.4);
+    --danger-text: #fecaca;
+    --counter-bg: linear-gradient(120deg, rgba(14, 165, 233, 0.3), rgba(16, 185, 129, 0.28));
+}
+
 /*  Shell (dark theme, default)  */
 
 .shell {

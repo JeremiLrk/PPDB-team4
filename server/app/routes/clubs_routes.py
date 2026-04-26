@@ -1,4 +1,6 @@
 from flask import Blueprint, jsonify, request
+
+from server.app.decorators import login_required
 from server.app.models.club import Club
 from server.app.services.auth_service import verify_user
 from server.app.models.ladder import Ladder
@@ -444,3 +446,23 @@ def search_accounts():
             for a in accounts
         ]
     }), 200
+
+@clubs_bp.get("/clubs/my")
+@login_required
+def list_my_clubs(account: Account):
+    """Return all clubs the current user can manage (is an owner of)."""
+
+    club_owner = ClubOwner.query.filter_by(id=account.id).first()
+    if not club_owner:
+        return jsonify({"clubs": []}), 200
+
+    links = ClubOwnerClub.query.filter_by(club_owner_id=club_owner.id).all()
+    club_ids = [link.club_id for link in links]
+
+    if not club_ids:
+        return jsonify({"clubs": []}), 200
+
+    db_clubs = Club.query.filter(Club.id.in_(club_ids)).order_by(Club.name.asc()).all()
+    clubs = [{"id": club.id, "name": club.name} for club in db_clubs]
+    return jsonify({"clubs": clubs}), 200
+

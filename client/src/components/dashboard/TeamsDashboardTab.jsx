@@ -9,6 +9,7 @@ import TeamCard from "@/components/dashboard/TeamCard.jsx";
 import CreateTeamButton from "@/components/team/CreateTeamButton.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 import { useMyTeams } from "@/hooks/dashboard/useMyTeams.js";
+import { useMyClubs } from "@/hooks/useMyClubs.js";
 
 
 const SORT_OPTIONS      = [{ value: "id", label: "By ID" }, { value: "name", label: "By Name" }];
@@ -29,6 +30,8 @@ export function TeamsTab({ texts }) {
         load,
         loadMore,
     } = useMyTeams();
+
+    const { clubs: myClubs } = useMyClubs();
 
     function handleTeamCreated() {
         void load({ sort, pageSize });
@@ -73,7 +76,7 @@ export function TeamsTab({ texts }) {
                             ))}
                         </select>
 
-                        <CreateTeamButton onCreated={handleTeamCreated} />
+                        <CreateTeamButton clubs={myClubs} onCreated={handleTeamCreated} />
                     </div>
                 </div>
 
