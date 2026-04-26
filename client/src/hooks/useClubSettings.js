@@ -7,7 +7,7 @@ export function useClubSettings(clubId) {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { sportTypes, loading: sloading, error: serror } = useSportTypes();
+    const { sportTypes } = useSportTypes();
 
     const [club, setClub] = useState(null);
     const [formData, setFormData] = useState({

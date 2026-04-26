@@ -6,6 +6,7 @@ import ClubSidebar from "@/components/club_settings/ClubSidebar.jsx";
 import ClubOverview from "@/components/club_settings/ClubOverview.jsx";
 import ClubGeneral from "@/components/club_settings/ClubGeneral.jsx";
 import ClubLadders from "@/components/club_settings/ClubLadders.jsx";
+import ClubMatchRules from "@/components/club_settings/ClubMatchRules.jsx";
 import ClubMembers from "@/components/club_settings/ClubMembers.jsx";
 import ClubOwners from "@/components/club_settings/ClubOwners.jsx";
 
@@ -58,6 +59,10 @@ function ClubSettings() {
                         onAdd={settings.addMember}
                         onRemove={settings.removeMember}
                     />
+                )}
+
+                {settings.activeTab === "rules" && (
+                    <ClubMatchRules clubId={clubId} />
                 )}
 
                 {settings.activeTab === "owners" && (
