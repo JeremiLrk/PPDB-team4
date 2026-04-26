@@ -76,7 +76,7 @@ class Team(db.Model):
     )
 
     @property
-    def managers(self) -> list[TeamManager]:
+    def managers(self) -> list['TeamManager']:
         return [a.team_manager for a in self.manager_associations]
 
     player_associations = db.relationship(
@@ -84,7 +84,7 @@ class Team(db.Model):
     )
 
     @property
-    def players(self) -> list[Player]:
+    def players(self) -> list['Player']:
         return [a.player for a in self.player_associations]
 
     def to_dict(self) -> dict:
