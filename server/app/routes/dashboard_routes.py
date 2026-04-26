@@ -5,7 +5,7 @@ from server.app.models.club_join_request import ClubJoinRequest
 from server.app.models.club import Club
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
-from server.app.models.match import MatchProposal, MatchStatus
+from server.app.models.match import MatchProposal, MatchPlayed, MatchStatus
 from server.app.models.player import Player
 from server.app.models.club_player import ClubPlayer
 from server.extensions import db
@@ -340,6 +340,74 @@ def add_club():
         db.session.rollback()
         return jsonify({"message": str(e)}), 500
     
+@dashboard_bp.get("/me/achievements")
+def get_my_achievements():
+    user_id = _get_current_user_id_from_cookie()
+    if not user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    empty = {"wins": 0, "current_streak": 0, "best_streak": 0, "total_matches": 0}
+
+    player = Player.query.filter_by(id=user_id).first()
+    if not player:
+        return jsonify(empty), 200
+
+    team_ids = [t.id for t in player.teams]
+    if not team_ids:
+        return jsonify(empty), 200
+
+    rows = (
+        db.session.query(MatchProposal, MatchPlayed)
+        .join(MatchPlayed, MatchProposal.id == MatchPlayed.id)
+        .filter(
+            db.or_(
+                MatchProposal.team1_id.in_(team_ids),
+                MatchProposal.team2_id.in_(team_ids),
+            )
+        )
+        .order_by(MatchPlayed.played_at.asc())
+        .all()
+    )
+
+    team_id_set = set(team_ids)
+    outcomes = []
+    for proposal, played in rows:
+        t1_mine = proposal.team1_id in team_id_set
+        t2_mine = proposal.team2_id in team_id_set
+        if t1_mine and played.score_team1 > played.score_team2:
+            outcomes.append(True)
+        elif t2_mine and played.score_team2 > played.score_team1:
+            outcomes.append(True)
+        else:
+            outcomes.append(False)
+
+    total_matches = len(outcomes)
+    total_wins = sum(outcomes)
+
+    current_streak = 0
+    for w in reversed(outcomes):
+        if w:
+            current_streak += 1
+        else:
+            break
+
+    best_streak = 0
+    streak = 0
+    for w in outcomes:
+        if w:
+            streak += 1
+            best_streak = max(best_streak, streak)
+        else:
+            streak = 0
+
+    return jsonify({
+        "wins": total_wins,
+        "current_streak": current_streak,
+        "best_streak": best_streak,
+        "total_matches": total_matches,
+    }), 200
+
+
 @dashboard_bp.post("/club/delete")
 def delete_club():
     owner_id = _get_current_user_id_from_cookie()
