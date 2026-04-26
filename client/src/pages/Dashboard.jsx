@@ -104,6 +104,7 @@ function Dashboard() {
                         }
                         onAvailabilitySubmit={workspace.onAvailabilitySubmit}
                         onAvailabilityDelete={workspace.onAvailabilityDelete}
+                        weekdayOptions={workspace.WEEKDAY_OPTIONS}
                         texts={dashboardTexts}
                     />
                 ) : null}

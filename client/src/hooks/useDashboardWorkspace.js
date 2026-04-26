@@ -17,10 +17,20 @@ const EMPTY_CLUB_REQUEST_FORM = {
     description: "",
 }
 const EMPTY_AVAILABILITY_FORM = {
-    date: "",
+    weekday: "",
     startTime: "",
     endTime: "",
 }
+
+const WEEKDAY_OPTIONS = [
+    { value: "0", label: "Monday" },
+    { value: "1", label: "Tuesday" },
+    { value: "2", label: "Wednesday" },
+    { value: "3", label: "Thursday" },
+    { value: "4", label: "Friday" },
+    { value: "5", label: "Saturday" },
+    { value: "6", label: "Sunday" },
+]
 
 function normalizeRequests(dashboardData) {
     return Array.isArray(dashboardData?.pending_requests?.my_requests)
@@ -209,14 +219,6 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         setAvailabilityForm((previous) => ({ ...previous, [name]: value }))
     }
 
-    function toApiTimestamp(date, time) {
-        const localDate = new Date(`${date}T${time}:00`)
-        if (Number.isNaN(localDate.getTime())) {
-            return ""
-        }
-        return localDate.toISOString()
-    }
-
     async function fetchAvailability() {
         setAvailabilityLoading(true)
         try {
@@ -261,8 +263,8 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         event.preventDefault()
         setAvailabilityMessage({ type: "", text: "" })
 
-        const { date, startTime, endTime } = availabilityForm
-        if (!date || !startTime || !endTime) {
+        const { weekday, startTime, endTime } = availabilityForm
+        if (weekday === "" || !startTime || !endTime) {
             setAvailabilityMessage({
                 type: "error",
                 text:
@@ -272,28 +274,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
             return
         }
 
-        const startAt = toApiTimestamp(date, startTime)
-        const endAt = toApiTimestamp(date, endTime)
-        if (!startAt || !endAt) {
-            setAvailabilityMessage({
-                type: "error",
-                text:
-                    texts.fill_all_availability_fields ||
-                    "Please fill all availability fields.",
-            })
-            return
-        }
-        if (new Date(startAt) <= new Date()) {
-            setAvailabilityMessage({
-                type: "error",
-                text:
-                    texts.availability_future_only ||
-                    "Start time must be in the future.",
-            })
-            return
-        }
-
-        if (new Date(startAt) >= new Date(endAt)) {
+        if (startTime >= endTime) {
             setAvailabilityMessage({
                 type: "error",
                 text:
@@ -309,7 +290,11 @@ export function useDashboardWorkspace(setUser, texts = {}) {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ start_at: startAt, end_at: endAt }),
+                body: JSON.stringify({
+                    weekday: Number(weekday),
+                    start_time: startTime,
+                    end_time: endTime,
+                }),
             })
 
             let body = {}
@@ -330,15 +315,19 @@ export function useDashboardWorkspace(setUser, texts = {}) {
             const newBlock = body?.block
             if (newBlock?.id) {
                 setAvailabilityBlocks((previous) =>
-                    [...previous, newBlock].sort((a, b) =>
-                        a.start_at.localeCompare(b.start_at),
-                    ),
+                    [...previous, newBlock].sort((a, b) => {
+                        const weekdayDiff = Number(a.weekday) - Number(b.weekday)
+                        if (weekdayDiff !== 0) {
+                            return weekdayDiff
+                        }
+                        return String(a.start_time).localeCompare(String(b.start_time))
+                    }),
                 )
             }
             setAvailabilityForm(EMPTY_AVAILABILITY_FORM)
             setAvailabilityMessage({
                 type: "success",
-                text: texts.availability_added || "Availability block added.",
+                text: texts.availability_added || "Availability saved.",
             })
         } catch (error) {
             setAvailabilityMessage({
@@ -586,5 +575,6 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         onAvailabilitySubmit,
         onAvailabilityDelete,
         sportTypes,
+        WEEKDAY_OPTIONS,
     };
 }

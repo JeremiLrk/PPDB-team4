@@ -29,6 +29,33 @@ function formatLocalTimestamp(value) {
     return parsed.toLocaleString()
 }
 
+const WEEKDAY_LABELS = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+]
+
+function formatWeeklyAvailability(block) {
+    const weekdayIndex = Number(block?.weekday)
+    const weekdayLabel = block?.weekday_label || WEEKDAY_LABELS[weekdayIndex] || "Day"
+    const startTime = block?.start_time || "--:--"
+    const endTime = block?.end_time || "--:--"
+
+    if (block?.weekday !== undefined && block?.weekday !== null) {
+        return `${weekdayLabel} ${startTime} - ${endTime}`
+    }
+
+    if (block?.start_at && block?.end_at) {
+        return `${formatLocalTimestamp(block.start_at)} - ${formatLocalTimestamp(block.end_at)}`
+    }
+
+    return "-"
+}
+
 function formatMatchTitle(match) {
     const team1 = match?.team1Name || (match?.team1Id ? `Team #${match.team1Id}` : "Team 1")
     const team2 = match?.team2Name || (match?.team2Id ? `Team #${match.team2Id}` : "Team 2")
@@ -788,6 +815,7 @@ export function AvailabilityTab({
     onAvailabilityFieldChange,
     onAvailabilitySubmit,
     onAvailabilityDelete,
+    weekdayOptions,
     texts,
 }) {
     return (
@@ -799,15 +827,21 @@ export function AvailabilityTab({
                 <form className={styles.form} onSubmit={onAvailabilitySubmit}>
                     <div className={styles.formRow}>
                         <label className={styles.formLabel}>
-                            {texts?.date || "Date"}
-                            <input
+                            {texts?.weekday || "Weekday"}
+                            <select
                                 className={styles.formInput}
-                                type="date"
-                                name="date"
-                                value={availabilityForm.date}
+                                name="weekday"
+                                value={availabilityForm.weekday}
                                 onChange={onAvailabilityFieldChange}
                                 required
-                            />
+                            >
+                                <option value="">{texts?.select_weekday || "Select weekday"}</option>
+                                {(weekdayOptions || WEEKDAY_LABELS.map((label, index) => ({ value: String(index), label }))).map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
                         </label>
                         <label className={styles.formLabel}>
                             {texts?.start_time || "Start time"}
@@ -887,7 +921,7 @@ export function AvailabilityTab({
                                 <li className={styles.listItem} key={block.id}>
                                     <div>
                                         <p className={styles.primaryText}>
-                                            {formatLocalTimestamp(block.start_at)} - {formatLocalTimestamp(block.end_at)}
+                                            {formatWeeklyAvailability(block)}
                                         </p>
                                     </div>
                                     <button

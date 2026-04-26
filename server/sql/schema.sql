@@ -7,6 +7,9 @@ AVAILABILITY
 CREATE TABLE IF NOT EXISTS availability_block (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
     user_id BIGINT NOT NULL,
+    weekday INT NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
     start_at TIMESTAMP NOT NULL,
     end_at TIMESTAMP NOT NULL,
 
@@ -17,6 +20,12 @@ CREATE TABLE IF NOT EXISTS availability_block (
 
     CONSTRAINT pk_availability_block
         PRIMARY KEY (id),
+
+    CONSTRAINT check_availability_block_weekday_range
+        CHECK (weekday BETWEEN 0 AND 6),
+
+    CONSTRAINT check_availability_block_start_before_end_time
+        CHECK (start_time < end_time),
 
     CONSTRAINT check_availability_block_start_before_end
         CHECK (start_at < end_at)

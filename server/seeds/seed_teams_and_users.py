@@ -282,11 +282,52 @@ def get_or_create_ladder_team(ladder_id, team_id, rank, rating, matches_played) 
   return row, True
 
 
-def get_or_create_availability_block(user_id: int, start_at: datetime.datetime, end_at: datetime.datetime) -> tuple:
-  existing = AvailabilityBlock.query.filter_by(user_id=user_id, start_at=start_at, end_at=end_at).first()
+def _next_occurrence_date(weekday: int, reference_date: datetime.date | None = None) -> datetime.date:
+  current_date = reference_date or datetime.date.today()
+  days_ahead = (weekday - current_date.weekday()) % 7
+  if days_ahead == 0:
+    days_ahead = 7
+  return current_date + datetime.timedelta(days=days_ahead)
+
+
+def get_or_create_availability_block(
+    user_id: int,
+    start_at: datetime.datetime | None = None,
+    end_at: datetime.datetime | None = None,
+    *,
+    weekday: int | None = None,
+    start_time: datetime.time | None = None,
+    end_time: datetime.time | None = None,
+) -> tuple:
+  if weekday is None and start_at is not None and end_at is not None:
+    weekday = start_at.weekday()
+    start_time = start_at.time().replace(microsecond=0)
+    end_time = end_at.time().replace(microsecond=0)
+  elif weekday is not None and start_time is not None and end_time is not None:
+    if start_at is None or end_at is None:
+      block_date = _next_occurrence_date(weekday)
+      start_at = datetime.datetime.combine(block_date, start_time)
+      end_at = datetime.datetime.combine(block_date, end_time)
+
+  if weekday is None or start_time is None or end_time is None or start_at is None or end_at is None:
+    raise ValueError("Availability block requires either datetimes or weekly recurrence fields.")
+
+  existing = AvailabilityBlock.query.filter_by(
+    user_id=user_id,
+    weekday=weekday,
+    start_time=start_time,
+    end_time=end_time,
+  ).first()
   if existing:
     return existing, False
-  block = AvailabilityBlock(user_id=user_id, start_at=start_at, end_at=end_at)
+  block = AvailabilityBlock(
+    user_id=user_id,
+    weekday=weekday,
+    start_time=start_time,
+    end_time=end_time,
+    start_at=start_at,
+    end_at=end_at,
+  )
   db.session.add(block)
   db.session.flush()
   return block, True

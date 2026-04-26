@@ -9,6 +9,7 @@ from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
 from server.app.models.match import MatchPlayed, MatchProposal, MatchStatus
 from server.app.models.team import Team
+from server.app.services.availability_service import weekly_window_for_block
 from server.extensions import db
 
 
@@ -312,23 +313,25 @@ def team_available_windows(team: Team, week_start_at: datetime, week_end_at: dat
 
 def player_available_windows(player_id: int, week_start_at: datetime, week_end_at: datetime) -> list[TimeWindow]:
     blocks = (
-        AvailabilityBlock.query.filter(
-            AvailabilityBlock.user_id == player_id,
-            AvailabilityBlock.start_at < week_end_at,
-            AvailabilityBlock.end_at > week_start_at,
-        )
-        .order_by(AvailabilityBlock.start_at.asc())
+        AvailabilityBlock.query.filter_by(user_id=player_id)
+        .order_by(AvailabilityBlock.weekday.asc(), AvailabilityBlock.start_time.asc(), AvailabilityBlock.id.asc())
         .all()
     )
 
-    windows = [
-        TimeWindow(
-            start=max(block.start_at, week_start_at),
-            end=min(block.end_at, week_end_at),
-        )
-        for block in blocks
-        if max(block.start_at, week_start_at) < min(block.end_at, week_end_at)
-    ]
+    windows = []
+    for block in blocks:
+        block_window = weekly_window_for_block(block, week_start_at.date())
+        if block_window is None:
+            continue
+
+        start_at, end_at = block_window
+        if start_at < week_end_at and end_at > week_start_at:
+            windows.append(
+                TimeWindow(
+                    start=max(start_at, week_start_at),
+                    end=min(end_at, week_end_at),
+                )
+            )
     return merge_windows(windows)
 
 
