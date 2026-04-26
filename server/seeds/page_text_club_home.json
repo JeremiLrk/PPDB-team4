@@ -10,5 +10,7 @@
   {"page":"club_home","key":"subtagline","language":"en","value":"The competitive ranking system for tennis and padel clubs."},
   {"page":"club_home","key":"subtagline","language":"nl","value":"Het competitieve rankingsysteem voor tennis- en padelclubs."},
   {"page":"club_home","key":"log_in","language":"en","value":"Log in"},
-  {"page":"club_home","key":"log_in","language":"nl","value":"Inloggen"}
+  {"page":"club_home","key":"log_in","language":"nl","value":"Inloggen"},
+  {"page":"club_home","key":"manage_club","language":"en","value":"Manage club"},
+  {"page":"club_home","key":"manage_club","language":"nl","value":"Club beheren"}
 ]

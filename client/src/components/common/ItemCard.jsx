@@ -1,4 +1,4 @@
-import styles from "@/style/common/Common.module.css";
+import styles from "@/style/common/Panel.module.css";
 
 /**
  * ItemCard — generic line-box for lists.

@@ -233,6 +233,44 @@
     gap: 1rem;
 }
 
+.profileStack {
+    display: grid;
+    gap: 1rem;
+}
+
+.manageClubsLayout {
+    display: grid;
+    gap: 1rem;
+}
+
+.requestList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.requestCard {
+    display: grid;
+    gap: 0.75rem;
+    border: 1px solid var(--muted-border);
+    border-radius: 0.9rem;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0.85rem;
+}
+
+.requestContent {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.requestActions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
 .panel {
     border: 1px solid var(--surface-border);
     border-radius: 1rem;
@@ -460,6 +498,30 @@
     gap: 1rem;
 }
 
+.availabilityStack {
+    display: grid;
+    gap: 1rem;
+}
+
+.availabilityList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.availabilityCard {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid var(--muted-border);
+    border-radius: 0.9rem;
+    padding: 0.95rem 1rem;
+    background: rgba(255, 255, 255, 0.02);
+}
+
 .form {
     display: grid;
     gap: 0.72rem;
@@ -565,6 +627,11 @@
     }
 
     .listItem {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .availabilityCard {
         flex-direction: column;
         align-items: flex-start;
     }

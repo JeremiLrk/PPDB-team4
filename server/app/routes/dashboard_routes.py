@@ -5,6 +5,7 @@ from server.app.models.club_join_request import ClubJoinRequest
 from server.app.models.club import Club
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
+from server.app.models.match import MatchProposal, MatchPlayed, MatchStatus
 from server.app.models.player import Player
 from server.app.models.club_player import ClubPlayer
 from server.extensions import db
@@ -28,6 +29,55 @@ def _get_current_user_id_from_cookie():
         return payload.get("user_id")
     except jwt.PyJWTError:
         return None
+
+
+def _serialize_upcoming_matches(account):
+    player = getattr(account, "player", None)
+    if not player:
+        return []
+
+    team_ids = [team.id for team in player.teams]
+    if not team_ids:
+        return []
+
+    accepted_status = MatchStatus.query.filter(
+        db.func.lower(MatchStatus.name) == "accepted"
+    ).first()
+    if not accepted_status:
+        return []
+
+    matches = (
+        MatchProposal.query.filter(
+            MatchProposal.status_id == accepted_status.id,
+            db.or_(
+                MatchProposal.team1_id.in_(team_ids),
+                MatchProposal.team2_id.in_(team_ids),
+            ),
+        )
+        .order_by(MatchProposal.id.desc())
+        .all()
+    )
+
+    upcoming_matches = []
+    for match in matches:
+        upcoming_matches.append(
+            {
+                "id": match.id,
+                "status": match.status.to_dict() if match.status else None,
+                "location": match.location,
+                "team1Id": match.team1_id,
+                "team1Name": match.team1.name if match.team1 else None,
+                "team1ClubName": match.team1.club.name if match.team1 and match.team1.club else None,
+                "team2Id": match.team2_id,
+                "team2Name": match.team2.name if match.team2 else None,
+                "team2ClubName": match.team2.club.name if match.team2 and match.team2.club else None,
+                "weekStartDate": match.week_start_date.isoformat() if match.week_start_date else None,
+                "proposedStartAt": match.proposed_start_at.isoformat() + "Z" if match.proposed_start_at else None,
+                "proposedEndAt": match.proposed_end_at.isoformat() + "Z" if match.proposed_end_at else None,
+            }
+        )
+
+    return upcoming_matches
 
 
 @dashboard_bp.get("/me/dashboard")
@@ -79,6 +129,7 @@ def get_my_dashboard():
         "account": {"id": account.id, "email": account.email},
         "roles": [getattr(account, "role", "user")],
         "clubs": list(clubs_map.values()),
+        "upcoming_matches": _serialize_upcoming_matches(account),
         "pending_requests": {
             "my_requests": [r.serialize() for r in join_requests],
             "my_club_creation_requests": [],
@@ -232,63 +283,75 @@ def decide_request():
     )
     
     return jsonify({"status": True, "message": f"Request {decision}"}), 200
-
-@dashboard_bp.post("/club/add-club")
-def add_club():
+    
+@dashboard_bp.get("/me/achievements")
+def get_my_achievements():
     user_id = _get_current_user_id_from_cookie()
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
 
-    data = request.get_json()
+    empty = {"wins": 0, "current_streak": 0, "best_streak": 0, "total_matches": 0}
 
-    required_fields = ["name", "description", "sport", "city"]
-    missing = [f for f in required_fields if not data.get(f)]
-    if missing:
-        return jsonify({"message": f"Missing fields: {missing}"}), 400
+    player = Player.query.filter_by(id=user_id).first()
+    if not player:
+        return jsonify(empty), 200
 
-    try:
-            club = Club(
-                name=data["name"],
-                description=data["description"],
-                sport=data["sport"],
-                city=data["city"]
+    team_ids = [t.id for t in player.teams]
+    if not team_ids:
+        return jsonify(empty), 200
+
+    rows = (
+        db.session.query(MatchProposal, MatchPlayed)
+        .join(MatchPlayed, MatchProposal.id == MatchPlayed.id)
+        .filter(
+            db.or_(
+                MatchProposal.team1_id.in_(team_ids),
+                MatchProposal.team2_id.in_(team_ids),
             )
+        )
+        .order_by(MatchPlayed.played_at.asc())
+        .all()
+    )
 
-            db.session.add(club)
-            db.session.flush()
+    team_id_set = set(team_ids)
+    outcomes = []
+    for proposal, played in rows:
+        t1_mine = proposal.team1_id in team_id_set
+        t2_mine = proposal.team2_id in team_id_set
+        if t1_mine and played.score_team1 > played.score_team2:
+            outcomes.append(True)
+        elif t2_mine and played.score_team2 > played.score_team1:
+            outcomes.append(True)
+        else:
+            outcomes.append(False)
 
-            club_owner = ClubOwner.query.filter_by(id=user_id).first()
+    total_matches = len(outcomes)
+    total_wins = sum(outcomes)
 
-            if not club_owner:
-                club_owner = ClubOwner(id=user_id)
-                db.session.add(club_owner)
-                db.session.flush()
+    current_streak = 0
+    for w in reversed(outcomes):
+        if w:
+            current_streak += 1
+        else:
+            break
 
-            club_owner_club = ClubOwnerClub(
-                club_owner_id=club_owner.id,
-                club_id=club.id
-            )
-        
-            db.session.add(club_owner_club)
-            db.session.flush()
+    best_streak = 0
+    streak = 0
+    for w in outcomes:
+        if w:
+            streak += 1
+            best_streak = max(best_streak, streak)
+        else:
+            streak = 0
 
-            existing_player = Player.query.filter_by(id=user_id).first()
-            if not existing_player:
-                new_player = Player(id=user_id)
-                db.session.add(new_player)
-                db.session.flush()
-            
-            club_link = ClubPlayer(club_id=club.id, player_id=user_id)
-            db.session.add(club_link)
+    return jsonify({
+        "wins": total_wins,
+        "current_streak": current_streak,
+        "best_streak": best_streak,
+        "total_matches": total_matches,
+    }), 200
 
-            db.session.commit()
 
-            return jsonify({"status": True,}), 201
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"message": str(e)}), 500
-    
 @dashboard_bp.post("/club/delete")
 def delete_club():
     owner_id = _get_current_user_id_from_cookie()

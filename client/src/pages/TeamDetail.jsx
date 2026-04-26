@@ -1,16 +1,21 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useTeam } from "@/hooks/useTeam.js";
+import { useTeam } from "@/hooks/teams/useTeam.js";
 import styles from "@/style/TeamDetail.module.css";
 import commonStyles from "@/style/common/Common.module.css";
-import {useTeamPlayers} from "@/hooks/useTeamPlayers.js";
+import panelStyles from "@/style/common/Panel.module.css";
+import {useTeamPlayers} from "@/hooks/teams/useTeamPlayers.js";
 import PlayerCard from "@/components/team/PlayerCard.jsx";
 import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 export default function TeamDetail() {
     const { teamId } = useParams();
     const navigate   = useNavigate();
+    const { lang } = useLangContext();
     const { currentUser } = useCurrentUserContext();
+    const texts = usePageTexts("team_detail", lang);
     const { team, loading, error } = useTeam(teamId);
     const { players, loading: playersLoading, error: playersError, total, reload} = useTeamPlayers(teamId);
 
@@ -18,7 +23,7 @@ export default function TeamDetail() {
         return (
             <div className={styles.state}>
                 <div className={styles.spinner} />
-                <span>Loading team…</span>
+                <span>{texts.loading_team || "Team loading..."}</span>
             </div>
         );
     }
@@ -28,7 +33,7 @@ export default function TeamDetail() {
             <div className={styles.state}>
                 <p className={styles.error}>{error}</p>
                 <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                    &lt;- Back to teams
+                    &lt;- {texts.back_to_teams || "Back to teams"}
                 </button>
             </div>
         );
@@ -41,7 +46,7 @@ export default function TeamDetail() {
 
             {/* Back */}
             <button className={styles.backBtn} onClick={() => navigate("/teams")}>
-                &lt;- All Teams
+                &lt;- {texts.back_to_teams || "Back to teams"}
             </button>
 
             {/* Hero */}
@@ -51,8 +56,8 @@ export default function TeamDetail() {
                     <div>
                         <h1 className={styles.name}>{team.name}</h1>
                         <div className={styles.tags}>
-                            <Tag label={team.clubId     ? `Club #${team.clubId}`        : "Independent"} muted={!team.clubId} />
-                            <Tag label={team.sportTypeId ? `Sport #${team.sportTypeId}` : "No sport"}    muted={!team.sportTypeId} />
+                            <Tag label={team.clubName ? team.clubName : "Independent"} muted={!team.clubId} />
+                            <Tag label={team.sportName ?  `${team.sportName || "Sport #"+team.sportTypeId}` : "No sport"} muted={!team.sportTypeId} />
                             <Tag label={`ID: ${team.id}`} muted />
                         </div>
                     </div>
@@ -62,40 +67,40 @@ export default function TeamDetail() {
 
             {/* Details grid */}
             <div className={styles.grid}>
-                <InfoCard label="Club" value={team.clubId     ? `#${team.clubId}`      : "—"} />
-                <InfoCard label="Sport Type" value={team.sportTypeId ? `#${team.sportTypeId}` : "—"} />
-                <InfoCard label="Team ID" value={`#${team.id}`} />
+                <InfoCard label={texts.club_label || "Club"} value={team.clubName    ?? "—"} />
+                <InfoCard label={texts.sport_label || "Sport"} value={team.sportName   ?? "—"}/>
+                <InfoCard label={texts.team_id_label || "Team ID"} value={`#${team.id}`} />
             </div>
 
             {/* Players */}
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
-                    <h2 className={styles.sectionTitle}>Players</h2>
+                    <h2 className={styles.sectionTitle}>{texts.players_title || "Players"}</h2>
                     {total !== null && (
-                        <span className={commonStyles.counter}>{total}</span>
+                        <span className={panelStyles.panelCounter}>{total}</span>
                     )}
                 </div>
 
                 {playersLoading && (
                     <div className={styles.inlineState}>
                         <div className={styles.spinner} />
-                        <span>Loading players…</span>
+                        <span>{texts.loading_players || "Players loading..."}</span>
                     </div>
                 )}
 
                 {!playersLoading && playersError && (
                     <div className={styles.inlineState}>
                         <p className={styles.error}>{playersError}</p>
-                        <button className={styles.retryBtn} onClick={reload}>Retry</button>
+                        <button className={styles.retryBtn} onClick={reload}>{texts.retry || "Retry"}</button>
                     </div>
                 )}
 
                 {!playersLoading && !playersError && players.length === 0 && (
-                    <p className={commonStyles.muted}>No players in this team yet.</p>
+                    <p className={commonStyles.muted}>{texts.no_players || "No players in this team yet."}</p>
                 )}
 
                 {!playersLoading && !playersError && players.length > 0 && (
-                    <ul className={commonStyles.list}>
+                    <ul className={panelStyles.list}>
                         {players.map(player => (
                             <PlayerCard key={player.playerId ?? player.id} player={player} />
                         ))}

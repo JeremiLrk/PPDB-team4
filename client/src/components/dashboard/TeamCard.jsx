@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import styles from "@/style/common/Common.module.css";
+import commonStyles from "@/style/common/Common.module.css";
+import buttonStyles from "@/style/common/Buttons.module.css";
+
 import ItemCard from "@/components/common/ItemCard.jsx";
 import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
 
@@ -27,18 +29,18 @@ export default function TeamCard({ team, texts, currentUser, onClick }) {
     return (
         <ItemCard>
             <div>
-                <p className={styles.primaryText}>{team.name}</p>
-                <p className={styles.secondaryText}>
-                    {team.clubId
-                        ? `Club #${team.clubId}`
+                <p className={commonStyles.primaryText}>{team.name}</p>
+                <p className={commonStyles.secondaryText}>
+                    {team.clubName
+                        ? team.clubName
                         : texts?.independent_team || "Independent"}
-                    {team.sportTypeId ? ` · Sport #${team.sportTypeId}` : ""}
+                    {team.sportName ? ` · ${team.sportName}` : ""}
                 </p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                 <TeamSettingsLink currentUser={currentUser} team={team} />
-                <button className={styles.linkButton} onClick={handleOpen}>
-                    {texts?.open || "Open"}
+                <button className={buttonStyles.linkButton} onClick={handleOpen}>
+                    {texts?.open || "Openen"}
                 </button>
             </div>
         </ItemCard>

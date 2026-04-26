@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "@/style/Teams.module.css";
-import { useTeams } from "@/hooks/useTeams.js";
+import { useTeams } from "@/hooks/teams/useTeams.js";
+
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 const SORT_OPTIONS = [
     { value: "id",   label: "By ID" },
@@ -12,6 +15,8 @@ const PAGE_SIZE_OPTIONS = [6, 12, 24, 48];
 
 export default function Teams() {
     const navigate = useNavigate();
+    const { lang } = useLangContext();
+    const texts = usePageTexts("teams", lang);
 
     const {
         teams, total, loading, error,
@@ -36,30 +41,33 @@ export default function Teams() {
             {/* ── Header ── */}
             <div className={styles.header}>
                 <div className={styles.titleBlock}>
-                    <h1 className={styles.title}>Teams</h1>
+                    <h1 className={styles.title}>{texts.title || "Teams"}</h1>
                     <p className={styles.subtitle}>
                         {total !== null
-                            ? `${total} team${total !== 1 ? "s" : ""} found`
-                            : "Loading…"}
+                            ? `${total} ${total !== 1 ? (texts.team_plural || "teams") : (texts.team_singular || "team")} ${texts.found || "gevonden"}`
+                            : (texts.loading_total || "Laden…")}
                     </p>
                 </div>
 
                 <div className={styles.controls}>
-                    <span className={styles.controlLabel}>Sort</span>
+                    <span className={styles.controlLabel}>{texts.sort_label || "Sorteren"}</span>
                     <select
                         className={styles.select}
                         value={sort}
                         onChange={handleSortChange}
                         disabled={loading}
                     >
-                        {SORT_OPTIONS.map(o => (
+                        {[
+                            { value: "id", label: texts.sort_id || "By ID" },
+                            { value: "name", label: texts.sort_name || "By name" },
+                        ].map(o => (
                             <option key={o.value} value={o.value}>{o.label}</option>
                         ))}
                     </select>
 
                     <div className={styles.divider} />
 
-                    <span className={styles.controlLabel}>Per load</span>
+                    <span className={styles.controlLabel}>{texts.page_size_label || "Per page"}</span>
                     <select
                         className={styles.select}
                         value={pageSize}
@@ -91,14 +99,14 @@ export default function Teams() {
 
             {/* ── Empty ── */}
             {!loading && !error && teams.length === 0 && (
-                <p className={styles.emptyState}>No teams found.</p>
+                <p className={styles.emptyState}>{texts.empty_state || "No teams found."}</p>
             )}
 
             {/* ── Loading indicator (initial or mid-page) ── */}
             {loading && (
                 <div className={styles.stateRow}>
                     <div className={styles.spinner} />
-                    <span>Loading teams…</span>
+                    <span>{texts.loading_teams || "Teams loading..."}</span>
                 </div>
             )}
 
@@ -106,7 +114,7 @@ export default function Teams() {
             {teams.length > 0 && (
                 <div className={styles.footer}>
                     <span className={styles.counter}>
-                        Showing {teams.length}{total !== null ? ` of ${total}` : ""}
+                        {texts.showing || "Weergegeven"} {teams.length}{total !== null ? ` / ${total}` : ""}
                     </span>
 
                     <div className={styles.footerRight}>
@@ -116,7 +124,7 @@ export default function Teams() {
                                 onClick={loadMore}
                                 disabled={loading}
                             >
-                                {loading ? "Loading…" : `Load ${pageSize} more`}
+                                {loading ? (texts.loading_total || "Loading...") : `${pageSize} ${texts.load_more || "Load more"}`}
                             </button>
                         )}
                     </div>
@@ -132,13 +140,13 @@ function TeamCard({ team, onClick }) {
             <div className={styles.cardAccent} />
             <p className={styles.cardName}>{team.name}</p>
             <div className={styles.cardMeta}>
-                {team.sportTypeId ? (
-                    <span className={styles.badge}>#{team.sportTypeId}</span>
+                {team.sportName ? (
+                    <span className={styles.badge}>{team.sportName}</span>
                 ) : (
                     <span className={`${styles.badge} ${styles.badgeMuted}`}>No sport</span>
                 )}
-                {team.clubId ? (
-                    <span className={styles.badge}>Club #{team.clubId}</span>
+                {team.clubName ? (
+                    <span className={styles.badge}>{team.clubName}</span>
                 ) : (
                     <span className={`${styles.badge} ${styles.badgeMuted}`}>Independent</span>
                 )}

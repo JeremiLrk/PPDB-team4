@@ -1,12 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import styles from "@/style/Landing.module.css";
-import { useLangContext } from "@/context/useLangContext.js";
-import { usePageTexts } from "@/hooks/usePageTexts.js";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 function Landing() {
     const navigate = useNavigate();
     const { lang } = useLangContext();
     const landingTexts = usePageTexts("landing", lang);
+
+    if (!landingTexts.explore_clubs) {
+        return <div className={styles.page} />;
+    }
 
     const playerSteps = [
         {

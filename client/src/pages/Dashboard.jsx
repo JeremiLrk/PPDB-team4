@@ -1,19 +1,46 @@
-import styles from "@/style/Dashboard.module.css";
+import styles from "@/style/dashboard/Dashboard.module.css";
+import commonStyles from "@/style/common/Common.module.css";
+import workspaceStyles from "@/style/dashboard/Workspace.module.css";
+
+
 import formStyles from "@/style/common/Forms.module.css";
+import { useEffect } from "react";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
-import { AvailabilityTab, CreateClubTab, OverviewTab, RequestsTab, SearchTab, TeamsTab, ManageClubsTab } from "@/components/dashboard/DashboardTabs.jsx";
-import { useLangContext } from "@/context/useLangContext.js";
-import { usePageTexts } from "@/hooks/usePageTexts.js";
+import {
+    AvailabilityTab,
+    CreateClubTab,
+    ManageClubsTab,
+    OverviewTab,
+    ProfileTab,
+    RequestsTab,
+    SearchTab,
+} from "@/components/dashboard/DashboardTabs.jsx";
+import MatchProposalsTab from "@/components/matches/MatchProposalsTab.jsx";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import {useCurrentUserContext} from "@/context/useCurrentUserContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import {TeamsTab} from "@/components/dashboard/TeamsDashboardTab.jsx";
 
-function Dashboard({ currentUser, setUser }) {
+function Dashboard() {
+    const { currentUser, setCurrentUser } = useCurrentUserContext();
     const { lang } = useLangContext()
     const dashboardTexts = usePageTexts("dashboard", lang)
-    const workspace = useDashboardWorkspace(setUser, dashboardTexts)
+    const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts, lang)
 
-    if (workspace.loading) {
+    // Sync theme to <body> so portals rendered via createPortal inherit CSS variables
+    useEffect(() => {
+        if (workspace.theme === "light") {
+            document.body.classList.add(commonStyles.light);
+        } else {
+            document.body.classList.remove(commonStyles.light);
+        }
+        return () => document.body.classList.remove(commonStyles.light);
+    }, [workspace.theme, commonStyles.light]);
+
+    if (workspace.loading|| !dashboardTexts.tab_overview) {
         return (
-            <div className={styles.loading}>
+            <div className={commonStyles.loading}>
                 {dashboardTexts.loading_dashboard || "Loading dashboard..."}
             </div>
         )
@@ -21,7 +48,7 @@ function Dashboard({ currentUser, setUser }) {
 
     return (
         <section
-            className={`${styles.shell} ${workspace.theme === "light" ? styles.light : ""}`}
+            className={`${commonStyles.shell} ${workspace.theme === "light" ? commonStyles.light : ""}`}
         >
             <DashboardSidebar
                 theme={workspace.theme}
@@ -34,7 +61,7 @@ function Dashboard({ currentUser, setUser }) {
                 onSignOut={workspace.onSignOut}
             />
 
-            <div className={styles.workspace}>
+            <div className={workspaceStyles.workspace}>
 
 
                 {workspace.error ? <p className={formStyles.warning}>{workspace.error}</p> : null}
@@ -46,7 +73,16 @@ function Dashboard({ currentUser, setUser }) {
                         pendingJoinRequestClubIds={
                             workspace.pendingJoinRequestClubIds
                         }
-                        clubCreationRequests={workspace.clubCreationRequests}
+                        incomingJoinRequests={workspace.incomingJoinRequests}
+                        texts={dashboardTexts}
+                        lang={lang}
+                    />
+                ) : null}
+
+                {workspace.activeTab === "profile" ? (
+                    <ProfileTab
+                        currentUser={currentUser}
+                        setCurrentUser={setCurrentUser}
                         texts={dashboardTexts}
                     />
                 ) : null}
@@ -62,12 +98,14 @@ function Dashboard({ currentUser, setUser }) {
                         pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
                         clubJoinrequest={workspace.clubJoinrequest}
                         texts={dashboardTexts}
+                        lang={lang}
                     />
                 ) : null}
 
                 {workspace.activeTab === "availability" ? (
                     <AvailabilityTab
                         availabilityBlocks={workspace.availabilityBlocks}
+                        upcomingMatches={workspace.upcomingMatches}
                         availabilityForm={workspace.availabilityForm}
                         availabilityLoading={workspace.availabilityLoading}
                         availabilitySubmitting={
@@ -79,7 +117,9 @@ function Dashboard({ currentUser, setUser }) {
                         }
                         onAvailabilitySubmit={workspace.onAvailabilitySubmit}
                         onAvailabilityDelete={workspace.onAvailabilityDelete}
+                        weekdayOptions={workspace.weekdayOptions}
                         texts={dashboardTexts}
+                        lang={lang}
                     />
                 ) : null}
 
@@ -87,38 +127,31 @@ function Dashboard({ currentUser, setUser }) {
                     <RequestsTab 
                         myRequests={workspace.myRequests} 
                         texts={dashboardTexts} 
+                        lang={lang}
                         />
                 ) : null}
 
                 {workspace.activeTab === "teams" ? (
                     <TeamsTab
-                        teams={workspace.myTeams}
-                        total={workspace.myTeamsTotal}
-                        loading={workspace.myTeamsLoading}
-                        error={workspace.myTeamsError}
-                        sort={workspace.myTeamsSort}
-                        pageSize={workspace.myTeamsPageSize}
-                        hasMore={workspace.myTeamsHasMore}
-                        onLoad={workspace.loadMyTeams}
-                        onLoadMore={workspace.loadMoreMyTeams}
                         texts={dashboardTexts}
-                        currentUser={currentUser}
+                        theme={workspace.theme}
                     />
+                ) : null}
+
+                {workspace.activeTab === "matches" ? (
+                    <MatchProposalsTab />
                 ) : null}
 
                 {workspace.activeTab === "createClub" ? (
                     <CreateClubTab
-                        clubCreaterequest={workspace.clubCreaterequest}
                         clubRequestForm={workspace.clubRequestForm}
                         clubRequestSubmitting={workspace.clubRequestSubmitting}
                         clubRequestMessage={workspace.clubRequestMessage}
-                        clubCreationRequests={workspace.clubCreationRequests}
                         onFieldChange={workspace.onClubRequestFieldChange}
                         onSubmit={workspace.onClubRequestSubmit}
                         texts={dashboardTexts}
-                        incomingJoinRequests={workspace.incomingJoinRequests}
-                        decideJoinrequest={workspace.decideJoinrequest}
-                        isClubOwner={workspace.isClubOwner}
+                        sportTypes={workspace.sportTypes}
+                        lang={lang}
                     />
                 ) : null}
 
@@ -130,6 +163,7 @@ function Dashboard({ currentUser, setUser }) {
                         isClubOwner={workspace.isClubOwner}
                         onGoSettings={workspace.onGoSettings}
                         texts={dashboardTexts}
+                        lang={lang}
                     />
                 ) : null}
             </div>

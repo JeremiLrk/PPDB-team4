@@ -4,8 +4,8 @@ import { Toaster } from "react-hot-toast"
 import Background_Glow from "@/components/Background_Glow.jsx"
 import Header from "@/components/Header.jsx"
 import AppRoutes from "@/app/AppRoutes.jsx"
-import { useLang } from "@/hooks/useLang.js"
-import { LangContext } from "@/context/useLangContext.js"
+import { useLang } from "@/hooks/common/useLang.js"
+import { LangContext } from "@/context/useLangContext.jsx"
 import { CurrentUserProvider } from "@/context/useCurrentUserContext.jsx"
 
 function App() {
@@ -96,6 +96,7 @@ function App() {
                     <main className={mainClass}>
                         <AppRoutes />
                     </main>
+                    <Toaster position="top-center" />
                 </LangContext.Provider>
             </CurrentUserProvider>
         </div>

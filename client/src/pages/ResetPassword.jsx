@@ -2,8 +2,8 @@ import au_styles from "@/style/Authorization.module.css"
 import { useState } from "react"
 import { notify } from "@/hooks/useNotify.js"
 import { useParams, useNavigate } from "react-router-dom"
-import { useLangContext } from "@/context/useLangContext.js"
-import { usePageTexts } from "@/hooks/usePageTexts.js"
+import { useLangContext } from "@/context/useLangContext.jsx"
+import { usePageTexts } from "@/hooks/common/usePageTexts.js"
 
 const ResetPassword = () => {
     const { token } = useParams()

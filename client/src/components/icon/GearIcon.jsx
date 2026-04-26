@@ -5,11 +5,11 @@
  *
  * Props:
  * size — size in px (default: 18)
- * title — tooltip / aria-label (default: "Settings")
+ * title — tooltip / aria-label (default: "Instellingen")
  * className — additional CSS classes
  * style — inline styles
  */
-export default function GearIcon({ size = 18, title = "Settings", className = "", style }) {
+export default function GearIcon({ size = 18, title = "Instellingen", className = "", style }) {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"

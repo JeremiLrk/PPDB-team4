@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard.js";
 import useClubs from "@/hooks/useClubs.js";
 import { notify } from "@/hooks/useNotify.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
-import { useTeams } from "@/hooks/useTeams.js";
+import { useTeams } from "@/hooks/teams/useTeams.js";
+import { useSportTypes } from "@/hooks/useSportTypes.js"
 
 const DEFAULT_THEME = "dark"
 const THEME_STORAGE_KEY = "dashboard_theme"
@@ -12,26 +13,38 @@ const THEME_STORAGE_KEY = "dashboard_theme"
 const EMPTY_CLUB_REQUEST_FORM = {
     name: "",
     city: "",
-    sport: "",
+    sport_type_id: "",
     description: "",
 }
 const EMPTY_AVAILABILITY_FORM = {
-    date: "",
+    weekday: "",
     startTime: "",
     endTime: "",
 }
 
+const WEEKDAY_OPTIONS_EN = [
+    { value: "0", label: "Monday" },
+    { value: "1", label: "Tuesday" },
+    { value: "2", label: "Wednesday" },
+    { value: "3", label: "Thursday" },
+    { value: "4", label: "Friday" },
+    { value: "5", label: "Saturday" },
+    { value: "6", label: "Sunday" },
+]
+
+const WEEKDAY_OPTIONS_NL = [
+    { value: "0", label: "Maandag" },
+    { value: "1", label: "Dinsdag" },
+    { value: "2", label: "Woensdag" },
+    { value: "3", label: "Donderdag" },
+    { value: "4", label: "Vrijdag" },
+    { value: "5", label: "Zaterdag" },
+    { value: "6", label: "Zondag" },
+]
+
 function normalizeRequests(dashboardData) {
     return Array.isArray(dashboardData?.pending_requests?.my_requests)
         ? dashboardData.pending_requests.my_requests
-        : []
-}
-
-function normalizeClubCreationRequests(dashboardData) {
-    return Array.isArray(
-        dashboardData?.pending_requests?.my_club_creation_requests,
-    )
-        ? dashboardData.pending_requests.my_club_creation_requests
         : []
 }
 
@@ -47,6 +60,12 @@ function normalizeClubIds(clubs) {
     )
 }
 
+function normalizeUpcomingMatches(dashboardData) {
+    return Array.isArray(dashboardData?.upcoming_matches)
+        ? dashboardData.upcoming_matches
+        : []
+}
+
 function normalizePendingJoinRequestClubIds(myRequests) {
     return new Set(
         myRequests
@@ -59,10 +78,11 @@ function normalizePendingJoinRequestClubIds(myRequests) {
     )
 }
 
-export function useDashboardWorkspace(setUser, texts = {}) {
+export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     const navigate = useNavigate();
     const { dashboardData, loading, error } = useDashboard();
-    const { currentUser, setCurrentUser } = useCurrentUserContext();
+    const { setCurrentUser } = useCurrentUserContext();
+    const { sportTypes } = useSportTypes();
     const {
         clubs: discoverClubs,
         loading: discoverLoading,
@@ -95,19 +115,19 @@ export function useDashboardWorkspace(setUser, texts = {}) {
     })
 
     const [isClubOwner, setIsClubOwner] = useState(false);
+    const weekdayOptions = useMemo(
+        () => (String(lang).toLowerCase().startsWith("nl") ? WEEKDAY_OPTIONS_NL : WEEKDAY_OPTIONS_EN),
+        [lang],
+    )
 
     const myClubs = useMemo(() => normalizeClubs(dashboardData), [dashboardData]);
     const myRequests = useMemo(() => normalizeRequests(dashboardData), [dashboardData]);
 
-    const initialClubCreationRequests = useMemo(
-        () => normalizeClubCreationRequests(dashboardData),
+    const myClubIds = useMemo(() => normalizeClubIds(myClubs), [myClubs])
+    const upcomingMatches = useMemo(
+        () => normalizeUpcomingMatches(dashboardData),
         [dashboardData],
     )
-    const [clubCreationRequests, setClubCreationRequests] = useState(
-        initialClubCreationRequests,
-    )
-
-    const myClubIds = useMemo(() => normalizeClubIds(myClubs), [myClubs])
     const pendingJoinRequestClubIds = useMemo(
         () => normalizePendingJoinRequestClubIds(myRequests),
         [myRequests],
@@ -139,15 +159,6 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         localStorage.setItem(THEME_STORAGE_KEY, theme)
     }, [theme])
 
-    // Keep local list in sync when backend payload shape changes.
-    useEffect(() => {
-        setClubCreationRequests(initialClubCreationRequests)
-    }, [initialClubCreationRequests])
-
-    useEffect(() => {
-        fetchAvailability()
-    }, [])
-
     function onThemeToggle() {
         setTheme((previousTheme) =>
             previousTheme === "dark" ? "light" : "dark",
@@ -175,15 +186,15 @@ export function useDashboardWorkspace(setUser, texts = {}) {
 
             const data = await response.json();
             if (!response.ok) {
-                throw new Error(data?.message || "Logout failed");
+                throw new Error(data?.message || "Uitloggen mislukt");
             }
 
             setCurrentUser(null);
-            notify.success("Logout successful");
+            notify.success("Uitloggen gelukt");
             navigate("/");
         } catch (err) {
-            console.error(err?.message || "Logout failed");
-            notify.error(err?.message || "Logout failed");
+            console.error(err?.message || "Uitloggen mislukt");
+            notify.error(err?.message || "Uitloggen mislukt");
         }
     }
 
@@ -197,15 +208,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         setAvailabilityForm((previous) => ({ ...previous, [name]: value }))
     }
 
-    function toApiTimestamp(date, time) {
-        const localDate = new Date(`${date}T${time}:00`)
-        if (Number.isNaN(localDate.getTime())) {
-            return ""
-        }
-        return localDate.toISOString()
-    }
-
-    async function fetchAvailability() {
+    const fetchAvailability = useCallback(async () => {
         setAvailabilityLoading(true)
         try {
             const response = await fetch("/api/me/availability", {
@@ -243,14 +246,18 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         } finally {
             setAvailabilityLoading(false)
         }
-    }
+    }, [texts.could_not_load_availability])
+
+    useEffect(() => {
+        fetchAvailability()
+    }, [fetchAvailability])
 
     async function onAvailabilitySubmit(event) {
         event.preventDefault()
         setAvailabilityMessage({ type: "", text: "" })
 
-        const { date, startTime, endTime } = availabilityForm
-        if (!date || !startTime || !endTime) {
+        const { weekday, startTime, endTime } = availabilityForm
+        if (weekday === "" || !startTime || !endTime) {
             setAvailabilityMessage({
                 type: "error",
                 text:
@@ -260,28 +267,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
             return
         }
 
-        const startAt = toApiTimestamp(date, startTime)
-        const endAt = toApiTimestamp(date, endTime)
-        if (!startAt || !endAt) {
-            setAvailabilityMessage({
-                type: "error",
-                text:
-                    texts.fill_all_availability_fields ||
-                    "Please fill all availability fields.",
-            })
-            return
-        }
-        if (new Date(startAt) <= new Date()) {
-            setAvailabilityMessage({
-                type: "error",
-                text:
-                    texts.availability_future_only ||
-                    "Start time must be in the future.",
-            })
-            return
-        }
-
-        if (new Date(startAt) >= new Date(endAt)) {
+        if (startTime >= endTime) {
             setAvailabilityMessage({
                 type: "error",
                 text:
@@ -297,7 +283,11 @@ export function useDashboardWorkspace(setUser, texts = {}) {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ start_at: startAt, end_at: endAt }),
+                body: JSON.stringify({
+                    weekday: Number(weekday),
+                    start_time: startTime,
+                    end_time: endTime,
+                }),
             })
 
             let body = {}
@@ -318,15 +308,19 @@ export function useDashboardWorkspace(setUser, texts = {}) {
             const newBlock = body?.block
             if (newBlock?.id) {
                 setAvailabilityBlocks((previous) =>
-                    [...previous, newBlock].sort((a, b) =>
-                        a.start_at.localeCompare(b.start_at),
-                    ),
+                    [...previous, newBlock].sort((a, b) => {
+                        const weekdayDiff = Number(a.weekday) - Number(b.weekday)
+                        if (weekdayDiff !== 0) {
+                            return weekdayDiff
+                        }
+                        return String(a.start_time).localeCompare(String(b.start_time))
+                    }),
                 )
             }
             setAvailabilityForm(EMPTY_AVAILABILITY_FORM)
             setAvailabilityMessage({
                 type: "success",
-                text: texts.availability_added || "Availability block added.",
+                text: texts.availability_added || "Availability saved.",
             })
         } catch (error) {
             setAvailabilityMessage({
@@ -461,12 +455,12 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         const payload = {
             name: trimmedName,
             city: clubRequestForm.city.trim(),
-            sport: clubRequestForm.sport.trim(),
+            sport_type_id: clubRequestForm.sport_type_id.trim(),
             description: clubRequestForm.description.trim(),
         }
 
         try {
-            const response = await fetch("/api/club/add-club", {
+            const response = await fetch("/api/clubs", {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -488,38 +482,12 @@ export function useDashboardWorkspace(setUser, texts = {}) {
                 );
             }
 
-            const requestRecord = {
-                id: responseBody?.club?.id || `club-request-${Date.now()}`,
-                name: responseBody?.request?.name || payload.name,
-                city: responseBody?.request?.city || payload.city,
-                sport: responseBody?.request?.sport || payload.sport,
-                status: responseBody?.request?.status || "pending",
-                requested_at:
-                    responseBody?.request?.requested_at ||
-                    new Date().toISOString(),
-            }
-
-            setClubCreationRequests((previous) => [requestRecord, ...previous])
             setClubRequestForm(EMPTY_CLUB_REQUEST_FORM)
             setClubRequestMessage({
                 type: "success",
                 text: texts.club_request_submitted || "Club request submitted.",
             })
         } catch {
-            // Temporary optimistic fallback while backend endpoint is still being merged.
-            const fallbackRequest = {
-                id: `local-club-request-${Date.now()}`,
-                name: payload.name,
-                city: payload.city,
-                sport: payload.sport,
-                status: "pending",
-                requested_at: new Date().toISOString(),
-            }
-
-            setClubCreationRequests((previous) => [
-                fallbackRequest,
-                ...previous,
-            ])
             setClubRequestForm(EMPTY_CLUB_REQUEST_FORM)
         } finally {
             setClubRequestSubmitting(false)
@@ -541,7 +509,6 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         filteredDiscoverClubs,
         discoverLoading,
         discoverError,
-        clubCreationRequests,
         clubRequestForm,
         clubRequestSubmitting,
         clubRequestMessage,
@@ -551,6 +518,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         decideJoinrequest,
         clubJoinrequest,
         availabilityBlocks,
+        upcomingMatches,
         availabilityForm,
         availabilityLoading,
         availabilitySubmitting,
@@ -572,5 +540,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         onAvailabilityFieldChange,
         onAvailabilitySubmit,
         onAvailabilityDelete,
+        sportTypes,
+        weekdayOptions,
     };
 }

@@ -1,12 +1,10 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link} from "react-router-dom";
 import formStyles from "@/style/common/Forms.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import dashStyles from "@/style/ClubSettings.module.css";
 
-import TeamCard from "@/components/dashboard/TeamCard.jsx";
 import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js";
-import CreateTeamButton from "@/components/team/CreateTeamButton.jsx";
 
 function parseUtcTimestamp(value) {
     if (typeof value !== "string") {
@@ -22,24 +20,443 @@ function parseUtcTimestamp(value) {
     return parsed
 }
 
-function formatLocalTimestamp(value) {
+function formatLocalTimestamp(value, locale = "en-US") {
     const parsed = parseUtcTimestamp(value)
     if (!parsed) {
         return value || "-"
     }
 
-    return parsed.toLocaleString()
+    return parsed.toLocaleString(locale)
 }
 
-// We combine both modules into one proxy object,
-// so as not to rewrite every styles.* in the template.
-// Dashboard-specific classes (shell, sidebar, …) only cover what
-// is not in Common, so there are no collisions.
+const EN_WEEKDAY_LABELS = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+]
+
+const NL_WEEKDAY_LABELS = [
+    "Maandag",
+    "Dinsdag",
+    "Woensdag",
+    "Donderdag",
+    "Vrijdag",
+    "Zaterdag",
+    "Zondag",
+]
+
+function isDutchLang(lang) {
+    return (lang || "").toLowerCase().startsWith("nl")
+}
+
+function defaultText(lang, english, dutch) {
+    return isDutchLang(lang) ? dutch : english
+}
+
+function formatWeeklyAvailability(block, lang) {
+    const weekdayIndex = Number(block?.weekday)
+    const weekdayLabels = isDutchLang(lang) ? NL_WEEKDAY_LABELS : EN_WEEKDAY_LABELS
+    const weekdayLabel = weekdayLabels[weekdayIndex] || block?.weekday_label || defaultText(lang, "Day", "Dag")
+    const startTime = block?.start_time || "--:--"
+    const endTime = block?.end_time || "--:--"
+
+    if (block?.weekday !== undefined && block?.weekday !== null) {
+        return `${weekdayLabel} ${startTime} - ${endTime}`
+    }
+
+    if (block?.start_at && block?.end_at) {
+        const locale = isDutchLang(lang) ? "nl-BE" : "en-US"
+        return `${formatLocalTimestamp(block.start_at, locale)} - ${formatLocalTimestamp(block.end_at, locale)}`
+    }
+
+    return "-"
+}
+
+function formatMatchTitle(match) {
+    const team1 = match?.team1Name || (match?.team1Id ? `Team #${match.team1Id}` : "Team 1")
+    const team2 = match?.team2Name || (match?.team2Id ? `Team #${match.team2Id}` : "Team 2")
+    return `${team1} vs ${team2}`
+}
+
+function formatUpcomingMatchDate(match, texts, lang) {
+    const locale = isDutchLang(lang) ? "nl-BE" : "en-US"
+    const start = formatLocalTimestamp(match?.proposedStartAt, locale)
+    const end = formatLocalTimestamp(match?.proposedEndAt, locale)
+
+    if (match?.proposedStartAt && match?.proposedEndAt) {
+        return `${start} - ${end}`
+    }
+
+    if (match?.proposedStartAt) {
+        return start
+    }
+
+    if (match?.weekStartDate) {
+        return `${texts?.week_of || defaultText(lang, "Week of", "Week van")} ${match.weekStartDate}`
+    }
+
+    return texts?.date_tbd || defaultText(lang, "Date/time TBD", "Datum/tijd volgt")
+}
+
 const styles = { ...formStyles, ...commonStyles, ...dashStyles };
 
-//  Overview Tab 
+export function ProfileTab({ currentUser, setCurrentUser, texts }) {
+    const [form, setForm] = useState({
+        firstName: currentUser?.firstName || "",
+        lastName: currentUser?.lastName || "",
+        dateOfBirth: currentUser?.dateOfBirth || "",
+    });
+    const [submitting, setSubmitting] = useState(false);
+    const [message, setMessage] = useState({ type: "", text: "" });
+    const [passwordForm, setPasswordForm] = useState({
+        currentPassword: "",
+        newPassword: "",
+        repeatPassword: "",
+    });
+    const [passwordSubmitting, setPasswordSubmitting] = useState(false);
+    const [passwordMessage, setPasswordMessage] = useState({
+        type: "",
+        text: "",
+    });
 
-export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, clubCreationRequests, texts }) {
+    useEffect(() => {
+        setForm({
+            firstName: currentUser?.firstName || "",
+            lastName: currentUser?.lastName || "",
+            dateOfBirth: currentUser?.dateOfBirth || "",
+        });
+    }, [currentUser?.firstName, currentUser?.lastName, currentUser?.dateOfBirth]);
+
+    function onFieldChange(event) {
+        const { name, value } = event.target;
+        setForm((previous) => ({ ...previous, [name]: value }));
+    }
+
+    function onPasswordFieldChange(event) {
+        const { name, value } = event.target;
+        setPasswordForm((previous) => ({ ...previous, [name]: value }));
+    }
+
+    async function onSubmit(event) {
+        event.preventDefault();
+        setMessage({ type: "", text: "" });
+
+        const payload = {
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+            dateOfBirth: form.dateOfBirth || null,
+        };
+
+        if (!payload.firstName || !payload.lastName) {
+            setMessage({
+                type: "error",
+                text:
+                    texts?.profile_required_fields ||
+                    "Voornaam en achternaam zijn verplicht.",
+            });
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            const response = await fetch("/api/me", {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            let body = {};
+            try {
+                body = await response.json();
+            } catch {
+                body = {};
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    body?.message ||
+                        texts?.profile_update_failed ||
+                        "Profiel kon niet worden bijgewerkt.",
+                );
+            }
+
+            const updatedAccount = body?.account;
+            if (updatedAccount) {
+                setCurrentUser?.(updatedAccount);
+            }
+
+            setMessage({
+                type: "success",
+                text:
+                    texts?.profile_updated_success ||
+                    "Profiel succesvol bijgewerkt.",
+            });
+        } catch (error) {
+            setMessage({
+                type: "error",
+                text:
+                    error?.message ||
+                    texts?.profile_update_failed ||
+                    "Profiel kon niet worden bijgewerkt.",
+            });
+        } finally {
+            setSubmitting(false);
+        }
+    }
+
+    async function onPasswordSubmit(event) {
+        event.preventDefault();
+        setPasswordMessage({ type: "", text: "" });
+
+        if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+            setPasswordMessage({
+                type: "error",
+                text:
+                    texts?.current_and_new_password_required ||
+                    "Huidig wachtwoord en nieuw wachtwoord zijn verplicht.",
+            });
+            return;
+        }
+
+        if (passwordForm.newPassword !== passwordForm.repeatPassword) {
+            setPasswordMessage({
+                type: "error",
+                text:
+                    texts?.passwords_do_not_match ||
+                    "Wachtwoorden komen niet overeen.",
+            });
+            return;
+        }
+
+        setPasswordSubmitting(true);
+        try {
+            const response = await fetch("/api/me/password", {
+                method: "PATCH",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    currentPassword: passwordForm.currentPassword,
+                    password: passwordForm.newPassword,
+                    repeatPassword: passwordForm.repeatPassword,
+                }),
+            });
+
+            let body = {};
+            try {
+                body = await response.json();
+            } catch {
+                body = {};
+            }
+
+            if (!response.ok) {
+                throw new Error(
+                    body?.message ||
+                        texts?.password_update_failed ||
+                        "Wachtwoord kon niet worden bijgewerkt.",
+                );
+            }
+
+            setPasswordForm({
+                currentPassword: "",
+                newPassword: "",
+                repeatPassword: "",
+            });
+            setPasswordMessage({
+                type: "success",
+                text:
+                    texts?.password_updated_success ||
+                    "Wachtwoord succesvol bijgewerkt.",
+            });
+        } catch (error) {
+            setPasswordMessage({
+                type: "error",
+                text:
+                    error?.message ||
+                    texts?.password_update_failed ||
+                    "Wachtwoord kon niet worden bijgewerkt.",
+            });
+        } finally {
+            setPasswordSubmitting(false);
+        }
+    }
+
+    return (
+        <div className={`${styles.profileStack} ${styles.contentFade}`}>
+            <article className={styles.panel}>
+                <h3 className={styles.panelTitle}>
+                    {texts?.profile_title || "My Profile"}
+                </h3>
+                <p className={styles.muted}>
+                    {texts?.profile_description ||
+                        "Update your personal information."}
+                </p>
+
+                <form className={styles.form} onSubmit={onSubmit}>
+                    <div className={styles.formRow}>
+                        <label className={styles.formLabel}>
+                            {texts?.first_name || "First name"}
+                            <input
+                                className={styles.formInput}
+                                type="text"
+                                name="firstName"
+                                value={form.firstName}
+                                onChange={onFieldChange}
+                                required
+                            />
+                        </label>
+
+                        <label className={styles.formLabel}>
+                            {texts?.last_name || "Last name"}
+                            <input
+                                className={styles.formInput}
+                                type="text"
+                                name="lastName"
+                                value={form.lastName}
+                                onChange={onFieldChange}
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <div className={styles.formRow}>
+                        <label className={styles.formLabel}>
+                            {texts?.email || "Email"}
+                            <input
+                                className={styles.formInput}
+                                type="email"
+                                value={currentUser?.email || ""}
+                                disabled
+                            />
+                        </label>
+
+                        <label className={styles.formLabel}>
+                            {texts?.date_of_birth || "Date of birth"}
+                            <input
+                                className={styles.formInput}
+                                type="date"
+                                name="dateOfBirth"
+                                value={form.dateOfBirth || ""}
+                                onChange={onFieldChange}
+                            />
+                        </label>
+                    </div>
+
+                    <div className={styles.formActions}>
+                        <button
+                            className={styles.submitButton}
+                            type="submit"
+                            disabled={submitting}
+                        >
+                            {submitting
+                                ? texts?.saving || "Saving..."
+                                : texts?.save_changes || "Save changes"}
+                        </button>
+                    </div>
+                </form>
+
+                {message.text ? (
+                    <p
+                        className={`${styles.notice} ${
+                            message.type === "error"
+                                ? styles.noticeError
+                                : styles.noticeSuccess
+                        }`}
+                    >
+                        {message.text}
+                    </p>
+                ) : null}
+            </article>
+
+            <article className={styles.panel}>
+                <h3 className={styles.panelTitle}>
+                    {texts?.change_password_title || "Change password"}
+                </h3>
+
+                <form className={styles.form} onSubmit={onPasswordSubmit}>
+                    <label className={styles.formLabel}>
+                        {texts?.current_password || "Current password"}
+                        <input
+                            className={styles.formInput}
+                            type="password"
+                            name="currentPassword"
+                            value={passwordForm.currentPassword}
+                            onChange={onPasswordFieldChange}
+                            required
+                        />
+                    </label>
+
+                    <div className={styles.formRow}>
+                        <label className={styles.formLabel}>
+                            {texts?.new_password || "New password"}
+                            <input
+                                className={styles.formInput}
+                                type="password"
+                                name="newPassword"
+                                value={passwordForm.newPassword}
+                                onChange={onPasswordFieldChange}
+                                minLength={6}
+                                required
+                            />
+                        </label>
+
+                        <label className={styles.formLabel}>
+                            {texts?.repeat_password || "Repeat password"}
+                            <input
+                                className={styles.formInput}
+                                type="password"
+                                name="repeatPassword"
+                                value={passwordForm.repeatPassword}
+                                onChange={onPasswordFieldChange}
+                                minLength={6}
+                                required
+                            />
+                        </label>
+                    </div>
+
+                    <div className={styles.formActions}>
+                        <button
+                            className={styles.submitButton}
+                            type="submit"
+                            disabled={passwordSubmitting}
+                        >
+                            {passwordSubmitting
+                                ? texts?.saving || "Saving..."
+                                : texts?.update_password || "Update password"}
+                        </button>
+                    </div>
+                </form>
+
+                {passwordMessage.text ? (
+                    <p
+                        className={`${styles.notice} ${
+                            passwordMessage.type === "error"
+                                ? styles.noticeError
+                                : styles.noticeSuccess
+                        }`}
+                    >
+                        {passwordMessage.text}
+                    </p>
+                ) : null}
+            </article>
+        </div>
+    );
+}
+
+//  Overview Tab
+
+export function OverviewTab({
+    myClubs,
+    myRequests,
+    pendingJoinRequestClubIds,
+    incomingJoinRequests,
+    texts,
+    lang = "en",
+}) {
     return (
         <div className={`${styles.contentGrid} ${styles.contentFade}`}>
             <article className={styles.panel}>
@@ -60,7 +477,7 @@ export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, cl
                                         </p>
                                     </div>
                                     <Link className={styles.linkButton} to={`/clubs/${clubId}`}>
-                                        {texts?.open || "Open"}
+                                        {texts?.open || defaultText(lang, "Open", "Openen")}
                                     </Link>
                                 </li>
                             );
@@ -70,21 +487,23 @@ export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, cl
             </article>
 
             <article className={styles.panel}>
-                <h3 className={styles.panelTitle}>{texts?.quick_highlights || "Quick Highlights"}</h3>
+                <h3 className={styles.panelTitle}>{texts?.quick_highlights || defaultText(lang, "Request Overview", "Aanvragen overzicht")}</h3>
                 <div className={styles.metrics}>
                     <div className={styles.metricCard}>
-                        <p className={styles.metricLabel}>{texts?.join_requests || "Join requests"}</p>
+                        <p className={styles.metricLabel}>{texts?.requests_i_sent || defaultText(lang, "Requests I sent", "Mijn ingediende aanvragen")}</p>
                         <p className={styles.metricValue}>{myRequests.length}</p>
                     </div>
                     <div className={styles.metricCard}>
-                        <p className={styles.metricLabel}>{texts?.pending_join_requests || "Pending join requests"}</p>
+                        <p className={styles.metricLabel}>
+                            {texts?.pending_join_requests || defaultText(lang, "Pending join requests", "Aanvraag in afwachting van clubgoedkeuring")}
+                        </p>
                         <p className={styles.metricValue}>{pendingJoinRequestClubIds.size}</p>
                     </div>
                     <div className={styles.metricCard}>
                         <p className={styles.metricLabel}>
-                            {texts?.club_registration_requests || "Club registration requests"}
+                            {texts?.incoming_join_requests || defaultText(lang, "Incoming requests to review", "Binnenkomende aanvragen om te beoordelen")}
                         </p>
-                        <p className={styles.metricValue}>{clubCreationRequests.length}</p>
+                        <p className={styles.metricValue}>{incomingJoinRequests.length}</p>
                     </div>
                 </div>
             </article>
@@ -92,7 +511,7 @@ export function OverviewTab({ myClubs, myRequests, pendingJoinRequestClubIds, cl
     );
 }
 
-//  Search Tab 
+//  Search Tab
 
 export function SearchTab({
     searchTerm,
@@ -104,11 +523,12 @@ export function SearchTab({
     pendingJoinRequestClubIds,
     clubJoinrequest,
     texts,
+    lang = "en",
 }) {
     return (
         <article className={`${styles.panel} ${styles.contentFade}`}>
             <div className={styles.panelTopRow}>
-                <h3 className={styles.panelTitle}>{texts?.search_clubs || "Search Clubs"}</h3>
+                <h3 className={styles.panelTitle}>{texts?.search_clubs || defaultText(lang, "Search Clubs", "Zoek clubs")}</h3>
                 <span className={styles.counter}>{filteredDiscoverClubs.length}</span>
             </div>
 
@@ -117,16 +537,16 @@ export function SearchTab({
                 type="search"
                 value={searchTerm}
                 onChange={(event) => onSearchChange(event.target.value)}
-                placeholder={texts?.search_by_name || "Search by club name"}
-                aria-label={texts?.search_clubs || "Search clubs"}
+                placeholder={texts?.search_by_name || defaultText(lang, "Search by club name", "Zoek op clubnaam")}
+                aria-label={texts?.search_clubs || defaultText(lang, "Search clubs", "Zoek clubs")}
             />
 
-            {discoverLoading ? <p className={styles.muted}>{texts?.loading_clubs || "Loading clubs..."}</p> : null}
+            {discoverLoading ? <p className={styles.muted}>{texts?.loading_clubs || defaultText(lang, "Loading clubs...", "Clubs laden...")}</p> : null}
             {discoverError ? <p className={styles.warning}>{discoverError}</p> : null}
 
             {!discoverLoading && !discoverError ? (
                 filteredDiscoverClubs.length === 0 ? (
-                    <p className={styles.muted}>{texts?.no_clubs_found || "No clubs found."}</p>
+                    <p className={styles.muted}>{texts?.no_clubs_found || defaultText(lang, "No clubs found.", "Geen clubs gevonden.")}</p>
                 ) : (
                     <div className={styles.discoverGrid}>
                         {filteredDiscoverClubs.map((club) => {
@@ -141,13 +561,13 @@ export function SearchTab({
                                     <div className={styles.actionRow}>
                                         {isJoined ? (
                                             <span className={`${styles.statusPill} ${styles.statusApproved}`}>
-                                                {texts?.joined || "Joined"}
+                                                {texts?.joined || defaultText(lang, "Joined", "Lid")}
                                             </span>
                                         ) : null}
 
                                         {!isJoined && hasPendingRequest ? (
                                             <span className={`${styles.statusPill} ${styles.statusPending}`}>
-                                                {texts?.status_pending || "Pending"}
+                                                {texts?.status_pending || defaultText(lang, "Pending", "In afwachting")}
                                             </span>
                                         ) : null}
 
@@ -156,7 +576,7 @@ export function SearchTab({
                                                     className={styles.primaryButton}
                                                     type="button"
                                                     onClick={(e) => {clubJoinrequest(clubId);e.currentTarget.disabled = true;}}>
-                                                    {texts?.request_to_join || "Request to Join"}
+                                                    {texts?.request_to_join || defaultText(lang, "Request to Join", "Lidmaatschap aanvragen")}
                                                 </button>
                                         ) : null}
                                     </div>
@@ -170,19 +590,20 @@ export function SearchTab({
     );
 }
 
-export function RequestsTab({ 
-    myRequests, 
-    texts
+export function RequestsTab({
+    myRequests,
+    texts,
+    lang = "en",
 }) {
     return (
         <article className={`${styles.panel} ${styles.contentFade}`}>
             <div className={styles.panelTopRow}>
-                <h3 className={styles.panelTitle}>{texts?.my_join_requests || "My Join Requests"}</h3>
+                <h3 className={styles.panelTitle}>{texts?.my_join_requests || defaultText(lang, "My Join Requests", "Mijn aanvragen")}</h3>
                 <span className={styles.counter}>{myRequests.length}</span>
             </div>
 
             {myRequests.length === 0 ? (
-                <p className={styles.muted}>{texts?.no_join_requests_yet || "No join requests yet."}</p>
+                <p className={styles.muted}>{texts?.no_join_requests_yet || defaultText(lang, "No join requests yet.", "Nog geen aanvragen.")}</p>
             ) : (
                 <ul className={styles.list}>
                     {myRequests.map((request) => {
@@ -193,10 +614,10 @@ export function RequestsTab({
                             <li key={requestId} className={styles.listItem}>
                                 <div>
                                     <p className={styles.primaryText}>
-                                        {request?.club_name || request?.club?.name || texts?.unknown_club || "Unknown club"}
+                                        {request?.club_name || request?.club?.name || texts?.unknown_club || defaultText(lang, "Unknown club", "Onbekende club")}
                                     </p>
                                     <p className={styles.secondaryText}>
-                                        {(texts?.requested_prefix || "Requested") + ":"} {request?.requested_at || "-"}
+                                        {(texts?.requested_prefix || defaultText(lang, "Requested", "Aangevraagd")) + ":"} {request?.requested_at || "-"}
                                     </p>
                                 </div>
 
@@ -212,350 +633,212 @@ export function RequestsTab({
     );
 }
 
-//  Create Club Tab 
+//  Create Club Tab
 
 export function CreateClubTab({
     clubRequestForm,
     clubRequestSubmitting,
     clubRequestMessage,
-    clubCreationRequests,
     onFieldChange,
     onSubmit,
     texts,
-    incomingJoinRequests,
-    decideJoinrequest,
-    isClubOwner
+    sportTypes = [],
+    lang = "en",
 }) {
     return (
-        <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
-            {/* Left Column: The Form */}
-            <article className={styles.panel}>
-                <h3 className={styles.panelTitle}>{texts?.request_your_club || "Request Your Own Club"}</h3>
+        /* Removed the sidebar logic entirely */
+        <section className={`${styles.singleColumnLayout} ${styles.contentFade}`}>
+            <article className={styles.fullWidthPanel}>
+                <h3 className={styles.panelTitle}>{texts?.request_your_club || defaultText(lang, "Request Your Own Club", "Vraag je eigen club aan")}</h3>
                 <form className={styles.form} onSubmit={onSubmit}>
-                    <label className={styles.formLabel}>
-                        {texts?.club_name || "Club Name"}
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>{texts?.club_name || defaultText(lang, "Club Name", "Clubnaam")}</label>
                         <input
                             className={styles.formInput}
                             type="text"
                             name="name"
                             value={clubRequestForm.name}
                             onChange={onFieldChange}
-                            placeholder={texts?.club_name_placeholder || "What is your club's name?"}
+                            placeholder={texts?.club_name_placeholder || defaultText(lang, "What is your club's name?", "Wat is de naam van je club?")}
                             required
                         />
-                    </label>
+                    </div>
 
                     <div className={styles.formRow}>
-                        <label className={styles.formLabel}>
-                            {texts?.city || "City"}
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>{texts?.city || defaultText(lang, "City", "Stad")}</label>
                             <input
                                 className={styles.formInput}
                                 type="text"
                                 name="city"
                                 value={clubRequestForm.city}
                                 onChange={onFieldChange}
-                                placeholder={texts?.city_placeholder || "City where your club is based"}
+                                placeholder={texts?.city_placeholder || defaultText(lang, "City where your club is based", "Stad waar je club gevestigd is")}
                                 required
                             />
-                        </label>
+                        </div>
 
-                        <label className={styles.formLabel}>
-                            {texts?.main_sport || "Main Sport"}
-                            <input
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>{texts?.main_sport || defaultText(lang, "Main Sport", "Hoofdsport")}</label>
+                            <select
                                 className={styles.formInput}
-                                type="text"
-                                name="sport"
-                                value={clubRequestForm.sport}
+                                name="sport_type_id" 
+                                value={clubRequestForm.sport_type_id || ""}
                                 onChange={onFieldChange}
-                                placeholder={texts?.main_sport_placeholder || "Padel"}
                                 required
-                            />
-                        </label>
+                            >
+                                <option value="" disabled>{texts?.select_sport_placeholder || defaultText(lang, "Select a sport", "Selecteer een sport")}</option>
+                                {sportTypes.map((sport) => (
+                                    <option key={sport.id} value={sport.id}>{sport.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
-                    <label className={styles.formLabel}>
-                        {texts?.description || "Description"}
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>{texts?.description || defaultText(lang, "Description", "Beschrijving")}</label>
                         <textarea
                             className={styles.formTextarea}
                             name="description"
                             value={clubRequestForm.description}
                             onChange={onFieldChange}
-                            placeholder={
-                                texts?.description_placeholder ||
-                                "Tell us what your club is about and why you want to use our platform"
-                            }
-                            rows={4}
+                            placeholder={texts?.description_placeholder || defaultText(lang, "Tell us about your club...", "Vertel ons over je club...")}
+                            rows={6} // Made slightly taller since we have more room
                             required
                         />
-                    </label>
+                    </div>
 
                     <div className={styles.formActions}>
                         <button type="submit" className={styles.submitButton} disabled={clubRequestSubmitting}>
-                            {clubRequestSubmitting
-                                ? texts?.submitting || "Submitting..."
-                                : texts?.submit_club_request || "Submit Club Request"}
+                            {clubRequestSubmitting ? texts?.submitting : texts?.submit_club_request}
                         </button>
                     </div>
                 </form>
 
-                {clubRequestMessage.text ? (
+                {clubRequestMessage.text && (
                     <p className={`${styles.notice} ${clubRequestMessage.type === "error" ? styles.noticeError : styles.noticeSuccess}`}>
                         {clubRequestMessage.text}
                     </p>
-                ) : null}
+                )}
             </article>
-
-            {/* Right Column: Both types of requests */}
-            <div className={styles.requestsSidebar}>
-                <article className={styles.panel}>
-                    <div className={styles.panelTopRow}>
-                        <h3 className={styles.panelTitle}>
-                            {texts?.my_club_registration_requests || "My Club Registration Requests"}
-                        </h3>
-                        <span className={styles.counter}>{clubCreationRequests.length}</span>
-                    </div>
-
-                    {clubCreationRequests.length === 0 ? (
-                        <p className={styles.muted}>
-                            {texts?.no_club_registration_requests_yet || "No club registration requests yet."}
-                        </p>
-                    ) : (
-                        <ul className={styles.list}>
-                            {clubCreationRequests.map((request) => (
-                                <li className={styles.listItem} key={request.id}>
-                                    <div>
-                                        <p className={styles.primaryText}>{request.name || texts?.new_club || "New Club"}</p>
-                                        <p className={styles.secondaryText}>
-                                            {request.city || texts?.unknown_city || "Unknown city"}
-                                            {request.sport ? ` • ${request.sport}` : ""}
-                                        </p>
-                                    </div>
-                                    <span className={`${styles.statusPill} ${statusClass(request.status)}`}>
-                                        {statusLabel(request.status, texts)}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </article>
-            </div>
         </section>
     );
 }
+export default CreateClubTab;
 
-export function ManageClubsTab({ 
-    myClubs, 
-    incomingJoinRequests, 
-    decideJoinrequest, 
-    isClubOwner, 
+export function ManageClubsTab({
+    myClubs,
+    incomingJoinRequests,
+    decideJoinrequest,
+    isClubOwner,
     onGoSettings,
-    texts 
+    texts,
+    lang = "en",
 }) {
     const ownedClubs = myClubs.filter(club => club.membership_status === "owner");
 
     if (!isClubOwner && ownedClubs.length === 0) {
         return (
             <div className={styles.panel} style={{ textAlign: 'center', padding: '40px' }}>
-                <h3 className={styles.panelTitle}>{texts?.manage_clubs_title || "Club Administration"}</h3>
                 <p className={styles.muted}>
-                    {texts?.no_clubs_owned || "You don't own any clubs yet."}
+                    {texts?.no_clubs_owned || defaultText(lang, "You don't own any clubs yet.", "Je bent nog geen eigenaar van een club.")}
                 </p>
             </div>
         );
     }
 
     return (
-        <div className={`${styles.tabContent} ${styles.contentFade}`}>
-            <h2 className={styles.panelTitle}>{texts?.manage_clubs_title || "Club Administration"}</h2>
-            
-            <div className={styles.twoColumnLayout}>
-                <section className={styles.mainColumn}>
-                    <article className={styles.panel}>
-                        <h3 className={styles.panelTitle}>{texts?.your_clubs || "Your Owned Clubs"}</h3>
-                        
-                        {ownedClubs.length === 0 ? (
-                            <p className={styles.muted}>You haven't been assigned as an owner to any clubs yet.</p>
-                        ) : (
-                            <ul className={styles.list}>
-                                {ownedClubs.map(club => (
-                                    <li key={club.id} className={styles.listItem}>
-                                        <div>
-                                            <p className={styles.primaryText}>{club.name}</p>
-                                            <p className={styles.secondaryText}>
-                                                {club.city} - {club.sport}
-                                            </p>
-                                        </div>
-                                        <button 
-                                        onClick={() => onGoSettings(club.id)}
-                                        className={styles.linkButton}>
-                                            Settings
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </article>
-                </section>
+        <div className={`${styles.contentFade} ${styles.manageClubsLayout}`}>
+            <article className={styles.panel}>
+                <div className={styles.panelTopRow}>
+                    <h3 className={styles.panelTitle}>{texts?.your_clubs || defaultText(lang, "Your clubs", "Jouw eigen clubs")}</h3>
+                    <span className={styles.counter}>{ownedClubs.length}</span>
+                </div>
 
-                <aside className={styles.requestsSidebar}>
-                    <article className={styles.panel}>
-                        <div className={styles.panelTopRow}>
-                            <h3 className={styles.panelTitle}>
-                                {texts?.incoming_join_requests || "Incoming Join Requests"}
-                            </h3>
-                            <span className={styles.counter}>{incomingJoinRequests.length}</span>
-                        </div>
+                {ownedClubs.length === 0 ? (
+                    <p className={styles.muted}>{texts?.no_clubs_owned || defaultText(lang, "You don't own any clubs yet.", "Je bent nog geen eigenaar van een club.")}</p>
+                ) : (
+                    <ul className={styles.list}>
+                        {ownedClubs.map(club => (
+                            <li key={club.id} className={styles.listItem}>
+                                <div>
+                                    <p className={styles.primaryText}>{club.name}</p>
+                                    <p className={styles.secondaryText}>
+                                        {club.city || texts?.unknown_city || defaultText(lang, "Unknown city", "Onbekende stad")}
+                                        {club.sport || club.sport_type_id ? ` · ${club.sport || `${texts?.sport_prefix || defaultText(lang, "Sport", "Sport")} #${club.sport_type_id}`}` : ""}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => onGoSettings(club.id)}
+                                    className={styles.linkButton}
+                                >
+                                    {texts?.settings || defaultText(lang, "Settings", "Instellingen")}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </article>
 
-                        {incomingJoinRequests.length === 0 ? (
-                            <p className={styles.muted}>No pending join requests.</p>
-                        ) : (
-                            <ul className={styles.list}>
-                                {incomingJoinRequests.map((req, index) => (
-                                    <li className={styles.listItem} key={index}>
-                                        <div>
-                                            <p className={styles.primaryText}>
-                                                <strong>{req.user_name}</strong> wants to join <strong>{req.club_name}</strong>
-                                            </p>
-                                        </div>
-                                        <div className={styles.actionRow} style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                                            <button 
-                                            className={styles.submitButton} 
-                                            type="button"
-                                            onClick={(e) => {
-                                                // Find all buttons in this specific div and disable them
-                                                const row = e.currentTarget.closest(`.${styles.actionRow}`);
-                                                row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                                                
-                                                decideJoinrequest(req.club_id, req.user_id, "approved");
-                                            }}>
-                                            {texts?.approve || "Approve"}
-                                        </button>
-                                        
-                                        <button 
-                                            className={styles.submitButton} 
-                                            type="button"
-                                            style={{ filter: 'grayscale(1) brightness(0.7)' }}
-                                            onClick={(e) => {
-                                                const row = e.currentTarget.closest(`.${styles.actionRow}`);
-                                                row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                                                
-                                                decideJoinrequest(req.club_id, req.user_id, "rejected");
-                                            }}>
-                                            {texts?.reject || "Reject"}
-                                        </button>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </article>
-                </aside>
-            </div>
+            <article className={styles.panel}>
+                <div className={styles.panelTopRow}>
+                    <h3 className={styles.panelTitle}>
+                        {texts?.incoming_join_requests || defaultText(lang, "Incoming join requests", "Binnenkomende aanmeldverzoeken")}
+                    </h3>
+                    <span className={styles.counter}>{incomingJoinRequests.length}</span>
+                </div>
+
+                {incomingJoinRequests.length === 0 ? (
+                    <p className={styles.muted}>{texts?.no_incoming_requests || defaultText(lang, "No incoming requests yet.", "Nog geen binnenkomende aanvragen.")}</p>
+                ) : (
+                    <ul className={styles.requestList}>
+                        {incomingJoinRequests.map((req, index) => (
+                            <li className={styles.requestCard} key={`${req.club_id}-${req.user_id}-${index}`}>
+                                <div className={styles.requestContent}>
+                                    <p className={styles.primaryText}>
+                                        <strong>{req.user_name}</strong> {texts?.wants_to_join || defaultText(lang, "wants to join", "wil lid worden van")} <strong>{req.club_name}</strong>
+                                    </p>
+                                </div>
+                                <div className={styles.requestActions}>
+                                    <button
+                                        className={styles.submitButton}
+                                        type="button"
+                                        onClick={(e) => {
+                                            const row = e.currentTarget.closest(`.${styles.requestCard}`);
+                                            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                                            decideJoinrequest(req.club_id, req.user_id, "approved");
+                                        }}
+                                    >
+                                        {texts?.approve || defaultText(lang, "Approve", "Goedkeuren")}
+                                    </button>
+
+                                    <button
+                                        className={styles.submitButton}
+                                        type="button"
+                                        style={{ filter: 'grayscale(1) brightness(0.7)' }}
+                                        onClick={(e) => {
+                                            const row = e.currentTarget.closest(`.${styles.requestCard}`);
+                                            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
+                                            decideJoinrequest(req.club_id, req.user_id, "rejected");
+                                        }}
+                                    >
+                                        {texts?.reject || defaultText(lang, "Reject", "Afwijzen")}
+                                    </button>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </article>
         </div>
     );
 }
-//  Teams Tab 
+//  Teams Tab
 
-const SORT_OPTIONS      = [{ value: "id", label: "By ID" }, { value: "name", label: "By Name" }];
-const PAGE_SIZE_OPTIONS = [6, 12, 24];
 
-export function TeamsTab({
-                             teams, total, loading, error,
-                             sort, pageSize, hasMore,
-                             onLoad, onLoadMore,
-                             texts,
-                             currentUser,
-                         }) {
-    const navigate = useNavigate();
-
-    useEffect(() => { void onLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    function handleTeamCreated() {
-        void onLoad({ sort, pageSize });
-    }
-
-    return (
-        <article className={`${styles.panel} ${styles.contentFade}`} style={{ display: "grid", gap: "1rem" }}>
-
-            {/* Header row */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
-                <h3 className={styles.panelTitle} style={{ margin: 0 }}>
-                    {texts?.my_teams || "My Teams"}
-                    {total !== null && (
-                        <span className={styles.counter} style={{ marginLeft: "0.6rem" }}>{total}</span>
-                    )}
-                </h3>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
-                    <select
-                        className={styles.searchInput}
-                        style={{ width: "auto", marginBottom: 0 }}
-                        value={sort}
-                        onChange={e => void onLoad({ sort: e.target.value, pageSize })}
-                        disabled={loading}
-                    >
-                        {SORT_OPTIONS.map(o => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
-                    </select>
-
-                    <select
-                        className={styles.searchInput}
-                        style={{ width: "auto", marginBottom: 0 }}
-                        value={pageSize}
-                        onChange={e => void onLoad({ sort, pageSize: Number(e.target.value) })}
-                        disabled={loading}
-                    >
-                        {PAGE_SIZE_OPTIONS.map(n => (
-                            <option key={n} value={n}>{n} per load</option>
-                        ))}
-                    </select>
-
-                    <CreateTeamButton onCreated={handleTeamCreated} />
-                </div>
-            </div>
-
-            {/* Error */}
-            {error && <p className={styles.warning}>{error}</p>}
-
-            {/* Empty state */}
-            {!loading && !error && teams.length === 0 && (
-                <p className={styles.muted}>
-                    {texts?.no_teams_yet || "You are not a member of any team yet."}
-                </p>
-            )}
-
-            {/* Teams list */}
-            {teams.length > 0 && (
-                <ul className={styles.list} style={{ margin: 0, padding: 0 }}>
-                    {teams.map(team => (
-                        <TeamCard key={team.id} team={team} texts={texts} currentUser={currentUser} />
-                    ))}
-                </ul>
-            )}
-
-            {/* Loading */}
-            {loading && (
-                <p className={styles.muted}>{texts?.loading_teams || "Loading teams…"}</p>
-            )}
-
-            {/* Load more */}
-            {!loading && hasMore && teams.length > 0 && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span className={styles.muted} style={{ fontSize: "0.82rem" }}>
-                        {texts?.showing || "Showing"} {teams.length}{total !== null ? ` / ${total}` : ""}
-                    </span>
-                    <button className={styles.primaryButton} onClick={() => void onLoadMore()}>
-                        {texts?.load_more || "Load more"}
-                    </button>
-                </div>
-            )}
-        </article>
-    );
-}
- 
 export function AvailabilityTab({
     availabilityBlocks,
+    upcomingMatches,
     availabilityForm,
     availabilityLoading,
     availabilitySubmitting,
@@ -563,29 +846,37 @@ export function AvailabilityTab({
     onAvailabilityFieldChange,
     onAvailabilitySubmit,
     onAvailabilityDelete,
+    weekdayOptions,
     texts,
+    lang = "en",
 }) {
     return (
         <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>
-                    {texts?.availability_title || "My Availability"}
+                        {texts?.availability_title || defaultText(lang, "My Availability", "Mijn beschikbaarheid")}
                 </h3>
                 <form className={styles.form} onSubmit={onAvailabilitySubmit}>
                     <div className={styles.formRow}>
                         <label className={styles.formLabel}>
-                            {texts?.date || "Date"}
-                            <input
+                            {texts?.weekday || defaultText(lang, "Weekday", "Weekdag")}
+                            <select
                                 className={styles.formInput}
-                                type="date"
-                                name="date"
-                                value={availabilityForm.date}
+                                name="weekday"
+                                value={availabilityForm.weekday}
                                 onChange={onAvailabilityFieldChange}
                                 required
-                            />
+                            >
+                                <option value="">{texts?.select_weekday || defaultText(lang, "Choose a weekday", "Kies een weekdag")}</option>
+                                {(weekdayOptions || (isDutchLang(lang) ? NL_WEEKDAY_LABELS : EN_WEEKDAY_LABELS).map((label, index) => ({ value: String(index), label }))).map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
                         </label>
                         <label className={styles.formLabel}>
-                            {texts?.start_time || "Start time"}
+                            {texts?.start_time || defaultText(lang, "Start time", "Starttijd")}
                             <input
                                 className={styles.formInput}
                                 type="time"
@@ -598,7 +889,7 @@ export function AvailabilityTab({
                     </div>
 
                     <label className={styles.formLabel}>
-                        {texts?.end_time || "End time"}
+                        {texts?.end_time || defaultText(lang, "End time", "Eindtijd")}
                         <input
                             className={styles.formInput}
                             type="time"
@@ -616,9 +907,8 @@ export function AvailabilityTab({
                             disabled={availabilitySubmitting}
                         >
                             {availabilitySubmitting
-                                ? texts?.adding || "Adding..."
-                                : texts?.add_availability_block ||
-                                  "Add availability block"}
+                                ? texts?.adding || defaultText(lang, "Adding...", "Toevoegen...")
+                                : texts?.add_availability_block || defaultText(lang, "Add availability block", "Beschikbaarheidsblok toevoegen")}
                         </button>
                     </div>
                 </form>
@@ -638,53 +928,84 @@ export function AvailabilityTab({
                 ) : null}
             </article>
 
-            <article className={styles.panel}>
-                <div className={styles.panelTopRow}>
-                    <h3 className={styles.panelTitle}>
-                        {texts?.availability_blocks || "Your blocks"}
-                    </h3>
-                    <span className={styles.counter}>
-                        {availabilityBlocks.length}
-                    </span>
-                </div>
+            <div className={styles.availabilityStack}>
+                <article className={styles.panel}>
+                    <div className={styles.panelTopRow}>
+                        <h3 className={styles.panelTitle}>
+                            {texts?.availability_blocks || defaultText(lang, "Your blocks", "Jouw blokken")}
+                        </h3>
+                        <span className={styles.counter}>{availabilityBlocks.length}</span>
+                    </div>
 
-                {availabilityLoading ? (
-                    <p className={styles.muted}>
-                        {texts?.loading || "Loading..."}
-                    </p>
-                ) : null}
+                    {availabilityLoading ? (
+                        <p className={styles.muted}>{texts?.loading || defaultText(lang, "Loading...", "Laden...")}</p>
+                    ) : null}
 
-                {!availabilityLoading && availabilityBlocks.length === 0 ? (
-                    <p className={styles.muted}>
-                        {texts?.no_availability_blocks ||
-                            "No availability blocks yet."}
-                    </p>
-                ) : null}
+                    {!availabilityLoading && availabilityBlocks.length === 0 ? (
+                        <p className={styles.muted}>
+                            {texts?.no_availability_blocks || defaultText(lang, "No availability blocks yet.", "Nog geen beschikbaarheidsblokken.")}
+                        </p>
+                    ) : null}
 
-                {!availabilityLoading && availabilityBlocks.length > 0 ? (
-                    <ul className={styles.list}>
-                        {availabilityBlocks.map((block) => (
-                            <li className={styles.listItem} key={block.id}>
-                                <div>
-                                    <p className={styles.primaryText}>
-                                        {formatLocalTimestamp(block.start_at)} -{" "}
-                                        {formatLocalTimestamp(block.end_at)}
-                                    </p>
-                                </div>
-                                <button
-                                    className={styles.primaryButton}
-                                    type="button"
-                                    onClick={() =>
-                                        onAvailabilityDelete(block.id)
-                                    }
-                                >
-                                    {texts?.delete || "Delete"}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                ) : null}
-            </article>
+                    {!availabilityLoading && availabilityBlocks.length > 0 ? (
+                        <ul className={styles.availabilityList}>
+                            {availabilityBlocks.map((block) => (
+                                <li className={styles.availabilityCard} key={block.id}>
+                                    <div>
+                                        <p className={styles.primaryText}>
+                                            {formatWeeklyAvailability(block, lang)}
+                                        </p>
+                                        <p className={styles.secondaryText}>
+                                            {texts?.availability_block_detail || defaultText(lang, "Weekly recurring block", "Wekelijks terugkerend blok")}
+                                        </p>
+                                    </div>
+                                    <button
+                                        className={styles.primaryButton}
+                                        type="button"
+                                        onClick={() => onAvailabilityDelete(block.id)}
+                                    >
+                                        {texts?.delete || defaultText(lang, "Delete", "Verwijderen")}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : null}
+                </article>
+
+                <article className={styles.panel}>
+                    <div className={styles.panelTopRow}>
+                        <h3 className={styles.panelTitle}>
+                            {texts?.availability_upcoming_matches || defaultText(lang, "Upcoming matches", "Aankomende wedstrijden")}
+                        </h3>
+                        <span className={styles.counter}>{upcomingMatches.length}</span>
+                    </div>
+
+                    {upcomingMatches.length === 0 ? (
+                        <p className={styles.muted}>
+                            {texts?.no_upcoming_matches || defaultText(lang, "No upcoming matches scheduled.", "Er staan nog geen aankomende wedstrijden gepland.")}
+                        </p>
+                    ) : (
+                        <ul className={styles.availabilityList}>
+                            {upcomingMatches.map((match) => (
+                                <li className={styles.availabilityCard} key={match.id}>
+                                    <div>
+                                        <p className={styles.primaryText}>{formatMatchTitle(match)}</p>
+                                        <p className={styles.secondaryText}>
+                                            {formatUpcomingMatchDate(match, texts, lang)}
+                                        </p>
+                                        <p className={styles.secondaryText}>
+                                            {match.location || texts?.unknown_location || defaultText(lang, "Unknown location", "Onbekende locatie")}
+                                        </p>
+                                    </div>
+                                    <span className={`${styles.statusPill} ${styles.statusApproved}`}>
+                                        {match.status?.name || texts?.status_accepted || defaultText(lang, "Accepted", "Geaccepteerd")}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </article>
+            </div>
         </section>
     )
 }

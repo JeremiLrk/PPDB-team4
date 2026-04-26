@@ -8,6 +8,7 @@ describe("dashboardUtils", () => {
   test("getDashboardTabs returns translated labels with stable ids", () => {
     const tabs = getDashboardTabs({
       tab_overview: "Overzicht",
+      tab_profile: "Profiel",
       tab_availability: "Beschikbaarheid",
       tab_search: "Zoek clubs",
       tab_requests: "Mijn aanvragen",
@@ -18,10 +19,12 @@ describe("dashboardUtils", () => {
 
     expect(tabs).toEqual([
       { id: "overview", label: "Overzicht" },
+      { id: "profile", label: "Profiel" },
       { id: "availability", label: "Beschikbaarheid" },
       { id: "search", label: "Zoek clubs" },
       { id: "requests", label: "Mijn aanvragen" },
       { id: "teams", label: "Mijn teams" },
+      { id: "matches", label: "Matches" },
       { id: "createClub", label: "Voeg je eigen club toe" },
       { id: "manageClubs", label: "Beheer je clubs" },
     ]);

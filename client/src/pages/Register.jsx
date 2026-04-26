@@ -2,8 +2,8 @@ import { Link } from "react-router-dom"
 import { useRegister } from "@/hooks/useRegister.js"
 import au_styles from "@/style/Authorization.module.css"
 import { useCurrentUserContext } from "@/context/useCurrentUserContext"
-import { useLangContext } from "@/context/useLangContext.js"
-import { usePageTexts } from "@/hooks/usePageTexts.js"
+import { useLangContext } from "@/context/useLangContext.jsx"
+import { usePageTexts } from "@/hooks/common/usePageTexts.js"
 
 const Register = () => {
     const { lang } = useLangContext()

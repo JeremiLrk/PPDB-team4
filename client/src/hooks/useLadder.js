@@ -1,32 +1,75 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 
-export function useLadder(clubId, ladderId) {
-    const [players, setPlayers] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
+export function useLadderPlayers(clubId, ladderId) {
+    const [players, setPlayers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!clubId || !ladderId) return
+        if (!clubId || !ladderId) return;
 
-        setLoading(true)
+        let alive = true;
+        setLoading(true);
+        setPlayers([]); 
 
-        fetch(`/api/clubs/${clubId}/ladders/${ladderId}`)
+        fetch(`/api/clubs/${clubId}/ladders/${ladderId}/players`)
             .then(res => {
-                if (!res.ok) {
-                    throw new Error("Failed to fetch ladder")
-                }
-                return res.json()
+                if (!res.ok) throw new Error("Failed to fetch players");
+                return res.json();
             })
             .then(data => {
-                setPlayers(data)
-                setLoading(false)
+                if (alive) {
+                    setPlayers(data);
+                    setLoading(false);
+                }
             })
             .catch(err => {
-                setError(err)
-                setLoading(false)
+                if (alive) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            });
+
+        return () => { alive = false; };
+    }, [clubId, ladderId]);
+
+    return { players, loading, error };
+}
+
+export function useLadder(clubId, ladderId) {
+    const [ladder, setLadder] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (!clubId || !ladderId) {
+            setLadder(null);
+            return;
+        }
+
+        let alive = true;
+        setLoading(true);
+
+        fetch(`/api/clubs/${clubId}/ladders/${ladderId}/details`)
+            .then(res => {
+                if (!res.ok) throw new Error("Failed to fetch ladder details");
+                return res.json();
             })
+            .then(data => {
+                if (alive) {
+                    setLadder(data);
+                    setLoading(false);
+                }
+            })
+            .catch(err => {
+                if (alive) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            });
 
-    }, [clubId, ladderId])
+        return () => { alive = false; };
+    }, [clubId, ladderId]);
 
-    return { players, loading, error }
+    return { ladder, loading, error };
 }

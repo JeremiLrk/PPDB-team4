@@ -1,0 +1,254 @@
+/* Submit buttons */
+
+.submitButton,
+.submitBtn {
+    border-radius: 0.66rem;
+    border: 1px solid var(--action-border);
+    background: var(--action-bg);
+    color: var(--action-text);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease, background 0.2s ease;
+}
+.submitButton {
+    padding: 0.42rem 0.72rem;
+}
+.submitBtn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.58rem;
+    margin-top: 0.1rem;
+}
+.submitButton:hover,
+.submitBtn:hover:not(:disabled) {
+    border-color: var(--action-hover-border);
+    background: var(--action-hover-bg);
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: 0 10px 20px rgba(20, 184, 166, 0.18);
+}
+.submitButton:disabled,
+.submitBtn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Back buttons */
+
+.backBtn {
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #d1d5db);
+    background: transparent;
+    color: var(--text-secondary, #6b7280);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.backBtn:hover:not(:disabled) {
+    background: var(--bg-hover, #f3f4f6);
+    color: var(--text-primary, #111827);
+}
+.backBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+
+/* Next buttons */
+
+.nextBtn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    border: none;
+    background: var(--accent, #2563eb);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+}
+.nextBtn:hover:not(:disabled) {
+    background: var(--accent-hover, #1d4ed8);
+}
+.nextBtn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+
+/* Primary/link buttons */
+
+.primaryButton,
+.linkButton {
+    border-radius: 0.66rem;
+    border: 1px solid var(--action-border);
+    background: var(--action-bg);
+    color: var(--action-text);
+    padding: 0.42rem 0.72rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.primaryButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.linkButton:hover,
+.primaryButton:not(:disabled):hover {
+    border-color: var(--action-hover-border);
+    background: var(--action-hover-bg);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(20, 184, 166, 0.18);
+}
+
+.createTeamTrigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+    padding: 0.42rem 0.78rem;
+    border-radius: 0.66rem;
+    border: 1px solid var(--action-border);
+    background: var(--action-bg);
+    color: var(--action-text);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.createTeamTrigger:hover {
+    color: var(--action-text);
+    border-color: var(--action-hover-border);
+    background: var(--action-hover-bg);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 10px 20px rgba(20, 184, 166, 0.18);
+}
+
+.createTeamTriggerOpen {
+    color: var(--action-text);
+    border-color: var(--action-hover-border);
+    background: var(--action-hover-bg);
+}
+
+.createTeamPanel {
+    width: 336px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.96));
+    border-color: rgba(148, 163, 184, 0.26);
+    box-shadow:
+        0 24px 58px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(56, 189, 248, 0.07);
+}
+
+.createTeamPanel :global(.formLabel) {
+    color: #e2e8f0;
+}
+
+.createTeamPanel :global(.formInput),
+.createTeamPanel :global(.formSelect) {
+    background: rgba(15, 23, 42, 0.98);
+    color: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.34);
+}
+
+.createTeamPanel :global(.formInput::placeholder) {
+    color: #64748b;
+}
+
+.createTeamPanel :global(.formSelect) {
+    color: #f8fafc;
+}
+
+.createTeamPanel :global(.formSelect option) {
+    color: #0f172a;
+}
+
+/* Close button */
+
+.closeBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 0.44rem;
+    border: 1px solid transparent;
+    background: none;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.closeBtn:hover {
+    background: var(--danger-bg);
+    border-color: var(--danger-border);
+    color: var(--danger-text);
+}
+
+/* Nav button */
+
+.navButton {
+    border: 1px solid transparent;
+    border-radius: 0.78rem;
+    background: transparent;
+    color: var(--text-secondary);
+    text-align: left;
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 0.65rem 0.78rem;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.navButton:hover {
+    background: var(--nav-hover);
+    color: var(--text-heading);
+    transform: translateY(-1px);
+}
+
+.navButtonActive {
+    border-color: var(--nav-active-border);
+    background: var(--nav-active-bg);
+    color: var(--text-heading);
+    box-shadow: 0 8px 20px rgba(2, 132, 199, 0.15);
+}
+
+/* Icon buttons */
+
+.iconButton {
+    border: 1px solid var(--soft-border);
+    border-radius: 0.64rem;
+    width: 2rem;
+    height: 2rem;
+    background: var(--surface-bg-soft);
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.iconButton svg {
+    width: 1rem;
+    height: 1rem;
+}
+.iconButton:hover {
+    border-color: var(--nav-active-border);
+    transform: translateY(-1px) scale(1.06);
+    box-shadow: 0 8px 18px rgba(2, 132, 199, 0.22);
+}
+.iconButton:focus-visible {
+    outline: 2px solid var(--nav-active-border);
+    outline-offset: 1px;
+}

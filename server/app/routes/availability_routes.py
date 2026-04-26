@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from flask import Blueprint, jsonify, request
 
 from server.app.services.auth_service import verify_user
@@ -9,6 +7,8 @@ from server.app.services.availability_service import (
     has_overlap,
     list_blocks_for_user,
     parse_timestamp,
+    parse_time_value,
+    parse_weekday,
 )
 
 availability_bp = Blueprint("availability", __name__, url_prefix="/api/me/availability")
@@ -32,22 +32,28 @@ def create_my_availability_block():
         return jsonify({"message": "Unauthorized."}), 401
 
     data = request.get_json() or {}
-    start_at = parse_timestamp(data.get("start_at"))
-    end_at = parse_timestamp(data.get("end_at"))
+    weekday = parse_weekday(data.get("weekday"))
+    start_time_value = parse_time_value(data.get("start_time"))
+    end_time_value = parse_time_value(data.get("end_time"))
 
-    if not start_at or not end_at:
-        return jsonify({"message": ("Invalid timestamp format.")}), 400
+    if weekday is None or start_time_value is None or end_time_value is None:
+        start_at = parse_timestamp(data.get("start_at"))
+        end_at = parse_timestamp(data.get("end_at"))
+        if start_at and end_at:
+            weekday = start_at.weekday()
+            start_time_value = start_at.time().replace(microsecond=0)
+            end_time_value = end_at.time().replace(microsecond=0)
 
-    if start_at >= end_at:
-        return jsonify({"message": "start_at must be before end_at."}), 400
+    if weekday is None or start_time_value is None or end_time_value is None:
+        return jsonify({"message": "weekday, start_time, and end_time are required."}), 400
 
-    if start_at <= datetime.utcnow():
-        return jsonify({"message": "start_at must be in the future."}), 400
+    if start_time_value >= end_time_value:
+        return jsonify({"message": "start_time must be before end_time."}), 400
 
-    if has_overlap(account.id, start_at, end_at):
-        return jsonify({"message": "Availability block overlaps with an existing block."}), 409
+    if has_overlap(account.id, weekday, start_time_value, end_time_value):
+        return jsonify({"message": "Availability overlaps with an existing weekly block."}), 409
 
-    block = create_block_for_user(account.id, start_at, end_at)
+    block = create_block_for_user(account.id, weekday, start_time_value, end_time_value)
     return jsonify({"block": block}), 201
 
 @availability_bp.delete("/<int:block_id>")

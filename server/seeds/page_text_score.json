@@ -2,6 +2,7 @@
   {"page": "score", "key": "top_players", "language": "en", "value": "Top Players"},
   {"page": "score", "key": "top_players", "language": "nl", "value": "Topspelers"},
   {"page": "score", "key": "top_matches", "language": "en", "value": "Top Matches"},
-  {"page": "score", "key": "top_matches", "language": "nl", "value": "Populairste resultaten"}
-
+  {"page": "score", "key": "top_matches", "language": "nl", "value": "Populairste resultaten"},
+  {"page": "score", "key": "recent_played_matches", "language": "en", "value": "Recent played matches"},
+  {"page": "score", "key": "recent_played_matches", "language": "nl", "value": "Recent gespeelde wedstrijden"}
 ]

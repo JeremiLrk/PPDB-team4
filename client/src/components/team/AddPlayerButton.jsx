@@ -1,11 +1,16 @@
-import { useRef, useEffect } from "react";
-import styles      from "@/style/common/Forms.module.css";
-import teamStyles  from "@/style/TeamSettings.module.css";
 import commonStyles from "@/style/common/Common.module.css";
-import { useAddPlayer }  from "@/hooks/useAddPlayer.js";
-import { PlusIcon }      from "@/components/icon/PlusIcon.jsx";
-import { Spinner }       from "@/components/forms/Spinner.jsx";
-import ItemCard          from "@/components/common/ItemCard.jsx";
+import formStyles   from "@/style/common/Forms.module.css";
+import panelStyles  from "@/style/common/Panel.module.css";
+import teamStyles   from "@/style/TeamSettings.module.css";
+
+import { useAddPlayer } from "@/hooks/teams/useAddPlayer.js";
+import { PlusIcon }     from "@/components/icon/PlusIcon.jsx";
+import { Spinner }      from "@/components/forms/Spinner.jsx";
+import { FormPanel }    from "@/components/forms/FormPanel.jsx";
+import { FormPage }     from "@/components/forms/FormPage.jsx";
+import ItemCard         from "@/components/common/ItemCard.jsx";
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 /**
  * AddPlayerButton - dropdown panel for searching and adding players to a team.
@@ -15,139 +20,101 @@ import ItemCard          from "@/components/common/ItemCard.jsx";
  *   onAdded   {() => void}     - called after a player is successfully added
  */
 export default function AddPlayerButton({ teamId, onAdded }) {
+    const { lang } = useLangContext();
+    const texts = usePageTexts("team_settings", lang);
     const {
         isOpen, openPanel, closePanel,
         query, setQuery,
         results, searching, searchErr,
         addPlayer, addingId, addedIds, addErr,
+        inputRef,
     } = useAddPlayer({ teamId, onAdded });
 
-    const panelRef   = useRef(null);
-    const triggerRef = useRef(null);
-    const inputRef   = useRef(null);
-
-    // Close on outside click
-    useEffect(() => {
-        if (!isOpen) return;
-        function onOutside(e) {
-            if (
-                panelRef.current   && !panelRef.current.contains(e.target) &&
-                triggerRef.current && !triggerRef.current.contains(e.target)
-            ) closePanel();
-        }
-        document.addEventListener("mousedown", onOutside);
-        return () => document.removeEventListener("mousedown", onOutside);
-    }, [isOpen, closePanel]);
-
-    // Close on Escape
-    useEffect(() => {
-        if (!isOpen) return;
-        function onKey(e) { if (e.key === "Escape") closePanel(); }
-        document.addEventListener("keydown", onKey);
-        return () => document.removeEventListener("keydown", onKey);
-    }, [isOpen, closePanel]);
-
-    // Auto-focus input when panel opens
-    useEffect(() => {
-        if (isOpen) setTimeout(() => inputRef.current?.focus(), 60);
-    }, [isOpen]);
-
     return (
-        <div className={styles.wrapper}>
-            {/* Trigger */}
-            <button
-                ref={triggerRef}
-                onClick={isOpen ? closePanel : openPanel}
-                className={`${styles.trigger} ${isOpen ? styles.triggerOpen : ""}`}
-                aria-expanded={isOpen}
-                aria-haspopup="dialog"
-            >
-                <PlusIcon rotated={isOpen} />
-                Add Player
-            </button>
+        <FormPanel
+            title={texts.add_player_title || "Add Player"}
+            triggerContent={<><PlusIcon rotated={isOpen} /> {texts.add_player_btn || "Add Player"}</>}
 
-            {/* Panel */}
-            <div
-                ref={panelRef}
-                role="dialog"
-                aria-label="Add player to team"
-                aria-modal="true"
-                className={`${styles.panel} ${teamStyles.addPlayerPanel} ${isOpen ? styles.panelOpen : ""}`}
-            >
-                {/* Header */}
-                <div className={styles.panelHeader}>
-                    <p className={styles.panelTitle}>Add Player</p>
-                    <button
-                        className={styles.closeBtn}
-                        onClick={closePanel}
-                        aria-label="Close"
-                    >
-                        ×
-                    </button>
-                </div>
+            isOpen={isOpen}
+            openPanel={openPanel}
+            closePanel={closePanel}
 
-                {/* Body */}
-                <div className={styles.panelBody}>
-                    {/* Search input */}
-                    <div className={teamStyles.searchRow}>
+            // One page - navigation hidden automatically
+            step={0}
+            totalSteps={1}
+            onNext={null}
+            onBack={null}
+            onSubmit={null}
+
+            // No loading/success state at the panel level —
+            // each result card has its own state
+            isLoading={false}
+            isSuccess={false}
+
+            error={addErr || searchErr || null}
+
+            panelClassName={teamStyles.addPlayerPanel}
+            ariaLabel={texts.add_player_aria || "Add player to team"}
+
+        >
+            {/* --- Page 0: search and results ------------------------- */}
+            <FormPage active={true}>
+
+                {/* Search input */}
+                <div className={teamStyles.searchRow}>
                         <input
                             ref={inputRef}
-                            className={styles.formInput}
+                            className={formStyles.formInput}
                             type="text"
-                            placeholder="Name, email, or ID…"
+                            placeholder={texts.add_player_search_placeholder || "Name, email, or ID…"}
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                         />
-                        {searching && (
-                            <span className={teamStyles.searchSpinner}>
-                                <Spinner />
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Add error */}
-                    {addErr && <p className={styles.error}>{addErr}</p>}
-
-                    {/* Search error */}
-                    {searchErr && <p className={styles.error}>{searchErr}</p>}
-
-                    {/* Empty state */}
-                    {!searching && !searchErr && query.trim() && results.length === 0 && (
-                        <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
-                            No accounts found.
-                        </p>
-                    )}
-
-                    {/* Hint when no query */}
-                    {!query.trim() && (
-                        <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
-                            Type to search accounts.
-                        </p>
-                    )}
-
-                    {/* Results */}
-                    {results.length > 0 && (
-                        <ul className={`${commonStyles.list} ${teamStyles.resultsList}`}>
-                            {results.map(account => (
-                                <SearchResultCard
-                                    key={account.id}
-                                    account={account}
-                                    isAdding={addingId === account.id}
-                                    isAdded={addedIds.has(account.id)}
-                                    onAdd={() => addPlayer(account.id)}
-                                />
-                            ))}
-                        </ul>
+                    {searching && (
+                        <span className={teamStyles.searchSpinner}>
+                            <Spinner />
+                        </span>
                     )}
                 </div>
-            </div>
-        </div>
+
+                {/* Hint if nothing is entered */}
+                {!query.trim() && (
+                    <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
+                        {texts.add_player_search_hint || "Type to search accounts."}
+                    </p>
+                )}
+
+                {/* Empty result */}
+                {!searching && !searchErr && query.trim() && results.length === 0 && (
+                    <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
+                        {texts.add_player_no_results || "No accounts found."}
+                    </p>
+                )}
+
+                {/* Search results */}
+                {results.length > 0 && (
+                    <ul className={`${panelStyles.list} ${teamStyles.resultsList}`}>
+                        {results.map(account => (
+                            <SearchResultCard
+                                key={account.id}
+                                account={account}
+                                isAdding={addingId === account.id}
+                                isAdded={addedIds.has(account.id)}
+                                onAdd={() => addPlayer(account.id)}
+                                texts={texts}
+                            />
+                        ))}
+                    </ul>
+                )}
+
+            </FormPage>
+        </FormPanel>
     );
 }
 
-/* ── Search result card ── */
+/* -- Search result card ------------------------------------------------------- */
 
-function SearchResultCard({ account, isAdding, isAdded, onAdd }) {
+function SearchResultCard({ account, isAdding, isAdded, onAdd, texts = {} }) {
     const fullName = [account.firstName, account.lastName].filter(Boolean).join(" ") || "-";
 
     return (
@@ -160,15 +127,9 @@ function SearchResultCard({ account, isAdding, isAdded, onAdd }) {
                 className={`${teamStyles.addBtn} ${isAdded ? teamStyles.addBtnDone : ""}`}
                 onClick={onAdd}
                 disabled={isAdding || isAdded}
-                aria-label={isAdded ? "Added" : `Add ${fullName}`}
+                aria-label={isAdded ? (texts.added_label || "Added") : `${texts.add_player_btn || "Add"} ${fullName}`}
             >
-                {isAdding ? (
-                    <Spinner />
-                ) : isAdded ? (
-                    "✓"
-                ) : (
-                    <PlusIcon />
-                )}
+                {isAdding ? <Spinner /> : isAdded ? "✓" : <PlusIcon />}
             </button>
         </ItemCard>
     );

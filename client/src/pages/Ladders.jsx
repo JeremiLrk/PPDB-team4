@@ -1,9 +1,13 @@
 import { useNavigate, useParams } from "react-router-dom"
 import { useLadders } from "../hooks/useLadders"
+import { useLangContext } from "@/context/useLangContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 const Ladders = () => {
     const navigate = useNavigate()
     const { clubId } = useParams()
+    const { lang } = useLangContext()
+    const texts = usePageTexts("ladder", lang)
     const { ladders, loading } = useLadders(clubId)
 
     return (
@@ -13,10 +17,10 @@ const Ladders = () => {
             {/* Header */}
             <div className="mb-12">
                 <h1 className="text-4xl font-semibold tracking-tight">
-                    Available Ladders
+                    {texts.ladder || "Ladder"}
                 </h1>
                 {!loading && ladders.length === 0 && (
-                    <p className="p-6 text-slate-400">No ladder available for this club.</p>
+                    <p className="p-6 text-slate-400">{texts.no_ladders || "No ladders available for this club."}</p>
                 )}
             </div>
 
@@ -24,7 +28,7 @@ const Ladders = () => {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
 
                 {loading && (
-                    <p className="text-slate-400">Loading ladders...</p>
+                    <p className="text-slate-400">{texts.loading_ladders || "Loading ladders..."}</p>
                 )}
 
                 {!loading && ladders.map((ladder) => (

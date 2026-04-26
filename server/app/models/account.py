@@ -34,7 +34,8 @@ class Account(db.Model):
             return self.player
         return self
 
-    def to_dict(self):
+    def to_dict(self, include=None):
+        include = include or []
         resolved = self.resolved_role
 
         if isinstance(resolved, Administrator):
@@ -58,15 +59,23 @@ class Account(db.Model):
         if isinstance(resolved, ClubOwner):
             club_ids = [c.id for c in resolved.clubs]
 
-        return {
+        payload = {
             "id":             self.id,
             "email":          self.email,
             "firstName":      self.first_name,
             "lastName":       self.last_name,
             "role":           role,
+            "roles":          [role],
             "managedTeamIds": managed_team_ids,
             "clubIds":        club_ids,
         }
+
+        # Backward-compatible expansion for team membership payloads.
+        if "player" in include and self.player:
+            payload["playerId"] = self.player.id
+            payload["accountId"] = self.id
+
+        return payload
 
 class Administrator(db.Model):
     __tablename__ = "administrator"
@@ -80,16 +89,13 @@ class Administrator(db.Model):
     account = db.relationship("Account", back_populates="administrator")
 
     def to_dict(self):
-        return self.account.to_dict()
+        return {
+            "id":          self.id,
+            "accessLevel": self.access_level,
+        }
 
-class TeamManager(db.Model):
-    __tablename__ = "team_manager"
 
-    id = db.Column(db.BigInteger, db.ForeignKey("account.id", ondelete="CASCADE"), primary_key=True)
-
-    account    = db.relationship("Account",   back_populates="team_manager")
-    teams      = db.relationship("Team",      secondary="team_manager_team", back_populates="managers")
-    club_owner = db.relationship("ClubOwner", back_populates="team_manager", uselist=False)
-
-    def to_dict(self):
-        return self.account.to_dict()
+# Backward-compatible re-exports for modules/tests importing these from account.
+from server.app.models.account_role import AccountRole  # noqa: E402
+from server.app.models.team import TeamManager  # noqa: E402
+from server.app.models.club_owner import ClubOwner  # noqa: E402

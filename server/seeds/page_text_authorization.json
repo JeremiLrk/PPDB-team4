@@ -121,6 +121,30 @@
     },
     {
         "page": "authorization",
+        "key": "log_out_success",
+        "language": "en",
+        "value": "Logged out"
+    },
+    {
+        "page": "authorization",
+        "key": "log_out_success",
+        "language": "nl",
+        "value": "Uitgelogd"
+    },
+    {
+        "page": "authorization",
+        "key": "log_out_failed",
+        "language": "en",
+        "value": "Logout failed"
+    },
+    {
+        "page": "authorization",
+        "key": "log_out_failed",
+        "language": "nl",
+        "value": "Uitloggen mislukt"
+    },
+    {
+        "page": "authorization",
         "key": "forgot_password",
         "language": "en",
         "value": "Forgot Password?"

@@ -7,6 +7,7 @@ import { mockApi } from "./testApiMock.js";
 
 // Verifies that the app shell renders and the backend health badge becomes Online.
 test("renders header and shows Online status", async () => {
+  localStorage.setItem("app_lang", "nl");
   mockApi();
 
   render(
@@ -17,8 +18,9 @@ test("renders header and shows Online status", async () => {
 
   const banner = screen.getByRole("banner");
   expect(within(banner).getByText("NetRank")).toBeInTheDocument();
-  expect(within(banner).getByRole("button", { name: "Log in" })).toBeInTheDocument();
-  expect(within(banner).getByRole("button", { name: "Register" })).toBeInTheDocument();
+  expect(within(banner).getByRole("button", { name: "Inloggen" })).toBeInTheDocument();
+  expect(within(banner).getByRole("button", { name: "Registreren" })).toBeInTheDocument();
 
   expect(await screen.findByText("Online")).toBeInTheDocument();
+  localStorage.removeItem("app_lang");
 });

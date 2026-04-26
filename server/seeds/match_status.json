@@ -1,0 +1,7 @@
+[
+  {"name": "pending"},
+  {"name": "accepted"},
+  {"name": "rejected"},
+  {"name": "cancelled"},
+  {"name": "played"}
+]

@@ -129,3 +129,16 @@ def update_password(email, password):
     account.password_hash = generate_password_hash(password)
     db.session.commit()
     return account
+
+
+def change_password(account, current_password, new_password, repeat_password=None):
+    if not current_password or not new_password:
+        raise ValueError("Current password and new password are required.")
+
+    if repeat_password is not None and new_password != repeat_password:
+        raise ValueError("Passwords do not match.")
+
+    if not check_password_hash(account.password_hash, current_password):
+        raise ValueError("Current password is incorrect.")
+
+    return update_password(account.email, new_password)
