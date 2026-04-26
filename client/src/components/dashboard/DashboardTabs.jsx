@@ -659,41 +659,6 @@ export function CreateClubTab({
                     </p>
                 )}
             </article>
-
-            {/* Right Column: Both types of requests */}
-            <div className={commonStyles.noStylePleaseFixMe}>
-                <article className={styles.panel}>
-                    <div className={styles.panelTopRow}>
-                        <h3 className={styles.panelTitle}>
-                            {texts?.my_club_registration_requests || "My Club Registration Requests"}
-                        </h3>
-                        <span className={styles.counter}>{clubCreationRequests.length}</span>
-                    </div>
-
-                    {clubCreationRequests.length === 0 ? (
-                        <p className={styles.muted}>
-                            {texts?.no_club_registration_requests_yet || "No club registration requests yet."}
-                        </p>
-                    ) : (
-                        <ul className={styles.list}>
-                            {clubCreationRequests.map((request) => (
-                                <li className={styles.listItem} key={request.id}>
-                                    <div>
-                                        <p className={styles.primaryText}>{request.name || texts?.new_club || "New Club"}</p>
-                                        <p className={styles.secondaryText}>
-                                            {request.city || texts?.unknown_city || "Unknown city"}
-                                            {request.sport ? ` • ${request.sport}` : ""}
-                                        </p>
-                                    </div>
-                                    <span className={`${styles.statusPill} ${statusClass(request.status)}`}>
-                                        {statusLabel(request.status, texts)}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </article>
-            </div>
         </section>
     );
 }
