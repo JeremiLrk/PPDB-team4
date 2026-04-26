@@ -578,22 +578,19 @@ export function CreateClubTab({
     clubRequestForm,
     clubRequestSubmitting,
     clubRequestMessage,
-    clubCreationRequests,
     onFieldChange,
     onSubmit,
     texts,
-    incomingJoinRequests,
-    decideJoinrequest,
-    isClubOwner
+    sportTypes = []
 }) {
     return (
-        <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
-            {/* Left Column: The Form */}
-            <article className={styles.panel}>
+        /* Removed the sidebar logic entirely */
+        <section className={`${styles.singleColumnLayout} ${styles.contentFade}`}>
+            <article className={styles.fullWidthPanel}>
                 <h3 className={styles.panelTitle}>{texts?.request_your_club || "Request Your Own Club"}</h3>
                 <form className={styles.form} onSubmit={onSubmit}>
-                    <label className={styles.formLabel}>
-                        {texts?.club_name || "Club Name"}
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>{texts?.club_name || "Club Name"}</label>
                         <input
                             className={styles.formInput}
                             type="text"
@@ -603,11 +600,11 @@ export function CreateClubTab({
                             placeholder={texts?.club_name_placeholder || "What is your club's name?"}
                             required
                         />
-                    </label>
+                    </div>
 
                     <div className={styles.formRow}>
-                        <label className={styles.formLabel}>
-                            {texts?.city || "City"}
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>{texts?.city || "City"}</label>
                             <input
                                 className={styles.formInput}
                                 type="text"
@@ -617,52 +614,50 @@ export function CreateClubTab({
                                 placeholder={texts?.city_placeholder || "City where your club is based"}
                                 required
                             />
-                        </label>
+                        </div>
 
-                        <label className={styles.formLabel}>
-                            {texts?.main_sport || "Main Sport"}
-                            <input
+                        <div className={styles.formGroup}>
+                            <label className={styles.formLabel}>{texts?.main_sport || "Main Sport"}</label>
+                            <select
                                 className={styles.formInput}
-                                type="text"
-                                name="sport"
-                                value={clubRequestForm.sport}
+                                name="sport_type_id" 
+                                value={clubRequestForm.sport_type_id || ""}
                                 onChange={onFieldChange}
-                                placeholder={texts?.main_sport_placeholder || "Padel"}
                                 required
-                            />
-                        </label>
+                            >
+                                <option value="" disabled>{texts?.select_sport_placeholder || "Select a sport"}</option>
+                                {sportTypes.map((sport) => (
+                                    <option key={sport.id} value={sport.id}>{sport.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
-                    <label className={styles.formLabel}>
-                        {texts?.description || "Description"}
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel}>{texts?.description || "Description"}</label>
                         <textarea
                             className={styles.formTextarea}
                             name="description"
                             value={clubRequestForm.description}
                             onChange={onFieldChange}
-                            placeholder={
-                                texts?.description_placeholder ||
-                                "Tell us what your club is about and why you want to use our platform"
-                            }
-                            rows={4}
+                            placeholder={texts?.description_placeholder || "Tell us about your club..."}
+                            rows={6} // Made slightly taller since we have more room
                             required
                         />
-                    </label>
+                    </div>
 
                     <div className={styles.formActions}>
                         <button type="submit" className={styles.submitButton} disabled={clubRequestSubmitting}>
-                            {clubRequestSubmitting
-                                ? texts?.submitting || "Submitting..."
-                                : texts?.submit_club_request || "Submit Club Request"}
+                            {clubRequestSubmitting ? texts?.submitting : texts?.submit_club_request}
                         </button>
                     </div>
                 </form>
 
-                {clubRequestMessage.text ? (
+                {clubRequestMessage.text && (
                     <p className={`${styles.notice} ${clubRequestMessage.type === "error" ? styles.noticeError : styles.noticeSuccess}`}>
                         {clubRequestMessage.text}
                     </p>
-                ) : null}
+                )}
             </article>
 
             {/* Right Column: Both types of requests */}
@@ -702,6 +697,7 @@ export function CreateClubTab({
         </section>
     );
 }
+export default CreateClubTab;
 
 export function ManageClubsTab({
     myClubs,
@@ -742,7 +738,7 @@ export function ManageClubsTab({
                                         <div>
                                             <p className={styles.primaryText}>{club.name}</p>
                                             <p className={styles.secondaryText}>
-                                                {club.city} - {club.sport}
+                                                {club.city} - {club.sport_type_id}
                                             </p>
                                         </div>
                                         <button

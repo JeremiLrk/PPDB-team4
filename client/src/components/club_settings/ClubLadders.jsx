@@ -1,10 +1,16 @@
 import { useState } from "react";
+import { useSportTypes } from "@/hooks/useSportTypes"; 
 import styles from "@/style/ClubSettings.module.css";
 
-export function ClubLadders({ ladders = [], onCreate }) {
+export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], ruleSets = [] }) {
+    const { sportTypes, loading: sportsLoading } = useSportTypes();
+
     const [form, setForm] = useState({
         name: "",
         description: "",
+        sport_type_id: "",
+        rule_set_id: "", // Now using these
+        ladder_rating_function_id: "" // Now using these
     });
 
     const [submitting, setSubmitting] = useState(false);
@@ -17,22 +23,29 @@ export function ClubLadders({ ladders = [], onCreate }) {
     };
 
     const handleCreate = async () => {
-        if (!form.name.trim()) return;
+        // Basic validation
+        if (!form.name.trim() || !form.sport_type_id || !form.rule_set_id || !form.ladder_rating_function_id) {
+            alert("Please fill in all required fields");
+            return;
+        }
 
         setSubmitting(true);
+        
+        // We send the IDs (converted to Numbers) to the backend
         await onCreate({
             ...form,
-            ladder_rating_function_id: 1
+            sport_type_id: Number(form.sport_type_id),
+            ruleset_id: Number(form.rule_set_id),
+            ladder_rating_function_id: Number(form.ladder_rating_function_id)
         });
 
-        setForm({ name: "", description: "" });
+        // Reset form
+        setForm({ name: "", description: "", sport_type_id: "", rule_set_id: "", ladder_rating_function_id: "" });
         setSubmitting(false);
     };
 
     return (
         <div className={`${styles.contentGrid} ${styles.contentFade}`}>
-
-            {/* Create */}
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>Create Ladder</h3>
 
@@ -44,6 +57,30 @@ export function ClubLadders({ ladders = [], onCreate }) {
                         value={form.name}
                         onChange={handleChange}
                     />
+
+                    {/* Sport Type Dropdown */}
+                    <select className={styles.formInput} name="sport_type_id" value={form.sport_type_id} onChange={handleChange}>
+                        <option value="" disabled>Select Sport Type</option>
+                        {sportTypes.map(s => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                    </select>
+
+                    {/* Rule Set Dropdown - User sees Name, Form gets ID */}
+                    <select className={styles.formInput} name="rule_set_id" value={form.rule_set_id} onChange={handleChange}>
+                        <option value="" disabled>Select Rule Set</option>
+                        {ruleSets.map(r => (
+                            <option key={r.id} value={r.id}>{r.name}</option>
+                        ))}
+                    </select>
+
+                    {/* Rating Function Dropdown - User sees Name, Form gets ID */}
+                    <select className={styles.formInput} name="ladder_rating_function_id" value={form.ladder_rating_function_id} onChange={handleChange}>
+                        <option value="" disabled>Select Rating System</option>
+                        {ratingFunctions.map(rf => (
+                            <option key={rf.id} value={rf.id}>{rf.name}</option>
+                        ))}
+                    </select>
 
                     <textarea
                         className={styles.formTextarea}
@@ -85,7 +122,6 @@ export function ClubLadders({ ladders = [], onCreate }) {
                     </ul>
                 )}
             </article>
-
         </div>
     );
 }

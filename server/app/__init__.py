@@ -20,6 +20,9 @@ from server.app.routes.health_routes import api
 from server.app.routes.root_routes import root_bp
 from server.app.routes.ladder_routes import ladder_bp
 from server.app.routes.ladders_routes import ladders_bp
+from server.app.routes.rule_set_routes import rule_set_bp
+from server.app.routes.rating_function_routes import rating_function_bp
+from server.app.routes.weather_routes import weather
 from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
@@ -87,6 +90,9 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(match_rule_bp)
     app.register_blueprint(match_rule_set_bp)
     app.register_blueprint(match_proposals_bp)
+    app.register_blueprint(rule_set_bp)
+    app.register_blueprint(rating_function_bp)
+    app.register_blueprint(weather)
 
 
 def _register_cli_commands(app: Flask):

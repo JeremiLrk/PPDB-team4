@@ -5,6 +5,7 @@ import useClubs from "@/hooks/useClubs.js";
 import { notify } from "@/hooks/useNotify.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 import { useTeams } from "@/hooks/teams/useTeams.js";
+import { useSportTypes } from "@/hooks/useSportTypes.js"
 
 const DEFAULT_THEME = "dark"
 const THEME_STORAGE_KEY = "dashboard_theme"
@@ -12,7 +13,7 @@ const THEME_STORAGE_KEY = "dashboard_theme"
 const EMPTY_CLUB_REQUEST_FORM = {
     name: "",
     city: "",
-    sport: "",
+    sport_type_id: "",
     description: "",
 }
 const EMPTY_AVAILABILITY_FORM = {
@@ -69,6 +70,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
     const navigate = useNavigate();
     const { dashboardData, loading, error } = useDashboard();
     const { currentUser, setCurrentUser } = useCurrentUserContext();
+    const { sportTypes, loading: sloading, error: serror } = useSportTypes();
     const {
         clubs: discoverClubs,
         loading: discoverLoading,
@@ -471,7 +473,7 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         const payload = {
             name: trimmedName,
             city: clubRequestForm.city.trim(),
-            sport: clubRequestForm.sport.trim(),
+            sport_type_id: clubRequestForm.sport_type_id.trim(),
             description: clubRequestForm.description.trim(),
         }
 
@@ -583,5 +585,6 @@ export function useDashboardWorkspace(setUser, texts = {}) {
         onAvailabilityFieldChange,
         onAvailabilitySubmit,
         onAvailabilityDelete,
+        sportTypes,
     };
 }

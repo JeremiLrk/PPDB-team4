@@ -39,7 +39,16 @@ function ClubSidebar({ activeTab, onTabChange }) {
                         
                     </button>
 
-                                        <button
+                    <button
+                        className={`${styles.ladderButton} ${
+                            activeTab === "owners" ? "bg-indigo-500/20 border-l-4 border-indigo-500" : ""
+                        }`}
+                        onClick={() => onTabChange("owners")}
+                    >
+                        owners
+                    </button>
+
+                    <button
                         className={styles.ladderButton}
                         onClick={() => navigate(`/clubs/${clubId}`)}
                     >

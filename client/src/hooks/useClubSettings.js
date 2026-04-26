@@ -1,65 +1,70 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSportTypes } from "@/hooks/useSportTypes.js"
 
 export function useClubSettings(clubId) {
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    const [activeTab, setActiveTab] = useState("overview");
+    const { sportTypes, loading: sloading, error: serror } = useSportTypes();
 
     const [club, setClub] = useState(null);
-
     const [formData, setFormData] = useState({
         name: "",
         description: "",
         city: "",
-        sport: "",
+        sport_type_id: "", // Matches the name attribute in our select
     });
 
     const [members, setMembers] = useState([]);
     const [ladders, setLadders] = useState([]);
+    const [owners, setOwners] = useState([]);
+
+    const [ratingFunctions, setRatingFunctions] = useState([]);
+    const [ruleSets, setRuleSets] = useState([]);
 
     const [updating, setUpdating] = useState(false);
     const [updateMessage, setUpdateMessage] = useState(null);
 
+    // --- ADDED: Tab State Logic ---
+    const [activeTab, setActiveTab] = useState("general");
+
     useEffect(() => {
         async function fetchClubData() {
             try {
-                const [clubRes, membersRes, laddersRes] = await Promise.all([
-                    fetch(`/api/clubs/${clubId}`, {
-                        credentials: "include",
-                    }),
-                    fetch(`/api/clubs/${clubId}/members`, {
-                        credentials: "include",
-                    }),
-                    fetch(`/api/clubs/${clubId}/ladders`, {
-                        credentials: "include",
-                    }),
+                const [clubRes, membersRes, ownersRes, laddersRes, ratingsRes, rulesRes] = await Promise.all([
+                    fetch(`/api/clubs/${clubId}`, { credentials: "include" }),
+                    fetch(`/api/clubs/${clubId}/members`, { credentials: "include" }),
+                    fetch(`/api/clubs/${clubId}/owners`, { credentials: "include" }),
+                    fetch(`/api/clubs/${clubId}/ladders`, { credentials: "include" }),
+                    fetch(`/api/rating-functions`), 
+                    fetch(`/api/rule-sets`)
                 ]);
 
                 const clubData = await clubRes.json();
                 const membersData = await membersRes.json();
+                const ownersData = await ownersRes.json();
                 const laddersData = await laddersRes.json();
+                const ratingsData = await ratingsRes.json();
+                const rulesData = await rulesRes.json();
 
                 if (!clubRes.ok) throw new Error(clubData.message);
-                if (!membersRes.ok) throw new Error(membersData.message);
-                if (!laddersRes.ok) throw new Error(laddersData.message);
 
                 setClub(clubData.club);
-
+                
                 setFormData({
                     name: clubData.club.name || "",
                     description: clubData.club.description || "",
                     city: clubData.club.city || "",
-                    sport: clubData.club.sport || "",
+                    sport_type_id: clubData.club.sport_type_id || "",
                 });
 
                 setMembers(membersData.members || []);
-                setLadders(laddersData.ladders || []);
-
-                console.log(laddersData);
+                setOwners(ownersData.owners || []);
+                setLadders(Array.isArray(laddersData) ? laddersData : (laddersData.ladders || []));
+                setRatingFunctions(ratingsData.ratingFunctions || []);
+                setRuleSets(rulesData.ruleSets || []);
 
             } catch (err) {
                 setError(err.message);
@@ -68,7 +73,7 @@ export function useClubSettings(clubId) {
             }
         }
 
-        fetchClubData();
+        if (clubId) fetchClubData();
     }, [clubId]);
 
     const handleChange = (e) => {
@@ -80,7 +85,6 @@ export function useClubSettings(clubId) {
 
     const updateClub = async (e) => {
         e.preventDefault();
-
         setUpdating(true);
         setUpdateMessage(null);
 
@@ -88,20 +92,15 @@ export function useClubSettings(clubId) {
             const res = await fetch(`/api/clubs/${clubId}`, {
                 method: "PUT",
                 credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
 
             const data = await res.json();
-
             if (!res.ok) throw new Error(data.message);
 
             setClub(prev => ({ ...prev, ...formData }));
-
             setUpdateMessage({ type: "success", text: "Saved successfully" });
-
         } catch (err) {
             setUpdateMessage({ type: "error", text: err.message });
         } finally {
@@ -166,6 +165,56 @@ export function useClubSettings(clubId) {
         }
     };
 
+    const addOwner = async (ownerId) => {
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/owners`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ owner_id: ownerId }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            // Refresh owners list or append the new one
+            setOwners(prev => [...prev, data.owner]);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const removeOwner = async (ownerId) => {
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/owners/${ownerId}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message);
+            }
+            setOwners(prev => prev.filter(o => o.id !== ownerId));
+        } catch (err) {
+            alert(err.message); // Use alert for specific owner errors (like self-deletion)
+        }
+    };
+
+    const searchAccounts = async (query) => {
+        if (!query || query.length < 3) return [];
+        
+        try {
+            const res = await fetch(`/api/accounts/search?q=${encodeURIComponent(query)}`, {
+                credentials: "include"
+            });
+            const data = await res.json();
+            return data.accounts || [];
+        } catch (err) {
+            console.error("Search failed", err);
+            return [];
+        }
+    };
+
+
     return {
         loading,
         error,
@@ -185,8 +234,17 @@ export function useClubSettings(clubId) {
         addMember,
         removeMember,
 
+        owners,
+        addOwner,
+        removeOwner,
+        searchAccounts,
+
         ladders,
         createLadder,
+
+        ratingFunctions,
+        ruleSets,
+        sportTypes,
 
         goBack: () => navigate("/dashboard"),
     };

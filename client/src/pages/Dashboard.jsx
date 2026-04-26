@@ -138,6 +138,7 @@ function Dashboard() {
                         incomingJoinRequests={workspace.incomingJoinRequests}
                         decideJoinrequest={workspace.decideJoinrequest}
                         isClubOwner={workspace.isClubOwner}
+                        sportTypes={workspace.sportTypes}
                     />
                 ) : null}
 

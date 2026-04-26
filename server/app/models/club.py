@@ -58,6 +58,7 @@ class Club(db.Model):
             "id":           self.id,
             "name":         self.name,
             "description":  self.description,
+            "sport_type_id": self.sport_type_id,
             "sport_id":     self.sport_type_id,
             "sport":        self.sport,
             "city":         self.city,

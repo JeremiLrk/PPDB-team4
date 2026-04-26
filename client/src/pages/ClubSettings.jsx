@@ -7,6 +7,7 @@ import ClubOverview from "@/components/club_settings/ClubOverview.jsx";
 import ClubGeneral from "@/components/club_settings/ClubGeneral.jsx";
 import ClubLadders from "@/components/club_settings/ClubLadders.jsx";
 import ClubMembers from "@/components/club_settings/ClubMembers.jsx";
+import ClubOwners from "@/components/club_settings/ClubOwners.jsx";
 
 
 function ClubSettings() {
@@ -38,6 +39,7 @@ function ClubSettings() {
                         onSubmit={settings.updateClub}
                         updating={settings.updating}
                         updateMessage={settings.updateMessage}
+                        sportTypes={settings.sportTypes}
                     />
                 )}
 
@@ -45,6 +47,8 @@ function ClubSettings() {
                     <ClubLadders
                         ladders={settings.ladders}
                         onCreate={settings.createLadder}
+                        ratingFunctions={settings.ratingFunctions}
+                        ruleSets={settings.ruleSets}
                     />
                 )}
 
@@ -53,6 +57,15 @@ function ClubSettings() {
                         members={settings.members}
                         onAdd={settings.addMember}
                         onRemove={settings.removeMember}
+                    />
+                )}
+
+                {settings.activeTab === "owners" && (
+                    <ClubOwners
+                        owners={settings.owners}
+                        onAdd={settings.addOwner}
+                        onRemove={settings.removeOwner}
+                        searchAccounts={settings.searchAccounts}
                     />
                 )}
 

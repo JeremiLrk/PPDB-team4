@@ -9,13 +9,21 @@ from server.app.models.club_owner_club import ClubOwnerClub
 from server.app.models.club_player import ClubPlayer
 from server.app.models.team import TeamManager
 from server.app.routes.dashboard_routes import _get_current_user_id_from_cookie
+from sqlalchemy import or_
 
 clubs_bp = Blueprint("clubs", __name__, url_prefix="/api")
 
 @clubs_bp.get("/clubs")
 def list_clubs():
     db_clubs = Club.query.order_by(Club.name.asc()).all()
-    clubs = [{"id": club.id, "name": club.name, "description": club.description, "sport": club.sport, "city": club.city} for club in db_clubs]
+    clubs = [{
+        "id": club.id,
+        "name": club.name,
+        "description": club.description,
+        "sport_type_id": club.sport_type_id,
+        "sport": club.sport,
+        "city": club.city,
+    } for club in db_clubs]
     return jsonify({"clubs": clubs}), 200
 
 @clubs_bp.get("/clubs/<int:club_id>")
@@ -24,7 +32,14 @@ def get_club(club_id: int):
     if not club:
         return jsonify({"message": "Club not found"}), 404
     
-    return jsonify({"club": {"id": club.id, "name": club.name, "description": club.description, "sport": club.sport, "city": club.city}}), 200
+    return jsonify({"club": {
+        "id": club.id,
+        "name": club.name,
+        "description": club.description,
+        "sport_type_id": club.sport_type_id,
+        "sport": club.sport,
+        "city": club.city,
+    }}), 200
 
 @clubs_bp.get("/clubs/<int:club_id>/is_manager")
 def check_if_manager(club_id: int):
@@ -121,31 +136,6 @@ def create_club():
         "club": {"id": new_club.id, "name": new_club.name}
     }), 201
 
-@clubs_bp.post("/clubs/<int:club_id>/managers")
-def add_club_manager(club_id: int):
-    # 1. Check of de huidige gebruiker zelf manager is (beveiliging!)
-    token = request.cookies.get("access_token")
-    current_user = verify_user(token)
-    club = Club.query.get_or_404(club_id)
-    
-    if not current_user or current_user not in club.managers:
-        return jsonify({"message": "Niet geautoriseerd"}), 403
-
-    # 2. Zoek de nieuwe manager op via email
-    data = request.get_json()
-    new_manager = Account.query.filter_by(email=data.get("email")).first()
-
-    if not new_manager:
-        return jsonify({"message": "Gebruiker niet gevonden"}), 404
-
-    # 3. Voeg toe aan de relatie
-    if new_manager not in club.managers:
-        club.managers.append(new_manager)
-        db.session.commit()
-        return jsonify({"message": "Manager toegevoegd"}), 200
-    
-    return jsonify({"message": "Gebruiker is al manager"}), 400
-
 @clubs_bp.get("/clubs/<int:club_id>/ladders")
 def get_club_ladders(club_id: int):
     # Haal alle ladders op die bij deze specifieke club horen
@@ -180,7 +170,7 @@ def update_club(club_id: int):
     club.name = data.get("name", club.name)
     club.description = data.get("description", club.description)
     club.city = data.get("city", club.city)
-    club.sport = data.get("sport", club.sport)
+    club.sport_type_id = data.get("sport_type_id", club.sport_type_id)
 
     db.session.commit()
 
@@ -321,3 +311,138 @@ def create_ladder(club_id: int):
             "club_id": ladder.club_id
         }
     }), 201
+
+@clubs_bp.get("/clubs/<int:club_id>/owners")
+def get_club_owners(club_id: int):
+    """List all owners/managers of a club."""
+    current_user_id = _get_current_user_id_from_cookie()
+    if not current_user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    owners = (
+        db.session.query(Account)
+        .join(ClubOwner, ClubOwner.id == Account.id)
+        .join(ClubOwnerClub, ClubOwnerClub.club_owner_id == ClubOwner.id)
+        .filter(ClubOwnerClub.club_id == club_id)
+        .all()
+    )
+
+    return jsonify({
+        "owners": [
+            {"id": owner.id, "email": owner.email, "name": owner.first_name + " " + owner.last_name} 
+            for owner in owners
+        ]
+    }), 200
+
+@clubs_bp.post("/clubs/<int:club_id>/owners")
+def add_club_owner(club_id: int):
+    """Add a new owner to the club by their Account ID."""
+    current_user_id = _get_current_user_id_from_cookie()
+    data = request.get_json() or {}
+    target_owner_id = data.get("owner_id")
+
+    if not current_user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+    
+    if not target_owner_id:
+        return jsonify({"message": "Owner ID is required"}), 400
+
+    club = Club.query.get(club_id)
+    if not club:
+        return jsonify({"message": "Club not found"}), 404
+
+    requester_owner = ClubOwnerClub.query.filter_by(
+        club_owner_id=current_user_id, club_id=club_id
+    ).first()
+    if not requester_owner:
+        return jsonify({"message": "Forbidden"}), 403
+
+    target_account = Account.query.get(target_owner_id)
+    if not target_account:
+        return jsonify({"message": "User not found"}), 404
+
+    target_manager = TeamManager.query.get(target_owner_id)
+    if not target_manager:
+        target_manager = TeamManager(id=target_owner_id)
+        db.session.add(target_manager)
+        db.session.flush()
+
+    owner_profile = ClubOwner.query.get(target_owner_id)
+    if not owner_profile:
+        owner_profile = ClubOwner(id=target_owner_id)
+        db.session.add(owner_profile)
+        db.session.flush()
+
+    existing_link = ClubOwnerClub.query.filter_by(
+        club_owner_id=target_owner_id, club_id=club_id
+    ).first()
+    if existing_link:
+        return jsonify({"message": "User is already an owner"}), 400
+
+    new_link = ClubOwnerClub(club_owner_id=target_owner_id, club_id=club_id)
+    db.session.add(new_link)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Owner added successfully",
+        "owner": {"id": target_account.id, "email": target_account.email}
+    }), 201
+
+@clubs_bp.delete("/clubs/<int:club_id>/owners/<int:owner_id>")
+def remove_club_owner(club_id: int, owner_id: int):
+    """Remove an owner from the club."""
+    current_user_id = _get_current_user_id_from_cookie()
+    if not current_user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    if current_user_id == owner_id:
+        return jsonify({"message": "You cannot remove yourself"}), 400
+
+    club = Club.query.get(club_id)
+    if not club:
+        return jsonify({"message": "Club not found"}), 404
+
+    requester_owner = ClubOwnerClub.query.filter_by(
+        club_owner_id=current_user_id, club_id=club_id
+    ).first()
+    if not requester_owner:
+        return jsonify({"message": "Forbidden"}), 403
+
+    target_link = ClubOwnerClub.query.filter_by(
+        club_owner_id=owner_id, club_id=club_id
+    ).first()
+
+    if not target_link:
+        return jsonify({"message": "Owner not found in this club"}), 404
+
+    db.session.delete(target_link)
+    db.session.commit()
+
+    return jsonify({"message": "Owner removed successfully"}), 200
+@clubs_bp.get("/accounts/search")
+def search_accounts():
+    query = request.args.get("q", "").strip()
+    
+    if len(query) < 3:
+        return jsonify({"accounts": []}), 200
+
+    search_pattern = f"%{query}%"
+
+    accounts = Account.query.filter(
+        or_(
+            Account.email.ilike(search_pattern),
+            Account.first_name.ilike(search_pattern),
+            Account.last_name.ilike(search_pattern)
+        )
+    ).limit(10).all()
+
+    return jsonify({
+        "accounts": [
+            {
+                "id": a.id,
+                "email": a.email,
+                "name": f"{a.first_name} {a.last_name}".strip() or "Unknown User"
+            } 
+            for a in accounts
+        ]
+    }), 200
