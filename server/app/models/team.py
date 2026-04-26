@@ -92,7 +92,9 @@ class Team(db.Model):
             "id":          self.id,
             "name":        self.name,
             "clubId":      self.club_id,
+            "clubName":    self.club.name if self.club else None,
             "sportTypeId": self.sport_type_id,
+            "sportName":   self.sport_type.name if self.sport_type else None,
         }
 
 

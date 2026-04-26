@@ -52,8 +52,8 @@ export default function TeamDetail() {
                     <div>
                         <h1 className={styles.name}>{team.name}</h1>
                         <div className={styles.tags}>
-                            <Tag label={team.clubId     ? `Club #${team.clubId}`        : "Independent"} muted={!team.clubId} />
-                            <Tag label={team.sportTypeId ? `Sport #${team.sportTypeId}` : "No sport"}    muted={!team.sportTypeId} />
+                            <Tag label={team.clubName     ? team.clubName              : "Independent"} muted={!team.clubId} />
+                            <Tag label={team.sportName    ? team.sportName             : "No sport"}    muted={!team.sportTypeId} />
                             <Tag label={`ID: ${team.id}`} muted />
                         </div>
                     </div>
@@ -63,9 +63,9 @@ export default function TeamDetail() {
 
             {/* Details grid */}
             <div className={styles.grid}>
-                <InfoCard label="Club" value={team.clubId     ? `#${team.clubId}`      : "—"} />
-                <InfoCard label="Sport Type" value={team.sportTypeId ? `#${team.sportTypeId}` : "—"} />
-                <InfoCard label="Team ID" value={`#${team.id}`} />
+                <InfoCard label="Club"       value={team.clubName    ?? "—"} />
+                <InfoCard label="Sport Type" value={team.sportName   ?? "—"} />
+                <InfoCard label="Team ID"    value={`#${team.id}`} />
             </div>
 
             {/* Players */}

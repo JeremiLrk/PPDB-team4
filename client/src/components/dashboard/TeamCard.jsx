@@ -31,10 +31,10 @@ export default function TeamCard({ team, texts, currentUser, onClick }) {
             <div>
                 <p className={commonStyles.primaryText}>{team.name}</p>
                 <p className={commonStyles.secondaryText}>
-                    {team.clubId
-                        ? `Club #${team.clubId}`
+                    {team.clubName
+                        ? team.clubName
                         : texts?.independent_team || "Independent"}
-                    {team.sportTypeId ? ` · Sport #${team.sportTypeId}` : ""}
+                    {team.sportName ? ` · ${team.sportName}` : ""}
                 </p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>

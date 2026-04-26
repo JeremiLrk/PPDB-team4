@@ -47,9 +47,9 @@ export default function TeamSettings() {
 
     const { team,    loading: teamLoading,    error: teamError    } = useTeam(teamId);
     const { players, loading: playersLoading, error: playersError,
-            total:   playersTotal, reload: reloadPlayers }           = useTeamPlayers(teamId);
+        total:   playersTotal, reload: reloadPlayers }           = useTeamPlayers(teamId);
     const { managers, loading: managersLoading, error: managersError,
-            total:   managersTotal, reload: reloadManagers }         = useTeamManagers(teamId);
+        total:   managersTotal, reload: reloadManagers }         = useTeamManagers(teamId);
 
     const [displayName, setDisplayName] = useState(null);
     const teamName = displayName ?? team?.name ?? "";
@@ -132,7 +132,8 @@ export default function TeamSettings() {
                             </div>
                             <div className={styles.tags}>
                                 <Tag label="Settings" accent />
-                                <Tag label={team.clubId ? `Club #${team.clubId}` : "Independent"} muted={!team.clubId} />
+                                <Tag label={team.clubName  ? team.clubName   : "Independent"} muted={!team.clubId} />
+                                <Tag label={team.sportName ? team.sportName  : "No sport"}    muted={!team.sportTypeId} />
                                 <Tag label={`ID: ${team.id}`} muted />
                             </div>
                         </div>

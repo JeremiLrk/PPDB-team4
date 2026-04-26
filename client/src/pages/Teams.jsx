@@ -132,13 +132,13 @@ function TeamCard({ team, onClick }) {
             <div className={styles.cardAccent} />
             <p className={styles.cardName}>{team.name}</p>
             <div className={styles.cardMeta}>
-                {team.sportTypeId ? (
-                    <span className={styles.badge}>#{team.sportTypeId}</span>
+                {team.sportName ? (
+                    <span className={styles.badge}>{team.sportName}</span>
                 ) : (
                     <span className={`${styles.badge} ${styles.badgeMuted}`}>No sport</span>
                 )}
-                {team.clubId ? (
-                    <span className={styles.badge}>Club #{team.clubId}</span>
+                {team.clubName ? (
+                    <span className={styles.badge}>{team.clubName}</span>
                 ) : (
                     <span className={`${styles.badge} ${styles.badgeMuted}`}>Independent</span>
                 )}
