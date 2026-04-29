@@ -4,7 +4,7 @@ from datetime import datetime
 import click
 from flask import Flask
 
-from server.app.models.match_rule import MatchRuleSet
+from server.app.models.match_rule import MatchRuleSet  # noqa: F401 – needed for db.create_all()
 from server.app.routes.sport_type_routes import sport_type_bp
 from server.app.routes.team import team_bp
 from server.app.routes.match_rule import match_rule_bp, match_rule_set_bp
@@ -31,6 +31,7 @@ from server.app.models.account import Account, AccountRole
 from server.app.models.ladder import LadderRatingFunction
 from server.app.models.match import MatchStatus
 from server.app.models.venue_type import VenueType
+from server.app.models.sport_type import SportType
 from server.app.services.weekly_match_proposal_service import (
     generate_weekly_match_proposals,
     next_week_start,
@@ -247,5 +248,10 @@ def _seed_reference_tables():
     seed_table(
         model=VenueType,
         seeds_file="server/seeds/venue_type.json",
+        unique_fields=["name"],
+    )
+    seed_table(
+        model=SportType,
+        seeds_file="server/seeds/sport_type.json",
         unique_fields=["name"],
     )
