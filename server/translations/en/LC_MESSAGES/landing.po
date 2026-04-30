@@ -1,0 +1,63 @@
+# en — landing
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "landing.kicker"
+msgstr "Club ladder platform"
+
+msgid "landing.explore_clubs"
+msgstr "Explore clubs"
+
+msgid "landing.open_dashboard"
+msgstr "Open dashboard"
+
+msgid "landing.how_it_works"
+msgstr "How NetRank works"
+
+msgid "landing.as_player"
+msgstr "As a Player"
+
+msgid "landing.as_manager"
+msgstr "As a Club Manager"
+
+msgid "landing.step_label"
+msgstr "Step"
+
+msgid "landing.player_step_1_title"
+msgstr "Create account"
+
+msgid "landing.player_step_1_description"
+msgstr "Sign up to get access to your dashboard."
+
+msgid "landing.player_step_2_title"
+msgstr "Find clubs and request to join"
+
+msgid "landing.player_step_2_description"
+msgstr "Search clubs and send a join request to the one you want."
+
+msgid "landing.player_step_3_title"
+msgstr "Get accepted and placed in ladders"
+
+msgid "landing.player_step_3_description"
+msgstr "A club manager accepts your request and adds you to the right ladders."
+
+msgid "landing.manager_step_1_title"
+msgstr "Create account"
+
+msgid "landing.manager_step_1_description"
+msgstr "Sign up to get access to your dashboard."
+
+msgid "landing.manager_step_2_title"
+msgstr "Request your own club"
+
+msgid "landing.manager_step_2_description"
+msgstr "Submit your club creation request."
+
+msgid "landing.manager_step_3_title"
+msgstr "Manage club ladders"
+
+msgid "landing.manager_step_3_description"
+msgstr "Create, update, and manage ladders and members in your club."
+

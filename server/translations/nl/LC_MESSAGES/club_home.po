@@ -1,0 +1,27 @@
+# nl — club_home
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "club_home.loading_ladders"
+msgstr "Ladders laden..."
+
+msgid "club_home.loading_club"
+msgstr "Club laden..."
+
+msgid "club_home.error_loading_club"
+msgstr "Fout bij laden van club"
+
+msgid "club_home.tagline"
+msgstr "Speel. Challenge. Klim op de ladder."
+
+msgid "club_home.subtagline"
+msgstr "Het competitieve rankingsysteem voor tennis- en padelclubs."
+
+msgid "club_home.log_in"
+msgstr "Inloggen"
+
+msgid "club_home.manage_club"
+msgstr "Club beheren"
+

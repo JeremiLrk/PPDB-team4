@@ -1,0 +1,126 @@
+# en — authorization
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "authorization.log_in"
+msgstr "Log in"
+
+msgid "authorization.register"
+msgstr "Register"
+
+msgid "authorization.email"
+msgstr "Email"
+
+msgid "authorization.password"
+msgstr "Password"
+
+msgid "authorization.placeholder_email"
+msgstr "Enter your email"
+
+msgid "authorization.placeholder_password"
+msgstr "Enter your password"
+
+msgid "authorization.no_account"
+msgstr "Don't have an account?"
+
+msgid "authorization.has_account"
+msgstr "Already have an account?"
+
+msgid "authorization.as_guest"
+msgstr "Continue as guest"
+
+msgid "authorization.create_account"
+msgstr "Create account"
+
+msgid "authorization.log_out_success"
+msgstr "Logged out"
+
+msgid "authorization.log_out_failed"
+msgstr "Logout failed"
+
+msgid "authorization.forgot_password"
+msgstr "Forgot Password?"
+
+msgid "authorization.first_name"
+msgstr "First Name"
+
+msgid "authorization.placeholder_first_name"
+msgstr "Enter your first name"
+
+msgid "authorization.last_name"
+msgstr "Last Name"
+
+msgid "authorization.placeholder_last_name"
+msgstr "Enter your last name"
+
+msgid "authorization.date_of_birth"
+msgstr "Date of Birth"
+
+msgid "authorization.forgot_title"
+msgstr "Forgot your password"
+
+msgid "authorization.forgot_subtitle"
+msgstr "Enter your email and we'll send you a reset link."
+
+msgid "authorization.send_reset_link"
+msgstr "Send reset link"
+
+msgid "authorization.remembered_password"
+msgstr "Remembered your password?"
+
+msgid "authorization.back_to_login"
+msgstr "Back to login"
+
+msgid "authorization.reset_link_sent"
+msgstr "Check your inbox for the password reset link."
+
+msgid "authorization.reset_failed"
+msgstr "Password reset failed"
+
+msgid "authorization.reset_title"
+msgstr "Reset your password"
+
+msgid "authorization.new_password"
+msgstr "New password"
+
+msgid "authorization.repeat_password"
+msgstr "Repeat password"
+
+msgid "authorization.placeholder_new_password"
+msgstr "Enter your new password"
+
+msgid "authorization.placeholder_repeat_password"
+msgstr "Repeat your new password"
+
+msgid "authorization.reset_password"
+msgstr "Reset Password"
+
+msgid "authorization.passwords_do_not_match"
+msgstr "Passwords do not match"
+
+msgid "authorization.password_reset_success"
+msgstr "Password has been reset."
+
+msgid "authorization.verify_title"
+msgstr "Email verification"
+
+msgid "authorization.verify_pending"
+msgstr "Verifying your email"
+
+msgid "authorization.verify_success"
+msgstr "Email verified successfully"
+
+msgid "authorization.verify_failed"
+msgstr "Verification link is invalid or expired"
+
+msgid "authorization.account"
+msgstr "Account"
+
+msgid "authorization.profile"
+msgstr "Profile"
+
+msgid "authorization.log_out"
+msgstr "Log out"
+

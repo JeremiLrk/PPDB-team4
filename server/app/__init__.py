@@ -11,7 +11,7 @@ from server.app.routes.match_rule import match_rule_bp, match_rule_set_bp
 from server.app.routes.matcher import matches_bp
 from server.app.routes.match_routes import match_proposals_bp
 from server.config import SECRET_KEY, config_data
-from server.extensions import db
+from server.extensions import db, babel
 from server.app.routes.auth_routes import auth_bp
 from server.app.routes.availability_routes import availability_bp
 from server.app.routes.clubs_routes import clubs_bp
@@ -23,7 +23,6 @@ from server.app.routes.ladders_routes import ladders_bp
 from server.app.routes.rule_set_routes import rule_set_bp
 from server.app.routes.rating_function_routes import rating_function_bp
 from server.app.routes.weather_routes import weather
-from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
 from server.app.models.page_text import PageText
@@ -45,8 +44,20 @@ def create_app():
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = SECRET_KEY
+    app.config["BABEL_DEFAULT_LOCALE"] = "en"
+    app.config["BABEL_SUPPORTED_LOCALES"] = ["en", "nl"]
+    app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
 
     db.init_app(app)
+
+    def get_locale():
+        from flask import request
+        lang = request.args.get("lang")
+        if lang in app.config["BABEL_SUPPORTED_LOCALES"]:
+            return lang
+        return app.config["BABEL_DEFAULT_LOCALE"]
+
+    babel.init_app(app, locale_selector=get_locale)
 
     should_reset_db = os.getenv("RESET_DB_ON_STARTUP", "").lower() in {"1", "true", "yes"}
     if should_reset_db:
@@ -84,7 +95,6 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(matches_bp)
     app.register_blueprint(clubs_bp)
     app.register_blueprint(dashboard_bp)
-    app.register_blueprint(texts)
     app.register_blueprint(team_bp)
     app.register_blueprint(sport_type_bp)
     app.register_blueprint(match_rule_bp)

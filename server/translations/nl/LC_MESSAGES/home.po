@@ -1,0 +1,24 @@
+# nl — home
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "home.home"
+msgstr "Thuis"
+
+msgid "home.net_rank"
+msgstr "NetRank"
+
+msgid "home.padel"
+msgstr "Padel"
+
+msgid "home.juniors"
+msgstr "Junioren"
+
+msgid "home.mens_tennis"
+msgstr "Heren tennis"
+
+msgid "home.womens_tennis"
+msgstr "Dames tennis"
+

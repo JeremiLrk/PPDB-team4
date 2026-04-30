@@ -1,0 +1,42 @@
+# nl — team_detail
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "team_detail.loading_team"
+msgstr "Team laden..."
+
+msgid "team_detail.back_to_teams"
+msgstr "Terug naar teams"
+
+msgid "team_detail.back_to_team"
+msgstr "Terug naar team"
+
+msgid "team_detail.club_label"
+msgstr "Club"
+
+msgid "team_detail.sport_label"
+msgstr "Sport"
+
+msgid "team_detail.team_id_label"
+msgstr "Team-ID"
+
+msgid "team_detail.independent_team"
+msgstr "Onafhankelijk"
+
+msgid "team_detail.no_sport"
+msgstr "Geen sport"
+
+msgid "team_detail.players_title"
+msgstr "Spelers"
+
+msgid "team_detail.loading_players"
+msgstr "Spelers laden..."
+
+msgid "team_detail.retry"
+msgstr "Opnieuw proberen"
+
+msgid "team_detail.no_players"
+msgstr "Nog geen spelers in dit team."
+

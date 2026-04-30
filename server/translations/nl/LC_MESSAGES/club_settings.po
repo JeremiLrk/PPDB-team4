@@ -1,0 +1,210 @@
+# nl — club_settings
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "club_settings.loading"
+msgstr "Clubinstellingen laden..."
+
+msgid "club_settings.sidebar_title"
+msgstr "Instellingen"
+
+msgid "club_settings.tab_general"
+msgstr "Algemene info"
+
+msgid "club_settings.tab_ladders"
+msgstr "Ladders"
+
+msgid "club_settings.tab_members"
+msgstr "Leden"
+
+msgid "club_settings.tab_rules"
+msgstr "Wedstrijdregels"
+
+msgid "club_settings.tab_owners"
+msgstr "Eigenaren"
+
+msgid "club_settings.tab_home"
+msgstr "Naar clubhome"
+
+msgid "club_settings.overview_title"
+msgstr "Clubinformatie"
+
+msgid "club_settings.overview_name_label"
+msgstr "Naam"
+
+msgid "club_settings.overview_city_label"
+msgstr "Stad"
+
+msgid "club_settings.overview_sport_label"
+msgstr "Sport"
+
+msgid "club_settings.overview_description_title"
+msgstr "Omschrijving"
+
+msgid "club_settings.overview_no_description"
+msgstr "Geen omschrijving opgegeven."
+
+msgid "club_settings.general_title"
+msgstr "Algemene instellingen"
+
+msgid "club_settings.club_name"
+msgstr "Clubnaam"
+
+msgid "club_settings.city"
+msgstr "Stad"
+
+msgid "club_settings.sport"
+msgstr "Sport"
+
+msgid "club_settings.choose_sport"
+msgstr "Kies een sport"
+
+msgid "club_settings.description"
+msgstr "Omschrijving"
+
+msgid "club_settings.save_changes"
+msgstr "Wijzigingen opslaan"
+
+msgid "club_settings.saving"
+msgstr "Opslaan..."
+
+msgid "club_settings.saved_successfully"
+msgstr "Succesvol opgeslagen"
+
+msgid "club_settings.could_not_save_club"
+msgstr "Kon club niet opslaan."
+
+msgid "club_settings.ladder_create_title"
+msgstr "Ladder aanmaken"
+
+msgid "club_settings.ladder_name_placeholder"
+msgstr "Laddernaam"
+
+msgid "club_settings.choose_sport_type"
+msgstr "Kies een sporttype"
+
+msgid "club_settings.choose_rule_set"
+msgstr "Kies een regelset"
+
+msgid "club_settings.choose_rating_function"
+msgstr "Kies ratingsysteem"
+
+msgid "club_settings.ladder_description_placeholder"
+msgstr "Omschrijving"
+
+msgid "club_settings.create_ladder"
+msgstr "Ladder aanmaken"
+
+msgid "club_settings.creating_ladder"
+msgstr "Aanmaken..."
+
+msgid "club_settings.ladders_title"
+msgstr "Ladders"
+
+msgid "club_settings.no_ladders"
+msgstr "Nog geen ladders."
+
+msgid "club_settings.no_ladder_description"
+msgstr "Geen omschrijving"
+
+msgid "club_settings.members_title"
+msgstr "Leden"
+
+msgid "club_settings.no_members"
+msgstr "Nog geen leden."
+
+msgid "club_settings.remove"
+msgstr "Verwijderen"
+
+msgid "club_settings.owners_add_title"
+msgstr "Nieuwe eigenaar toevoegen"
+
+msgid "club_settings.owners_search_placeholder"
+msgstr "Zoek op naam of e-mail..."
+
+msgid "club_settings.owners_no_users"
+msgstr "Geen gebruikers gevonden."
+
+msgid "club_settings.owners_title"
+msgstr "Huidige eigenaren"
+
+msgid "club_settings.owners_no_owners"
+msgstr "Nog geen eigenaren."
+
+msgid "club_settings.owner_label"
+msgstr "Eigenaar"
+
+msgid "club_settings.add"
+msgstr "Toevoegen"
+
+msgid "club_settings.rules_loading_title"
+msgstr "Wedstrijdregels"
+
+msgid "club_settings.rules_loading_text"
+msgstr "Regels laden..."
+
+msgid "club_settings.rules_library_title"
+msgstr "Regelbibliotheek"
+
+msgid "club_settings.rule_name_placeholder"
+msgstr "Regelnaam"
+
+msgid "club_settings.rule_description_placeholder"
+msgstr "Omschrijving"
+
+msgid "club_settings.use_by_others"
+msgstr "Door anderen te gebruiken"
+
+msgid "club_settings.add_rule"
+msgstr "Regel toevoegen"
+
+msgid "club_settings.adding_rule"
+msgstr "Bezig met aanmaken..."
+
+msgid "club_settings.available_rules"
+msgstr "Beschikbare regels"
+
+msgid "club_settings.no_rules"
+msgstr "Nog geen regels."
+
+msgid "club_settings.build_rule_set_title"
+msgstr "Regelset samenstellen"
+
+msgid "club_settings.rule_set_name_placeholder"
+msgstr "Naam van regelset"
+
+msgid "club_settings.select_rules"
+msgstr "Selecteer regels om op te nemen"
+
+msgid "club_settings.save_rule_set"
+msgstr "Regelset opslaan"
+
+msgid "club_settings.saving_rule_set"
+msgstr "Bezig met opslaan..."
+
+msgid "club_settings.existing_rule_sets"
+msgstr "Bestaande regelsets"
+
+msgid "club_settings.contains_rules"
+msgstr "Bevat"
+
+msgid "club_settings.rules_count_suffix"
+msgstr "regels"
+
+msgid "club_settings.no_rule_sets"
+msgstr "Nog geen regelsets."
+
+msgid "club_settings.could_not_load_rules"
+msgstr "Regels konden niet worden geladen."
+
+msgid "club_settings.could_not_create_rule"
+msgstr "Regel kon niet worden aangemaakt."
+
+msgid "club_settings.could_not_create_rule_set"
+msgstr "Regelset kon niet worden aangemaakt."
+
+msgid "club_settings.could_not_attach_rule"
+msgstr "Regel kon niet aan de set worden gekoppeld."
+
