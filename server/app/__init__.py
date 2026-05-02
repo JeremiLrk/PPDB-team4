@@ -186,6 +186,7 @@ def init_db(app: Flask):
             "server/sql/club_and_team.sql",
             "server/sql/match_rules.sql",
             "server/sql/schema.sql",
+            "server/sql/match.sql",
             "server/sql/triggers.sql"
         ])
         db.create_all()
