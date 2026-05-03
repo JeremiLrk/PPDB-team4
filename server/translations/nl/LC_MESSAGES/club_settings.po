@@ -208,3 +208,86 @@ msgstr "Regelset kon niet worden aangemaakt."
 msgid "club_settings.could_not_attach_rule"
 msgstr "Regel kon niet aan de set worden gekoppeld."
 
+# --- Betwiste wedstrijden pagina ---
+
+msgid "club_settings.tab_disputed"
+msgstr "Betwiste wedstrijden"
+
+msgid "club_settings.disputed_title"
+msgstr "Betwiste wedstrijden"
+
+msgid "club_settings.disputed_description"
+msgstr "Wedstrijden waarbij beide teams een tegenstrijdige score hebben ingediend. Selecteer een wedstrijd om het verschil te bekijken en de beslissende score in te dienen."
+
+msgid "club_settings.disputed_forbidden"
+msgstr "Je hebt geen toestemming om betwiste wedstrijden te bekijken of te beoordelen. Alleen clubeigenaren en beheerders hebben toegang tot dit gedeelte."
+
+msgid "club_settings.disputed_queue_title"
+msgstr "Wachtrij geschillen"
+
+msgid "club_settings.no_disputed"
+msgstr "Momenteel geen betwiste wedstrijden."
+
+msgid "club_settings.select_match_prompt"
+msgstr "Selecteer een betwiste wedstrijd uit de lijst om deze te bekijken en te beoordelen."
+
+msgid "club_settings.submitted_scores"
+msgstr "Ingediende scores"
+
+msgid "club_settings.no_submissions"
+msgstr "Geen ingediende scores gevonden."
+
+msgid "club_settings.ladder_label"
+msgstr "Ladder"
+
+msgid "club_settings.no_ladder"
+msgstr "Geen ladder"
+
+msgid "club_settings.ruleset_label"
+msgstr "Regelset"
+
+msgid "club_settings.no_ruleset"
+msgstr "Geen"
+
+msgid "club_settings.ladder_admin_label"
+msgstr "Ladderbeheerder"
+
+msgid "club_settings.team1"
+msgstr "Team 1"
+
+msgid "club_settings.team2"
+msgstr "Team 2"
+
+msgid "club_settings.rules_snapshot_title"
+msgstr "Regels van kracht ten tijde van de wedstrijd"
+
+msgid "club_settings.no_rules_snapshot"
+msgstr "Geen regels geregistreerd voor deze wedstrijd."
+
+msgid "club_settings.match_id_label"
+msgstr "Wedstrijd"
+
+msgid "club_settings.adjudicate_title"
+msgstr "Beslissende score indienen"
+
+msgid "club_settings.submit_decisive_score"
+msgstr "Beslissende score indienen"
+
+msgid "club_settings.submitting"
+msgstr "Bezig met indienen..."
+
+msgid "club_settings.view_details"
+msgstr "Details"
+
+msgid "club_settings.collapse"
+msgstr "Inklappen"
+
+msgid "club_settings.refresh"
+msgstr "Vernieuwen"
+
+msgid "club_settings.retry"
+msgstr "Opnieuw proberen"
+
+msgid "club_settings.back"
+msgstr "Terug naar instellingen"
+

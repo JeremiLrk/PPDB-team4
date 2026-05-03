@@ -57,6 +57,15 @@ function ClubSidebar({ activeTab, onTabChange, texts = {} }) {
                     </button>
 
                     <button
+                        className={`${styles.ladderButton} ${
+                            activeTab === "disputed" ? "bg-red-500/20 border-l-4 border-red-500" : ""
+                        }`}
+                        onClick={() => navigate(`/clubs/${clubId}/settings/disputed`)}
+                    >
+                        {texts.tab_disputed || "Disputed matches"}
+                    </button>
+
+                    <button
                         className={styles.ladderButton}
                         onClick={() => navigate(`/clubs/${clubId}`)}
                     >

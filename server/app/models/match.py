@@ -312,11 +312,21 @@ class MatchProposal(db.Model):
     # ------------------------------------------------------------------
 
     def to_dict(self) -> dict:
+        # Resolve the effective ruleset once (ladder ruleset takes priority
+        # over the legacy direct FK, matching the logic in get_ruleset()).
+        effective_ruleset = self.get_ruleset()
+
         return {
             "id":               self.id,
             "sportTypeId":      self.sport_type_id,
             "rulesetId":        self.ruleset_id,
             "ladderId":         self.ladder_id,
+            # Human-readable names — consumed directly by the disputed-match UI
+            # (DisputedMatchCard, ClubDisputedMatchesPage) without a second
+            # round-trip.  Both fields are null when the match has no ladder /
+            # ruleset.
+            "ladderName":       self.ladder.name if self.ladder else None,
+            "ruleSetName":      effective_ruleset.name if effective_ruleset else None,
             "team1Id":          self.team1_id,
             "team2Id":          self.team2_id,
             "proposedByUserId": self.proposed_by_user_id,

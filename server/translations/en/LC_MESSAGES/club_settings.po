@@ -208,3 +208,86 @@ msgstr "Could not create ruleset."
 msgid "club_settings.could_not_attach_rule"
 msgstr "Could not attach rule to ruleset."
 
+# --- Disputed matches page ---
+
+msgid "club_settings.tab_disputed"
+msgstr "Disputed matches"
+
+msgid "club_settings.disputed_title"
+msgstr "Disputed matches"
+
+msgid "club_settings.disputed_description"
+msgstr "Matches where both teams submitted conflicting scores. Select a match to review the difference and submit the decisive score."
+
+msgid "club_settings.disputed_forbidden"
+msgstr "You do not have permission to view or adjudicate disputed matches. Only club owners and administrators can access this section."
+
+msgid "club_settings.disputed_queue_title"
+msgstr "Dispute queue"
+
+msgid "club_settings.no_disputed"
+msgstr "No disputed matches at this time."
+
+msgid "club_settings.select_match_prompt"
+msgstr "Select a disputed match from the list to review and adjudicate it."
+
+msgid "club_settings.submitted_scores"
+msgstr "Submitted scores"
+
+msgid "club_settings.no_submissions"
+msgstr "No submissions found."
+
+msgid "club_settings.ladder_label"
+msgstr "Ladder"
+
+msgid "club_settings.no_ladder"
+msgstr "No ladder"
+
+msgid "club_settings.ruleset_label"
+msgstr "Rule set"
+
+msgid "club_settings.no_ruleset"
+msgstr "None"
+
+msgid "club_settings.ladder_admin_label"
+msgstr "Ladder admin"
+
+msgid "club_settings.team1"
+msgstr "Team 1"
+
+msgid "club_settings.team2"
+msgstr "Team 2"
+
+msgid "club_settings.rules_snapshot_title"
+msgstr "Rules in effect at match time"
+
+msgid "club_settings.no_rules_snapshot"
+msgstr "No rules recorded for this match."
+
+msgid "club_settings.match_id_label"
+msgstr "Match"
+
+msgid "club_settings.adjudicate_title"
+msgstr "Submit decisive score"
+
+msgid "club_settings.submit_decisive_score"
+msgstr "Submit decisive score"
+
+msgid "club_settings.submitting"
+msgstr "Submitting..."
+
+msgid "club_settings.view_details"
+msgstr "Details"
+
+msgid "club_settings.collapse"
+msgstr "Collapse"
+
+msgid "club_settings.refresh"
+msgstr "Refresh"
+
+msgid "club_settings.retry"
+msgstr "Retry"
+
+msgid "club_settings.back"
+msgstr "Back to settings"
+

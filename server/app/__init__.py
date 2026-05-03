@@ -203,7 +203,7 @@ def seed_db(app: Flask, verbose: bool = True):
     Runs only when explicitly requested (SEED_ON_STARTUP=1 or called directly).
     Safe to run repeatedly — all helpers use get-or-create logic.
     """
-    from server.seeds.seed_teams_and_users import seed_teams_and_users
+    from server.seeds.seed_teams_and_users__match_edition import seed_teams_and_users
     with app.app_context():
         print("[seed_db] Running seed_teams_and_users...")
         seed_teams_and_users(verbose=verbose)
