@@ -25,7 +25,6 @@ from server.app.routes.rating_function_routes import rating_function_bp
 from server.app.routes.weather_routes import weather
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
-from server.app.models.page_text import PageText
 from server.app.models.account import Account, AccountRole
 from server.app.models.ladder import LadderRatingFunction
 from server.app.models.match import MatchStatus
@@ -191,7 +190,7 @@ def init_db(app: Flask):
         ])
         db.create_all()
 
-        _seed_page_texts()
+
         _seed_reference_tables()
 
         print("[init_db] Database initialisation complete.")
@@ -210,29 +209,6 @@ def seed_db(app: Flask, verbose: bool = True):
         print("[seed_db] Seed complete.")
 
 
-def _seed_page_texts():
-    page_text_files = [
-        "server/seeds/page_text_base.json",
-        "server/seeds/page_text_home.json",
-        "server/seeds/page_text_authorization.json",
-        "server/seeds/page_text_ladder.json",
-        "server/seeds/page_text_score.json",
-        "server/seeds/page_text_dashboard.json",
-        "server/seeds/page_text_landing.json",
-        "server/seeds/page_text_club_home.json",
-        "server/seeds/page_text_clubs.json",
-        "server/seeds/page_text_teams.json",
-        "server/seeds/page_text_team_detail.json",
-        "server/seeds/page_text_team_settings.json",
-        "server/seeds/page_text_club_settings.json",
-        "server/seeds/page_text_matches.json",
-    ]
-    for path in page_text_files:
-        seed_table(
-            model=PageText,
-            seeds_file=path,
-            unique_fields=["page", "key", "language"],
-        )
 
 def _seed_reference_tables():
     seed_table(
