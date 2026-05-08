@@ -1,0 +1,8 @@
+[
+  {"name": "Football",   "minimum_number_of_players_on_a_team": 11, "maximum_number_of_players_per_team": 23},
+  {"name": "Basketball", "minimum_number_of_players_on_a_team": 5,  "maximum_number_of_players_per_team": 12},
+  {"name": "Volleyball", "minimum_number_of_players_on_a_team": 6,  "maximum_number_of_players_per_team": 14},
+  {"name": "Tennis",     "minimum_number_of_players_on_a_team": 1,  "maximum_number_of_players_per_team": 4},
+  {"name": "Padel",      "minimum_number_of_players_on_a_team": 2,  "maximum_number_of_players_per_team": 4},
+  {"name": "Hockey",     "minimum_number_of_players_on_a_team": 11, "maximum_number_of_players_per_team": 22}
+]

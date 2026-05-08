@@ -11,7 +11,6 @@ import subprocess
 _TEST_TABLES = (
     "team_manager_team, player_team, club_owner_club, club_join_request, "
     "club_player, availability_block, "
-    "match_rule_set_rule, match_rule, "
     "ladder_team, ladder, "
     "match_score_submission, "
     "match_proposal, match_accepted, match_rejected, match_played, match_cancelled, "
