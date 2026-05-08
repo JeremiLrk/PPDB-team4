@@ -3,8 +3,8 @@ import { useTeam } from "@/hooks/teams/useTeam.js";
 import styles from "@/style/TeamDetail.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import panelStyles from "@/style/common/Panel.module.css";
-import {useTeamPlayers} from "@/hooks/teams/useTeamPlayers.js";
-import PlayerCard from "@/components/team/PlayerCard.jsx";
+import { useTeamMembers } from "@/hooks/teams/useTeamMembers.js";
+import MemberCard from "@/components/team/MemberCard.jsx";
 import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 import { useLangContext } from "@/context/useLangContext.jsx";
@@ -17,7 +17,7 @@ export default function TeamDetail() {
     const { currentUser } = useCurrentUserContext();
     const texts = usePageTexts("team_detail", lang);
     const { team, loading, error } = useTeam(teamId);
-    const { players, loading: playersLoading, error: playersError, total, reload} = useTeamPlayers(teamId);
+    const { members, loading: membersLoading, error: membersError, total, reload} = useTeamMembers(teamId);
 
     if (loading) {
         return (
@@ -81,28 +81,28 @@ export default function TeamDetail() {
                     )}
                 </div>
 
-                {playersLoading && (
+                {membersLoading && (
                     <div className={styles.inlineState}>
                         <div className={styles.spinner} />
                         <span>{texts.loading_players || "Players loading..."}</span>
                     </div>
                 )}
 
-                {!playersLoading && playersError && (
+                {!membersLoading && membersError && (
                     <div className={styles.inlineState}>
-                        <p className={styles.error}>{playersError}</p>
+                        <p className={styles.error}>{membersError}</p>
                         <button className={styles.retryBtn} onClick={reload}>{texts.retry || "Retry"}</button>
                     </div>
                 )}
 
-                {!playersLoading && !playersError && players.length === 0 && (
+                {!membersLoading && !membersError && members.length === 0 && (
                     <p className={commonStyles.muted}>{texts.no_players || "No players in this team yet."}</p>
                 )}
 
-                {!playersLoading && !playersError && players.length > 0 && (
+                {!membersLoading && !membersError && members.length > 0 && (
                     <ul className={panelStyles.list}>
-                        {players.map(player => (
-                            <PlayerCard key={player.playerId ?? player.id} player={player} />
+                        {members.map((member, index) => (
+                            <MemberCard key={index} member={member} />
                         ))}
                     </ul>
                 )}

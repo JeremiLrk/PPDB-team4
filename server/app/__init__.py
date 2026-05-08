@@ -11,7 +11,7 @@ from server.app.routes.match_rule import match_rule_bp, match_rule_set_bp
 from server.app.routes.matcher import matches_bp
 from server.app.routes.match_routes import match_proposals_bp
 from server.config import SECRET_KEY, config_data
-from server.extensions import db
+from server.extensions import db, babel
 from server.app.routes.auth_routes import auth_bp
 from server.app.routes.availability_routes import availability_bp
 from server.app.routes.clubs_routes import clubs_bp
@@ -23,10 +23,8 @@ from server.app.routes.ladders_routes import ladders_bp
 from server.app.routes.rule_set_routes import rule_set_bp
 from server.app.routes.rating_function_routes import rating_function_bp
 from server.app.routes.weather_routes import weather
-from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
-from server.app.models.page_text import PageText
 from server.app.models.account import Account, AccountRole
 from server.app.models.ladder import LadderRatingFunction
 from server.app.models.match import MatchStatus
@@ -45,8 +43,20 @@ def create_app():
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = SECRET_KEY
+    app.config["BABEL_DEFAULT_LOCALE"] = "en"
+    app.config["BABEL_SUPPORTED_LOCALES"] = ["en", "nl"]
+    app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
 
     db.init_app(app)
+
+    def get_locale():
+        from flask import request
+        lang = request.args.get("lang")
+        if lang in app.config["BABEL_SUPPORTED_LOCALES"]:
+            return lang
+        return app.config["BABEL_DEFAULT_LOCALE"]
+
+    babel.init_app(app, locale_selector=get_locale)
 
     should_reset_db = os.getenv("RESET_DB_ON_STARTUP", "").lower() in {"1", "true", "yes"}
     if should_reset_db:
@@ -84,7 +94,6 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(matches_bp)
     app.register_blueprint(clubs_bp)
     app.register_blueprint(dashboard_bp)
-    app.register_blueprint(texts)
     app.register_blueprint(team_bp)
     app.register_blueprint(sport_type_bp)
     app.register_blueprint(match_rule_bp)
@@ -176,11 +185,12 @@ def init_db(app: Flask):
             "server/sql/club_and_team.sql",
             "server/sql/match_rules.sql",
             "server/sql/schema.sql",
+            "server/sql/match.sql",
             "server/sql/triggers.sql"
         ])
         db.create_all()
 
-        _seed_page_texts()
+
         _seed_reference_tables()
 
         print("[init_db] Database initialisation complete.")
@@ -192,36 +202,13 @@ def seed_db(app: Flask, verbose: bool = True):
     Runs only when explicitly requested (SEED_ON_STARTUP=1 or called directly).
     Safe to run repeatedly — all helpers use get-or-create logic.
     """
-    from server.seeds.seed_teams_and_users import seed_teams_and_users
+    from server.seeds.seed_teams_and_users__match_edition import seed_teams_and_users
     with app.app_context():
         print("[seed_db] Running seed_teams_and_users...")
         seed_teams_and_users(verbose=verbose)
         print("[seed_db] Seed complete.")
 
 
-def _seed_page_texts():
-    page_text_files = [
-        "server/seeds/page_text_base.json",
-        "server/seeds/page_text_home.json",
-        "server/seeds/page_text_authorization.json",
-        "server/seeds/page_text_ladder.json",
-        "server/seeds/page_text_score.json",
-        "server/seeds/page_text_dashboard.json",
-        "server/seeds/page_text_landing.json",
-        "server/seeds/page_text_club_home.json",
-        "server/seeds/page_text_clubs.json",
-        "server/seeds/page_text_teams.json",
-        "server/seeds/page_text_team_detail.json",
-        "server/seeds/page_text_team_settings.json",
-        "server/seeds/page_text_club_settings.json",
-        "server/seeds/page_text_matches.json",
-    ]
-    for path in page_text_files:
-        seed_table(
-            model=PageText,
-            seeds_file=path,
-            unique_fields=["page", "key", "language"],
-        )
 
 def _seed_reference_tables():
     seed_table(

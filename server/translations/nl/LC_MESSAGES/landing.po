@@ -1,0 +1,63 @@
+# nl — landing
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "landing.kicker"
+msgstr "Club ladder platform"
+
+msgid "landing.explore_clubs"
+msgstr "Verken clubs"
+
+msgid "landing.open_dashboard"
+msgstr "Open dashboard"
+
+msgid "landing.how_it_works"
+msgstr "Hoe NetRank werkt"
+
+msgid "landing.as_player"
+msgstr "Als speler"
+
+msgid "landing.as_manager"
+msgstr "Als clubmanager"
+
+msgid "landing.step_label"
+msgstr "Stap"
+
+msgid "landing.player_step_1_title"
+msgstr "Account aanmaken"
+
+msgid "landing.player_step_1_description"
+msgstr "Registreer je voor toegang tot je dashboard."
+
+msgid "landing.player_step_2_title"
+msgstr "Zoek clubs en vraag toegang aan"
+
+msgid "landing.player_step_2_description"
+msgstr "Zoek clubs en stuur een aanvraag naar de club waar je bij wilt."
+
+msgid "landing.player_step_3_title"
+msgstr "Word geaccepteerd en in ladders geplaatst"
+
+msgid "landing.player_step_3_description"
+msgstr "Een clubmanager accepteert je aanvraag en plaatst je in de juiste ladders."
+
+msgid "landing.manager_step_1_title"
+msgstr "Account aanmaken"
+
+msgid "landing.manager_step_1_description"
+msgstr "Registreer je voor toegang tot je dashboard."
+
+msgid "landing.manager_step_2_title"
+msgstr "Vraag je eigen club aan"
+
+msgid "landing.manager_step_2_description"
+msgstr "Dien je clubaanvraag in."
+
+msgid "landing.manager_step_3_title"
+msgstr "Beheer clubladders"
+
+msgid "landing.manager_step_3_description"
+msgstr "Maak, update en beheer ladders en leden in je club."
+

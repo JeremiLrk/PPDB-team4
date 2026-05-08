@@ -1,0 +1,45 @@
+# nl — ladder
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "ladder.join_ladder"
+msgstr "Doe mee aan de Ladder"
+
+msgid "ladder.ladder"
+msgstr "Ladder"
+
+msgid "ladder.back_to_club"
+msgstr "Terug naar club"
+
+msgid "ladder.ladder_rankings"
+msgstr "Ladderranglijst"
+
+msgid "ladder.loading_rankings"
+msgstr "Ranglijsten laden..."
+
+msgid "ladder.loading_ladders"
+msgstr "Ladders laden..."
+
+msgid "ladder.no_ladders"
+msgstr "Er zijn geen ladders beschikbaar voor deze club."
+
+msgid "ladder.no_players"
+msgstr "Nog geen spelers in deze ladder."
+
+msgid "ladder.rank"
+msgstr "Rang"
+
+msgid "ladder.player"
+msgstr "Speler"
+
+msgid "ladder.rating"
+msgstr "Rating"
+
+msgid "ladder.ruleset_label"
+msgstr "Regelset"
+
+msgid "ladder.system_label"
+msgstr "Systeem"
+

@@ -6,6 +6,9 @@ import MatchProposalList from "@/components/matches/MatchProposalList.jsx";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
+import { useTeams }     from "@/hooks/teams/useTeams.js";
+import CreateMatchButton    from "@/components/matches/CreateMatchButton.jsx";
+
 export default function MatchProposalsTab() {
     const { lang } = useLangContext();
     const texts = usePageTexts("matches", lang);
@@ -18,6 +21,17 @@ export default function MatchProposalsTab() {
         load,
         setProposalStatus,
     } = useMatchProposals();
+
+    // Only the teams the account actively manages — passed to CreateMatchButton
+    const {
+        teams: managedTeams,
+        loading: managedLoading,
+    } = useTeams({ endpoint: "/api/teams/my" });
+
+    function handleMatchCreated() {
+        // Optionally navigate to the matches tab or show a toast here.
+        // For now a no-op; the panel's own success state is enough feedback.
+    }
 
     return (
         <article
@@ -48,6 +62,14 @@ export default function MatchProposalsTab() {
                 >
                     {texts.refresh || "Refresh"}
                 </button>
+
+                {/* Propose a new match (shown only when account manages at least one team) */}
+                {!managedLoading && (
+                    <CreateMatchButton
+                        managedTeams={managedTeams}
+                        onCreated={handleMatchCreated}
+                    />
+                )}
             </div>
 
             <MatchProposalList

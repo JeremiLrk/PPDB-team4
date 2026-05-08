@@ -6,12 +6,12 @@ class Club(db.Model):
 
     id          = db.Column(db.BigInteger, primary_key=True)
     name        = db.Column(db.String(64),  nullable=False)
-    description = db.Column(db.String(512), nullable=False)
+    description = db.Column(db.String(512), nullable=True)
     sport_type_id = db.Column(
         db.BigInteger,
         db.ForeignKey("sport_type.id", ondelete="SET NULL"),
     )
-    city = db.Column(db.String(128), nullable=False)
+    city = db.Column(db.String(128), nullable=True)
     sport_type = db.relationship("SportType")
 
     # Relationships

@@ -1,0 +1,126 @@
+# nl — authorization
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "authorization.log_in"
+msgstr "Inloggen"
+
+msgid "authorization.register"
+msgstr "Registreren"
+
+msgid "authorization.email"
+msgstr "E-mail"
+
+msgid "authorization.password"
+msgstr "Wachtwoord"
+
+msgid "authorization.placeholder_email"
+msgstr "Vul je e-mailadres in"
+
+msgid "authorization.placeholder_password"
+msgstr "Voer uw wachtwoord in"
+
+msgid "authorization.no_account"
+msgstr "Heb je nog geen account?"
+
+msgid "authorization.has_account"
+msgstr "Heb je al een account?"
+
+msgid "authorization.as_guest"
+msgstr "Doorgaan als gast"
+
+msgid "authorization.create_account"
+msgstr "Account aanmaken"
+
+msgid "authorization.log_out_success"
+msgstr "Uitgelogd"
+
+msgid "authorization.log_out_failed"
+msgstr "Uitloggen mislukt"
+
+msgid "authorization.forgot_password"
+msgstr "Wachtwoord vergeten?"
+
+msgid "authorization.first_name"
+msgstr "Voornaam"
+
+msgid "authorization.placeholder_first_name"
+msgstr "Vul je voornaam in"
+
+msgid "authorization.last_name"
+msgstr "Achternaam"
+
+msgid "authorization.placeholder_last_name"
+msgstr "Vul je achternaam in"
+
+msgid "authorization.date_of_birth"
+msgstr "Geboortedatum"
+
+msgid "authorization.forgot_title"
+msgstr "Wachtwoord vergeten"
+
+msgid "authorization.forgot_subtitle"
+msgstr "Voer je e-mailadres in en we sturen je een resetlink."
+
+msgid "authorization.send_reset_link"
+msgstr "Verstuur resetlink"
+
+msgid "authorization.remembered_password"
+msgstr "Weet je je wachtwoord weer?"
+
+msgid "authorization.back_to_login"
+msgstr "Terug naar inloggen"
+
+msgid "authorization.reset_link_sent"
+msgstr "Controleer je inbox voor de wachtwoordresetlink."
+
+msgid "authorization.reset_failed"
+msgstr "Wachtwoord reset mislukt"
+
+msgid "authorization.reset_title"
+msgstr "Stel je wachtwoord opnieuw in"
+
+msgid "authorization.new_password"
+msgstr "Nieuw wachtwoord"
+
+msgid "authorization.repeat_password"
+msgstr "Herhaal wachtwoord"
+
+msgid "authorization.placeholder_new_password"
+msgstr "Vul je nieuwe wachtwoord in"
+
+msgid "authorization.placeholder_repeat_password"
+msgstr "Herhaal je nieuwe wachtwoord"
+
+msgid "authorization.reset_password"
+msgstr "Wachtwoord resetten"
+
+msgid "authorization.passwords_do_not_match"
+msgstr "Wachtwoorden komen niet overeen"
+
+msgid "authorization.password_reset_success"
+msgstr "Het wachtwoord is opnieuw ingesteld."
+
+msgid "authorization.verify_title"
+msgstr "E-mailverificatie"
+
+msgid "authorization.verify_pending"
+msgstr "Je e-mailadres wordt geverifieerd"
+
+msgid "authorization.verify_success"
+msgstr "E-mailadres succesvol geverifieerd"
+
+msgid "authorization.verify_failed"
+msgstr "Verificatielink is ongeldig of verlopen"
+
+msgid "authorization.account"
+msgstr "Gebruiker"
+
+msgid "authorization.profile"
+msgstr "Profiel"
+
+msgid "authorization.log_out"
+msgstr "Uitloggen"
+

@@ -1,0 +1,21 @@
+# en — clubs
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "clubs.loading"
+msgstr "Loading clubs..."
+
+msgid "clubs.title"
+msgstr "All clubs"
+
+msgid "clubs.subtitle"
+msgstr "Choose a club to open the club homepage, or start your own club!"
+
+msgid "clubs.unknown_city"
+msgstr "Unknown city"
+
+msgid "clubs.sport_not_set"
+msgstr "Sport not set"
+

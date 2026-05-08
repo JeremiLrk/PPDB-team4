@@ -1,0 +1,27 @@
+# en — club_home
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "club_home.loading_ladders"
+msgstr "Loading ladders..."
+
+msgid "club_home.loading_club"
+msgstr "Loading club..."
+
+msgid "club_home.error_loading_club"
+msgstr "Error loading club"
+
+msgid "club_home.tagline"
+msgstr "Compete. Challenge. Climb the ladder."
+
+msgid "club_home.subtagline"
+msgstr "The competitive ranking system for tennis and padel clubs."
+
+msgid "club_home.log_in"
+msgstr "Log in"
+
+msgid "club_home.manage_club"
+msgstr "Manage club"
+

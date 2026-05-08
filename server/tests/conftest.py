@@ -13,6 +13,7 @@ _TEST_TABLES = (
     "club_player, availability_block, "
     "match_rule_set_rule, match_rule, "
     "ladder_team, ladder, "
+    "match_score_submission, "
     "match_proposal, match_accepted, match_rejected, match_played, match_cancelled, "
     "team, club, player, club_owner, team_manager, administrator, account"
 )

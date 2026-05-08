@@ -120,6 +120,30 @@ def get_team_players(team_id: int):
     }), 200
 
 
+@membership_bp.route("/<int:team_id>/members", methods=["GET"])
+def get_team_members(team_id: int):
+    """GET /api/teams/<team_id>/members — public list of team members (name only, no personal info)."""
+    _get_team_or_404(team_id)
+
+    players = (
+        db.session.query(Account)
+        .join(Player, Player.id == Account.id)
+        .join(PlayerTeam, PlayerTeam.player_id == Player.id)
+        .filter(PlayerTeam.team_id == team_id)
+        .order_by(Account.last_name.asc(), Account.first_name.asc(), Account.id.asc())
+        .all()
+    )
+
+    return jsonify({
+        "teamId": team_id,
+        "total": len(players),
+        "members": [
+            {"firstName": a.first_name, "lastName": a.last_name}
+            for a in players
+        ],
+    }), 200
+
+
 @membership_bp.route("/<int:team_id>/players", methods=["POST"])
 @login_required
 def add_player_to_team(account: Account, team_id: int):

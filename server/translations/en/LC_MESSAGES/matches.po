@@ -1,0 +1,33 @@
+# en — matches
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "matches.title"
+msgstr "Weekly Match Proposals"
+
+msgid "matches.refresh"
+msgstr "Refresh"
+
+msgid "matches.loading"
+msgstr "Match proposals loading..."
+
+msgid "matches.empty"
+msgstr "No match proposals yet."
+
+msgid "matches.retry"
+msgstr "Retry"
+
+msgid "matches.accept"
+msgstr "Accept"
+
+msgid "matches.reject"
+msgstr "Reject"
+
+msgid "matches.cancel"
+msgstr "Cancel"
+
+msgid "matches.reset_pending"
+msgstr "Set back to pending"
+

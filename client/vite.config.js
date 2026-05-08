@@ -4,13 +4,14 @@ import path from "path";
 
 import { fileURLToPath } from "url";
 import tailwindcss from "@tailwindcss/vite";
+import i18nPlugin from "./vite-plugin-i18n.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig(
     {
-        plugins: [react(), tailwindcss()],
+        plugins: [react(), tailwindcss(), i18nPlugin()],
         test: {
             globals: true,
             environment: "jsdom",

@@ -1,0 +1,60 @@
+# en — teams
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "teams.title"
+msgstr "Teams"
+
+msgid "teams.loading_total"
+msgstr "Loading..."
+
+msgid "teams.sort_label"
+msgstr "Sort"
+
+msgid "teams.sort_id"
+msgstr "By ID"
+
+msgid "teams.sort_name"
+msgstr "By name"
+
+msgid "teams.page_size_label"
+msgstr "Per page"
+
+msgid "teams.team_singular"
+msgstr "team"
+
+msgid "teams.team_plural"
+msgstr "teams"
+
+msgid "teams.found"
+msgstr "found"
+
+msgid "teams.loading_teams"
+msgstr "Teams loading..."
+
+msgid "teams.empty_state"
+msgstr "No teams found."
+
+msgid "teams.showing"
+msgstr "Showing"
+
+msgid "teams.load_more"
+msgstr "Load more"
+
+msgid "teams.open"
+msgstr "Open"
+
+msgid "teams.independent_team"
+msgstr "Independent"
+
+msgid "teams.no_sport"
+msgstr "No sport"
+
+msgid "teams.club_prefix"
+msgstr "Club"
+
+msgid "teams.sport_prefix"
+msgstr "Sport"
+

@@ -1,0 +1,390 @@
+# nl — dashboard
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "dashboard.loading_dashboard"
+msgstr "Dashboard laden..."
+
+msgid "dashboard.signed_in_as"
+msgstr "Ingelogd als"
+
+msgid "dashboard.unknown_user"
+msgstr "onbekend"
+
+msgid "dashboard.dashboard_tabs_aria"
+msgstr "Dashboard tabbladen"
+
+msgid "dashboard.tab_overview"
+msgstr "Overzicht"
+
+msgid "dashboard.tab_profile"
+msgstr "Mijn profiel"
+
+msgid "dashboard.tab_availability"
+msgstr "Beschikbaarheidskalender"
+
+msgid "dashboard.tab_search"
+msgstr "Zoek clubs"
+
+msgid "dashboard.tab_requests"
+msgstr "Mijn aanvragen"
+
+msgid "dashboard.tab_create_club"
+msgstr "Voeg je eigen club toe"
+
+msgid "dashboard.tab_teams"
+msgstr "Mijn teams"
+
+msgid "dashboard.tab_matches"
+msgstr "Wedstrijden"
+
+msgid "dashboard.tab_manage_club"
+msgstr "Beheer je clubs"
+
+msgid "dashboard.my_teams"
+msgstr "Mijn teams"
+
+msgid "dashboard.no_teams_yet"
+msgstr "Je bent nog geen lid van een team."
+
+msgid "dashboard.sort_id"
+msgstr "Op ID"
+
+msgid "dashboard.sort_name"
+msgstr "Op naam"
+
+msgid "dashboard.per_page"
+msgstr "per keer laden"
+
+msgid "dashboard.loading_teams"
+msgstr "Teams laden..."
+
+msgid "dashboard.showing"
+msgstr "Weergegeven"
+
+msgid "dashboard.load_more"
+msgstr "Meer laden"
+
+msgid "dashboard.create_team_title"
+msgstr "Team aanmaken"
+
+msgid "dashboard.new_team"
+msgstr "Nieuw team"
+
+msgid "dashboard.team_name"
+msgstr "Teamnaam *"
+
+msgid "dashboard.team_name_placeholder"
+msgstr "bijv. Red Hawks"
+
+msgid "dashboard.club_optional"
+msgstr "Club (optioneel)"
+
+msgid "dashboard.no_club"
+msgstr "- Geen club -"
+
+msgid "dashboard.sport_optional"
+msgstr "Sport (optioneel)"
+
+msgid "dashboard.loading_sport"
+msgstr "Laden…"
+
+msgid "dashboard.any_sport"
+msgstr "- Elke sport -"
+
+msgid "dashboard.team_created"
+msgstr "Team aangemaakt!"
+
+msgid "dashboard.create_team"
+msgstr "Team aanmaken"
+
+msgid "dashboard.switch_to_light_mode"
+msgstr "Wissel naar lichte modus"
+
+msgid "dashboard.switch_to_dark_mode"
+msgstr "Wissel naar donkere modus"
+
+msgid "dashboard.light_mode"
+msgstr "Lichte modus"
+
+msgid "dashboard.dark_mode"
+msgstr "Donkere modus"
+
+msgid "dashboard.go_to_home"
+msgstr "Ga naar home"
+
+msgid "dashboard.home"
+msgstr "Home"
+
+msgid "dashboard.sign_out"
+msgstr "Uitloggen"
+
+msgid "dashboard.my_clubs"
+msgstr "Mijn clubs"
+
+msgid "dashboard.no_clubs_yet"
+msgstr "Je bent nog geen lid van een club."
+
+msgid "dashboard.member_status"
+msgstr "lid"
+
+msgid "dashboard.open"
+msgstr "Openen"
+
+msgid "dashboard.club_prefix"
+msgstr "Club"
+
+msgid "dashboard.sport_prefix"
+msgstr "Sport"
+
+msgid "dashboard.independent_team"
+msgstr "Onafhankelijk"
+
+msgid "dashboard.quick_highlights"
+msgstr "Snelle highlights"
+
+msgid "dashboard.join_requests"
+msgstr "Aanvragen"
+
+msgid "dashboard.requests_i_sent"
+msgstr "Mijn ingediende aanvragen"
+
+msgid "dashboard.pending_join_requests"
+msgstr "Openstaande aanvragen"
+
+msgid "dashboard.incoming_join_requests"
+msgstr "Binnenkomende aanvragen om te beoordelen"
+
+msgid "dashboard.no_clubs_owned"
+msgstr "Je bent nog geen eigenaar van een club."
+
+msgid "dashboard.no_incoming_requests"
+msgstr "Nog geen binnenkomende aanvragen."
+
+msgid "dashboard.wants_to_join"
+msgstr "wil lid worden van"
+
+msgid "dashboard.settings"
+msgstr "Instellingen"
+
+msgid "dashboard.club_registration_requests"
+msgstr "Clubregistratie-aanvragen"
+
+msgid "dashboard.search_clubs"
+msgstr "Zoek clubs"
+
+msgid "dashboard.search_by_name"
+msgstr "Zoek op clubnaam"
+
+msgid "dashboard.loading_clubs"
+msgstr "Clubs laden..."
+
+msgid "dashboard.no_clubs_found"
+msgstr "Geen clubs gevonden."
+
+msgid "dashboard.joined"
+msgstr "Lid"
+
+msgid "dashboard.request_to_join"
+msgstr "Aanvraag om lid te worden"
+
+msgid "dashboard.my_join_requests"
+msgstr "Mijn aanvragen"
+
+msgid "dashboard.no_join_requests_yet"
+msgstr "Nog geen aanvragen."
+
+msgid "dashboard.unknown_club"
+msgstr "Onbekende club"
+
+msgid "dashboard.requested_prefix"
+msgstr "Aangevraagd"
+
+msgid "dashboard.availability_title"
+msgstr "Mijn beschikbaarheid"
+
+msgid "dashboard.date"
+msgstr "Datum"
+
+msgid "dashboard.start_time"
+msgstr "Starttijd"
+
+msgid "dashboard.end_time"
+msgstr "Eindtijd"
+
+msgid "dashboard.adding"
+msgstr "Toevoegen..."
+
+msgid "dashboard.add_availability_block"
+msgstr "Beschikbaarheidsblok toevoegen"
+
+msgid "dashboard.availability_blocks"
+msgstr "Jouw blokken"
+
+msgid "dashboard.availability_upcoming_matches"
+msgstr "Komende wedstrijden"
+
+msgid "dashboard.no_upcoming_matches"
+msgstr "Geen komende wedstrijden gepland."
+
+msgid "dashboard.week_of"
+msgstr "Week van"
+
+msgid "dashboard.date_tbd"
+msgstr "Datum/tijd nog te bepalen"
+
+msgid "dashboard.loading"
+msgstr "Laden..."
+
+msgid "dashboard.no_availability_blocks"
+msgstr "Nog geen beschikbaarheidsblokken."
+
+msgid "dashboard.delete"
+msgstr "Verwijderen"
+
+msgid "dashboard.could_not_load_availability"
+msgstr "Kon beschikbaarheid niet laden."
+
+msgid "dashboard.fill_all_availability_fields"
+msgstr "Vul alle beschikbaarheidsvelden in."
+
+msgid "dashboard.availability_future_only"
+msgstr "Starttijd moet in de toekomst liggen."
+
+msgid "dashboard.availability_start_before_end"
+msgstr "Starttijd moet voor eindtijd liggen."
+
+msgid "dashboard.could_not_add_availability"
+msgstr "Kon beschikbaarheid niet toevoegen."
+
+msgid "dashboard.availability_added"
+msgstr "Beschikbaarheidsblok toegevoegd."
+
+msgid "dashboard.could_not_delete_availability"
+msgstr "Kon beschikbaarheid niet verwijderen."
+
+msgid "dashboard.availability_deleted"
+msgstr "Beschikbaarheidsblok verwijderd."
+
+msgid "dashboard.request_your_club"
+msgstr "Vraag je eigen club aan"
+
+msgid "dashboard.club_name"
+msgstr "Clubnaam"
+
+msgid "dashboard.club_name_placeholder"
+msgstr "Wat is de naam van je club?"
+
+msgid "dashboard.city"
+msgstr "Stad"
+
+msgid "dashboard.city_placeholder"
+msgstr "Stad waar je club gevestigd is"
+
+msgid "dashboard.main_sport"
+msgstr "Hoofdsport"
+
+msgid "dashboard.main_sport_placeholder"
+msgstr "Padel"
+
+msgid "dashboard.description"
+msgstr "Beschrijving"
+
+msgid "dashboard.description_placeholder"
+msgstr "Vertel ons over je club en waarom je ons platform wilt gebruiken"
+
+msgid "dashboard.submitting"
+msgstr "Verzenden..."
+
+msgid "dashboard.submit_club_request"
+msgstr "Verstuur clubaanvraag"
+
+msgid "dashboard.my_club_registration_requests"
+msgstr "Mijn clubregistratie-aanvragen"
+
+msgid "dashboard.no_club_registration_requests_yet"
+msgstr "Nog geen clubregistratie-aanvragen."
+
+msgid "dashboard.new_club"
+msgstr "Nieuwe club"
+
+msgid "dashboard.unknown_city"
+msgstr "Onbekende stad"
+
+msgid "dashboard.status_pending"
+msgstr "In behandeling"
+
+msgid "dashboard.status_approved"
+msgstr "Goedgekeurd"
+
+msgid "dashboard.status_rejected"
+msgstr "Geweigerd"
+
+msgid "dashboard.status_cancelled"
+msgstr "Geannuleerd"
+
+msgid "dashboard.club_name_required"
+msgstr "Clubnaam is verplicht."
+
+msgid "dashboard.could_not_submit_club_request"
+msgstr "Je clubaanvraag kon nu niet verzonden worden."
+
+msgid "dashboard.club_request_submitted"
+msgstr "Clubaanvraag verzonden."
+
+msgid "dashboard.profile_title"
+msgstr "Mijn profiel"
+
+msgid "dashboard.profile_description"
+msgstr "Werk je persoonlijke informatie bij."
+
+msgid "dashboard.first_name"
+msgstr "Voornaam"
+
+msgid "dashboard.last_name"
+msgstr "Achternaam"
+
+msgid "dashboard.date_of_birth"
+msgstr "Geboortedatum"
+
+msgid "dashboard.save_changes"
+msgstr "Wijzigingen opslaan"
+
+msgid "dashboard.profile_required_fields"
+msgstr "Voornaam en achternaam zijn verplicht."
+
+msgid "dashboard.profile_updated_success"
+msgstr "Profiel succesvol bijgewerkt."
+
+msgid "dashboard.profile_update_failed"
+msgstr "Kon profiel niet bijwerken."
+
+msgid "dashboard.change_password_title"
+msgstr "Wachtwoord wijzigen"
+
+msgid "dashboard.current_password"
+msgstr "Huidig wachtwoord"
+
+msgid "dashboard.new_password"
+msgstr "Nieuw wachtwoord"
+
+msgid "dashboard.repeat_password"
+msgstr "Herhaal wachtwoord"
+
+msgid "dashboard.update_password"
+msgstr "Wachtwoord bijwerken"
+
+msgid "dashboard.password_updated_success"
+msgstr "Wachtwoord succesvol bijgewerkt."
+
+msgid "dashboard.password_update_failed"
+msgstr "Kon wachtwoord niet bijwerken."
+
+msgid "dashboard.current_and_new_password_required"
+msgstr "Huidig wachtwoord en nieuw wachtwoord zijn verplicht."
+
+msgid "dashboard.passwords_do_not_match"
+msgstr "Wachtwoorden komen niet overeen."
+
