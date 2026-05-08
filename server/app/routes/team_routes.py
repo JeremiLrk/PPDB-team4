@@ -5,11 +5,14 @@ The current team implementation lives under `server.app.routes.team.*`.
 This module keeps older helper signatures available.
 """
 
-from flask import jsonify
+from flask import Blueprint, jsonify, request
+from sqlalchemy import or_
 
 from server.app.models.account import Administrator
 from server.app.models.club_owner import ClubOwner
-from server.app.models.team import TeamManager
+from server.app.models.team import TeamManager, Team
+
+team__bp = Blueprint("team_", __name__, url_prefix="/api")
 
 
 def _parse_pagination(args):
@@ -49,3 +52,21 @@ def _can_edit_team(resolved, team):
         # the team has no club owner context.
         return team in resolved.teams and team.club_id is None
     return False
+
+@team__bp.get("/clubs/<int:club_id>/eligible-teams")
+def get_eligible_teams(club_id):
+    """
+    Returns teams that either belong to this club OR are unaffiliated (club_id is NULL).
+    """
+    try:
+        # Query teams where club_id matches or is None
+        teams = Team.query.filter(
+            or_(Team.club_id == club_id, Team.club_id == None)
+        ).all()
+        
+        # Use the to_dict method from your Team model
+        return jsonify({
+            "teams": [t.to_dict() for t in teams]
+        }), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500

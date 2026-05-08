@@ -2,19 +2,43 @@ import { useState } from "react";
 import { useSportTypes } from "@/hooks/useSportTypes"; 
 import styles from "@/style/ClubSettings.module.css";
 
-export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], ruleSets = [], texts = {} }) {
+export function ClubLadders({ 
+    ladders = [], 
+    onCreate, 
+    ratingFunctions = [], 
+    ruleSets = [], 
+    teams = [], 
+    onAddTeam, 
+    texts = {} 
+}) {
     const { sportTypes } = useSportTypes();
 
+    // --- State for Creating a New Ladder ---
     const [form, setForm] = useState({
         name: "",
         description: "",
         sport_type_id: "",
-        rule_set_id: "", // Now using these
-        ladder_rating_function_id: "" // Now using these
+        rule_set_id: "",
+        ladder_rating_function_id: ""
     });
-
     const [submitting, setSubmitting] = useState(false);
 
+    // --- State for Adding a Team to a Ladder ---
+    const [ladderSearch, setLadderSearch] = useState("");
+    const [teamSearch, setTeamSearch] = useState("");
+    const [selectedLadderId, setSelectedLadderId] = useState("");
+    const [selectedTeamId, setSelectedTeamId] = useState("");
+    const [addingTeam, setAddingTeam] = useState(false);
+
+    // Filtered lists for the search/dropdowns
+    const filteredLadders = ladders.filter(l => 
+        l.name.toLowerCase().includes(ladderSearch.toLowerCase())
+    );
+    const filteredTeams = teams.filter(t => 
+        t.name.toLowerCase().includes(teamSearch.toLowerCase())
+    );
+
+    // --- Handlers for Creation ---
     const handleChange = (e) => {
         setForm(prev => ({
             ...prev,
@@ -23,15 +47,12 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
     };
 
     const handleCreate = async () => {
-        // Basic validation
         if (!form.name.trim() || !form.sport_type_id || !form.rule_set_id || !form.ladder_rating_function_id) {
             alert(texts.fill_all_required_fields || "Vul alle verplichte velden in.");
             return;
         }
 
         setSubmitting(true);
-        
-        // We send the IDs (converted to Numbers) to the backend
         await onCreate({
             ...form,
             sport_type_id: Number(form.sport_type_id),
@@ -39,13 +60,33 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
             ladder_rating_function_id: Number(form.ladder_rating_function_id)
         });
 
-        // Reset form
         setForm({ name: "", description: "", sport_type_id: "", rule_set_id: "", ladder_rating_function_id: "" });
         setSubmitting(false);
     };
 
+    // --- Handler for Adding Team ---
+    const handleAddTeamSubmit = async () => {
+        if (!selectedLadderId || !selectedTeamId) {
+            alert(texts.select_ladder_and_team || "Selecteer een ladder en een team.");
+            return;
+        }
+
+        setAddingTeam(true);
+        try {
+            await onAddTeam(selectedLadderId, selectedTeamId);
+            // Reset selection after success
+            setSelectedTeamId("");
+            setTeamSearch("");
+        } catch (err) {
+            console.error("Failed to add team:", err);
+        } finally {
+            setAddingTeam(false);
+        }
+    };
+
     return (
         <div className={`${styles.contentGrid} ${styles.contentFade}`}>
+            {/* PANEL 1: CREATE LADDER */}
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>{texts.ladder_create_title || "Ladder aanmaken"}</h3>
 
@@ -58,7 +99,6 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
                         onChange={handleChange}
                     />
 
-                    {/* Sport Type Dropdown */}
                     <select className={styles.formInput} name="sport_type_id" value={form.sport_type_id} onChange={handleChange}>
                         <option value="" disabled>{texts.choose_sport_type || "Kies een sporttype"}</option>
                         {sportTypes.map(s => (
@@ -66,7 +106,6 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
                         ))}
                     </select>
 
-                    {/* Rule Set Dropdown - User sees Name, Form gets ID */}
                     <select className={styles.formInput} name="rule_set_id" value={form.rule_set_id} onChange={handleChange}>
                         <option value="" disabled>{texts.choose_rule_set || "Kies een regelset"}</option>
                         {ruleSets.map(r => (
@@ -74,7 +113,6 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
                         ))}
                     </select>
 
-                    {/* Rating Function Dropdown - User sees Name, Form gets ID */}
                     <select className={styles.formInput} name="ladder_rating_function_id" value={form.ladder_rating_function_id} onChange={handleChange}>
                         <option value="" disabled>{texts.choose_rating_function || "Kies ratingsysteem"}</option>
                         {ratingFunctions.map(rf => (
@@ -101,7 +139,62 @@ export function ClubLadders({ ladders = [], onCreate, ratingFunctions = [], rule
                 </div>
             </article>
 
-            {/* List */}
+            {/* PANEL 2: ADD TEAM TO LADDER (Searchable) */}
+            <article className={styles.panel}>
+                <h3 className={styles.panelTitle}>{texts.add_team_title || "Team toevoegen aan ladder"}</h3>
+                
+                <div className={styles.form}>
+                    <p className={styles.secondaryText}>Search for a ladder and a team to link them.</p>
+                    
+                    {/* Ladder Selection */}
+                    <input 
+                        className={styles.formInput}
+                        placeholder={texts.search_ladder || "Zoek ladder..."}
+                        value={ladderSearch}
+                        onChange={(e) => setLadderSearch(e.target.value)}
+                    />
+                    <select 
+                        className={styles.formInput}
+                        value={selectedLadderId}
+                        onChange={(e) => setSelectedLadderId(e.target.value)}
+                    >
+                        <option value="" disabled>{texts.select_ladder || "Selecteer een ladder"}</option>
+                        {filteredLadders.map(l => (
+                            <option key={l.id} value={l.id}>{l.name}</option>
+                        ))}
+                    </select>
+
+                    <hr className={styles.divider} />
+
+                    {/* Team Selection */}
+                    <input 
+                        className={styles.formInput}
+                        placeholder={texts.search_team || "Zoek team..."}
+                        value={teamSearch}
+                        onChange={(e) => setTeamSearch(e.target.value)}
+                    />
+                    <select 
+                        className={styles.formInput}
+                        value={selectedTeamId}
+                        onChange={(e) => setSelectedTeamId(e.target.value)}
+                    >
+                        <option value="" disabled>{texts.select_team || "Selecteer een team"}</option>
+                        {filteredTeams.map(t => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                    </select>
+
+                    <button 
+                        className={styles.submitButton}
+                        onClick={handleAddTeamSubmit}
+                        disabled={!selectedLadderId || !selectedTeamId || addingTeam}
+                    >
+                        {addingTeam ? (texts.adding_team || "Toevoegen...") : (texts.add_team || "Team Toevoegen")}
+                    </button>
+                </div>
+            </article>
+
+            {/* PANEL 3: EXISTING LADDERS LIST */}
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>{texts.ladders_title || "Ladders"}</h3>
 

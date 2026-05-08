@@ -14,12 +14,15 @@ export function useClubSettings(clubId, texts = {}) {
         name: "",
         description: "",
         city: "",
-        sport_type_id: "", // Matches the name attribute in our select
+        sport_type_id: "", 
     });
 
     const [members, setMembers] = useState([]);
     const [ladders, setLadders] = useState([]);
     const [owners, setOwners] = useState([]);
+    
+    // --- ADDED: Eligible Teams State ---
+    const [eligibleTeams, setEligibleTeams] = useState([]);
 
     const [ratingFunctions, setRatingFunctions] = useState([]);
     const [ruleSets, setRuleSets] = useState([]);
@@ -27,19 +30,20 @@ export function useClubSettings(clubId, texts = {}) {
     const [updating, setUpdating] = useState(false);
     const [updateMessage, setUpdateMessage] = useState(null);
 
-    // --- ADDED: Tab State Logic ---
     const [activeTab, setActiveTab] = useState("general");
 
     useEffect(() => {
         async function fetchClubData() {
             try {
-                const [clubRes, membersRes, ownersRes, laddersRes, ratingsRes, rulesRes] = await Promise.all([
+                // Included the new eligible-teams endpoint in the initial load
+                const [clubRes, membersRes, ownersRes, laddersRes, ratingsRes, rulesRes, teamsRes] = await Promise.all([
                     fetch(`/api/clubs/${clubId}`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/members`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/owners`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/ladders`, { credentials: "include" }),
                     fetch(`/api/rating-functions`), 
-                    fetch(`/api/rule-sets`)
+                    fetch(`/api/rule-sets`),
+                    fetch(`/api/clubs/${clubId}/eligible-teams`, { credentials: "include" })
                 ]);
 
                 const clubData = await clubRes.json();
@@ -48,6 +52,7 @@ export function useClubSettings(clubId, texts = {}) {
                 const laddersData = await laddersRes.json();
                 const ratingsData = await ratingsRes.json();
                 const rulesData = await rulesRes.json();
+                const teamsData = await teamsRes.json();
 
                 if (!clubRes.ok) throw new Error(clubData.message);
 
@@ -65,6 +70,7 @@ export function useClubSettings(clubId, texts = {}) {
                 setLadders(Array.isArray(laddersData) ? laddersData : (laddersData.ladders || []));
                 setRatingFunctions(ratingsData.ratingFunctions || []);
                 setRuleSets(rulesData.ruleSets || []);
+                setEligibleTeams(teamsData.teams || []);
 
             } catch (err) {
                 setError(err.message);
@@ -214,6 +220,23 @@ export function useClubSettings(clubId, texts = {}) {
         }
     };
 
+    const addTeamToLadder = async (ladderId, teamId) => {
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/ladders/${ladderId}/teams/${teamId}`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message || "Could not add team to ladder.");
+            }
+            
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
 
     return {
         loading,
@@ -245,6 +268,9 @@ export function useClubSettings(clubId, texts = {}) {
         ratingFunctions,
         ruleSets,
         sportTypes,
+
+        eligibleTeams,
+        addTeamToLadder,
 
         goBack: () => navigate("/dashboard"),
     };

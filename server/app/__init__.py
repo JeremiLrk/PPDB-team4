@@ -7,6 +7,7 @@ from flask import Flask
 from server.app.models.match_rule import MatchRuleSet  # noqa: F401 – needed for db.create_all()
 from server.app.routes.sport_type_routes import sport_type_bp
 from server.app.routes.team import team_bp
+from server.app.routes.team_routes import team__bp
 from server.app.routes.match_rule import match_rule_bp, match_rule_set_bp
 from server.app.routes.matcher import matches_bp
 from server.app.routes.match_routes import match_proposals_bp
@@ -96,6 +97,7 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(clubs_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(team_bp)
+    app.register_blueprint(team__bp)
     app.register_blueprint(sport_type_bp)
     app.register_blueprint(match_rule_bp)
     app.register_blueprint(match_rule_set_bp)

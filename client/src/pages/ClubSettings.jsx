@@ -59,6 +59,8 @@ function ClubSettings() {
                         onCreate={settings.createLadder}
                         ratingFunctions={settings.ratingFunctions}
                         ruleSets={settings.ruleSets}
+                        teams={settings.eligibleTeams}
+                        onAddTeam={settings.addTeamToLadder}
                         texts={texts}
                     />
                 )}
