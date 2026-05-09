@@ -46,6 +46,10 @@ def proposal_payload(proposal: MatchProposal):
         "venue_type_id": proposal.venue_type_id,
         "team1_name": proposal.team1.name if proposal.team1 else None,
         "team2_name": proposal.team2.name if proposal.team2 else None,
+        "team1_club_id": proposal.team1.club_id if proposal.team1 else None,
+        "team2_club_id": proposal.team2.club_id if proposal.team2 else None,
+        "team1_club_city": proposal.team1.club.city if proposal.team1 and proposal.team1.club else None,
+        "team2_club_city": proposal.team2.club.city if proposal.team2 and proposal.team2.club else None,
     }
 
 

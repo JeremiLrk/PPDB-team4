@@ -21,7 +21,7 @@ test("landing switches from EN to NL using header language toggle", async () => 
     expect(await screen.findByRole("heading", { name: "How NetRank works" })).toBeInTheDocument();
 
     const banner = screen.getByRole("banner");
-    await account.click(within(banner).getByRole("button", { name: "NL" }));
+    await account.click(within(banner).getByRole("button", { name: "Switch language to NL" }));
 
     expect(await screen.findByRole("heading", { name: "Hoe NetRank werkt" })).toBeInTheDocument();
 });

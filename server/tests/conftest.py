@@ -1,9 +1,10 @@
 import pytest
-import sys
 
 from server.app import create_app, seed_db
 from server.extensions import db
-import subprocess
+from server.config import config_data
+import resend
+import psycopg
 
 # Tables that tests write to — truncated after every test to ensure isolation.
 # Seed tables (account_role, page_text, match_rule_set, ladder_rating_function,
@@ -18,12 +19,32 @@ _TEST_TABLES = (
 )
 
 
+def _reset_database():
+    with psycopg.connect(
+        dbname=config_data["db_name"],
+        user=config_data["db_username"],
+        password=config_data["db_password"],
+        host=config_data["db_host"],
+        port=config_data["db_port"],
+        autocommit=True,
+    ) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT pg_terminate_backend(pid)
+                FROM pg_stat_activity
+                WHERE datname = current_database()
+                  AND pid <> pg_backend_pid()
+                """
+            )
+            cur.execute("DROP SCHEMA IF EXISTS public CASCADE")
+            cur.execute("CREATE SCHEMA public")
+            cur.execute("GRANT ALL ON SCHEMA public TO public")
+
+
 @pytest.fixture(scope="session", autouse=True)
 def reset_database_once():
-    subprocess.run(
-        [sys.executable, "-m", "server.app.utils.reset_db", "--no-schema"],
-        check=True
-    )
+    _reset_database()
 
 
 @pytest.fixture(scope="session")
@@ -54,9 +75,27 @@ def clean_database(app):
     yield
 
 
+@pytest.fixture(autouse=True)
+def disable_resend_for_tests(monkeypatch):
+    # Keep the test suite from consuming the free-tier email quota.
+    monkeypatch.setattr(resend.Emails, "send", lambda *args, **kwargs: None, raising=False)
+
+
 @pytest.fixture
-def seeded_app(app):
-    seed_db(app, verbose=False)
+def seeded_app(app, clean_database):
+    from server.app.models.match import MatchProposal
+
+    def _seed_safe_to_dict(self):
+        return {}
+
+    original_to_dict = MatchProposal.to_dict
+    MatchProposal.to_dict = _seed_safe_to_dict
+    with app.app_context():
+        try:
+            seed_db(app, verbose=False)
+        finally:
+            MatchProposal.to_dict = original_to_dict
+            db.session.remove()
     return app
 
 

@@ -2,6 +2,7 @@ import commonStyles from "@/style/common/Common.module.css";
 import styles from "@/style/matches/MatchProposalCard.module.css";
 import ItemCard from "@/components/common/ItemCard.jsx";
 import { statusLabel } from "@/components/dashboard/dashboardUtils.js";
+import { useWeather } from "@/hooks/useWeather.js";
 
 function parseDate(value) {
     if (!value) return null;
@@ -37,6 +38,11 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
     const normalizedStatus = (proposal.status || "pending").toLowerCase();
     const canRespond = normalizedStatus === "pending";
     const canResetToPending = normalizedStatus !== "pending";
+    const weatherClubId = proposal.team1ClubId || proposal.team2ClubId || null;
+    const weatherCity = proposal.team1ClubCity || proposal.team2ClubCity || "";
+    const { weather, loading: weatherLoading } = useWeather(weatherClubId);
+    const weatherDescription = weather?.weather?.[0]?.description || "";
+    const weatherTemp = Number.isFinite(weather?.main?.temp) ? Math.round(weather.main.temp) : null;
 
     return (
         <ItemCard>
@@ -49,6 +55,15 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                 </p>
                 {proposal.location ? (
                     <p className={commonStyles.secondaryText}>{proposal.location}</p>
+                ) : null}
+                {weatherClubId ? (
+                    <p className={commonStyles.secondaryText}>
+                        {weatherLoading
+                            ? `Weather for ${weatherCity || "club"} loading...`
+                            : weatherTemp !== null
+                                ? `Weather for ${weatherCity || weather?.name || "club"}: ${weatherTemp}°C${weatherDescription ? `, ${weatherDescription}` : ""}`
+                                : `Weather for ${weatherCity || weather?.name || "club"} unavailable`}
+                    </p>
                 ) : null}
             </div>
 

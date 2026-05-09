@@ -592,9 +592,43 @@ export function mockApi(options = {}) {
         const lang = url.searchParams.get("lang") || "en";
 
         if (path === "/api/health") return jsonResponse({ db_connected: true });
+        if (path === "/api/cities/search") {
+            const query = url.searchParams.get("q") || "";
+            const citySuggestions = query.toLowerCase().startsWith("ant")
+                ? [
+                    {
+                        label: "Antwerpen, Belgium",
+                        city: "Antwerpen",
+                        country: "Belgium",
+                        country_code: "BE",
+                        state: null,
+                        lat: 51.2194,
+                        lon: 4.4025,
+                    },
+                    {
+                        label: "Antwerp, Canada",
+                        city: "Antwerp",
+                        country: "Canada",
+                        country_code: "CA",
+                        state: "Ontario",
+                        lat: 44.2,
+                        lon: -76.0,
+                    },
+                ]
+                : [];
+            return jsonResponse({ cities: citySuggestions });
+        }
         if (path === "/api/me") {
             if (!me) return jsonResponse({ message: "Unauthorized" }, 401);
             return jsonResponse({ account: me });
+        }
+        const weatherMatch = path.match(/^\/api\/weather\/(\d+)$/);
+        if (weatherMatch) {
+            return jsonResponse({
+                name: "Antwerpen, Belgium",
+                main: { temp: 12.4 },
+                weather: [{ description: "clear sky" }],
+            });
         }
         if (path === "/api/me/dashboard") return jsonResponse(dashboardData);
         if (path === "/api/clubs") return jsonResponse({ clubs });

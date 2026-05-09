@@ -16,6 +16,7 @@ export function useClubSettings(clubId, texts = {}) {
         city: "",
         sport_type_id: "", // Matches the name attribute in our select
     });
+    const [citySelection, setCitySelection] = useState(null);
 
     const [members, setMembers] = useState([]);
     const [ladders, setLadders] = useState([]);
@@ -59,6 +60,7 @@ export function useClubSettings(clubId, texts = {}) {
                     city: clubData.club.city || "",
                     sport_type_id: clubData.club.sport_type_id || "",
                 });
+                setCitySelection(clubData.club.city ? { label: clubData.club.city } : null);
 
                 setMembers(membersData.members || []);
                 setOwners(ownersData.owners || []);
@@ -81,6 +83,17 @@ export function useClubSettings(clubId, texts = {}) {
             ...prev,
             [e.target.name]: e.target.value,
         }));
+        if (e.target.name === "city") {
+            setCitySelection(null);
+        }
+    };
+
+    const handleCitySelect = (city) => {
+        setFormData((prev) => ({
+            ...prev,
+            city: city.label,
+        }));
+        setCitySelection(city);
     };
 
     const updateClub = async (e) => {
@@ -88,18 +101,33 @@ export function useClubSettings(clubId, texts = {}) {
         setUpdating(true);
         setUpdateMessage(null);
 
+        const selectedCity = citySelection?.label?.trim();
+        if (!selectedCity) {
+            setUpdateMessage({
+                type: "error",
+                text: texts.city_selection_required || "Please choose a real city from the suggestions.",
+            });
+            setUpdating(false);
+            return;
+        }
+
         try {
+            const payload = {
+                ...formData,
+                city: selectedCity,
+            };
+
             const res = await fetch(`/api/clubs/${clubId}`, {
                 method: "PUT",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
             });
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
 
-            setClub(prev => ({ ...prev, ...formData }));
+            setClub(prev => ({ ...prev, ...payload }));
             setUpdateMessage({ type: "success", text: texts.saved_successfully || "Saved successfully" });
         } catch (err) {
             setUpdateMessage({ type: "error", text: err.message || texts.could_not_save_club || "Could not save club." });
@@ -228,6 +256,7 @@ export function useClubSettings(clubId, texts = {}) {
         club,
         formData,
         handleChange,
+        handleCitySelect,
         updateClub,
 
         members,

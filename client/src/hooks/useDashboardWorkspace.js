@@ -98,6 +98,7 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     const [clubRequestForm, setClubRequestForm] = useState(
         EMPTY_CLUB_REQUEST_FORM,
     )
+    const [clubRequestCitySelection, setClubRequestCitySelection] = useState(null)
     const [clubRequestSubmitting, setClubRequestSubmitting] = useState(false)
     const [clubRequestMessage, setClubRequestMessage] = useState({
         type: "",
@@ -201,6 +202,14 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     function onClubRequestFieldChange(event) {
         const { name, value } = event.target
         setClubRequestForm((previous) => ({ ...previous, [name]: value }))
+        if (name === "city") {
+            setClubRequestCitySelection(null)
+        }
+    }
+
+    function onClubRequestCitySelect(city) {
+        setClubRequestForm((previous) => ({ ...previous, city: city.label }))
+        setClubRequestCitySelection(city)
     }
 
     function onAvailabilityFieldChange(event) {
@@ -441,10 +450,19 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         event.preventDefault()
 
         const trimmedName = clubRequestForm.name.trim()
+        const selectedCity = clubRequestCitySelection?.label?.trim()
         if (!trimmedName) {
             setClubRequestMessage({
                 type: "error",
                 text: texts.club_name_required || "Club name is required.",
+            })
+            return
+        }
+
+        if (!selectedCity) {
+            setClubRequestMessage({
+                type: "error",
+                text: texts.city_selection_required || "Please choose a real city from the suggestions.",
             })
             return
         }
@@ -454,7 +472,7 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
 
         const payload = {
             name: trimmedName,
-            city: clubRequestForm.city.trim(),
+            city: selectedCity,
             sport_type_id: clubRequestForm.sport_type_id.trim(),
             description: clubRequestForm.description.trim(),
         }
@@ -483,12 +501,19 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
             }
 
             setClubRequestForm(EMPTY_CLUB_REQUEST_FORM)
+            setClubRequestCitySelection(null)
             setClubRequestMessage({
                 type: "success",
                 text: texts.club_request_submitted || "Club request submitted.",
             })
-        } catch {
-            setClubRequestForm(EMPTY_CLUB_REQUEST_FORM)
+        } catch (error) {
+            setClubRequestMessage({
+                type: "error",
+                text:
+                    error?.message ||
+                    texts.could_not_submit_club_request ||
+                    "Could not submit your club request right now.",
+            })
         } finally {
             setClubRequestSubmitting(false)
         }
@@ -510,6 +535,7 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         discoverLoading,
         discoverError,
         clubRequestForm,
+        clubRequestCitySelection,
         clubRequestSubmitting,
         clubRequestMessage,
         incomingJoinRequests,
@@ -517,6 +543,8 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         onGoSettings,
         decideJoinrequest,
         clubJoinrequest,
+        onClubRequestFieldChange,
+        onClubRequestCitySelect,
         availabilityBlocks,
         upcomingMatches,
         availabilityForm,
@@ -526,7 +554,6 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         onThemeToggle,
         onGoHome,
         onSignOut,
-        onClubRequestFieldChange,
         onClubRequestSubmit,
         myTeams,
         myTeamsTotal,
