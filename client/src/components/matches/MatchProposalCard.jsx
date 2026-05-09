@@ -2,6 +2,7 @@ import commonStyles from "@/style/common/Common.module.css";
 import styles from "@/style/matches/MatchProposalCard.module.css";
 import ItemCard from "@/components/common/ItemCard.jsx";
 import { statusLabel } from "@/components/dashboard/dashboardUtils.js";
+import buttonStyles from "@/style/common/Buttons.module.css"; 
 
 function parseDate(value) {
     if (!value) return null;
@@ -33,10 +34,18 @@ function statusClass(status) {
     return commonStyles.statusPending;
 }
 
-export default function MatchProposalCard({ proposal, disabled, onStatusChange, texts = {}, statusTexts = {} }) {
+export default function MatchProposalCard({ 
+    proposal, 
+    disabled, 
+    onStatusChange, 
+    onReportScore, // <--- Prop added here
+    texts = {}, 
+    statusTexts = {} 
+}) {
     const normalizedStatus = (proposal.status || "pending").toLowerCase();
     const canRespond = normalizedStatus === "pending";
     const canResetToPending = normalizedStatus !== "pending";
+    const isAccepted = normalizedStatus === "accepted" || normalizedStatus === "approved";
 
     return (
         <ItemCard>
@@ -52,9 +61,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                 ) : null}
             </div>
 
-            <div
-                className={styles.actionRow}
-            >
+            <div className={styles.actionRow}>
                 <span className={`${commonStyles.statusPill} ${statusClass(proposal.status)}`}>
                     {statusLabel(proposal.status, statusTexts)}
                 </span>
@@ -87,6 +94,19 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                         </button>
                     </>
                 ) : null}
+
+                {/* SCORING BUTTON: Only show if accepted */}
+                {isAccepted && (
+                    <button
+                        className={buttonStyles.primaryButton}
+                        style={{ marginLeft: "auto", marginRight: "0.5rem" }}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => onReportScore(proposal.id)}
+                    >
+                        {texts.report_score || "Add Score"}
+                    </button>
+                )}
 
                 {canResetToPending ? (
                     <button

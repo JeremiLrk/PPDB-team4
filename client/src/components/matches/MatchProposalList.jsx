@@ -10,6 +10,7 @@ export default function MatchProposalList({
     submitting,
     onReload,
     onStatusChange,
+    onReportScore, // <--- Add this prop
     texts = {},
     statusTexts = {},
 }) {
@@ -38,6 +39,7 @@ export default function MatchProposalList({
                             proposal={proposal}
                             disabled={submitting}
                             onStatusChange={onStatusChange}
+                            onReportScore={onReportScore} // <--- Pass it here
                             texts={texts}
                             statusTexts={statusTexts}
                         />
