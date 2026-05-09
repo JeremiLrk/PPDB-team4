@@ -42,7 +42,6 @@ def proposal_payload(proposal: MatchProposal):
         "proposed_end_at": proposal.proposed_end_at.isoformat() + "Z" if proposal.proposed_end_at else None,
         "created_at": proposal.created_at.isoformat() + "Z" if proposal.created_at else None,
         "updated_at": proposal.updated_at.isoformat() + "Z" if proposal.updated_at else None,
-        "location": proposal.location,
         "venue_type_id": proposal.venue_type_id,
         "team1_name": proposal.team1.name if proposal.team1 else None,
         "team2_name": proposal.team2.name if proposal.team2 else None,

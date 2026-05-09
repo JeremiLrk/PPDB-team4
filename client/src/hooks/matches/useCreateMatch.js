@@ -3,18 +3,18 @@ import { useState, useCallback, useEffect } from "react";
 /**
  * useCreateMatch
  *
- * State machine for the four-step "Create Match" form:
+ * State machine for the three-step "Create Match" form:
  *
  *   step 0  - pick which managed team is team1
  *   step 1  - pick which ladder that team belongs to
  *   step 2  - pick the opponent (team2) from the same ladder
- *   step 3  - optional match details (location)
+ *   step 3  - submit the proposal
  *
  * Separate boolean flags drive loading/success/closed states so that
- * step numbers 0-3 are never overloaded with a second meaning.
+ * step numbers 0-2 are never overloaded with a second meaning.
  */
 export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
-    // -1 = closed, 0-3 = wizard page index
+    // -1 = closed, 0-2 = wizard page index
     const [step,      setStep]      = useState(-1);
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -35,9 +35,6 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
     const [peersError,     setPeersError]     = useState("");
     const [selectedPeerId, setSelectedPeerId] = useState("");
 
-    // Step 3 — optional details
-    const [location, setLocation] = useState("");
-
     // ------------------------------------------------------------------
     // Open / close
     // ------------------------------------------------------------------
@@ -52,7 +49,6 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
         setSelectedPeerId("");
         setLadders([]);
         setPeers([]);
-        setLocation("");
         setLaddersError("");
         setPeersError("");
     }, [managedTeams]);
@@ -227,7 +223,6 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
             };
 
             if (selectedLadderId) body.ladderId = Number(selectedLadderId);
-            if (location.trim())  body.location = location.trim();
 
             const res  = await fetch("/api/matches", {
                 method:      "POST",
@@ -254,7 +249,7 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
         }
     }, [
         selectedTeamId, selectedPeerId, selectedLadderId,
-        location, managedTeams, onCreated, closePanel,
+        managedTeams, onCreated, closePanel,
     ]);
 
     // ------------------------------------------------------------------
@@ -293,10 +288,6 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
         peersError,
         selectedPeerId,
         setSelectedPeerId,
-
-        // Step 3
-        location,
-        setLocation,
 
         submit,
     };

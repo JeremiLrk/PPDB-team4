@@ -53,9 +53,6 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                 <p className={commonStyles.secondaryText}>
                     {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
                 </p>
-                {proposal.location ? (
-                    <p className={commonStyles.secondaryText}>{proposal.location}</p>
-                ) : null}
                 {weatherClubId ? (
                     <p className={commonStyles.secondaryText}>
                         {weatherLoading

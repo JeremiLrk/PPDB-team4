@@ -64,7 +64,6 @@ def _serialize_upcoming_matches(account):
             {
                 "id": match.id,
                 "status": match.status.to_dict() if match.status else None,
-                "location": match.location,
                 "team1Id": match.team1_id,
                 "team1Name": match.team1.name if match.team1 else None,
                 "team1ClubName": match.team1.club.name if match.team1 and match.team1.club else None,

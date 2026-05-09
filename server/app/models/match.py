@@ -343,7 +343,6 @@ class MatchProposal(db.Model):
             "team2ClubId":      self.team2.club_id if self.team2 else None,
             "team1ClubCity":    self.team1.club.city if self.team1 and self.team1.club else None,
             "team2ClubCity":    self.team2.club.city if self.team2 and self.team2.club else None,
-            "location":         self.location,
             "venueTypeId":      self.venue_type_id,
             "ruleSnapshot":     self.rule_snapshot,
             "scoreStatus":      self.score_status,

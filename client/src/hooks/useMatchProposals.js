@@ -30,7 +30,6 @@ function normalizeMatchProposal(raw = {}) {
         proposedStartAt: readField(raw, "proposed_start_at", "proposedStartAt", "start_at", "startAt"),
         proposedEndAt: readField(raw, "proposed_end_at", "proposedEndAt", "end_at", "endAt"),
         weekStartDate: readField(raw, "week_start_date", "weekStartDate"),
-        location: readField(raw, "location", "venue") || "",
         team1ClubId: readField(raw, "team1_club_id", "team1ClubId"),
         team2ClubId: readField(raw, "team2_club_id", "team2ClubId"),
         team1ClubCity: readField(raw, "team1_club_city", "team1ClubCity") || "",

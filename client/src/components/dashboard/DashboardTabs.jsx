@@ -1063,9 +1063,6 @@ export function AvailabilityTab({
                                         <p className={styles.secondaryText}>
                                             {formatUpcomingMatchDate(match, texts, lang)}
                                         </p>
-                                        <p className={styles.secondaryText}>
-                                            {match.location || texts?.unknown_location || defaultText(lang, "Unknown location", "Onbekende locatie")}
-                                        </p>
                                     </div>
                                     <span className={`${styles.statusPill} ${styles.statusApproved}`}>
                                         {match.status?.name || texts?.status_accepted || defaultText(lang, "Accepted", "Geaccepteerd")}
