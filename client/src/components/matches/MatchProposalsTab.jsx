@@ -1,3 +1,4 @@
+import { useState } from "react";
 import animationStyles from "@/style/common/Animation.module.css";
 import buttonStyles from "@/style/common/Buttons.module.css";
 import panelStyles from "@/style/common/Panel.module.css";
@@ -13,6 +14,7 @@ export default function MatchProposalsTab() {
     const { lang } = useLangContext();
     const texts = usePageTexts("matches", lang);
     const dashboardTexts = usePageTexts("dashboard", lang);
+    const [showArchived, setShowArchived] = useState(false);
     const {
         proposals,
         loading,
@@ -20,7 +22,7 @@ export default function MatchProposalsTab() {
         submitting,
         load,
         setProposalStatus,
-    } = useMatchProposals();
+    } = useMatchProposals({ archived: showArchived });
 
     // Only the teams the account actively manages — passed to CreateMatchButton
     const {
@@ -61,6 +63,17 @@ export default function MatchProposalsTab() {
                     disabled={loading}
                 >
                     {texts.refresh || "Refresh"}
+                </button>
+
+                <button
+                    className={buttonStyles.primaryButton}
+                    type="button"
+                    onClick={() => setShowArchived((current) => !current)}
+                    disabled={loading}
+                >
+                    {showArchived
+                        ? (texts.show_active || "Show active")
+                        : (texts.show_archived || "Show archived")}
                 </button>
 
                 {/* Propose a new match (shown only when account manages at least one team) */}

@@ -19,6 +19,7 @@ from server.app.models.match import (
     MatchPlayed,
     MatchCancelled,
     MatchStatus,
+    teams_share_players,
 )
 from server.app.services.elo_service import apply_elo_for_match_result
 
@@ -61,6 +62,8 @@ def create_match_proposal(account: Account) -> tuple[Response, int]:
 
     if not _can_manage_either_team(resolved, team1, team2):
         abort(403, description="Forbidden: you do not have permission to create a match for these teams.")
+    if teams_share_players(team1, team2):
+        abort(422, description="A match proposal cannot include the same player on both teams.")
 
     ruleset_id    = data.get("rulesetId")
     rule_snapshot = data.get("ruleSnapshot")  # NEW: optional JSONB snapshot of ruleset at proposal time
@@ -348,4 +351,3 @@ def cancel_match(account: Account, match_id: int) -> tuple[Response, int]:
         "message": "Match cancelled.",
         "match":   proposal.to_dict_full(),
     }), 200
-

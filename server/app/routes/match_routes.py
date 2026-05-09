@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func, or_
@@ -15,17 +15,20 @@ from server.app.models.match import (
     MatchRejected,
     MatchStatus,
     _serialize_team_contacts,
+    teams_share_players,
 )
 from server.app.models.team import Team, TeamManager
 from server.app.models.venue_type import VenueType
 from server.app.services.weekly_match_proposal_service import (
     generate_weekly_match_proposals,
+    latest_allowed_proposal_week_start,
     next_week_start,
 )
 from server.app.services.elo_service import apply_elo_for_match_result
 from server.extensions import db
 
 match_proposals_bp = Blueprint("match_proposals", __name__, url_prefix="/api/matches")
+ARCHIVE_AFTER_DAYS = 30
 
 
 def proposal_payload(proposal: MatchProposal):
@@ -53,6 +56,14 @@ def proposal_payload(proposal: MatchProposal):
         "team1_contacts": _serialize_team_contacts(proposal.team1),
         "team2_contacts": _serialize_team_contacts(proposal.team2),
     }
+
+
+def is_archived_proposal(proposal: MatchProposal, *, reference_date: date | None = None) -> bool:
+    if proposal.week_start_date is None:
+        return False
+    today = reference_date or datetime.utcnow().date()
+    cutoff = today - timedelta(days=ARCHIVE_AFTER_DAYS)
+    return proposal.week_start_date < cutoff
 
 
 def parse_timestamp(value):
@@ -179,6 +190,8 @@ def create_match_proposal(account):
     can_manage_either_team = can_manage_team(account, team1) or can_manage_team(account, team2)
     if not can_manage_either_team:
         return jsonify({"message": "Forbidden: you must manage at least one of the teams."}), 403
+    if teams_share_players(team1, team2):
+        return jsonify({"message": "team1_id and team2_id cannot share players."}), 422
 
     proposed_start_at = parse_timestamp(data.get("proposed_start_at"))
     proposed_end_at = parse_timestamp(data.get("proposed_end_at"))
@@ -190,6 +203,10 @@ def create_match_proposal(account):
     week_start_date = parse_date(data.get("week_start_date"))
     if not week_start_date:
         week_start_date = week_start_for(proposed_start_at)
+    if week_start_date > latest_allowed_proposal_week_start():
+        return jsonify(
+            {"message": "week_start_date cannot be more than 2 weeks ahead."}
+        ), 422
 
     week_end_date = week_start_date + timedelta(days=6)
     if not (week_start_date <= proposed_start_at.date() <= week_end_date):
@@ -259,6 +276,15 @@ def list_match_proposals(account):
             )
         )
 
+    archived_requested = request.args.get("archived", "").strip().lower() in {"1", "true", "yes", "on"}
+    today = datetime.utcnow().date()
+    cutoff = today - timedelta(days=ARCHIVE_AFTER_DAYS)
+    archival_filter = MatchProposal.week_start_date.isnot(None)
+    if archived_requested:
+        query = query.filter(archival_filter, MatchProposal.week_start_date < cutoff)
+    else:
+        query = query.filter(or_(MatchProposal.week_start_date.is_(None), MatchProposal.week_start_date >= cutoff))
+
     team_id = request.args.get("team_id")
     if team_id is not None:
         try:
@@ -308,15 +334,21 @@ def generate_weekly_proposals(account):
     if duration_minutes <= 0:
         return jsonify({"message": "duration_minutes must be greater than zero."}), 422
 
+    if week_start_date > latest_allowed_proposal_week_start():
+        return jsonify({"message": "week_start_date cannot be more than 2 weeks ahead."}), 422
+
     managed_team_ids = resolve_managed_team_ids(account)
-    result = generate_weekly_match_proposals(
-        proposed_by_user_id=account.id,
-        week_start_date=week_start_date,
-        ladder_id=ladder_id,
-        managed_team_ids=managed_team_ids,
-        duration_minutes=duration_minutes,
-        location=data.get("location"),
-    )
+    try:
+        result = generate_weekly_match_proposals(
+            proposed_by_user_id=account.id,
+            week_start_date=week_start_date,
+            ladder_id=ladder_id,
+            managed_team_ids=managed_team_ids,
+            duration_minutes=duration_minutes,
+            location=data.get("location"),
+        )
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 422
     return jsonify(result), 201
 
 

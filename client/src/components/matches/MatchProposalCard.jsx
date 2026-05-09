@@ -70,7 +70,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                     {proposal.team1Name} vs {proposal.team2Name}
                 </p>
                 <p className={commonStyles.secondaryText}>
-                    {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
+                    Proposed date: {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
                 </p>
                 {(proposal.team1Contacts?.length || proposal.team2Contacts?.length) ? (
                     <div className={commonStyles.secondaryText} style={{ display: "grid", gap: "0.2rem" }}>

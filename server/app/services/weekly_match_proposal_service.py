@@ -7,7 +7,7 @@ import hashlib
 from server.app.models.availability_block import AvailabilityBlock
 from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
-from server.app.models.match import MatchPlayed, MatchProposal, MatchStatus
+from server.app.models.match import MatchPlayed, MatchProposal, MatchStatus, teams_share_players
 from server.app.models.team import Team
 from server.app.services.availability_service import weekly_window_for_block
 from server.extensions import db
@@ -15,6 +15,7 @@ from server.extensions import db
 
 DEFAULT_MATCH_DURATION_MINUTES = 60
 DEFAULT_AUTOGEN_MIN_LEAD_DAYS = 7
+DEFAULT_MAX_PROPOSAL_LEAD_WEEKS = 2
 DEFAULT_AUTOGEN_EARLIEST_HOUR = 8
 DEFAULT_REMATCH_OTHER_MATCHES_REQUIRED = 3
 
@@ -33,6 +34,10 @@ def week_start_for(value: date | datetime) -> date:
 def next_week_start(reference: date | None = None) -> date:
     today = reference or date.today()
     return week_start_for(today) + timedelta(days=7)
+
+
+def latest_allowed_proposal_week_start(reference: date | None = None) -> date:
+    return next_week_start(reference) + timedelta(weeks=DEFAULT_MAX_PROPOSAL_LEAD_WEEKS)
 
 
 def generate_weekly_match_proposals(
@@ -56,6 +61,11 @@ def generate_weekly_match_proposals(
         raise ValueError("duration_minutes must be greater than zero.")
 
     target_week_start = week_start_date or next_week_start()
+    reference_date = generated_at.date() if generated_at else date.today()
+    if target_week_start > latest_allowed_proposal_week_start(reference_date):
+        raise ValueError(
+            f"week_start_date cannot be more than {DEFAULT_MAX_PROPOSAL_LEAD_WEEKS} weeks ahead."
+        )
     week_end_exclusive = target_week_start + timedelta(days=7)
     week_start_at = datetime.combine(target_week_start, time.min)
     week_end_at = datetime.combine(week_end_exclusive, time.min)
@@ -87,6 +97,10 @@ def generate_weekly_match_proposals(
 
             if not team1 or not team2:
                 skipped.append(skip(ladder.id, first_row.team_id, second_row.team_id, "team_not_found"))
+                continue
+
+            if teams_share_players(team1, team2):
+                skipped.append(skip(ladder.id, team1.id, team2.id, "shared_players"))
                 continue
 
             if managed_team_ids is not None and team1.id not in managed_team_ids and team2.id not in managed_team_ids:

@@ -75,9 +75,14 @@ def create_app():
     init_db(app)
 
     should_seed = os.getenv("SEED_ON_STARTUP", "").lower() in {"1", "true", "yes"}
-    if should_seed:
+    # Flask's debug reloader imports the app twice. The child process is the
+    # one that actually serves requests, so only seed there to avoid doing the
+    # heavy demo build in the parent watchdog process as well.
+    if should_seed and os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         seed_verbose = os.getenv("SEED_VERBOSE", "1").lower() not in {"0", "false", "no"}
         seed_db(app, verbose=seed_verbose)
+    elif should_seed:
+        print("[seed_db] Skipping startup seed in Flask reloader parent process.")
 
     @app.get("/")
     def root():

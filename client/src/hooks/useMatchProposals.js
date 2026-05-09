@@ -67,6 +67,9 @@ async function fetchMatchProposals(filters = {}) {
     if (filters.weekStartDate) {
         params.set("week_start_date", filters.weekStartDate);
     }
+    if (filters.archived) {
+        params.set("archived", "1");
+    }
 
     const queryString = params.toString();
     const response = await fetch(
@@ -99,7 +102,7 @@ async function updateMatchProposalStatus(proposalId, status, extra = {}) {
 }
 
 export function useMatchProposals(filters = {}) {
-    const { teamId, weekStartDate } = filters;
+    const { teamId, weekStartDate, archived } = filters;
     const [proposals, setProposals] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -110,14 +113,14 @@ export function useMatchProposals(filters = {}) {
         setError("");
 
         try {
-            const loadedProposals = await fetchMatchProposals({ teamId, weekStartDate });
+            const loadedProposals = await fetchMatchProposals({ teamId, weekStartDate, archived });
             setProposals(loadedProposals);
         } catch (err) {
             setError(err?.message || "Failed to load match proposals.");
         } finally {
             setLoading(false);
         }
-    }, [teamId, weekStartDate]);
+    }, [teamId, weekStartDate, archived]);
 
     const setProposalStatus = useCallback(async (proposalId, status, extra = {}) => {
         setSubmitting(true);

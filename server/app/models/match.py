@@ -89,6 +89,45 @@ def _serialize_team_contacts(team) -> list[dict]:
     return [_serialize_contact_info(account) for account in _team_contact_accounts(team)]
 
 
+def _team_player_accounts(team) -> list[Account]:
+    if not team:
+        return []
+
+    accounts = []
+    if getattr(team, "players", None):
+        accounts.extend(
+            player.account
+            for player in team.players
+            if getattr(player, "account", None)
+        )
+
+    seen_ids: set[int] = set()
+    unique_accounts = []
+    for account in accounts:
+        if account.id in seen_ids:
+            continue
+        seen_ids.add(account.id)
+        unique_accounts.append(account)
+
+    return sorted(
+        unique_accounts,
+        key=lambda account: (
+            (account.last_name or "").lower(),
+            (account.first_name or "").lower(),
+            account.email.lower(),
+            account.id,
+        ),
+    )
+
+
+def team_player_account_ids(team) -> set[int]:
+    return {account.id for account in _team_player_accounts(team)}
+
+
+def teams_share_players(team1, team2) -> bool:
+    return bool(team_player_account_ids(team1) & team_player_account_ids(team2))
+
+
 # ---------------------------------------------------------------------------
 # Submission-role constants
 # ---------------------------------------------------------------------------

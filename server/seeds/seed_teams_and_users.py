@@ -24,7 +24,7 @@ from server.app.models.player import Player, PlayerTeam
 from server.app.models.team import Team, TeamManager, TeamManagerTeam
 from server.app.models.ladder import Ladder, LadderRatingFunction
 from server.app.models.ladder_team import LadderTeam
-from server.app.models.match import MatchAccepted, MatchCancelled, MatchProposal, MatchRejected, MatchStatus
+from server.app.models.match import MatchAccepted, MatchCancelled, MatchProposal, MatchRejected, MatchStatus, teams_share_players
 from server.app.services.weekly_match_proposal_service import generate_weekly_match_proposals, next_week_start
 
 TAG = "[seed:teams_and_users]"
@@ -478,6 +478,10 @@ def ensure_pending_proposal(
     team2_id=ordered_team2_id,
   ).first()
   if existing:
+    return False
+  team1 = db.session.get(Team, ordered_team1_id)
+  team2 = db.session.get(Team, ordered_team2_id)
+  if teams_share_players(team1, team2):
     return False
 
   db.session.add(
