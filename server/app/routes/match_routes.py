@@ -14,6 +14,7 @@ from server.app.models.match import (
     MatchProposal,
     MatchRejected,
     MatchStatus,
+    _serialize_team_contacts,
 )
 from server.app.models.team import Team, TeamManager
 from server.app.models.venue_type import VenueType
@@ -49,6 +50,8 @@ def proposal_payload(proposal: MatchProposal):
         "team2_club_id": proposal.team2.club_id if proposal.team2 else None,
         "team1_club_city": proposal.team1.club.city if proposal.team1 and proposal.team1.club else None,
         "team2_club_city": proposal.team2.club.city if proposal.team2 and proposal.team2.club else None,
+        "team1_contacts": _serialize_team_contacts(proposal.team1),
+        "team2_contacts": _serialize_team_contacts(proposal.team2),
     }
 
 

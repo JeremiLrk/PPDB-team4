@@ -15,6 +15,8 @@ function normalizeMatchProposal(raw = {}) {
     const team1Id = readField(raw, "team1_id", "team1Id");
     const team2Id = readField(raw, "team2_id", "team2Id");
     const rawStatus = readField(raw, "status", "status_name", "statusName");
+    const team1Contacts = readField(raw, "team1_contacts", "team1Contacts") || [];
+    const team2Contacts = readField(raw, "team2_contacts", "team2Contacts") || [];
 
     return {
         id: readField(raw, "id", "proposal_id", "proposalId"),
@@ -34,6 +36,8 @@ function normalizeMatchProposal(raw = {}) {
         team2ClubId: readField(raw, "team2_club_id", "team2ClubId"),
         team1ClubCity: readField(raw, "team1_club_city", "team1ClubCity") || "",
         team2ClubCity: readField(raw, "team2_club_city", "team2ClubCity") || "",
+        team1Contacts,
+        team2Contacts,
         original: raw,
     };
 }

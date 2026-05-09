@@ -34,6 +34,25 @@ function statusClass(status) {
     return commonStyles.statusPending;
 }
 
+function formatContact(contact) {
+    if (!contact) return "";
+    const name = contact.name || [contact.firstName, contact.lastName].filter(Boolean).join(" ").trim();
+    const email = contact.email || contact.value || "";
+
+    if (name && email && name !== email) {
+        return `${name} <${email}>`;
+    }
+
+    return name || email || "";
+}
+
+function formatContactList(contacts = []) {
+    return contacts
+        .map(formatContact)
+        .filter(Boolean)
+        .join(", ");
+}
+
 export default function MatchProposalCard({ proposal, disabled, onStatusChange, texts = {}, statusTexts = {} }) {
     const normalizedStatus = (proposal.status || "pending").toLowerCase();
     const canRespond = normalizedStatus === "pending";
@@ -53,6 +72,16 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                 <p className={commonStyles.secondaryText}>
                     {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
                 </p>
+                {(proposal.team1Contacts?.length || proposal.team2Contacts?.length) ? (
+                    <div className={commonStyles.secondaryText} style={{ display: "grid", gap: "0.2rem" }}>
+                        <p style={{ margin: 0 }}>
+                            {proposal.team1Name || "Team 1"}: {formatContactList(proposal.team1Contacts)}
+                        </p>
+                        <p style={{ margin: 0 }}>
+                            {proposal.team2Name || "Team 2"}: {formatContactList(proposal.team2Contacts)}
+                        </p>
+                    </div>
+                ) : null}
                 {weatherClubId ? (
                     <p className={commonStyles.secondaryText}>
                         {weatherLoading

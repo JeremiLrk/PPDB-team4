@@ -81,6 +81,8 @@ def test_player_can_see_and_accept_weekly_proposal(seeded_client: FlaskClient):
     player_demo_proposal = findPlayerDemoProposal(seeded_client)
     assert player_demo_proposal["team2_name"] == "Player Demo B"
     assert player_demo_proposal["status"] == "pending"
+    assert any(contact["email"] == "jeremilorek@outlook.com" for contact in player_demo_proposal["team1_contacts"])
+    assert any(contact["email"] == "robin.vermeulen@example.com" for contact in player_demo_proposal["team2_contacts"])
 
     accept_response = seeded_client.patch(
         f"/api/matches/proposals/{player_demo_proposal['id']}/status",
