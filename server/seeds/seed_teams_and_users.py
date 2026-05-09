@@ -86,6 +86,8 @@ def make_account(
     password_hash=generate_password_hash(password),
     account_role_id=role.id,
     date_of_birth=datetime.date(1995, 1, 1),
+    gender="other",
+    phone="+32 470 00 00 01",
     is_verified=True,
   )
   db.session.add(acc)

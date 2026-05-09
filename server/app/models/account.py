@@ -9,6 +9,8 @@ class Account(db.Model):
     first_name    = db.Column(db.String(32))
     last_name     = db.Column(db.String(32))
     date_of_birth = db.Column(db.Date)
+    gender        = db.Column(db.String(32))
+    phone         = db.Column(db.String(64))
     email         = db.Column(db.String(254), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
 
@@ -64,6 +66,9 @@ class Account(db.Model):
             "email":          self.email,
             "firstName":      self.first_name,
             "lastName":       self.last_name,
+            "dateOfBirth":    self.date_of_birth.isoformat() if self.date_of_birth else None,
+            "gender":         self.gender,
+            "phoneNumber":    self.phone,
             "role":           role,
             "roles":          [role],
             "managedTeamIds": managed_team_ids,
