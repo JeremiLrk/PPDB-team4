@@ -17,7 +17,7 @@ from server.extensions import db
 from server.app.models.availability_block import AvailabilityBlock
 from server.app.models.sport_type import SportType
 from server.app.models.match_rule import MatchRuleSet
-from server.app.models.account import Account, TeamManager
+from server.app.models.account import Account, TeamManager, Administrator
 from server.app.models.account_role import AccountRole
 from server.app.models.club import Club
 from server.app.models.club_join_request import ClubJoinRequest
@@ -75,7 +75,6 @@ def get_or_create_sport(name: str, min_p: int, max_p: int, verbose: bool = True)
         log(f"{TAG}   sport '{name}' created (id={sport.id}, min={min_p}, max={max_p})", verbose)
     return sport
 
-
 def make_account(
     first: str,
     last: str,
@@ -103,6 +102,14 @@ def make_account(
     db.session.flush()
     return acc, True
 
+def make_administrator(account: Account, access_level: int = 10) -> tuple:
+    """Returns (administrator, created: bool)."""
+    if account.administrator:
+        return account.administrator, False
+    admin = Administrator(id=account.id, access_level=access_level)
+    db.session.add(admin)
+    db.session.flush()
+    return admin, True
 
 def make_manager(account: Account) -> tuple:
     if account.team_manager:
@@ -962,7 +969,7 @@ def seed_teams_and_users(verbose: bool = True) -> None:
         "mgr.ralliers@example.com",
         "mgr.meuse@example.com",
         "mgr.ardennes@example.com",
-        "mgr.citadel@example.com",
+        "admn.netrank@example.com"
     ]
 
     MANAGER_NAMES = [
@@ -972,7 +979,7 @@ def seed_teams_and_users(verbose: bool = True) -> None:
         ("Daniel", "Ross"), ("Jack", "Henderson"),("Owen", "Coleman"),("Samuel", "Jenkins"),
         ("Wyatt", "Perry"), ("Dylan", "Powell"),("Caleb", "Long"),  ("Hunter", "Patterson"),
         ("Evan", "Hughes"), ("Nathan", "Flores"),("Connor", "Washington"),("Luke", "Butler"),
-        ("Gavin", "Simmons"),("Blake", "Murphy"),("Austin", "Rivera"),("Landon", "Cooper"),
+        ("Gavin", "Simmons"),("Blake", "Murphy"),("Austin", "Rivera"), ("NetRank", "Admin"),
     ]
 
     # Flat list of all teams in the same order as MANAGER_EMAILS
@@ -985,6 +992,8 @@ def seed_teams_and_users(verbose: bool = True) -> None:
         for i, (email, (first, last)) in enumerate(zip(MANAGER_EMAILS, MANAGER_NAMES)):
             team = all_teams_flat[i]
             acc, _ = make_account(first, last, email, role_manager)
+            if acc.email == "admn.netrank@example.com":
+                make_administrator(acc)
             tm, _  = make_manager(acc)
             assign_manager_to_team(tm, team)
             # Also let the club owner manage each team in their club
@@ -994,10 +1003,10 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             team_managers[team.id] = acc
             log(f"{TAG}   manager '{email}' -> '{team.name}'", verbose)
     except Exception as e:
-        print(f"{TAG} ERROR seeding team managers: {e}")
+        print(f"{TAG} ERROR seeding team managers/ Admins: {e}")
         db.session.rollback()
         raise
-    log(f"{TAG} [5/8] Team managers OK", verbose)
+    log(f"{TAG} [5/8] Team managers/ Admins OK", verbose)
 
     # ------------------------------------------------------------------
     # 6. Ladders — 2 ladders per club = 14 total

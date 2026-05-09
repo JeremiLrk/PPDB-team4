@@ -5,7 +5,7 @@ from server.app.models.club import Club
 from server.app.services.auth_service import verify_user
 from server.app.models.ladder import Ladder
 from server.extensions import db
-from server.app.models.account import Account
+from server.app.models.account import Account, Administrator
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
 from server.app.models.club_player import ClubPlayer
@@ -59,6 +59,9 @@ def check_if_manager(club_id: int):
         return jsonify({"message": "Club not found"}), 404
 
     clubowner = ClubOwner.query.filter_by(id=account.id).first()
+    admin = Administrator.query.filter_by(id=account.id).first()
+    if admin:
+        return jsonify({"is_manager": True}), 200
     if not clubowner:
         return jsonify({"message": "Unauthorized"}), 401
     
@@ -160,11 +163,12 @@ def update_club(club_id: int):
         return jsonify({"message": "Club not found"}), 404
     
     clubowner = ClubOwner.query.filter_by(id=user_id).first()
-    if not clubowner:
+    admin = Administrator.query.filter_by(id=user_id).first()
+    if not clubowner and not admin:
         return jsonify({"message": "Unauthorized"}), 401
     
     owner_check = ClubOwnerClub.query.filter_by(club_owner_id=clubowner.id, club_id=club_id).first()
-    if not owner_check:
+    if not owner_check and not admin:
         return jsonify({"message": "Forbidden"}), 403
 
     club.name = data.get("name", club.name)
@@ -226,7 +230,8 @@ def remove_member(club_id: int, user_id: int):
 
     # Check current account is an owner of this club
     club_owner = ClubOwner.query.filter_by(id=current_user_id).first()
-    if not club_owner:
+    admin = Administrator.query.filter_by(id=current_user_id).first()
+    if not club_owner and not admin:
         return jsonify({"message": "Unauthorized"}), 401
 
     owner_check = ClubOwnerClub.query.filter_by(
@@ -234,7 +239,7 @@ def remove_member(club_id: int, user_id: int):
         club_id=club_id
     ).first()
 
-    if not owner_check:
+    if not owner_check and not admin:
         return jsonify({"message": "Forbidden"}), 403
 
     is_owner = ClubOwnerClub.query.filter_by(
@@ -274,7 +279,8 @@ def create_ladder(club_id: int):
 
     # Check account is owner
     club_owner = ClubOwner.query.filter_by(id=user_id).first()
-    if not club_owner:
+    admin = Administrator.query.filter_by(id=user_id).first()
+    if not club_owner and not admin:
         return jsonify({"message": "Unauthorized"}), 401
 
     owner_check = ClubOwnerClub.query.filter_by(
@@ -282,7 +288,7 @@ def create_ladder(club_id: int):
         club_id=club_id
     ).first()
 
-    if not owner_check:
+    if not owner_check and not admin:
         return jsonify({"message": "Forbidden"}), 403
 
     # Create ladder
@@ -312,24 +318,42 @@ def create_ladder(club_id: int):
         }
     }), 201
 
+from sqlalchemy import or_
+
 @clubs_bp.get("/clubs/<int:club_id>/owners")
 def get_club_owners(club_id: int):
-    """List all owners/managers of a club."""
+    """List all owners/managers of a club AND global administrators."""
     current_user_id = _get_current_user_id_from_cookie()
     if not current_user_id:
         return jsonify({"message": "Unauthorized"}), 401
 
+    # Query accounts that are EITHER:
+    # 1. Linked to this specific club via ClubOwner/ClubOwnerClub
+    # 2. Registered in the Administrator table
     owners = (
         db.session.query(Account)
-        .join(ClubOwner, ClubOwner.id == Account.id)
-        .join(ClubOwnerClub, ClubOwnerClub.club_owner_id == ClubOwner.id)
-        .filter(ClubOwnerClub.club_id == club_id)
+        .outerjoin(ClubOwner, ClubOwner.id == Account.id)
+        .outerjoin(ClubOwnerClub, ClubOwnerClub.club_owner_id == ClubOwner.id)
+        .outerjoin(Administrator, Administrator.id == Account.id)
+        .filter(
+            or_(
+                ClubOwnerClub.club_id == club_id,
+                Administrator.id.isnot(None)
+            )
+        )
+        .distinct() # Ensure an Admin who is also a ClubOwner isn't listed twice
         .all()
     )
 
     return jsonify({
         "owners": [
-            {"id": owner.id, "email": owner.email, "name": owner.first_name + " " + owner.last_name} 
+            {
+                "id": owner.id, 
+                "email": owner.email, 
+                "name": f"{owner.first_name} {owner.last_name}",
+                # Optional: helpful for the frontend to know WHY they are in this list
+                "role": "admin" if owner.administrator else "owner" 
+            } 
             for owner in owners
         ]
     }), 200
@@ -354,7 +378,8 @@ def add_club_owner(club_id: int):
     requester_owner = ClubOwnerClub.query.filter_by(
         club_owner_id=current_user_id, club_id=club_id
     ).first()
-    if not requester_owner:
+    admin = Administrator.query.filter_by(id=current_user_id).first()
+    if not requester_owner and not admin:
         return jsonify({"message": "Forbidden"}), 403
 
     target_account = Account.query.get(target_owner_id)
@@ -405,7 +430,8 @@ def remove_club_owner(club_id: int, owner_id: int):
     requester_owner = ClubOwnerClub.query.filter_by(
         club_owner_id=current_user_id, club_id=club_id
     ).first()
-    if not requester_owner:
+    admin = Administrator.query.filter_by(id=current_user_id).first()
+    if not requester_owner and not admin:
         return jsonify({"message": "Forbidden"}), 403
 
     target_link = ClubOwnerClub.query.filter_by(
@@ -452,6 +478,11 @@ def search_accounts():
 def list_my_clubs(account: Account):
     """Return all clubs the current user can manage (is an owner of)."""
 
+    admin = Administrator.query.filter_by(id=account.id).first()
+    if admin:
+        db_clubs = Club.query.order_by(Club.name.asc()).all()
+        clubs = [{"id": club.id, "name": club.name} for club in db_clubs]
+        return jsonify({"clubs": clubs}), 200
     club_owner = ClubOwner.query.filter_by(id=account.id).first()
     if not club_owner:
         return jsonify({"clubs": []}), 200
@@ -486,8 +517,8 @@ def delete_club(club_id: int):
     requester_owner = ClubOwnerClub.query.filter_by(
         club_owner_id=current_user_id, club_id=club_id
     ).first()
-    
-    if not requester_owner:
+    admin = Administrator.query.filter_by(id=current_user_id).first()
+    if not requester_owner and not admin:
         return jsonify({"message": "Forbidden"}), 403
 
     try:

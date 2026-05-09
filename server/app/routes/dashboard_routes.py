@@ -9,7 +9,7 @@ from server.app.models.match import MatchProposal, MatchPlayed, MatchStatus
 from server.app.models.player import Player
 from server.app.models.club_player import ClubPlayer
 from server.extensions import db
-from server.app.models.account import Account
+from server.app.models.account import Account, Administrator
 from server.config import SECRET_KEY
 from server.app.services.club_notifications import send_join_request_confirmation_to_player
 from server.app.services.club_notifications import send_join_request_notification_to_owner
@@ -92,36 +92,43 @@ def get_my_dashboard():
 
     clubs_map = {}
 
-    club_owner = ClubOwner.query.filter_by(id=user_id).first()
+    # --- ADMIN CHECK ---
+    # Check if this account exists in the administrator table
+    is_admin = Administrator.query.filter_by(id=user_id).first() is not None
 
-    if club_owner:
-        owned_links = ClubOwnerClub.query.filter_by(
-            club_owner_id=club_owner.id
-        ).all()
+    if is_admin:
+        # Admins see every club in the system
+        all_clubs = Club.query.all()
+        for club in all_clubs:
+            clubs_map[club.id] = {
+                **club.serialize(),
+                "membership_status": "owner"
+            }
+    else:
+        club_owner = ClubOwner.query.filter_by(id=user_id).first()
+        if club_owner:
+            owned_links = ClubOwnerClub.query.filter_by(
+                club_owner_id=club_owner.id
+            ).all()
+            owned_ids = [link.club_id for link in owned_links]
+            if owned_ids:
+                owned_clubs = Club.query.filter(Club.id.in_(owned_ids)).all()
+                for club in owned_clubs:
+                    clubs_map[club.id] = {
+                        **club.serialize(),
+                        "membership_status": "owner"
+                    }
 
-        owned_ids = [link.club_id for link in owned_links]
-
-        if owned_ids:
-            owned_clubs = Club.query.filter(Club.id.in_(owned_ids)).all()
-
-            for club in owned_clubs:
-                clubs_map[club.id] = {
-                    **club.serialize(),
-                    "membership_status": "owner"
-                }
-
-    member_links = ClubPlayer.query.filter_by(player_id=user_id).all()
-    member_ids = [link.club_id for link in member_links]
-
-    if member_ids:
-        member_clubs = Club.query.filter(Club.id.in_(member_ids)).all()
-
-        for club in member_clubs:
-            if club.id not in clubs_map:
-                clubs_map[club.id] = {
-                    **club.serialize(),
-                    "membership_status": "member"
-                }
+        member_links = ClubPlayer.query.filter_by(player_id=user_id).all()
+        member_ids = [link.club_id for link in member_links]
+        if member_ids:
+            member_clubs = Club.query.filter(Club.id.in_(member_ids)).all()
+            for club in member_clubs:
+                if club.id not in clubs_map:
+                    clubs_map[club.id] = {
+                        **club.serialize(),
+                        "membership_status": "member"
+                    }
 
     join_requests = ClubJoinRequest.query.filter_by(user_id=user_id).all()
 
@@ -136,16 +143,28 @@ def get_my_dashboard():
         },
     }), 200
 
-@dashboard_bp.get("/club/join-request")
+@dashboard_bp.get("/me/club-join-requests") # This is likely the route name
 def get_join_requests_for_owner():
     user_id = _get_current_user_id_from_cookie()
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
 
-    club_owner = ClubOwner.query.filter_by(id=user_id).first()
-    if not club_owner:
-        return jsonify({"message": "Not a club owner"}), 403
+    # 1. Check if the user is a Global Admin
+    admin = Administrator.query.get(user_id) is not None
 
+    if admin:
+        # Admins see all join requests in the whole system
+        all_requests = ClubJoinRequest.query.all()
+        return jsonify([r.serialize() for r in all_requests]), 200
+
+    # 2. If not admin, proceed with Club Owner logic
+    club_owner = ClubOwner.query.get(user_id)
+    
+    # FIX: Add this safety check!
+    if not club_owner:
+        return jsonify([]), 200 # Return empty list if they aren't an owner
+
+    # Original line 157 that was crashing:
     owner_links = ClubOwnerClub.query.filter_by(club_owner_id=club_owner.id).all()
     club_ids = [link.club_id for link in owner_links]
 
@@ -257,8 +276,8 @@ def decide_request():
         club_owner_id=owner_id, 
         club_id=club_id
     ).first()
-    
-    if not is_owner:
+    admin = Administrator.query.filter_by(id=owner_id).first()
+    if not is_owner and not admin:
         return jsonify({"message": "You do not have permission to manage this club"}), 403
 
     if decision == "approved":
@@ -373,8 +392,8 @@ def delete_club():
         club_owner_id=owner_id, 
         club_id=club_id
     ).first()
-    
-    if not is_owner:
+    admin = Administrator.query.filter_by(id=owner_id).first()
+    if not is_owner and not admin:
         return jsonify({"message": "You do not have permission to manage this club"}), 403
     
     try:

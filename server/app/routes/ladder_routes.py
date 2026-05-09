@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from server.app.services.auth_service import verify_user
 from server.app.models.ladder import Ladder, LadderRatingFunction
 from server.app.models.match_rule import MatchRuleSet
+from server.app.models.account import Administrator
 from server.app.models.sport_type import SportType
 from server.app.services.ladder_service import get_all_players_ladder
 from server.extensions import db
@@ -35,7 +36,9 @@ def add_team_to_ladder(club_id, ladder_id, team_id):
 
     # 2. PERMISSION CHECK
     clubowner = ClubOwner.query.filter_by(id=account.id).first()
-    if not clubowner:
+    admin = Administrator.query.filter_by(id=account.id).first()
+    
+    if not clubowner and not admin:
         return jsonify({"message": "Unauthorized"}), 401
     
     owner_check = ClubOwnerClub.query.filter_by(
@@ -43,7 +46,7 @@ def add_team_to_ladder(club_id, ladder_id, team_id):
         club_id=club_id
     ).first()
     
-    if not owner_check:
+    if not owner_check and not admin:
         return jsonify({"message": "Forbidden: You do not own this club"}), 403
 
     # 3. DATA VALIDATION
