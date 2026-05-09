@@ -49,6 +49,7 @@ function ClubSettings() {
                         updating={settings.updating}
                         updateMessage={settings.updateMessage}
                         sportTypes={settings.sportTypes}
+                        handleDeleteClub={settings.handleDeleteClub}
                         texts={texts}
                     />
                 )}

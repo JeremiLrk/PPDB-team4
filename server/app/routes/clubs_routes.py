@@ -466,3 +466,38 @@ def list_my_clubs(account: Account):
     clubs = [{"id": club.id, "name": club.name} for club in db_clubs]
     return jsonify({"clubs": clubs}), 200
 
+@clubs_bp.delete("/clubs/<int:club_id>")
+def delete_club(club_id: int):
+    """
+    Deletes the club and cleans up owner associations.
+    Note: Depending on your business logic, you might want to 
+    unaffiliate teams instead of deleting them.
+    """
+    current_user_id = _get_current_user_id_from_cookie()
+    if not current_user_id:
+        return jsonify({"message": "Unauthorized"}), 401
+
+    # 1. Fetch the club
+    club = Club.query.get(club_id)
+    if not club:
+        return jsonify({"message": "Club not found"}), 404
+
+    # 2. Authorization Check: Is the requester an owner of THIS club?
+    requester_owner = ClubOwnerClub.query.filter_by(
+        club_owner_id=current_user_id, club_id=club_id
+    ).first()
+    
+    if not requester_owner:
+        return jsonify({"message": "Forbidden"}), 403
+
+    try:
+        db.session.delete(club)
+        db.session.commit()
+
+        return jsonify({
+            "message": f"Club '{club.name}' and all associated data have been deleted."
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Failed to delete club: {str(e)}"}), 500

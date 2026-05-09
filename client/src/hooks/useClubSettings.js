@@ -237,6 +237,25 @@ export function useClubSettings(clubId, texts = {}) {
         }
     };
 
+    const handleDeleteClub = async () => {
+        try {
+            const res = await fetch(`/api/clubs/${clubId}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.message || "Could not delete club.");
+            }
+
+            // Redirect to dashboard on success
+            navigate("/dashboard");
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
 
     return {
         loading,
@@ -252,6 +271,7 @@ export function useClubSettings(clubId, texts = {}) {
         formData,
         handleChange,
         updateClub,
+        handleDeleteClub,
 
         members,
         addMember,
