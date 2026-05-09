@@ -20,6 +20,13 @@ function formatDateTime(value) {
     });
 }
 
+function formatTemplate(template, values = {}) {
+    return Object.entries(values).reduce(
+        (output, [key, value]) => output.replaceAll(`{${key}}`, String(value ?? "")),
+        template,
+    );
+}
+
 function statusClass(status) {
     const normalized = (status || "pending").toLowerCase();
     if (normalized === "accepted" || normalized === "approved") {
@@ -59,9 +66,26 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
     const canResetToPending = normalizedStatus !== "pending";
     const weatherClubId = proposal.team1ClubId || proposal.team2ClubId || null;
     const weatherCity = proposal.team1ClubCity || proposal.team2ClubCity || "";
-    const { weather, loading: weatherLoading } = useWeather(weatherClubId);
+    const weatherDate = formatDateTime(proposal.proposedStartAt);
+    const { weather, loading: weatherLoading } = useWeather(weatherClubId, proposal.proposedStartAt);
     const weatherDescription = weather?.weather?.[0]?.description || "";
     const weatherTemp = Number.isFinite(weather?.main?.temp) ? Math.round(weather.main.temp) : null;
+    const weatherLocation = weatherCity || weather?.name || texts.club || "club";
+    const proposedDateLabel = texts.proposed_date || "Proposed date";
+    const weatherLoadingLabel = texts.weather_loading || "Weather for {city} on {date} loading...";
+    const weatherAvailableLabel = texts.weather_available || "Weather for {city} on {date}: {temp}°C{description}";
+    const weatherUnavailableLabel = texts.weather_unavailable || "Weather for {city} on {date} unavailable";
+    const weatherLoadingText = formatTemplate(weatherLoadingLabel, { city: weatherLocation, date: weatherDate });
+    const weatherAvailableText = formatTemplate(weatherAvailableLabel, {
+        city: weatherLocation,
+        date: weatherDate,
+        temp: weatherTemp ?? "-",
+        description: weatherDescription ? `, ${weatherDescription}` : "",
+    });
+    const weatherUnavailableText = formatTemplate(weatherUnavailableLabel, {
+        city: weatherLocation,
+        date: weatherDate,
+    });
 
     return (
         <ItemCard>
@@ -70,25 +94,25 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                     {proposal.team1Name} vs {proposal.team2Name}
                 </p>
                 <p className={commonStyles.secondaryText}>
-                    Proposed date: {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
+                    {proposedDateLabel}: {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
                 </p>
                 {(proposal.team1Contacts?.length || proposal.team2Contacts?.length) ? (
                     <div className={commonStyles.secondaryText} style={{ display: "grid", gap: "0.2rem" }}>
                         <p style={{ margin: 0 }}>
-                            {proposal.team1Name || "Team 1"}: {formatContactList(proposal.team1Contacts)}
+                            {proposal.team1Name || texts.team1 || "Team 1"}: {formatContactList(proposal.team1Contacts)}
                         </p>
                         <p style={{ margin: 0 }}>
-                            {proposal.team2Name || "Team 2"}: {formatContactList(proposal.team2Contacts)}
+                            {proposal.team2Name || texts.team2 || "Team 2"}: {formatContactList(proposal.team2Contacts)}
                         </p>
                     </div>
                 ) : null}
                 {weatherClubId ? (
                     <p className={commonStyles.secondaryText}>
                         {weatherLoading
-                            ? `Weather for ${weatherCity || "club"} loading...`
+                            ? weatherLoadingText
                             : weatherTemp !== null
-                                ? `Weather for ${weatherCity || weather?.name || "club"}: ${weatherTemp}°C${weatherDescription ? `, ${weatherDescription}` : ""}`
-                                : `Weather for ${weatherCity || weather?.name || "club"} unavailable`}
+                                ? weatherAvailableText
+                                : weatherUnavailableText}
                     </p>
                 ) : null}
             </div>
