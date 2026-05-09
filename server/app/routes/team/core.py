@@ -108,6 +108,8 @@ def create_team(account: Account):
             can_delete=True,
             can_edit_players=True,
             can_edit_managers=True,
+            # This line was omitted when the manager's permissions flag was added
+            can_manage_match=True,
         )
         db.session.add(assoc)
 
