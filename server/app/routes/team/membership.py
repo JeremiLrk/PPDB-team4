@@ -188,6 +188,20 @@ def add_player_to_team(account: Account, team_id: int):
     if active_request:
         abort(409, description="Join request for this player to this team already exists.")
 
+    # Check if adding player would exceed ladder size limits
+    exceeding_ladders = _ladders_exceeding_max_after_add(team_id)
+
+    confirm_exceed = request.args.get("confirmExceed", "").lower() == "true"
+
+    if exceeding_ladders and not confirm_exceed:
+        # Return warning instead of error
+        return jsonify({
+            "message": "Adding this player would exceed team size limits in active ladders.",
+            "warning": "exceeds_max_players",
+            "ladders": [{"id": l.id, "name": l.name} for l in exceeding_ladders],
+            "requireConfirm": True
+        }), 202
+
     promote_to_player(target)
 
     join_request = TeamJoinRequest(
@@ -225,6 +239,21 @@ def remove_player_from_team(account: Account, team_id: int, account_id: int):
     )
     if not assoc:
         abort(404, description="This account is not a player in this team.")
+
+    # Check if removing player would violate minimum roster size in active ladders
+    violating_ladders = _ladders_violating_min_after_remove(team_id)
+
+    # Get confirmation flag from query parameters
+    confirm_remove = request.args.get("confirmViolate", "").lower() == "true"
+
+    if violating_ladders and not confirm_remove:
+        # Return warning instead of error
+        return jsonify({
+            "message": "Removing this player would drop below minimum team size in active ladders.",
+            "warning": "violates_min_players",
+            "ladders": [{"id": l.id, "name": l.name} for l in violating_ladders],
+            "requireConfirm": True
+        }), 202
 
     db.session.delete(assoc)
     db.session.commit()
@@ -447,70 +476,6 @@ def remove_player_dropping_violated_ladders(account: Account, team_id: int, acco
     }), 200
 
 
-@membership_bp.route("/<int:team_id>/players/join-requests/<int:request_id>/accept", methods=["POST"])
-@login_required
-def accept_player_join_request(account: Account, team_id: int, request_id: int):
-    """POST /api/teams/<team_id>/players/join-requests/<request_id>/accept — Accept player join request."""
-    team = _get_team_or_404(team_id)
-    resolved = account.resolved_role
-
-    _can_edit_players_or_403(resolved, team)
-
-    join_request = db.session.query(TeamJoinRequest).filter(
-        TeamJoinRequest.id == request_id,
-        TeamJoinRequest.team_id == team_id,
-        ).first()
-
-    if not join_request:
-        abort(404, description="Join request not found.")
-
-    if join_request.status != "pending":
-        abort(409, description="Join request is not in pending status.")
-
-    join_request.status = "accepted"
-    db.session.flush()
-
-    target = _resolve_target(join_request.user_id)
-    promote_to_player(target)
-
-    assoc = PlayerTeam(player_id=target.player.id, team_id=team.id)
-    db.session.add(assoc)
-    db.session.commit()
-
-    return jsonify({
-        "message": "Player join request accepted successfully.",
-        "request": join_request.serialize()
-    }), 200
-
-
-@membership_bp.route("/<int:team_id>/players/join-requests/<int:request_id>/reject", methods=["POST"])
-@login_required
-def reject_player_join_request(account: Account, team_id: int, request_id: int):
-    """POST /api/teams/<team_id>/players/join-requests/<request_id>/reject — Reject player join request."""
-    team = _get_team_or_404(team_id)
-    resolved = account.resolved_role
-
-    _can_edit_players_or_403(resolved, team)
-
-    join_request = db.session.query(TeamJoinRequest).filter(
-        TeamJoinRequest.id == request_id,
-        TeamJoinRequest.team_id == team_id,
-        ).first()
-
-    if not join_request:
-        abort(404, description="Join request not found.")
-
-    if join_request.status != "pending":
-        abort(409, description="Join request is not in pending status.")
-
-    join_request.status = "rejected"
-    db.session.commit()
-
-    return jsonify({
-        "message": "Player join request rejected successfully.",
-        "request": join_request.serialize()
-    }), 200
-
 
 
 @membership_bp.route("/<int:team_id>/players/search", methods=["GET"])
@@ -626,3 +591,4 @@ def get_team_managers(team_id: int):
         "total":    len(managers),
         "managers": managers,
     }), 200
+

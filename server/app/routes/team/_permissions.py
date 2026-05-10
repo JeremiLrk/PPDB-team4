@@ -200,3 +200,24 @@ def _get_permissions(resolved, team: Team) -> dict:
         "canEditPlayers":  assoc.can_edit_players,
         "canEditManagers": assoc.can_edit_managers,
     }
+
+# ---------------------------------------------------------------------------
+# Join-request permissions
+# ---------------------------------------------------------------------------
+
+def _can_manage_join_request(resolved, join_request, team: Team) -> bool:
+    """
+    Returns True if *resolved* is allowed to accept/reject a join request.
+    """
+    if _is_admin(resolved):
+        return True
+
+    if join_request.user_id == resolved.id:
+        return True
+
+    return False
+
+
+def _can_manage_join_request_or_403(resolved, join_request, team: Team) -> None:
+    if not _can_manage_join_request(resolved, join_request, team):
+        abort(403, description="Forbidden: cannot manage join requests for this team.")

@@ -2,6 +2,8 @@ from typing import Any
 
 from flask import abort
 from sqlalchemy import func
+
+from server.app.routes.team._permissions import _is_admin
 from server.extensions import db
 from server.app.models.account import Account, AccountRole
 from server.app.models.team import Team, TeamManagerTeam, TeamManager

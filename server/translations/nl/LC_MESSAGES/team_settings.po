@@ -163,3 +163,24 @@ msgstr "Bevestig het verwijderen van de manager"
 msgid "team_settings.confirm_remove_manager_text"
 msgstr "Weet je zeker dat je deze manager uit het team wilt verwijderen?"
 
+msgid "team_settings.add_player_warn_exceed"
+msgstr "Het toevoegen van deze speler zou de limieten van teamgrootte in actieve ladders overschrijden."
+
+msgid "team_settings.add_player_warn_ladders"
+msgstr "Getroffen ladders:"
+
+msgid "team_settings.add_player_confirm_exceed"
+msgstr "Toch toevoegen"
+
+msgid "team_settings.cancel_btn"
+msgstr "Annuleren"
+
+msgid "team_settings.remove_player_warn_violate"
+msgstr "Het verwijderen van deze speler zou onder het minimale teamformaat in actieve ladders vallen."
+
+msgid "team_settings.remove_player_warn_ladders"
+msgstr "Getroffen ladders:"
+
+msgid "team_settings.remove_player_confirm_violate"
+msgstr "Toch verwijderen"
+

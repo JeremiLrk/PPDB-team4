@@ -6,6 +6,7 @@ import buttonStyles     from "@/style/common/Buttons.module.css";
 
 import TeamCard             from "@/components/dashboard/TeamCard.jsx";
 import CreateTeamButton     from "@/components/team/CreateTeamButton.jsx";
+import TeamInvitations      from "@/components/team/TeamInvitations.jsx";
 
 
 import { useCurrentUserContext }    from "@/context/useCurrentUserContext.jsx";
@@ -49,7 +50,10 @@ export function TeamsTab({ texts, theme }) {
 
     return (
         <div className={`${animationStyles.contentGrid} ${animationStyles.contentFade}`}>
-            <article className={`${panelStyles.panel}`}>
+
+
+            {/* My Teams Section */}
+            <article className={`${panelStyles.panel}`} style={{ gridColumn: "1 / -1" }}>
 
                 {/* Header row */}
                 <div style={{
@@ -167,6 +171,11 @@ export function TeamsTab({ texts, theme }) {
                     </div>
                 )}
             </article>
+
+            {/* Team Invitations Section */}
+            <div style={{ gridColumn: "1 / -1" }}>
+                <TeamInvitations />
+            </div>
         </div>
     );
 }

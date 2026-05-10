@@ -14,6 +14,7 @@ export function useAddPlayer({ teamId, onAdded } = {}) {
     const [addingId,  setAddingId]  = useState(null);
     const [addedIds,  setAddedIds]  = useState(new Set());
     const [addErr,    setAddErr]    = useState(null);
+    const [confirmWarning, setConfirmWarning] = useState(null);
 
     const debounceRef = useRef(null);
     const inputRef    = useRef(null); // controlled by hook, passed to component
@@ -28,6 +29,7 @@ export function useAddPlayer({ teamId, onAdded } = {}) {
         setResults([]);
         setSearchErr(null);
         setAddErr(null);
+        setConfirmWarning(null);
     }, []);
 
     // Auto-focus when opening
@@ -69,16 +71,29 @@ export function useAddPlayer({ teamId, onAdded } = {}) {
     }, [query, teamId, isOpen]);
 
 
-    const addPlayer = useCallback(async (accountId) => {
+    const addPlayer = useCallback(async (accountId, confirmExceed = false) => {
         setAddingId(accountId);
         setAddErr(null);
+        setConfirmWarning(null);
         try {
             const res  = await fetch(`/api/teams/${teamId}/players`, {
                 method:  "POST",
                 headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify({ accountId }),
+                body:    JSON.stringify({ accountId, confirmExceed }),
             });
             const data = await res.json();
+
+            // Handle warning response (202) — requires confirmation
+            if (res.status === 202 && data.warning === "exceeds_max_players") {
+                setConfirmWarning({
+                    accountId,
+                    message: data.message,
+                    ladders: data.ladders || []
+                });
+                setAddingId(null);
+                return;
+            }
+
             if (!res.ok) throw new Error(data?.message || "Failed to add player.");
 
             setAddedIds(prev => new Set(prev).add(accountId));
@@ -104,6 +119,7 @@ export function useAddPlayer({ teamId, onAdded } = {}) {
         query, setQuery,
         results, searching, searchErr,
         addPlayer, addingId, addedIds, addErr,
+        confirmWarning, setConfirmWarning,
         inputRef, // component throws in <input ref={inputRef}>
     };
 }

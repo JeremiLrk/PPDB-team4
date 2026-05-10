@@ -1,10 +1,14 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, abort
 from server.app.models.account import Account, Administrator
 from server.app.models.club_owner import ClubOwner
 from server.app.models.team import Team, TeamManager
 from server.app.decorators.login_required import login_required
 from server.extensions import db
-from ._helpers import _parse_pagination
+from ._helpers import _parse_pagination, _resolve_target, _get_team_or_404
+from ._permissions import _can_manage_join_request_or_403
+from ...models.player import PlayerTeam
+from ...models.team_join_request import TeamJoinRequest
+from ...utils.promote import promote_to_player
 
 my_teams_bp = Blueprint("team_my", __name__)
 
@@ -110,4 +114,89 @@ def get_my_all_teams(account: Account):
         "from": offset,
         "to": offset + len(teams),
         "teams": [t.to_dict() for t in teams]
+    }), 200
+
+@my_teams_bp.route("/<int:team_id>/players/join-requests/<int:request_id>/accept", methods=["POST"])
+@login_required
+def accept_player_join_request(account: Account, team_id: int, request_id: int):
+    """POST /api/teams/<team_id>/players/join-requests/<request_id>/accept"""
+    team = _get_team_or_404(team_id)
+    resolved = account.resolved_role
+
+    join_request = db.session.query(TeamJoinRequest).filter(
+        TeamJoinRequest.id == request_id,
+        TeamJoinRequest.team_id == team_id,
+        ).first()
+
+    if not join_request:
+        abort(404, description="Join request not found.")
+
+    _can_manage_join_request_or_403(resolved, join_request, team)
+
+    if join_request.status != "pending":
+        abort(409, description="Join request is not in pending status.")
+
+    join_request.status = "accepted"
+    db.session.flush()
+
+    target = _resolve_target(join_request.user_id)
+    promote_to_player(target)
+
+    assoc = PlayerTeam(player_id=target.player.id, team_id=team.id)
+    db.session.add(assoc)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Player join request accepted successfully.",
+        "request": join_request.serialize()
+    }), 200
+
+
+@my_teams_bp.route("/<int:team_id>/players/join-requests/<int:request_id>/reject", methods=["POST"])
+@login_required
+def reject_player_join_request(account: Account, team_id: int, request_id: int):
+    """POST /api/teams/<team_id>/players/join-requests/<request_id>/reject"""
+    team = _get_team_or_404(team_id)
+    resolved = account.resolved_role
+
+    join_request = db.session.query(TeamJoinRequest).filter(
+        TeamJoinRequest.id == request_id,
+        TeamJoinRequest.team_id == team_id,
+        ).first()
+
+    if not join_request:
+        abort(404, description="Join request not found.")
+
+    _can_manage_join_request_or_403(resolved, join_request, team)
+
+    if join_request.status != "pending":
+        abort(409, description="Join request is not in pending status.")
+
+    join_request.status = "rejected"
+    db.session.commit()
+
+    return jsonify({
+        "message": "Player join request rejected successfully.",
+        "request": join_request.serialize()
+    }), 200
+
+@my_teams_bp.route("/my-join-requests", methods=["GET"])
+@login_required
+def get_my_join_requests(account: Account):
+    """GET /api/teams/my-join-requests — list all active (pending) join requests
+    sent by the currently authenticated user across all teams."""
+
+    requests = (
+        db.session.query(TeamJoinRequest)
+        .filter(
+            TeamJoinRequest.user_id == account.id,
+            TeamJoinRequest.status == "pending",
+            )
+        .order_by(TeamJoinRequest.date.desc())
+        .all()
+    )
+
+    return jsonify({
+        "total": len(requests),
+        "joinRequests": [r.serialize() for r in requests],
     }), 200
