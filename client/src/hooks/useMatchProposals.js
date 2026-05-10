@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 const MATCH_PROPOSALS_ENDPOINT = "/api/matches/proposals";
 
 function readField(source, ...keys) {
+    // The API has a few naming variants from older and newer payloads.
+    // This helper keeps the hook tolerant without forcing a rewrite of the backend.
     for (const key of keys) {
         if (source?.[key] !== undefined && source?.[key] !== null) {
             return source[key];
@@ -12,6 +14,8 @@ function readField(source, ...keys) {
 }
 
 function normalizeMatchProposal(raw = {}) {
+    // Flatten the API payload into one UI-friendly object shape.
+    // The card/list components can then stay dumb and only render fields.
     const team1Id = readField(raw, "team1_id", "team1Id");
     const team2Id = readField(raw, "team2_id", "team2Id");
     const rawStatus = readField(raw, "status", "status_name", "statusName");
@@ -38,11 +42,15 @@ function normalizeMatchProposal(raw = {}) {
         team2ClubCity: readField(raw, "team2_club_city", "team2ClubCity") || "",
         team1Contacts,
         team2Contacts,
+        // Keep the raw payload around so the UI can still inspect anything
+        // new the backend starts returning before this hook is extended.
         original: raw,
     };
 }
 
 function normalizeProposalList(payload) {
+    // Different endpoints return proposals under different keys, so accept
+    // the common wrappers and fall back to an empty list.
     const rows = Array.isArray(payload)
         ? payload
         : payload?.proposals ?? payload?.matches ?? payload?.items ?? [];
@@ -61,6 +69,7 @@ async function readJson(response) {
 async function fetchMatchProposals(filters = {}) {
     const params = new URLSearchParams();
 
+    // These query params map directly to the list endpoint filters.
     if (filters.teamId) {
         params.set("team_id", String(filters.teamId));
     }
@@ -86,6 +95,8 @@ async function fetchMatchProposals(filters = {}) {
 }
 
 async function updateMatchProposalStatus(proposalId, status, extra = {}) {
+    // Keep the older action endpoints working for accept/reject/cancel flows,
+    // and fall back to the generic status patch for everything else.
     const normalizedStatus = String(status || "").toLowerCase();
     const actionEndpointByStatus = {
         accepted: `/api/matches/${proposalId}/accept`,
@@ -128,6 +139,8 @@ export function useMatchProposals(filters = {}) {
     const [submitting, setSubmitting] = useState(false);
 
     const load = useCallback(async () => {
+        // Reloading always replaces the current list with the latest backend
+        // result so the UI stays consistent after status changes.
         setLoading(true);
         setError("");
 
@@ -142,6 +155,8 @@ export function useMatchProposals(filters = {}) {
     }, [teamId, weekStartDate, archived]);
 
     const setProposalStatus = useCallback(async (proposalId, status, extra = {}) => {
+        // Keep the local list in sync with the backend response instead of
+        // forcing a full page refresh after every action.
         setSubmitting(true);
         setError("");
 
@@ -170,6 +185,8 @@ export function useMatchProposals(filters = {}) {
         loading,
         error,
         submitting,
+        // The tab uses load() for manual refresh and setProposalStatus() for
+        // button-driven changes from the proposal cards.
         load,
         setProposalStatus,
     };

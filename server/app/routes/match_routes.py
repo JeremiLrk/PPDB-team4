@@ -32,6 +32,8 @@ ARCHIVE_AFTER_DAYS = 30
 
 
 def proposal_payload(proposal: MatchProposal):
+    # This serializer is shared by the list, create, and status endpoints so
+    # the frontend sees one stable proposal shape regardless of where it came from.
     return {
         "id": proposal.id,
         "proposed_by_user_id": proposal.proposed_by_user_id,
@@ -59,6 +61,8 @@ def proposal_payload(proposal: MatchProposal):
 
 
 def is_archived_proposal(proposal: MatchProposal, *, reference_date: date | None = None) -> bool:
+    # Archiving is week-based, not status-based: older proposals move out of the
+    # default list even if they were never explicitly accepted or rejected.
     if proposal.week_start_date is None:
         return False
     today = reference_date or datetime.utcnow().date()
@@ -168,6 +172,8 @@ def can_respond_to_proposal(account, team1, team2):
 def create_match_proposal(account):
     data = request.get_json() or {}
 
+    # The create flow validates identity, permissions, scheduling, and sport
+    # compatibility before the proposal row is inserted.
     team1_id = data.get("team1_id")
     team2_id = data.get("team2_id")
     if not team1_id or not team2_id:
@@ -233,7 +239,8 @@ def create_match_proposal(account):
         if not venue_exists:
             return jsonify({"message": "venue_type_id not found."}), 404
 
-    # Canonical pair ordering for DB constraint: team1_id < team2_id.
+    # Canonical pair ordering keeps the uniqueness constraint stable no matter
+    # which side the caller picked first in the UI.
     ordered_team1_id, ordered_team2_id = sorted((team1_id, team2_id))
 
     proposal = MatchProposal(
@@ -263,6 +270,8 @@ def create_match_proposal(account):
 @match_proposals_bp.get("/proposals")
 @login_required
 def list_match_proposals(account):
+    # The list endpoint applies role-based visibility first, then archive and
+    # team/week filters so the frontend can drive all views with one hook.
     query = MatchProposal.query
     visible_team_ids = resolve_visible_team_ids(account)
 
@@ -315,6 +324,8 @@ def list_match_proposals(account):
 def generate_weekly_proposals(account):
     data = request.get_json() or {}
 
+    # This endpoint is the manual entry point for the weekly generator used by
+    # the scheduler and by admins who want to backfill proposals.
     week_start_date = parse_date(data.get("week_start_date")) if data.get("week_start_date") else next_week_start()
     if not week_start_date:
         return jsonify({"message": "week_start_date must be YYYY-MM-DD."}), 422
@@ -355,6 +366,8 @@ def generate_weekly_proposals(account):
 @match_proposals_bp.patch("/proposals/<int:proposal_id>/status")
 @login_required
 def update_match_proposal_status(account, proposal_id):
+    # Status updates are locked to the participants, the proposer, or admins.
+    # The same endpoint also records side data like accepted/rejected reasons.
     proposal = MatchProposal.query.filter_by(id=proposal_id).with_for_update().first()
     if not proposal:
         return jsonify({"message": "Match proposal not found."}), 404
@@ -406,6 +419,8 @@ def update_match_proposal_status(account, proposal_id):
             db.session.add(cancelled)
         cancelled.reason = data.get("reason")
     elif normalized_status == "played":
+        # "Played" is the only status that also writes a score row and may
+        # trigger Elo updates.
         if current_status_name == "played":
             existing_played = db.session.get(MatchPlayed, proposal.id)
             if not existing_played:

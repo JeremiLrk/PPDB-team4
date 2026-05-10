@@ -14,6 +14,7 @@ function formatDateTime(value) {
     const parsed = parseDate(value);
     if (!parsed) return value || "-";
 
+    // These values are already normalized by the hook; this is just display formatting.
     return parsed.toLocaleString([], {
         dateStyle: "medium",
         timeStyle: "short",
@@ -21,6 +22,8 @@ function formatDateTime(value) {
 }
 
 function formatTemplate(template, values = {}) {
+    // Keep the text tokens flexible so the translations can reuse one template
+    // for multiple clubs, dates, and weather states.
     return Object.entries(values).reduce(
         (output, [key, value]) => output.replaceAll(`{${key}}`, String(value ?? "")),
         template,
@@ -43,6 +46,8 @@ function statusClass(status) {
 
 function formatContact(contact) {
     if (!contact) return "";
+    // The backend may send either a compact name/email pair or a more
+    // structured contact object; normalize both into one label.
     const name = contact.name || [contact.firstName, contact.lastName].filter(Boolean).join(" ").trim();
     const email = contact.email || contact.value || "";
 
@@ -54,6 +59,7 @@ function formatContact(contact) {
 }
 
 function formatContactList(contacts = []) {
+    // Multiple contacts are rendered as one readable comma-separated line.
     return contacts
         .map(formatContact)
         .filter(Boolean)
@@ -62,6 +68,8 @@ function formatContactList(contacts = []) {
 
 export default function MatchProposalCard({ proposal, disabled, onStatusChange, texts = {}, statusTexts = {} }) {
     const normalizedStatus = (proposal.status || "pending").toLowerCase();
+    // Pending proposals can be acted on directly; finalized ones can only be
+    // moved back to pending when the backend allows it.
     const canRespond = normalizedStatus === "pending";
     const canCancel = normalizedStatus === "accepted";
     const weatherClubId = proposal.team1ClubId || proposal.team2ClubId || null;
@@ -90,6 +98,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
     return (
         <ItemCard>
             <div>
+                {/* The top block is pure display: teams, time, contacts, and weather. */}
                 <p className={commonStyles.primaryText}>
                     {proposal.team1Name} vs {proposal.team2Name}
                 </p>
@@ -97,6 +106,8 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                     {proposedDateLabel}: {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
                 </p>
                 {(proposal.team1Contacts?.length || proposal.team2Contacts?.length) ? (
+                    // Contact info comes from the proposal payload so the card
+                    // does not need to reach back into the team models.
                     <div className={commonStyles.secondaryText} style={{ display: "grid", gap: "0.2rem" }}>
                         <p style={{ margin: 0 }}>
                             {proposal.team1Name || texts.team1 || "Team 1"}: {formatContactList(proposal.team1Contacts)}
@@ -107,6 +118,8 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                     </div>
                 ) : null}
                 {weatherClubId ? (
+                    // Weather is fetched per club/date so the proposal can show
+                    // conditions for the venue tied to the match.
                     <p className={commonStyles.secondaryText}>
                         {weatherLoading
                             ? weatherLoadingText
@@ -120,12 +133,14 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
             <div
                 className={styles.actionRow}
             >
+                {/* The status pill reflects the last server state, not local UI guesses. */}
                 <span className={`${commonStyles.statusPill} ${statusClass(proposal.status)}`}>
                     {statusLabel(proposal.status, statusTexts)}
                 </span>
 
                 {canRespond ? (
                     <>
+                        {/* These buttons map directly to the status patch endpoint. */}
                         <button
                             className={styles.acceptButton}
                             type="button"
@@ -145,6 +160,8 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                     </>
                 ) : null}
 
+                {/* Once a proposal is accepted, the UI still allows cancelling it
+                    instead of exposing the generic reset-to-pending action. */}
                 {canCancel ? (
                     <button
                         className={styles.cancelButton}

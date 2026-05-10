@@ -24,7 +24,8 @@ export default function MatchProposalsTab() {
         setProposalStatus,
     } = useMatchProposals({ archived: showArchived });
 
-    // Only the teams the account actively manages — passed to CreateMatchButton
+    // Only the teams the account actively manages are eligible for match creation.
+    // The button uses this list to build the proposal wizard.
     const {
         teams: managedTeams,
         loading: managedLoading,
@@ -61,6 +62,7 @@ export default function MatchProposalsTab() {
                     onClick={load}
                     disabled={loading}
                 >
+                    {/* Manual refresh always re-reads the proposals from the backend. */}
                     {texts.refresh || "Refresh"}
                 </button>
 
@@ -70,12 +72,13 @@ export default function MatchProposalsTab() {
                     onClick={() => setShowArchived((current) => !current)}
                     disabled={loading}
                 >
+                    {/* This is just a filter switch; the hook asks the API again. */}
                     {showArchived
                         ? (texts.show_active || "Show active")
                         : (texts.show_archived || "Show archived")}
                 </button>
 
-                {/* Propose a new match (shown only when account manages at least one team) */}
+                {/* Wait for managed teams so the wizard gets the actual eligible list. */}
                 {!managedLoading && (
                     <CreateMatchButton
                         managedTeams={managedTeams}

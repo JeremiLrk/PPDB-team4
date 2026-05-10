@@ -60,6 +60,7 @@ def generate_weekly_match_proposals(
     if duration_minutes <= 0:
         raise ValueError("duration_minutes must be greater than zero.")
 
+    # The target week is either explicitly requested or defaults to next week.
     target_week_start = week_start_date or next_week_start()
     reference_date = generated_at.date() if generated_at else date.today()
     if target_week_start > latest_allowed_proposal_week_start(reference_date):
@@ -72,7 +73,7 @@ def generate_weekly_match_proposals(
     duration = timedelta(minutes=duration_minutes)
     not_before = None
     if week_start_date is None:
-        # Automatic weekly runs keep a safety window before the earliest slot.
+        # Scheduled runs avoid proposing matches too close to the current time.
         not_before = auto_generation_not_before(generated_at or datetime.utcnow())
 
     pending_status = resolve_status("pending")
@@ -85,8 +86,8 @@ def generate_weekly_match_proposals(
 
     for ladder in ladders:
         ladder_rows = load_ladder_rows(ladder.id)
-        # Weekly proposals keep nearby pairings with controlled variation:
-        # mostly #1-#2 / #3-#4, sometimes #1-#3 / #2-#4.
+        # Pair the ladder by rank so proposals are always between nearby teams.
+        # The alternate pairing branch keeps the schedule from being perfectly static.
         for first_row, second_row in pair_ladder_rows(
             ladder_rows,
             ladder_id=ladder.id,
@@ -103,6 +104,8 @@ def generate_weekly_match_proposals(
                 skipped.append(skip(ladder.id, team1.id, team2.id, "shared_players"))
                 continue
 
+            # If managed_team_ids is provided, only generate proposals involving teams
+            # the caller actually manages.
             if managed_team_ids is not None and team1.id not in managed_team_ids and team2.id not in managed_team_ids:
                 skipped.append(skip(ladder.id, team1.id, team2.id, "not_managed"))
                 continue
@@ -125,8 +128,7 @@ def generate_weekly_match_proposals(
                 skipped.append(skip(ladder.id, team1.id, team2.id, "rematch_cooldown"))
                 continue
 
-            # A team is available only when every player on that team has an
-            # overlapping block; then both team windows must overlap too.
+            # Find one time window where both teams are available at the same time.
             common_window = find_common_team_window(
                 team1,
                 team2,
@@ -144,6 +146,7 @@ def generate_weekly_match_proposals(
                 skipped.append(skip(ladder.id, team1.id, team2.id, "missing_sport_type"))
                 continue
 
+            # Create the proposal only after every guard has passed.
             proposal = MatchProposal(
                 proposed_by_user_id=proposed_by_user_id,
                 sport_type_id=sport_type_id,
