@@ -8,26 +8,27 @@
 
 .toolbar {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 1rem;
     flex-wrap: wrap;
+    gap: 0.75rem;
 }
 
 .toolbarCopy {
     display: grid;
-    gap: 0.3rem;
+    gap: 0.2rem;
     min-width: 0;
 }
 
 .toolbarTitle {
     margin: 0;
-    color: var(--text-heading);
-    font-size: 1.15rem;
+    font-size: 1.25rem;
     font-weight: 800;
+    color: var(--text-heading);
+    letter-spacing: -0.02em;
     display: inline-flex;
     align-items: center;
-    gap: 0.7rem;
+    gap: 0.6rem;
 }
 
 .toolbarSubtitle {
@@ -39,8 +40,7 @@
 .toolbarActions {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 0.75rem;
+    gap: 0.6rem;
     flex-wrap: wrap;
 }
 
@@ -51,52 +51,79 @@
 
 .section {
     display: grid;
-    gap: 0.85rem;
-    padding: 1rem;
-    border: 1px solid var(--surface-border);
-    border-radius: 1rem;
-    background: var(--surface-bg-soft);
+    gap: 0.8rem;
 }
 
 .sectionHeader {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
 }
 
 .sectionHeaderText {
     display: grid;
-    gap: 0.2rem;
+    gap: 0.15rem;
+    min-width: 0;
 }
 
 .sectionTitle {
     margin: 0;
     color: var(--text-heading);
-    font-size: 0.98rem;
+    font-size: 1rem;
     font-weight: 800;
 }
 
 .sectionSubtitle {
     margin: 0;
     color: var(--text-secondary);
-    font-size: 0.86rem;
+    font-size: 0.88rem;
 }
 
 .loading,
 .error {
     margin: 0;
-    padding: 0.8rem 0.95rem;
-    border-radius: 0.9rem;
-    border: 1px solid var(--surface-border);
-    background: var(--surface-bg-soft);
     color: var(--text-secondary);
 }
 
-.error {
-    color: var(--danger-text);
-    border-color: var(--danger-border);
-    background: var(--danger-bg);
+.errorBlock {
+    display: grid;
+    gap: 0.7rem;
+}
+
+.scoreForm {
+    display: grid;
+    gap: 0.8rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 1rem;
+    background: var(--surface-bg-soft);
+}
+
+.scoreFormHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.scoreFormTitle {
+    margin: 0;
+    color: var(--text-heading);
+    font-size: 0.98rem;
+    font-weight: 800;
+}
+
+.scoreInputs {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.scoreSeparator {
+    color: var(--text-secondary);
+    font-weight: 700;
 }
 
 @media (max-width: 860px) {
@@ -105,17 +132,37 @@
     }
 }
 
+@media (max-width: 720px) {
+    .toolbar,
+    .sectionHeader {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .toolbarActions {
+        width: 100%;
+    }
+
+    .toolbarActions > * {
+        flex: 1 1 100%;
+    }
+
+    .scoreFormHeader,
+    .scoreInputs {
+        align-items: stretch;
+    }
+
+    .scoreInputs > * {
+        width: 100%;
+    }
+
+    .scoreSeparator {
+        text-align: center;
+    }
+}
+
 @media (max-width: 640px) {
     .page {
         padding: 0.85rem;
-    }
-
-    .section {
-        padding: 0.85rem;
-    }
-
-    .sectionHeader {
-        align-items: flex-start;
-        flex-direction: column;
     }
 }
