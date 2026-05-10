@@ -31,8 +31,7 @@ export default function MatchProposalsTab() {
     } = useTeams({ endpoint: "/api/teams/my" });
 
     function handleMatchCreated() {
-        // Optionally navigate to the matches tab or show a toast here.
-        // For now a no-op; the panel's own success state is enough feedback.
+        void load();
     }
 
     return (

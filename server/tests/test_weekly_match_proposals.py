@@ -176,7 +176,7 @@ def test_player_can_see_and_accept_weekly_proposal(seeded_client: FlaskClient):
     assert accept_response.get_json()["proposal"]["status"] == "accepted"
 
 
-def test_player_can_set_accepted_proposal_back_to_pending(seeded_client: FlaskClient):
+def test_accepted_proposal_cannot_be_reset_to_pending(seeded_client: FlaskClient):
     loginDemoPlayer(seeded_client)
     player_demo_proposal = findPlayerDemoProposal(seeded_client)
 
@@ -190,8 +190,8 @@ def test_player_can_set_accepted_proposal_back_to_pending(seeded_client: FlaskCl
         f"/api/matches/proposals/{player_demo_proposal['id']}/status",
         json={"status": "pending"},
     )
-    assert pending_response.status_code == 200
-    assert pending_response.get_json()["proposal"]["status"] == "pending"
+    assert pending_response.status_code == 409
+    assert "cannot be reset to pending" in pending_response.get_json()["message"]
 
 
 def test_played_result_updates_elo_rating_matches_played_and_rank(seeded_client: FlaskClient, seeded_app: Flask):

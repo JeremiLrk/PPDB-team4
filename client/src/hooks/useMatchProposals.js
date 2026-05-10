@@ -86,16 +86,35 @@ async function fetchMatchProposals(filters = {}) {
 }
 
 async function updateMatchProposalStatus(proposalId, status, extra = {}) {
-    const response = await fetch(`${MATCH_PROPOSALS_ENDPOINT}/${proposalId}/status`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status, ...extra }),
-    });
+    const normalizedStatus = String(status || "").toLowerCase();
+    const actionEndpointByStatus = {
+        accepted: `/api/matches/${proposalId}/accept`,
+        rejected: `/api/matches/${proposalId}/reject`,
+        cancelled: `/api/matches/${proposalId}/cancel`,
+        canceled: `/api/matches/${proposalId}/cancel`,
+    };
+    const actionEndpoint = actionEndpointByStatus[normalizedStatus];
+
+    const response = actionEndpoint
+        ? await fetch(actionEndpoint, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                responseText: extra.responseText ?? extra.response_text ?? "",
+                reason: extra.reason ?? "",
+            }),
+        })
+        : await fetch(`${MATCH_PROPOSALS_ENDPOINT}/${proposalId}/status`, {
+            method: "PATCH",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status, ...extra }),
+        });
     const payload = await readJson(response);
 
     if (!response.ok) {
-        throw new Error(payload?.message || "Failed to update match proposal.");
+        throw new Error(payload?.description || payload?.message || "Failed to update match proposal.");
     }
 
     return normalizeMatchProposal(payload?.proposal ?? payload?.match ?? payload);

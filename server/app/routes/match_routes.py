@@ -382,6 +382,8 @@ def update_match_proposal_status(account, proposal_id):
     normalized_status = next_status.name.lower()
     if current_status_name == "played" and normalized_status != "played":
         return jsonify({"message": "Played matches are immutable and cannot change status."}), 409
+    if normalized_status == "pending" and current_status_name != "pending":
+        return jsonify({"message": "Match proposals cannot be reset to pending after a response."}), 409
 
     if normalized_status == "accepted":
         accepted = db.session.get(MatchAccepted, proposal.id)

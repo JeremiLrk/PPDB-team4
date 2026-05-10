@@ -63,7 +63,7 @@ function formatContactList(contacts = []) {
 export default function MatchProposalCard({ proposal, disabled, onStatusChange, texts = {}, statusTexts = {} }) {
     const normalizedStatus = (proposal.status || "pending").toLowerCase();
     const canRespond = normalizedStatus === "pending";
-    const canResetToPending = normalizedStatus !== "pending";
+    const canCancel = normalizedStatus === "accepted";
     const weatherClubId = proposal.team1ClubId || proposal.team2ClubId || null;
     const weatherCity = proposal.team1ClubCity || proposal.team2ClubCity || "";
     const weatherDate = formatDateTime(proposal.proposedStartAt);
@@ -142,25 +142,17 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                         >
                             {texts.reject || "Reject"}
                         </button>
-                        <button
-                            className={styles.cancelButton}
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => onStatusChange(proposal.id, "cancelled")}
-                        >
-                            {texts.cancel || "Cancel"}
-                        </button>
                     </>
                 ) : null}
 
-                {canResetToPending ? (
+                {canCancel ? (
                     <button
-                        className={styles.resetButton}
+                        className={styles.cancelButton}
                         type="button"
                         disabled={disabled}
-                        onClick={() => onStatusChange(proposal.id, "pending")}
+                        onClick={() => onStatusChange(proposal.id, "cancelled")}
                     >
-                        {texts.reset_pending || "Set back to pending"}
+                        {texts.cancel || "Cancel"}
                     </button>
                 ) : null}
             </div>
