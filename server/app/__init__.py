@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 
 import click
-from flask import Flask
+from flask import Flask, jsonify
 
 from server.app.models.match_rule import MatchRuleSet  # noqa: F401 – needed for db.create_all()
 from server.app.routes.sport_type_routes import sport_type_bp
@@ -82,6 +82,13 @@ def create_app():
             db.session.execute(text("GRANT ALL ON SCHEMA public TO public"))  # restore rights
             db.session.commit()
             print("Database schema reset complete.")
+
+    @app.errorhandler(Exception)
+    def handle_http_exception(e):
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            return jsonify({"description": e.description}), e.code
+        raise e
 
     _register_blueprints(app)
     _register_cli_commands(app)
