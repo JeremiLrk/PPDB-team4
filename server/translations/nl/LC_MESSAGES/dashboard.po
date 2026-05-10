@@ -319,6 +319,9 @@ msgstr "In behandeling"
 msgid "dashboard.status_approved"
 msgstr "Goedgekeurd"
 
+msgid "dashboard.status_accepted"
+msgstr "Geaccepteerd"
+
 msgid "dashboard.status_rejected"
 msgstr "Geweigerd"
 
@@ -387,4 +390,3 @@ msgstr "Huidig wachtwoord en nieuw wachtwoord zijn verplicht."
 
 msgid "dashboard.passwords_do_not_match"
 msgstr "Wachtwoorden komen niet overeen."
-

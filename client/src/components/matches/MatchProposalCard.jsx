@@ -198,12 +198,12 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                 <div className={styles.bodyRow}>
                     <div className={styles.contactsGrid}>
                         <ContactBlock
-                            teamName={proposal.team1Name || texts.team1 || "Team 1"}
+                            teamName={proposal.team1Name || texts.team_1 || "Team 1"}
                             contacts={proposal.team1Contacts}
                             fallbackLabel={texts.no_contacts || "No contact info"}
                         />
                         <ContactBlock
-                            teamName={proposal.team2Name || texts.team2 || "Team 2"}
+                            teamName={proposal.team2Name || texts.team_2 || "Team 2"}
                             contacts={proposal.team2Contacts}
                             fallbackLabel={texts.no_contacts || "No contact info"}
                         />
@@ -249,7 +249,7 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                                 disabled={disabled}
                                 onClick={() => onStatusChange(proposal.id, "pending")}
                             >
-                                {texts.set_pending || texts.reset || "Set pending"}
+                                {texts.reset_pending || "Set back to pending"}
                             </button>
                         ) : null}
                     </div>

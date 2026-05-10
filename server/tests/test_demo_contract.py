@@ -95,3 +95,15 @@ def test_dashboard_texts_exist_for_en_and_nl():
     assert 'msgid "dashboard.tab_overview"' in nl_dashboard
     assert 'msgstr "Overview"' in en_dashboard
     assert 'msgstr "Overzicht"' in nl_dashboard
+
+
+def test_matches_texts_exist_for_en_and_nl():
+    en_matches = (TRANSLATION_ROOT / "en" / "LC_MESSAGES" / "matches.po").read_text(encoding="utf-8")
+    nl_matches = (TRANSLATION_ROOT / "nl" / "LC_MESSAGES" / "matches.po").read_text(encoding="utf-8")
+
+    assert 'msgid "matches.title"' in en_matches
+    assert 'msgid "matches.title"' in nl_matches
+    assert 'msgid "matches.reset_pending"' in en_matches
+    assert 'msgid "matches.reset_pending"' in nl_matches
+    assert 'msgstr "Set back to pending"' in en_matches
+    assert 'msgstr "Opnieuw in afwachting zetten"' in nl_matches

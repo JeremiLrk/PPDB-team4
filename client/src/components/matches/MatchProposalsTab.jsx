@@ -94,6 +94,12 @@ export default function MatchProposalsTab() {
     const managedSubtitle = texts.managed_matches_subtitle || "Matches for teams and clubs you manage.";
     const playerTitle = texts.player_matches || "Player matches";
     const playerSubtitle = texts.player_matches_subtitle || "Matches that involve teams you play on.";
+    const refreshLabel = texts.refresh || "Refresh";
+    const showArchivedLabel = texts.show_archived || "Show archived";
+    const showActiveLabel = texts.show_active || "Show active";
+    const loadingLabel = texts.loading || "Match proposals loading...";
+    const managedEmptyLabel = texts.no_managed_matches || "No managed match proposals yet.";
+    const playerEmptyLabel = texts.no_player_matches || "No player match proposals yet.";
 
     return (
         <article className={`${panelStyles.panel} ${styles.page} ${animationStyles.contentFade}`}>
@@ -103,9 +109,6 @@ export default function MatchProposalsTab() {
                         {topLabel}
                         <span className={panelStyles.panelCounter}>{proposals.length}</span>
                     </h3>
-                    <p className={styles.toolbarSubtitle}>
-                        {texts.subtitle || "Split by the role you use them in, while keeping one action flow."}
-                    </p>
                 </div>
 
                 <div className={styles.toolbarActions}>
@@ -115,7 +118,7 @@ export default function MatchProposalsTab() {
                         onClick={load}
                         disabled={loading}
                     >
-                        {texts.refresh || "Refresh"}
+                        {refreshLabel}
                     </button>
 
                     <button
@@ -125,8 +128,8 @@ export default function MatchProposalsTab() {
                         disabled={loading}
                     >
                         {showArchived
-                            ? (texts.show_active || "Show active")
-                            : (texts.show_archived || "Show archived")}
+                            ? showActiveLabel
+                            : showArchivedLabel}
                     </button>
 
                     {!managedLoading ? (
@@ -143,7 +146,7 @@ export default function MatchProposalsTab() {
             ) : null}
 
             {loading || roleLoading ? (
-                <p className={styles.loading}>{texts.loading || "Match proposals loading..."}</p>
+                <p className={styles.loading}>{loadingLabel}</p>
             ) : null}
 
             {!loading && !roleLoading && !error ? (
@@ -161,7 +164,7 @@ export default function MatchProposalsTab() {
                             onStatusChange={setProposalStatus}
                             texts={texts}
                             statusTexts={dashboardTexts}
-                            emptyText={texts.no_managed_matches || "No managed match proposals yet."}
+                            emptyText={managedEmptyLabel}
                         />
                     </section>
 
@@ -178,7 +181,7 @@ export default function MatchProposalsTab() {
                             onStatusChange={setProposalStatus}
                             texts={texts}
                             statusTexts={dashboardTexts}
-                            emptyText={texts.no_player_matches || "No player match proposals yet."}
+                            emptyText={playerEmptyLabel}
                         />
                     </section>
                 </div>
