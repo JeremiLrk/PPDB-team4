@@ -16,9 +16,18 @@ load_dotenv(dotenv_path=env_path)
 PW_RESET_SALT = os.environ["PW_RESET_SALT"]
 EMAIL_VERIFICATION_SALT = os.environ.get("EMAIL_VERIFICATION_SALT", "email-verify-salt")
 
-def register_user(email, password, first_name, last_name, date_of_birth):
+_ALLOWED_GENDERS = frozenset({"male", "female", "other"})
+
+
+def register_user(email, password, first_name, last_name, date_of_birth, gender=None, phone=None):
     if len(password) < 6:
         raise ValueError("Password is too short.")
+
+    if not gender or not phone:
+        raise ValueError("Gender and phone number are required.")
+
+    if gender not in _ALLOWED_GENDERS:
+        raise ValueError("gender must be male, female, or other.")
 
     account = Account.query.filter_by(email=email).first()
     if account:
@@ -37,6 +46,8 @@ def register_user(email, password, first_name, last_name, date_of_birth):
         first_name=first_name,
         last_name=last_name,
         date_of_birth=date_of_birth,
+        gender=gender,
+        phone=phone,
         account_role_id=user_role.id,
         is_verified=True,
     )

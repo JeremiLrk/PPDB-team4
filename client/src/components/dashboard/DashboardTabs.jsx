@@ -5,6 +5,12 @@ import commonStyles from "@/style/common/Common.module.css";
 import dashStyles from "@/style/ClubSettings.module.css";
 
 import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js";
+import { GENDER_SELECT_OPTIONS, GENDER_VALUES } from "@/constants/genderOptions.js";
+
+function profileGenderFromUser(user) {
+    const g = user?.gender
+    return GENDER_VALUES.includes(g) ? g : ""
+}
 
 function parseUtcTimestamp(value) {
     if (typeof value !== "string") {
@@ -109,6 +115,8 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
         firstName: currentUser?.firstName || "",
         lastName: currentUser?.lastName || "",
         dateOfBirth: currentUser?.dateOfBirth || "",
+        gender: profileGenderFromUser(currentUser),
+        phoneNumber: currentUser?.phoneNumber ?? "",
     });
     const [submitting, setSubmitting] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
@@ -128,8 +136,16 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
             firstName: currentUser?.firstName || "",
             lastName: currentUser?.lastName || "",
             dateOfBirth: currentUser?.dateOfBirth || "",
+            gender: profileGenderFromUser(currentUser),
+            phoneNumber: currentUser?.phoneNumber ?? "",
         });
-    }, [currentUser?.firstName, currentUser?.lastName, currentUser?.dateOfBirth]);
+    }, [
+        currentUser?.firstName,
+        currentUser?.lastName,
+        currentUser?.dateOfBirth,
+        currentUser?.gender,
+        currentUser?.phoneNumber,
+    ]);
 
     function onFieldChange(event) {
         const { name, value } = event.target;
@@ -149,6 +165,8 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
             firstName: form.firstName.trim(),
             lastName: form.lastName.trim(),
             dateOfBirth: form.dateOfBirth || null,
+            gender: form.gender,
+            phoneNumber: form.phoneNumber.trim(),
         };
 
         if (!payload.firstName || !payload.lastName) {
@@ -157,6 +175,22 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                 text:
                     texts?.profile_required_fields ||
                     "Voornaam en achternaam zijn verplicht.",
+            });
+            return;
+        }
+
+        if (!GENDER_VALUES.includes(payload.gender)) {
+            setMessage({
+                type: "error",
+                text: texts?.profile_gender_required || "Gender is required.",
+            });
+            return;
+        }
+
+        if (!payload.phoneNumber) {
+            setMessage({
+                type: "error",
+                text: texts?.profile_phone_required || "Phone number is required.",
             });
             return;
         }
@@ -341,6 +375,42 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                                 type="date"
                                 name="dateOfBirth"
                                 value={form.dateOfBirth || ""}
+                                onChange={onFieldChange}
+                            />
+                        </label>
+                    </div>
+
+                    <div className={styles.formRow}>
+                        <label className={styles.formLabel}>
+                            {texts?.gender || "Gender"}
+                            <select
+                                className={styles.formInput}
+                                name="gender"
+                                required
+                                value={form.gender}
+                                onChange={onFieldChange}
+                            >
+                                <option value="" disabled>
+                                    Select gender
+                                </option>
+                                {GENDER_SELECT_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </label>
+
+                        <label className={styles.formLabel}>
+                            {texts?.phone_number || "Phone number"}
+                            <input
+                                className={styles.formInput}
+                                type="tel"
+                                name="phoneNumber"
+                                required
+                                autoComplete="tel"
+                                maxLength={64}
+                                value={form.phoneNumber}
                                 onChange={onFieldChange}
                             />
                         </label>

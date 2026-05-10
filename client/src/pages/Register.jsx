@@ -4,6 +4,7 @@ import au_styles from "@/style/Authorization.module.css"
 import { useCurrentUserContext } from "@/context/useCurrentUserContext"
 import { useLangContext } from "@/context/useLangContext.jsx"
 import { usePageTexts } from "@/hooks/common/usePageTexts.js"
+import { GENDER_SELECT_OPTIONS } from "@/constants/genderOptions.js"
 
 const Register = () => {
     const { lang } = useLangContext()
@@ -21,6 +22,10 @@ const Register = () => {
         setLastName,
         dateOfBirth,
         setDateOfBirth,
+        gender,
+        setGender,
+        phoneNumber,
+        setPhoneNumber,
         handleSubmit,
     } = useRegister(setCurrentUser)
 
@@ -41,6 +46,7 @@ const Register = () => {
                             <input
                                 id="register-firstname"
                                 type="text"
+                                required
                                 placeholder={au_texts.placeholder_first_name}
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
@@ -58,6 +64,7 @@ const Register = () => {
                             <input
                                 id="register-lastname"
                                 type="text"
+                                required
                                 placeholder={au_texts.placeholder_last_name}
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
@@ -76,10 +83,56 @@ const Register = () => {
                         <input
                             id="register-dateofbirth"
                             type="date"
+                            required
                             value={dateOfBirth}
                             onChange={(e) => setDateOfBirth(e.target.value)}
                             className={au_styles.formInput}
                         />
+                    </div>
+
+                    <div className={au_styles.nameFieldsRow}>
+                        <div className={au_styles.formGroup}>
+                            <label
+                                htmlFor="register-gender"
+                                className={au_styles.formLabel}
+                            >
+                                Gender
+                            </label>
+                            <select
+                                id="register-gender"
+                                required
+                                value={gender}
+                                onChange={(e) => setGender(e.target.value)}
+                                className={au_styles.formInput}
+                            >
+                                <option value="" disabled>
+                                    Select gender
+                                </option>
+                                {GENDER_SELECT_OPTIONS.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className={au_styles.formGroup}>
+                            <label
+                                htmlFor="register-phone"
+                                className={au_styles.formLabel}
+                            >
+                                Phone number
+                            </label>
+                            <input
+                                id="register-phone"
+                                type="tel"
+                                required
+                                autoComplete="tel"
+                                maxLength={64}
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                className={au_styles.formInput}
+                            />
+                        </div>
                     </div>
 
                     <div className={au_styles.formGroup}>
@@ -92,6 +145,7 @@ const Register = () => {
                         <input
                             id="register-email"
                             type="email"
+                            required
                             placeholder={au_texts.placeholder_email}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -109,6 +163,7 @@ const Register = () => {
                         <input
                             id="register-password"
                             type="password"
+                            required
                             placeholder={au_texts.placeholder_password}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
