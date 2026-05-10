@@ -12,17 +12,21 @@ CREATE TABLE IF NOT EXISTS venue_type(
 CREATE TABLE IF NOT EXISTS sport_type (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(255) NOT NULL,
-    minimum_number_of_players_on_a_team INT NOT NULL,
-    maximum_number_of_players_per_team INT NOT NULL,
+    minimum_number_of_players_on_a_team INT,
+    maximum_number_of_players_per_team INT,
 
     CONSTRAINT pk_sport_type
     PRIMARY KEY (id),
 
-    CHECK (minimum_number_of_players_on_a_team > 0),
-    CHECK (maximum_number_of_players_per_team > 0),
+    CHECK (minimum_number_of_players_on_a_team IS NULL OR minimum_number_of_players_on_a_team > 0),
+    CHECK (maximum_number_of_players_per_team IS NULL OR maximum_number_of_players_per_team > 0),
 
     CONSTRAINT chk_min_le_max
-        CHECK (minimum_number_of_players_on_a_team <= maximum_number_of_players_per_team)
+        CHECK (
+            minimum_number_of_players_on_a_team IS NULL
+            OR maximum_number_of_players_per_team IS NULL
+            OR minimum_number_of_players_on_a_team <= maximum_number_of_players_per_team
+        )
 );
 
 CREATE TABLE IF NOT EXISTS match_status (

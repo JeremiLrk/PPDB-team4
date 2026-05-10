@@ -9,9 +9,9 @@ Submission lifecycle
 2. A manager/owner/player on team2 submits a score  → role 'team2_side'
 3a. Both scores agree → finalize_match() is called automatically,
     MatchPlayed is written, status becomes PLAYED.
-3b. Scores disagree  → match enters 'disputed' state.
+3b. Scores disagree  -> match enters 'disputed' state.
 4. A ladder admin (ClubOwner of the ladder's club, or Administrator)
-   submits the decisive score → role 'ladder_admin'
+   submits the decisive score -> role 'ladder_admin'
 5. finalize_match() is called with the admin's score,
    MatchPlayed is written, status becomes PLAYED.
 

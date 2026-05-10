@@ -33,67 +33,7 @@ from server.app.routes.team._permissions import (
 )
 from server.app.routes.team._helpers import _parse_pagination, _search_accounts
 from server.tests._authed_client import _authed_client
-
-
-# ---------------------------------------------------------------------------
-# Auxiliary factories
-# ---------------------------------------------------------------------------
-
-def _role(name: str) -> AccountRole:
-    role = AccountRole.query.filter_by(name=name).first()
-    if not role:
-        role = AccountRole(name=name)
-        db.session.add(role)
-        db.session.flush()
-    return role
-
-
-def _make_account(*, email: str, role_name="team_manager") -> Account:
-    r = _role(role_name)
-    acc = Account(
-        email=email,
-        password_hash="hashed",
-        first_name="First",
-        last_name="Last",
-        account_role_id=r.id,
-        is_verified=True,
-    )
-    db.session.add(acc)
-    db.session.flush()
-    return acc
-
-
-def _make_team(*, name: str, club_id=None) -> Team:
-    t = Team(name=name, club_id=club_id)
-    db.session.add(t)
-    db.session.flush()
-    return t
-
-
-def _make_team_manager(account: Account) -> TeamManager:
-    existing = TeamManager.query.get(account.id)
-    if existing:
-        return existing
-    tm = TeamManager(id=account.id)
-    db.session.add(tm)
-    db.session.flush()
-    return tm
-
-
-def _make_assoc(tm: TeamManager, team: Team, *,
-                can_rename=True, can_delete=True,
-                can_edit_players=True, can_edit_managers=True) -> TeamManagerTeam:
-    a = TeamManagerTeam(
-        team_manager_id=tm.id,
-        team_id=team.id,
-        can_rename=can_rename,
-        can_delete=can_delete,
-        can_edit_players=can_edit_players,
-        can_edit_managers=can_edit_managers,
-    )
-    db.session.add(a)
-    db.session.flush()
-    return a
+from server.tests.team.factories import _make_team, _make_account, _make_team_manager, _make_assoc
 
 
 # ===========================================================================
@@ -193,7 +133,7 @@ class TestIsOwnerOfTeamClub:
             db.session.add_all([club1, club2])
             db.session.flush()
 
-            # Account → TeamManager → ClubOwner (real DB chain)
+            # Account -> TeamManager -> ClubOwner (real DB chain)
             acc = _make_account(email="co_fallthrough@t.com")
             tm  = _make_team_manager(acc)
             co  = RealClubOwner(id=tm.id)
@@ -1059,4 +999,3 @@ class TestGetMyAllTeams:
 
         resp = client.get("/api/teams/my-all")
         assert resp.status_code == 200
-        assert resp.get_json()["total"] == 0

@@ -1,3 +1,6 @@
 [
-  {"name": "user"}
+  {"name": "user"},
+  {"name": "team_manager"},
+  {"name": "club_owner"},
+  {"name": "administrator"}
 ]
