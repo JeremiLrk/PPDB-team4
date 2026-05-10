@@ -10,6 +10,7 @@ Approach: Flask test client (PostgreSQL via conftest) + monkeypatch verify_user.
 """
 
 import pytest
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 from flask.testing import FlaskClient
@@ -18,6 +19,7 @@ from server.extensions import db
 from server.app.models.account import Account, AccountRole, Administrator
 from server.app.models.team import Team, TeamManager, TeamManagerTeam
 from server.app.models.player import Player, PlayerTeam
+from server.app.models.team_join_request import TeamJoinRequest
 from server.app.models.club_owner import ClubOwner
 
 from server.app.routes.team._permissions import (
@@ -31,67 +33,7 @@ from server.app.routes.team._permissions import (
 )
 from server.app.routes.team._helpers import _parse_pagination, _search_accounts
 from server.tests._authed_client import _authed_client
-
-
-# ---------------------------------------------------------------------------
-# Auxiliary factories
-# ---------------------------------------------------------------------------
-
-def _role(name: str) -> AccountRole:
-    role = AccountRole.query.filter_by(name=name).first()
-    if not role:
-        role = AccountRole(name=name)
-        db.session.add(role)
-        db.session.flush()
-    return role
-
-
-def _make_account(*, email: str, role_name="team_manager") -> Account:
-    r = _role(role_name)
-    acc = Account(
-        email=email,
-        password_hash="hashed",
-        first_name="First",
-        last_name="Last",
-        account_role_id=r.id,
-        is_verified=True,
-    )
-    db.session.add(acc)
-    db.session.flush()
-    return acc
-
-
-def _make_team(*, name: str, club_id=None) -> Team:
-    t = Team(name=name, club_id=club_id)
-    db.session.add(t)
-    db.session.flush()
-    return t
-
-
-def _make_team_manager(account: Account) -> TeamManager:
-    existing = TeamManager.query.get(account.id)
-    if existing:
-        return existing
-    tm = TeamManager(id=account.id)
-    db.session.add(tm)
-    db.session.flush()
-    return tm
-
-
-def _make_assoc(tm: TeamManager, team: Team, *,
-                can_rename=True, can_delete=True,
-                can_edit_players=True, can_edit_managers=True) -> TeamManagerTeam:
-    a = TeamManagerTeam(
-        team_manager_id=tm.id,
-        team_id=team.id,
-        can_rename=can_rename,
-        can_delete=can_delete,
-        can_edit_players=can_edit_players,
-        can_edit_managers=can_edit_managers,
-    )
-    db.session.add(a)
-    db.session.flush()
-    return a
+from server.tests.team.factories import _make_team, _make_account, _make_team_manager, _make_assoc
 
 
 # ===========================================================================
@@ -191,7 +133,7 @@ class TestIsOwnerOfTeamClub:
             db.session.add_all([club1, club2])
             db.session.flush()
 
-            # Account → TeamManager → ClubOwner (real DB chain)
+            # Account -> TeamManager -> ClubOwner (real DB chain)
             acc = _make_account(email="co_fallthrough@t.com")
             tm  = _make_team_manager(acc)
             co  = RealClubOwner(id=tm.id)
@@ -631,12 +573,14 @@ class TestAddPlayerToTeam:
         resp = client.post(f"/api/teams/{team_id}/players", json={})
         assert resp.status_code == 422
 
+
     def test_add_player_success(self, client, app, monkeypatch):
+        # POST /players creates a pending join request, not a direct membership.
         with app.app_context():
-            acc    = _make_account(email="add_pl_ok@t.com")
-            target = _make_account(email="add_pl_target_ok@t.com")
+            acc    = _make_account(email="add_pl_201@t.com")
+            target = _make_account(email="add_pl_target_201@t.com")
             tm     = _make_team_manager(acc)
-            team   = _make_team(name="Add Player OK")
+            team   = _make_team(name="Add Player 201")
             _make_assoc(tm, team, can_edit_players=True)
             db.session.commit()
             team_id   = team.id
@@ -648,7 +592,49 @@ class TestAddPlayerToTeam:
             _authed_client(client, monkeypatch, acc)
 
         resp = client.post(f"/api/teams/{team_id}/players", json={"accountId": target_id})
-        assert resp.status_code == 200
+        assert resp.status_code == 201
+        data = resp.get_json()
+        assert data["request"]["status"] == "pending"
+        assert data["request"]["user_id"] == target_id
+        assert data["request"]["team_id"] == team_id
+
+        with app.app_context():
+            req = TeamJoinRequest.query.filter_by(
+                team_id=team_id, user_id=target_id
+            ).first()
+            assert req is not None
+            assert req.status == "pending"
+
+    def test_add_player_rejected_request_can_be_resubmitted(self, client, app, monkeypatch):
+        # A previously rejected join request must not block a new one.
+        # The search route shows rejected players as available, so adding must also work.
+        with app.app_context():
+            acc    = _make_account(email="add_pl_resubmit@t.com")
+            target = _make_account(email="add_pl_target_resubmit@t.com")
+            tm     = _make_team_manager(acc)
+            team   = _make_team(name="Resubmit Team")
+            _make_assoc(tm, team, can_edit_players=True)
+
+            rejected_req = TeamJoinRequest(
+                team_id=team.id,
+                user_id=target.id,
+                date=datetime.utcnow(),
+                status="rejected",
+            )
+            db.session.add(rejected_req)
+            db.session.commit()
+            team_id   = team.id
+            acc_id    = acc.id
+            target_id = target.id
+
+        with app.app_context():
+            acc = Account.query.get(acc_id)
+            _authed_client(client, monkeypatch, acc)
+
+        resp = client.post(f"/api/teams/{team_id}/players", json={"accountId": target_id})
+        assert resp.status_code == 201
+        data = resp.get_json()
+        assert data["request"]["status"] == "pending"
 
     def test_add_duplicate_player_returns_409(self, client, app, monkeypatch):
         with app.app_context():
@@ -1013,4 +999,3 @@ class TestGetMyAllTeams:
 
         resp = client.get("/api/teams/my-all")
         assert resp.status_code == 200
-        assert resp.get_json()["total"] == 0

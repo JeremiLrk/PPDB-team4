@@ -27,8 +27,24 @@ export default function AddPlayerButton({ teamId, onAdded }) {
         query, setQuery,
         results, searching, searchErr,
         addPlayer, addingId, addedIds, addErr,
+        confirmWarning, setConfirmWarning,
         inputRef,
     } = useAddPlayer({ teamId, onAdded });
+
+    const getErrorMessage = (err) => {
+        if (typeof err === "string") {
+            const key = "team_settings.error_" + err.replace(/\s+/g, "_").toLowerCase();
+            return texts[key] || err;
+        }
+        return err;
+    };
+
+    const handleConfirmExceed = () => {
+        if (confirmWarning) {
+            addPlayer(confirmWarning.accountId, true);
+            setConfirmWarning(null);
+        }
+    };
 
     return (
         <FormPanel
@@ -51,63 +67,106 @@ export default function AddPlayerButton({ teamId, onAdded }) {
             isLoading={false}
             isSuccess={false}
 
-            error={addErr || searchErr || null}
+            error={confirmWarning ? null : (addErr || searchErr || null)}
+            errorMessage={confirmWarning ? null : getErrorMessage(addErr || searchErr)}
 
             panelClassName={teamStyles.addPlayerPanel}
             ariaLabel={texts.add_player_aria || "Add player to team"}
 
         >
-            {/* --- Page 0: search and results ------------------------- */}
-            <FormPage active={true}>
+            {/* --- Confirmation dialog for exceeding ladder limits ------- */}
+            {confirmWarning && (
+                <FormPage active={true}>
+                    <div className={`${commonStyles.alertBox} ${teamStyles.confirmWarning}`}>
+                        <p className={commonStyles.warningText}>
+                            {texts.add_player_warn_exceed || confirmWarning.message}
+                        </p>
+                        {confirmWarning.ladders && confirmWarning.ladders.length > 0 && (
+                            <div className={teamStyles.laddersList}>
+                                <p className={commonStyles.secondaryText}>
+                                    {texts.add_player_warn_ladders || "Affected ladders:"}
+                                </p>
+                                <ul className={panelStyles.list}>
+                                    {confirmWarning.ladders.map(ladder => (
+                                        <li key={ladder.id} className={teamStyles.ladderItem}>
+                                            {ladder.name}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        <div className={teamStyles.confirmButtons}>
+                            <button
+                                className={`${formStyles.btn} ${formStyles.btnSecondary}`}
+                                onClick={() => setConfirmWarning(null)}
+                            >
+                                {texts.cancel_btn || "Cancel"}
+                            </button>
+                            <button
+                                className={`${formStyles.btn} ${formStyles.btnPrimary}`}
+                                onClick={handleConfirmExceed}
+                                disabled={addingId}
+                            >
+                                {addingId ? <Spinner /> : (texts.add_player_confirm_exceed || "Add Anyway")}
+                            </button>
+                        </div>
+                    </div>
+                </FormPage>
+            )}
 
-                {/* Search input */}
-                <div className={teamStyles.searchRow}>
+            {/* --- Page 0: search and results ------------------------- */}
+            {!confirmWarning && (
+                <FormPage active={true}>
+
+                    {/* Search input */}
+                    <div className={teamStyles.searchRow}>
                         <input
                             ref={inputRef}
                             className={formStyles.formInput}
                             type="text"
-                            placeholder={texts.add_player_search_placeholder || "Name, email, or ID…"}
+                            placeholder={texts.add_player_search_placeholder || "Name, email, or ID..."}
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                         />
-                    {searching && (
-                        <span className={teamStyles.searchSpinner}>
-                            <Spinner />
-                        </span>
+                        {searching && (
+                            <span className={teamStyles.searchSpinner}>
+                                <Spinner />
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Hint if nothing is entered */}
+                    {!query.trim() && (
+                        <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
+                            {texts.add_player_search_hint || "Type to search accounts."}
+                        </p>
                     )}
-                </div>
 
-                {/* Hint if nothing is entered */}
-                {!query.trim() && (
-                    <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
-                        {texts.add_player_search_hint || "Type to search accounts."}
-                    </p>
-                )}
+                    {/* Empty result */}
+                    {!searching && !searchErr && query.trim() && results.length === 0 && (
+                        <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
+                            {texts.add_player_no_results || "No accounts found."}
+                        </p>
+                    )}
 
-                {/* Empty result */}
-                {!searching && !searchErr && query.trim() && results.length === 0 && (
-                    <p className={`${commonStyles.muted} ${teamStyles.noResults}`}>
-                        {texts.add_player_no_results || "No accounts found."}
-                    </p>
-                )}
+                    {/* Search results */}
+                    {results.length > 0 && (
+                        <ul className={`${panelStyles.list} ${teamStyles.resultsList}`}>
+                            {results.map(account => (
+                                <SearchResultCard
+                                    key={account.id}
+                                    account={account}
+                                    isAdding={addingId === account.id}
+                                    isAdded={addedIds.has(account.id)}
+                                    onAdd={() => addPlayer(account.id)}
+                                    texts={texts}
+                                />
+                            ))}
+                        </ul>
+                    )}
 
-                {/* Search results */}
-                {results.length > 0 && (
-                    <ul className={`${panelStyles.list} ${teamStyles.resultsList}`}>
-                        {results.map(account => (
-                            <SearchResultCard
-                                key={account.id}
-                                account={account}
-                                isAdding={addingId === account.id}
-                                isAdded={addedIds.has(account.id)}
-                                onAdd={() => addPlayer(account.id)}
-                                texts={texts}
-                            />
-                        ))}
-                    </ul>
-                )}
-
-            </FormPage>
+                </FormPage>
+            )}
         </FormPanel>
     );
 }
@@ -129,7 +188,7 @@ function SearchResultCard({ account, isAdding, isAdded, onAdd, texts = {} }) {
                 disabled={isAdding || isAdded}
                 aria-label={isAdded ? (texts.added_label || "Added") : `${texts.add_player_btn || "Add"} ${fullName}`}
             >
-                {isAdding ? <Spinner /> : isAdded ? "✓" : <PlusIcon />}
+                {isAdding ? <Spinner /> : isAdded ? "+" : <PlusIcon />}
             </button>
         </ItemCard>
     );

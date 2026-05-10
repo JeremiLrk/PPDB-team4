@@ -45,7 +45,7 @@ def compile_translations(translations_root: str = None) -> None:
             with open(mo_path, "wb") as fh:
                 write_mo(fh, catalogue)
 
-            print(f"  [{lang}]  {po_file} → {os.path.basename(mo_path)}  ({len(catalogue)} strings)")
+            print(f"  [{lang}]  {po_file} -> {os.path.basename(mo_path)}  ({len(catalogue)} strings)")
             compiled += 1
 
     if compiled == 0:

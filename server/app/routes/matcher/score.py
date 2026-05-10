@@ -48,7 +48,7 @@ def post_score(account, match_id: int):
     score_team2 : int   required, >= 0
 
     The caller's SubmissionRole is resolved from their permissions:
-      - ClubOwner/Admin whose club owns the ladder → 'ladder_admin'
+      - ClubOwner/Admin whose club owns the ladder -> 'ladder_admin'
         (only accepted when scores from both team sides disagree)
       - manager/owner/player on team1 → 'team1_side'
       - manager/owner/player on team2 → 'team2_side'
