@@ -122,6 +122,11 @@ def me(account: Account):
 
     base["managedTeamIds"] = managed_team_ids
 
+    player_team_ids = []
+    if account.player:
+        player_team_ids = [t.id for t in account.player.teams]
+    base["playerTeamIds"] = player_team_ids
+
     club_ids = []
     if account.team_manager and account.team_manager.club_owner:
         club_ids = [c.id for c in account.team_manager.club_owner.clubs]

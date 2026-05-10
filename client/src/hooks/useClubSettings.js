@@ -21,6 +21,7 @@ export function useClubSettings(clubId, texts = {}) {
     const [members, setMembers] = useState([]);
     const [ladders, setLadders] = useState([]);
     const [owners, setOwners] = useState([]);
+    const [eligibleTeams, setEligibleTeams] = useState([]);
 
     const [ratingFunctions, setRatingFunctions] = useState([]);
     const [ruleSets, setRuleSets] = useState([]);
@@ -34,13 +35,14 @@ export function useClubSettings(clubId, texts = {}) {
     useEffect(() => {
         async function fetchClubData() {
             try {
-                const [clubRes, membersRes, ownersRes, laddersRes, ratingsRes, rulesRes] = await Promise.all([
+                const [clubRes, membersRes, ownersRes, laddersRes, ratingsRes, rulesRes, teamsRes] = await Promise.all([
                     fetch(`/api/clubs/${clubId}`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/members`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/owners`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/ladders`, { credentials: "include" }),
                     fetch(`/api/rating-functions`), 
-                    fetch(`/api/rule-sets`)
+                    fetch(`/api/rule-sets`),
+                    fetch(`/api/clubs/${clubId}/eligible-teams`, { credentials: "include" }),
                 ]);
 
                 const clubData = await clubRes.json();
@@ -49,6 +51,7 @@ export function useClubSettings(clubId, texts = {}) {
                 const laddersData = await laddersRes.json();
                 const ratingsData = await ratingsRes.json();
                 const rulesData = await rulesRes.json();
+                const teamsData = await teamsRes.json();
 
                 if (!clubRes.ok) throw new Error(clubData.message);
 
@@ -67,6 +70,7 @@ export function useClubSettings(clubId, texts = {}) {
                 setLadders(Array.isArray(laddersData) ? laddersData : (laddersData.ladders || []));
                 setRatingFunctions(ratingsData.ratingFunctions || []);
                 setRuleSets(rulesData.ruleSets || []);
+                setEligibleTeams(teamsData.teams || []);
 
             } catch (err) {
                 setError(err.message);
@@ -157,6 +161,23 @@ export function useClubSettings(clubId, texts = {}) {
         }
     };
 
+    const addTeamToLadder = async (ladderId, teamId) => {
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/ladders/${ladderId}/teams/${teamId}`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            return data;
+        } catch (err) {
+            setError(err.message || texts.could_not_add_team_to_ladder || "Could not add team to ladder.");
+            throw err;
+        }
+    };
+
     const addMember = async (email) => {
         try {
             const res = await fetch(`/api/clubs/${clubId}/members`, {
@@ -227,6 +248,24 @@ export function useClubSettings(clubId, texts = {}) {
         }
     };
 
+    const deleteClub = async () => {
+        try {
+            const res = await fetch(`/api/clubs/${clubId}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.message || texts.could_not_delete_club || "Could not delete club.");
+            }
+
+            navigate("/dashboard");
+        } catch (err) {
+            setError(err.message || texts.could_not_delete_club || "Could not delete club.");
+        }
+    };
+
     const searchAccounts = async (query) => {
         if (!query || query.length < 3) return [];
         
@@ -267,9 +306,12 @@ export function useClubSettings(clubId, texts = {}) {
         addOwner,
         removeOwner,
         searchAccounts,
+        deleteClub,
 
         ladders,
         createLadder,
+        eligibleTeams,
+        addTeamToLadder,
 
         ratingFunctions,
         ruleSets,

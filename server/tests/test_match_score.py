@@ -44,6 +44,7 @@ from server.app.models.match import (
     SubmissionRole,
 )
 from server.app.models.match_rule import MatchRuleSet
+from server.app.models.player import Player, PlayerTeam
 from server.app.models.sport_type import SportType
 from server.app.models.team import Team, TeamManager, TeamManagerTeam
 from server.app.services.match_score_service import ScoreSubmissionError, submit_score
@@ -113,6 +114,17 @@ def _team_manager(account: Account, team: Team, *, can_manage_match: bool = True
     db.session.flush()
     db.session.refresh(account)
     return tm
+
+
+def _player(account: Account, team: Team) -> Player:
+    player = Player(id=account.id)
+    db.session.add(player)
+    db.session.flush()
+    assoc = PlayerTeam(player_id=player.id, team_id=team.id)
+    db.session.add(assoc)
+    db.session.flush()
+    db.session.refresh(account)
+    return player
 
 
 def _club_owner(account: Account, club: Club) -> ClubOwner:
@@ -222,6 +234,20 @@ class TestSubmitScoreRoleResolution:
                 submit_score(proposal, stranger, 1, 0)
 
             assert exc.value.status_code == 403
+
+    def test_player_on_team_gets_team_side_role(self, seeded_app):
+        """A player who is actually on team1 receives role 'team1_side'."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            player_acc = _account("player1@test.com", role_name="player")
+            _player(player_acc, t1)
+            proposal = _proposal(t1, t2)
+
+            submission, _ = submit_score(proposal, player_acc, 2, 1)
+            db.session.commit()
+
+            assert submission.submitted_by_role == SubmissionRole.TEAM1_SIDE.value
 
 
 class TestAutoFinalization:
@@ -424,6 +450,25 @@ class TestPostScoreRoute:
         assert body["submission"]["submittedByRole"] == SubmissionRole.TEAM1_SIDE.value
         assert body["submission"]["scoreTeam1"] == 3
         assert body["finalized"] is False
+
+    def test_player_can_submit_for_team_one(self, seeded_app, client, monkeypatch):
+        """A player on team1 may submit a score for that team."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            player_acc = _account("player@test.com", role_name="player")
+            _player(player_acc, t1)
+            proposal = _proposal(t1, t2)
+            db.session.commit()
+            pid = proposal.id
+
+        authed = _authed_client(client, monkeypatch, player_acc)
+        resp = authed.post(f"/api/matches/{pid}/score", json={"score_team1": 3, "score_team2": 1})
+
+        assert resp.status_code == 201
+        body = resp.get_json()
+        assert body["submission"]["submittedByRole"] == SubmissionRole.TEAM1_SIDE.value
+        assert body["scoreStatus"] == "not_submitted"
 
     def test_both_sides_agree_returns_finalized_true(self, seeded_app, client, monkeypatch):
         """When both sides submit matching scores, response contains finalized=true."""

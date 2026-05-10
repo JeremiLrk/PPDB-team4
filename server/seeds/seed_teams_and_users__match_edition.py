@@ -18,7 +18,7 @@ from server.extensions import db
 from server.app.models.availability_block import AvailabilityBlock
 from server.app.models.sport_type import SportType
 from server.app.models.match_rule import MatchRuleSet
-from server.app.models.account import Account, TeamManager
+from server.app.models.account import Account, TeamManager, Administrator
 from server.app.models.account_role import AccountRole
 from server.app.models.club import Club
 from server.app.models.club_join_request import ClubJoinRequest
@@ -191,6 +191,18 @@ def make_club_owner(team_manager: TeamManager) -> tuple:
     db.session.add(owner)
     db.session.flush()
     return owner, True
+
+
+def make_admin(account: Account, access_level: int = 1) -> tuple:
+    existing = Administrator.query.filter_by(id=account.id).first()
+    if existing:
+        existing.access_level = access_level
+        db.session.flush()
+        return existing, False
+    admin = Administrator(id=account.id, access_level=access_level)
+    db.session.add(admin)
+    db.session.flush()
+    return admin, True
 
 
 def ensure_owner_of_club(club_owner: ClubOwner, club: Club) -> bool:
@@ -860,6 +872,7 @@ def seed_teams_and_users(verbose: bool = True) -> None:
     try:
         role_manager = get_or_create_role("team_manager", verbose)
         role_player  = get_or_create_role("player", verbose)
+        role_admin   = get_or_create_role("administrator", verbose)
         get_or_create_role("user", verbose)
     except Exception as e:
         print(f"{TAG} ERROR seeding roles: {e}")
@@ -923,6 +936,19 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             ensure_owner_of_club(co, club)
             owners.append((acc, tm, co, club, sport))
             log(f"{TAG}   owner '{email}' -> club '{club_name}'", verbose)
+
+        admin_acc, _ = make_account(
+            "Admin",
+            "Tester",
+            "admin@netrank.test",
+            role_admin,
+            password="admin12345",
+            force_password_update=True,
+        )
+        if not admin_acc.is_verified:
+            admin_acc.is_verified = True
+        make_admin(admin_acc, access_level=1)
+        log(f"{TAG}   admin account 'admin@netrank.test' created/updated", verbose)
     except Exception as e:
         print(f"{TAG} ERROR seeding clubs/owners: {e}")
         db.session.rollback()
@@ -1106,6 +1132,12 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             acc, _ = make_account(first_name, last_name, email, role_player)
             ensure_player_on_team(acc, team)
             ensure_team_players_in_club(team, owners[club_idx][3])
+            get_or_create_availability_block(
+                acc.id,
+                weekday=2,
+                start_time=datetime.time(hour=18, minute=0),
+                end_time=datetime.time(hour=20, minute=0),
+            )
             log(f"{TAG}   player '{email}' -> '{team.name}'", verbose)
     except Exception as e:
         print(f"{TAG} ERROR seeding team players: {e}")
@@ -1231,6 +1263,53 @@ def seed_teams_and_users(verbose: bool = True) -> None:
                     + ", ".join(f"{k}={v}" for k, v in counts.items()),
                     verbose,
                 )
+
+        # Give NetRank Club a few near-future proposals so Jeremi sees active
+        # matches in the dashboard without opening the archived history.
+        jeremi_acc = owners[0][0]
+        jeremi_club = owners[0][3]
+        jeremi_sport = owners[0][4]
+        future_week_start = next_week_start()
+        future_start = datetime.datetime.combine(
+            future_week_start + datetime.timedelta(days=2),
+            datetime.time(hour=18, minute=0),
+        )
+        future_end = future_start + datetime.timedelta(hours=1)
+        future_pairs = [
+            (club_teams[0][0], club_teams[0][1]),
+            (club_teams[0][2], club_teams[0][3]),
+            (club_teams[0][0], club_teams[0][2]),
+        ]
+        future_created = 0
+        future_week_pairs = []
+        for team1, team2 in future_pairs:
+            future_week_pairs.append((team1, team2))
+            if ensure_pending_proposal(
+                week_start_date=future_week_start,
+                team1_id=team1.id,
+                team2_id=team2.id,
+                proposed_by_user_id=jeremi_acc.id,
+                sport_type_id=jeremi_sport.id,
+                proposed_start_at=future_start,
+                proposed_end_at=future_end,
+                location=f"{jeremi_club.name} main court",
+            ):
+                future_created += 1
+        if future_week_pairs:
+            accepted_team1, accepted_team2 = future_week_pairs[0]
+            set_match_proposal_accepted(
+                week_start_date=future_week_start,
+                team1_id=accepted_team1.id,
+                team2_id=accepted_team2.id,
+                accepted_by_user_id=team_managers[accepted_team2.id].id,
+                response_text="Accepted by the opposing team manager for status demo.",
+            )
+        total_matches += future_created
+        log(
+            f"{TAG}   future NetRank proposals: created={future_created}, "
+            f"week_start={future_week_start.isoformat()}",
+            verbose,
+        )
     except Exception as e:
         print(f"{TAG} ERROR seeding ladder teams/matches: {e}")
         db.session.rollback()
@@ -1408,6 +1487,12 @@ def _print_account_summary(owners, manager_emails, manager_names, all_teams_flat
         print(f"  password: {pwd}")
         print(f"  club    : {club_name}  (owner)")
         print()
+
+    print("--- ADMIN TEST ACCOUNT ---")
+    print("  email   : admin@netrank.test")
+    print("  password: admin12345")
+    print("  role    : administrator")
+    print()
 
     print("--- TEAM MANAGERS (can propose + manage matches for their team) ---")
     for i, (email, (first, last)) in enumerate(zip(manager_emails, manager_names)):

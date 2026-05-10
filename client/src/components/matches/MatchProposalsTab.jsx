@@ -43,6 +43,18 @@ function proposalIsPlayer(proposal, currentUser) {
     );
 }
 
+function proposalCanUpdate(proposal, currentUser) {
+    if ((currentUser?.role || "").toLowerCase() === "administrator") {
+        return true;
+    }
+
+    if (Number(currentUser?.id) === Number(proposal.proposedByUserId)) {
+        return true;
+    }
+
+    return proposalIsManaged(proposal, currentUser) || proposalIsPlayer(proposal, currentUser);
+}
+
 function SectionHeader({ title, subtitle, count }) {
     return (
         <div className={styles.sectionHeader}>
@@ -61,6 +73,9 @@ export default function MatchProposalsTab() {
     const dashboardTexts = usePageTexts("dashboard", lang);
     const { currentUser, loadingUser } = useCurrentUserContext();
     const [showArchived, setShowArchived] = useState(false);
+    const [reportingMatchId, setReportingMatchId] = useState(null);
+    const [scoreValues, setScoreValues] = useState({ team1: "", team2: "" });
+    const [scoreSubmitting, setScoreSubmitting] = useState(false);
     const {
         proposals,
         loading,
@@ -83,10 +98,48 @@ export default function MatchProposalsTab() {
         () => proposals.filter((proposal) => proposalIsPlayer(proposal, currentUser)),
         [currentUser, proposals],
     );
+    const canUpdateProposal = (proposal) => proposalCanUpdate(proposal, currentUser);
     const roleLoading = loadingUser && !currentUser;
 
     function handleMatchCreated() {
         void load();
+    }
+
+    function openScoring(matchId) {
+        setReportingMatchId(matchId);
+        setScoreValues({ team1: "", team2: "" });
+    }
+
+    async function submitScore(event, matchId = reportingMatchId) {
+        event.preventDefault();
+
+        const scoreTeam1 = Number.parseInt(scoreValues.team1, 10);
+        const scoreTeam2 = Number.parseInt(scoreValues.team2, 10);
+        if (!Number.isInteger(scoreTeam1) || !Number.isInteger(scoreTeam2) || scoreTeam1 < 0 || scoreTeam2 < 0) {
+            return;
+        }
+
+        setScoreSubmitting(true);
+        try {
+            const response = await fetch(`/api/matches/${matchId}/score`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    score_team1: scoreTeam1,
+                    score_team2: scoreTeam2,
+                }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload?.message || "Could not submit score.");
+            }
+            setReportingMatchId(null);
+            setScoreValues({ team1: "", team2: "" });
+            await load();
+        } finally {
+            setScoreSubmitting(false);
+        }
     }
 
     const topLabel = texts.title || "Weekly Match Proposals";
@@ -127,9 +180,7 @@ export default function MatchProposalsTab() {
                         onClick={() => setShowArchived((current) => !current)}
                         disabled={loading}
                     >
-                        {showArchived
-                            ? showActiveLabel
-                            : showArchivedLabel}
+                        {showArchived ? showActiveLabel : showArchivedLabel}
                     </button>
 
                     {!managedLoading ? (
@@ -142,7 +193,16 @@ export default function MatchProposalsTab() {
             </div>
 
             {error ? (
-                <p className={styles.error}>{error}</p>
+                <div className={styles.errorBlock}>
+                    <p className={styles.error}>{error}</p>
+                    <button
+                        className={buttonStyles.primaryButton}
+                        type="button"
+                        onClick={load}
+                    >
+                        {texts.retry || "Retry"}
+                    </button>
+                </div>
             ) : null}
 
             {loading || roleLoading ? (
@@ -161,7 +221,18 @@ export default function MatchProposalsTab() {
                             proposals={managedProposals}
                             loading={false}
                             submitting={submitting}
+                            onReload={load}
                             onStatusChange={setProposalStatus}
+                            onReportScore={openScoring}
+                            reportingMatchId={reportingMatchId}
+                            scoreValues={scoreValues}
+                            onScoreChange={(field, value) =>
+                                setScoreValues((current) => ({ ...current, [field]: value }))
+                            }
+                            onScoreSubmit={submitScore}
+                            onCancelScore={() => setReportingMatchId(null)}
+                            scoreSubmitting={scoreSubmitting}
+                            canUpdateProposal={canUpdateProposal}
                             texts={texts}
                             statusTexts={dashboardTexts}
                             emptyText={managedEmptyLabel}
@@ -178,7 +249,18 @@ export default function MatchProposalsTab() {
                             proposals={playerProposals}
                             loading={false}
                             submitting={submitting}
+                            onReload={load}
                             onStatusChange={setProposalStatus}
+                            onReportScore={openScoring}
+                            reportingMatchId={reportingMatchId}
+                            scoreValues={scoreValues}
+                            onScoreChange={(field, value) =>
+                                setScoreValues((current) => ({ ...current, [field]: value }))
+                            }
+                            onScoreSubmit={submitScore}
+                            onCancelScore={() => setReportingMatchId(null)}
+                            scoreSubmitting={scoreSubmitting}
+                            canUpdateProposal={canUpdateProposal}
                             texts={texts}
                             statusTexts={dashboardTexts}
                             emptyText={playerEmptyLabel}

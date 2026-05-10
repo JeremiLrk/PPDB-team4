@@ -5,8 +5,8 @@ Business logic for the score-submission flow.
 
 Submission lifecycle
 --------------------
-1. A manager/owner of team1 submits a score  → role 'team1_side'
-2. A manager/owner of team2 submits a score  → role 'team2_side'
+1. A manager/owner/player on team1 submits a score  → role 'team1_side'
+2. A manager/owner/player on team2 submits a score  → role 'team2_side'
 3a. Both scores agree → finalize_match() is called automatically,
     MatchPlayed is written, status becomes PLAYED.
 3b. Scores disagree  → match enters 'disputed' state.
@@ -183,15 +183,32 @@ def _resolve_role(proposal: MatchProposal, account: Account) -> SubmissionRole:
         return SubmissionRole.LADDER_ADMIN
 
     # team1_side / team2_side
-    if _can_manage_match(resolved, proposal.team1):
+    if _can_score_for_team(account, proposal.team1, resolved=resolved):
         return SubmissionRole.TEAM1_SIDE
-    if _can_manage_match(resolved, proposal.team2):
+    if _can_score_for_team(account, proposal.team2, resolved=resolved):
         return SubmissionRole.TEAM2_SIDE
 
     raise ScoreSubmissionError(
         "Forbidden: you are not authorised to submit a score for this match.",
         status_code=403,
     )
+
+
+def _can_score_for_team(account: Account, team, *, resolved=None) -> bool:
+    """True when the account may submit the score for *team*.
+
+    Team scores can be submitted by the usual managers/owners as well as by
+    players who are actually on the team.
+    """
+    from server.app.routes.matcher._permissions import _can_manage_match
+
+    if resolved is None:
+        resolved = account.resolved_role
+
+    if _can_manage_match(resolved, team):
+        return True
+
+    return account.player is not None and team in account.player.teams
 
 
 def _try_finalize(proposal: MatchProposal) -> bool:

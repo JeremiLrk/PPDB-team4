@@ -57,6 +57,8 @@ def proposal_payload(proposal: MatchProposal):
         "team2_club_city": proposal.team2.club.city if proposal.team2 and proposal.team2.club else None,
         "team1_contacts": _serialize_team_contacts(proposal.team1),
         "team2_contacts": _serialize_team_contacts(proposal.team2),
+        "score_status": proposal.score_status,
+        "score_submissions": [submission.to_dict() for submission in proposal.score_submissions],
     }
 
 
@@ -391,19 +393,31 @@ def update_match_proposal_status(account, proposal_id):
         return jsonify({"message": f"Unknown status '{status_name}'."}), 422
 
     current_status_name = proposal.status.name.lower() if proposal.status else None
-
     normalized_status = next_status.name.lower()
+
     if current_status_name == "played" and normalized_status != "played":
         return jsonify({"message": "Played matches are immutable and cannot change status."}), 409
+
+    def clear_mutually_exclusive_rows(*, keep_played: bool = False):
+        proposal.accepted = None
+        proposal.rejected = None
+        proposal.cancelled = None
+        if not keep_played:
+            proposal.played = None
+
     if normalized_status == "pending":
+        if current_status_name == "pending":
+            return jsonify({"proposal": proposal_payload(proposal)}), 200
+
+        clear_mutually_exclusive_rows(keep_played=True)
         proposal.status_id = next_status.id
-        for model in (MatchAccepted, MatchRejected, MatchCancelled, MatchPlayed):
-            row = db.session.get(model, proposal.id)
-            if row:
-                db.session.delete(row)
-        for submission in list(proposal.score_submissions):
-            db.session.delete(submission)
-    elif normalized_status == "accepted":
+        proposal.updated_at = datetime.utcnow()
+        db.session.commit()
+        return jsonify({"proposal": proposal_payload(proposal)}), 200
+
+    if normalized_status == "accepted":
+        proposal.rejected = None
+        proposal.cancelled = None
         accepted = db.session.get(MatchAccepted, proposal.id)
         if not accepted:
             accepted = MatchAccepted(id=proposal.id)
@@ -411,6 +425,8 @@ def update_match_proposal_status(account, proposal_id):
         accepted.response_by_user_id = account.id
         accepted.response_text = data.get("response_text")
     elif normalized_status == "rejected":
+        proposal.accepted = None
+        proposal.cancelled = None
         rejected = db.session.get(MatchRejected, proposal.id)
         if not rejected:
             rejected = MatchRejected(id=proposal.id)
@@ -418,6 +434,8 @@ def update_match_proposal_status(account, proposal_id):
         rejected.response_by_user_id = account.id
         rejected.response_text = data.get("response_text")
     elif normalized_status == "cancelled":
+        proposal.accepted = None
+        proposal.rejected = None
         cancelled = db.session.get(MatchCancelled, proposal.id)
         if not cancelled:
             cancelled = MatchCancelled(id=proposal.id)

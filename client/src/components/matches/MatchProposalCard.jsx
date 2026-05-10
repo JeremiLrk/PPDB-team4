@@ -1,3 +1,5 @@
+import commonStyles from "@/style/common/Common.module.css";
+import buttonStyles from "@/style/common/Buttons.module.css";
 import styles from "@/style/matches/MatchProposalCard.module.css";
 import { statusLabel } from "@/components/dashboard/dashboardUtils.js";
 import { useWeather } from "@/hooks/useWeather.js";
@@ -143,11 +145,30 @@ function ContactBlock({ teamName, contacts, fallbackLabel }) {
     );
 }
 
-export default function MatchProposalCard({ proposal, disabled, onStatusChange, texts = {}, statusTexts = {} }) {
+export default function MatchProposalCard({
+    proposal,
+    disabled,
+    onStatusChange,
+    onReportScore,
+    reportingMatchId,
+    scoreValues,
+    onScoreChange,
+    onScoreSubmit,
+    onCancelScore,
+    scoreSubmitting = false,
+    canUpdate = true,
+    texts = {},
+    statusTexts = {},
+}) {
     const normalizedStatus = normalizeStatus(proposal.status);
-    const canRespond = normalizedStatus === "pending";
-    const canCancel = normalizedStatus === "accepted";
-    const canReset = normalizedStatus !== "pending";
+    const scoreStatus = String(proposal.scoreStatus || "not_submitted").toLowerCase();
+    const scoreSubmissions = Array.isArray(proposal.scoreSubmissions) ? proposal.scoreSubmissions : [];
+    const canRespond = normalizedStatus === "pending" && canUpdate;
+    const canCancel = normalizedStatus === "accepted" && canUpdate;
+    const canResetPending = normalizedStatus !== "pending" && normalizedStatus !== "played" && canUpdate;
+    const hasScoreSubmission = scoreSubmissions.length > 0 || scoreStatus !== "not_submitted";
+    const canScore = normalizedStatus === "accepted" && typeof onReportScore === "function" && !hasScoreSubmission;
+    const isReportingScore = reportingMatchId === proposal.id;
     const weatherClubId = proposal.team1ClubId || proposal.team2ClubId || null;
     const weatherCity = proposal.team1ClubCity || proposal.team2ClubCity || "";
     const weatherDate = formatDateTime(proposal.proposedStartAt);
@@ -242,7 +263,18 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                             </button>
                         ) : null}
 
-                        {canReset ? (
+                        {canScore ? (
+                            <button
+                                className={buttonStyles.primaryButton}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => onReportScore(proposal.id)}
+                            >
+                                {texts.report_score || "Add Score"}
+                            </button>
+                        ) : null}
+
+                        {canResetPending ? (
                             <button
                                 className={styles.resetButton}
                                 type="button"
@@ -254,6 +286,57 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                         ) : null}
                     </div>
                 </div>
+
+                {isReportingScore ? (
+                    <form className={styles.inlineScoreForm} onSubmit={(event) => onScoreSubmit(event, proposal.id)}>
+                        <h4 className={styles.inlineScoreTitle}>
+                            {texts.adjudicate_title || "Submit decisive score"}
+                        </h4>
+                        <div className={styles.inlineScoreInputs}>
+                            <input
+                                className={styles.inlineScoreInput}
+                                type="number"
+                                min="0"
+                                value={scoreValues.team1}
+                                onChange={(event) => onScoreChange("team1", event.target.value)}
+                                placeholder="0"
+                                required
+                            />
+                            <span className={styles.inlineScoreSeparator}>-</span>
+                            <input
+                                className={styles.inlineScoreInput}
+                                type="number"
+                                min="0"
+                                value={scoreValues.team2}
+                                onChange={(event) => onScoreChange("team2", event.target.value)}
+                                placeholder="0"
+                                required
+                            />
+                            <button
+                                className={buttonStyles.primaryButton}
+                                type="submit"
+                                disabled={scoreSubmitting}
+                            >
+                                {scoreSubmitting ? "..." : (texts.confirm || "Submit")}
+                            </button>
+                            <button
+                                className={buttonStyles.secondaryButton}
+                                type="button"
+                                onClick={onCancelScore}
+                            >
+                                {texts.cancel || "Cancel"}
+                            </button>
+                        </div>
+                    </form>
+                ) : null}
+
+                {hasScoreSubmission ? (
+                    <div className={`${styles.scoreNotice} ${scoreStatus === "resolved" ? styles.scoreNoticeFinalized : styles.scoreNoticePending}`}>
+                        {scoreStatus === "resolved"
+                            ? (texts.score_finalized || "Score finalized.")
+                            : (texts.score_waiting || "Score submitted. Waiting for the other team.")}
+                    </div>
+                ) : null}
 
                 {weatherClubId ? (
                     <p className={styles.weatherLine}>

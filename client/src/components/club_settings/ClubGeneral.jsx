@@ -1,3 +1,4 @@
+import { useState } from "react";
 import styles from "@/style/ClubSettings.module.css";
 import CityAutocompleteField from "@/components/common/CityAutocompleteField.jsx";
 
@@ -8,11 +9,32 @@ export function ClubGeneral({
     onSubmit,
     updating,
     updateMessage,
-    sportTypes = [], // Default to empty array to avoid map errors
+    sportTypes = [],
+    handleDeleteClub,
     texts = {},
 }) {
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [confirmName, setConfirmName] = useState("");
+
+    const canDelete = typeof handleDeleteClub === "function";
+
+    function closeDeleteModal() {
+        setShowDeleteModal(false);
+        setConfirmName("");
+    }
+
+    function confirmDelete() {
+        if (!canDelete || confirmName !== (formData.name || "")) {
+            return;
+        }
+
+        handleDeleteClub();
+        closeDeleteModal();
+    }
+
     return (
-        <article className={`${styles.panel} ${styles.contentFade}`}>
+        <div className={styles.contentFade}>
+            <article className={styles.panel}>
             <h3 className={styles.panelTitle}>{texts.general_title || "Algemene instellingen"}</h3>
 
             <form className={styles.form} onSubmit={onSubmit}>
@@ -100,7 +122,68 @@ export function ClubGeneral({
                     {updateMessage.text}
                 </p>
             )}
+
+            {canDelete && (
+                <div className={styles.formActions} style={{ marginTop: "1rem" }}>
+                    <button
+                        type="button"
+                        className={styles.deleteButton}
+                        onClick={() => setShowDeleteModal(true)}
+                    >
+                        {texts.delete_club || "Club Verwijderen"}
+                    </button>
+                </div>
+            )}
         </article>
+
+        {showDeleteModal && canDelete && (
+            <div className={styles.modalOverlay}>
+                <div className={styles.modalContainer}>
+                    <h3 className={styles.modalTitle}>
+                        {texts.delete_modal_title || "Weet je het absoluut zeker?"}
+                    </h3>
+
+                    <p className={styles.modalWarning}>
+                        {(texts.delete_modal_warning || "This action cannot be undone. This will permanently delete {name}.").replace(
+                            "{name}",
+                            formData.name || "",
+                        )}
+                    </p>
+
+                    <div className={styles.modalConfirmBox}>
+                        <label className={styles.formLabel}>
+                            {(texts.type_to_confirm || "Typ {name} om te bevestigen:").replace("{name}", formData.name || "")}
+                            <input
+                                type="text"
+                                className={styles.formInput}
+                                value={confirmName}
+                                onChange={(event) => setConfirmName(event.target.value)}
+                                placeholder={formData.name || ""}
+                            />
+                        </label>
+                    </div>
+
+                    <div className={styles.modalActions}>
+                        <button
+                            type="button"
+                            className={styles.cancelButton}
+                            onClick={closeDeleteModal}
+                        >
+                            {texts.cancel || "Annuleren"}
+                        </button>
+                        <button
+                            type="button"
+                            className={styles.confirmDeleteButton}
+                            disabled={confirmName !== (formData.name || "")}
+                            onClick={confirmDelete}
+                        >
+                            {texts.understand_delete || "Ik begrijp de gevolgen, verwijder club"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </div>
     );
 }
 

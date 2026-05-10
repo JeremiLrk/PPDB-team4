@@ -24,8 +24,9 @@ export function statusClass(status) {
 
 export function statusLabel(status, texts = {}) {
     const value = (status || "pending").toLowerCase()
-    if (value === "approved") return texts.status_approved || "Approved"
-    if (value === "accepted") return texts.status_accepted || "Accepted"
+    if (value === "accepted" || value === "approved") {
+        return texts.status_accepted || texts.status_approved || "Accepted"
+    }
     if (value === "rejected") return texts.status_rejected || "Rejected"
     if (value === "cancelled") return texts.status_cancelled || "Cancelled"
     return texts.status_pending || "Pending"

@@ -7,62 +7,14 @@ msgstr ""
 msgid "matches.title"
 msgstr "Weekly Match Proposals"
 
-msgid "matches.subtitle"
-msgstr "Split by the role you use them in, while keeping one action flow."
-
 msgid "matches.refresh"
 msgstr "Refresh"
-
-msgid "matches.show_archived"
-msgstr "Show archived"
-
-msgid "matches.show_active"
-msgstr "Show active"
 
 msgid "matches.loading"
 msgstr "Match proposals loading..."
 
 msgid "matches.empty"
 msgstr "No match proposals yet."
-
-msgid "matches.managed_matches"
-msgstr "Managed matches"
-
-msgid "matches.managed_matches_subtitle"
-msgstr "Matches for teams and clubs you manage."
-
-msgid "matches.no_managed_matches"
-msgstr "No managed match proposals yet."
-
-msgid "matches.player_matches"
-msgstr "Player matches"
-
-msgid "matches.player_matches_subtitle"
-msgstr "Matches that involve teams you play on."
-
-msgid "matches.no_player_matches"
-msgstr "No player match proposals yet."
-
-msgid "matches.proposed_date"
-msgstr "Proposed date"
-
-msgid "matches.no_contacts"
-msgstr "No contact info"
-
-msgid "matches.team_1"
-msgstr "Team 1"
-
-msgid "matches.team_2"
-msgstr "Team 2"
-
-msgid "matches.weather_loading"
-msgstr "Weather for {city} on {date} loading..."
-
-msgid "matches.weather_available"
-msgstr "Weather for {city} on {date}: {temp}°C{description}"
-
-msgid "matches.weather_unavailable"
-msgstr "Weather for {city} on {date} unavailable"
 
 msgid "matches.retry"
 msgstr "Retry"
@@ -78,3 +30,33 @@ msgstr "Cancel"
 
 msgid "matches.reset_pending"
 msgstr "Set back to pending"
+
+msgid "matches.managed_matches"
+msgstr "Managed matches"
+
+msgid "matches.managed_matches_subtitle"
+msgstr "Matches for teams and clubs you manage."
+
+msgid "matches.player_matches"
+msgstr "Player matches"
+
+msgid "matches.player_matches_subtitle"
+msgstr "Matches that involve teams you play on."
+
+msgid "matches.no_managed_matches"
+msgstr "No managed match proposals yet."
+
+msgid "matches.no_player_matches"
+msgstr "No player match proposals yet."
+
+msgid "matches.report_score"
+msgstr "Add Score"
+
+msgid "matches.adjudicate_title"
+msgstr "Submit decisive score"
+
+msgid "matches.score_waiting"
+msgstr "Score submitted. Waiting for the other team."
+
+msgid "matches.score_finalized"
+msgstr "Score finalized."

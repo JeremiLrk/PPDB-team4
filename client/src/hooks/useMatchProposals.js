@@ -21,9 +21,11 @@ function normalizeMatchProposal(raw = {}) {
     const rawStatus = readField(raw, "status", "status_name", "statusName");
     const team1Contacts = readField(raw, "team1_contacts", "team1Contacts") || [];
     const team2Contacts = readField(raw, "team2_contacts", "team2Contacts") || [];
+    const scoreSubmissions = readField(raw, "score_submissions", "scoreSubmissions") || [];
 
     return {
         id: readField(raw, "id", "proposal_id", "proposalId"),
+        proposedByUserId: readField(raw, "proposed_by_user_id", "proposedByUserId"),
         team1Id,
         team2Id,
         team1Name:
@@ -42,6 +44,8 @@ function normalizeMatchProposal(raw = {}) {
         team2ClubCity: readField(raw, "team2_club_city", "team2ClubCity") || "",
         team1Contacts,
         team2Contacts,
+        scoreStatus: readField(raw, "score_status", "scoreStatus") || "not_submitted",
+        scoreSubmissions,
         // Keep the raw payload around so the UI can still inspect anything
         // new the backend starts returning before this hook is extended.
         original: raw,
@@ -95,33 +99,14 @@ async function fetchMatchProposals(filters = {}) {
 }
 
 async function updateMatchProposalStatus(proposalId, status, extra = {}) {
-    // Keep the older action endpoints working for accept/reject/cancel flows,
-    // and fall back to the generic status patch for everything else.
-    const normalizedStatus = String(status || "").toLowerCase();
-    const actionEndpointByStatus = {
-        accepted: `/api/matches/${proposalId}/accept`,
-        rejected: `/api/matches/${proposalId}/reject`,
-        cancelled: `/api/matches/${proposalId}/cancel`,
-        canceled: `/api/matches/${proposalId}/cancel`,
-    };
-    const actionEndpoint = actionEndpointByStatus[normalizedStatus];
-
-    const response = actionEndpoint
-        ? await fetch(actionEndpoint, {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                responseText: extra.responseText ?? extra.response_text ?? "",
-                reason: extra.reason ?? "",
-            }),
-        })
-        : await fetch(`${MATCH_PROPOSALS_ENDPOINT}/${proposalId}/status`, {
-            method: "PATCH",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status, ...extra }),
-        });
+    // The merged backend now exposes one canonical status endpoint for all
+    // proposal transitions, so the UI always goes through the same code path.
+    const response = await fetch(`${MATCH_PROPOSALS_ENDPOINT}/${proposalId}/status`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, ...extra }),
+    });
     const payload = await readJson(response);
 
     if (!response.ok) {

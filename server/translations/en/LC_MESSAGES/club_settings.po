@@ -291,3 +291,44 @@ msgstr "Retry"
 msgid "club_settings.back"
 msgstr "Back to settings"
 
+msgid "club_settings.add_team_title"
+msgstr "Team to ladder"
+
+msgid "club_settings.add_team_subtitle"
+msgstr "Select a ladder and a team to link them."
+
+msgid "club_settings.select_ladder"
+msgstr "Select a ladder"
+
+msgid "club_settings.select_team"
+msgstr "Select a team"
+
+msgid "club_settings.add_team"
+msgstr "Add team"
+
+msgid "club_settings.adding_team"
+msgstr "Adding..."
+
+msgid "club_settings.team_added_to_ladder"
+msgstr "Team added to ladder."
+
+msgid "club_settings.could_not_add_team_to_ladder"
+msgstr "Could not add team to ladder."
+
+msgid "club_settings.delete_club"
+msgstr "Delete club"
+
+msgid "club_settings.delete_modal_title"
+msgstr "Are you absolutely sure?"
+
+msgid "club_settings.delete_modal_warning"
+msgstr "This action cannot be undone. This will permanently delete {name}."
+
+msgid "club_settings.type_to_confirm"
+msgstr "Type {name} to confirm:"
+
+msgid "club_settings.understand_delete"
+msgstr "I understand the consequences, delete club"
+
+msgid "club_settings.cancel"
+msgstr "Cancel"

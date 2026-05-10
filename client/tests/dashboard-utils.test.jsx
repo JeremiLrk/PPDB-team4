@@ -31,6 +31,7 @@ describe("dashboardUtils", () => {
   });
 
   test("statusClass maps each status to Common.module.css class", () => {
+    expect(statusClass("accepted")).toBe(styles.statusApproved);
     expect(statusClass("approved")).toBe(styles.statusApproved);
     expect(statusClass("rejected")).toBe(styles.statusRejected);
     expect(statusClass("cancelled")).toBe(styles.statusCancelled);
@@ -40,17 +41,18 @@ describe("dashboardUtils", () => {
 
   test("statusLabel uses localized labels with fallback to English", () => {
     const texts = {
-      status_approved: "Goedgekeurd",
+      status_accepted: "Geaccepteerd",
       status_rejected: "Afgewezen",
       status_cancelled: "Geannuleerd",
       status_pending: "In behandeling",
     };
 
-    expect(statusLabel("approved", texts)).toBe("Goedgekeurd");
+    expect(statusLabel("accepted", texts)).toBe("Geaccepteerd");
+    expect(statusLabel("approved", texts)).toBe("Geaccepteerd");
     expect(statusLabel("rejected", texts)).toBe("Afgewezen");
     expect(statusLabel("cancelled", texts)).toBe("Geannuleerd");
     expect(statusLabel("pending", texts)).toBe("In behandeling");
     expect(statusLabel("other", texts)).toBe("In behandeling");
-    expect(statusLabel("approved", {})).toBe("Approved");
+    expect(statusLabel("accepted", {})).toBe("Accepted");
   });
 });

@@ -291,3 +291,44 @@ msgstr "Opnieuw proberen"
 msgid "club_settings.back"
 msgstr "Terug naar instellingen"
 
+msgid "club_settings.add_team_title"
+msgstr "Team aan ladder"
+
+msgid "club_settings.add_team_subtitle"
+msgstr "Selecteer een ladder en een team om ze te koppelen."
+
+msgid "club_settings.select_ladder"
+msgstr "Selecteer een ladder"
+
+msgid "club_settings.select_team"
+msgstr "Selecteer een team"
+
+msgid "club_settings.add_team"
+msgstr "Team toevoegen"
+
+msgid "club_settings.adding_team"
+msgstr "Toevoegen..."
+
+msgid "club_settings.team_added_to_ladder"
+msgstr "Team toegevoegd aan ladder."
+
+msgid "club_settings.could_not_add_team_to_ladder"
+msgstr "Kon team niet aan ladder toevoegen."
+
+msgid "club_settings.delete_club"
+msgstr "Club verwijderen"
+
+msgid "club_settings.delete_modal_title"
+msgstr "Weet je het absoluut zeker?"
+
+msgid "club_settings.delete_modal_warning"
+msgstr "Deze actie kan niet ongedaan worden gemaakt. Dit zal {name} permanent verwijderen."
+
+msgid "club_settings.type_to_confirm"
+msgstr "Typ {name} om te bevestigen:"
+
+msgid "club_settings.understand_delete"
+msgstr "Ik begrijp de gevolgen, verwijder club"
+
+msgid "club_settings.cancel"
+msgstr "Annuleren"

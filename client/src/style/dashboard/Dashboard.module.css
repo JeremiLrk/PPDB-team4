@@ -10,9 +10,6 @@
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    position: sticky;
-    top: 0;
-    align-self: start;
 }
 
 .brand {
@@ -51,6 +48,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 
@@ -120,7 +118,6 @@
         border-right: none;
         border-bottom: 1px solid var(--shell-border);
         height: auto;
-        position: static;
         overflow: visible;
     }
 }
