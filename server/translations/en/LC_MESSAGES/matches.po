@@ -1,0 +1,62 @@
+# en — matches
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "matches.title"
+msgstr "Weekly Match Proposals"
+
+msgid "matches.refresh"
+msgstr "Refresh"
+
+msgid "matches.loading"
+msgstr "Match proposals loading..."
+
+msgid "matches.empty"
+msgstr "No match proposals yet."
+
+msgid "matches.retry"
+msgstr "Retry"
+
+msgid "matches.accept"
+msgstr "Accept"
+
+msgid "matches.reject"
+msgstr "Reject"
+
+msgid "matches.cancel"
+msgstr "Cancel"
+
+msgid "matches.reset_pending"
+msgstr "Set back to pending"
+
+msgid "matches.managed_matches"
+msgstr "Managed matches"
+
+msgid "matches.managed_matches_subtitle"
+msgstr "Matches for teams and clubs you manage."
+
+msgid "matches.player_matches"
+msgstr "Player matches"
+
+msgid "matches.player_matches_subtitle"
+msgstr "Matches that involve teams you play on."
+
+msgid "matches.no_managed_matches"
+msgstr "No managed match proposals yet."
+
+msgid "matches.no_player_matches"
+msgstr "No player match proposals yet."
+
+msgid "matches.report_score"
+msgstr "Add Score"
+
+msgid "matches.adjudicate_title"
+msgstr "Submit decisive score"
+
+msgid "matches.score_waiting"
+msgstr "Score submitted. Waiting for the other team."
+
+msgid "matches.score_finalized"
+msgstr "Score finalized."

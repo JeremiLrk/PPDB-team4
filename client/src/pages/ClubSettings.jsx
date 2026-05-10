@@ -45,10 +45,12 @@ function ClubSettings() {
                     <ClubGeneral
                         formData={settings.formData}
                         onChange={settings.handleChange}
+                        onCitySelect={settings.handleCitySelect}
                         onSubmit={settings.updateClub}
                         updating={settings.updating}
                         updateMessage={settings.updateMessage}
                         sportTypes={settings.sportTypes}
+                        handleDeleteClub={settings.deleteClub}
                         texts={texts}
                     />
                 )}
@@ -59,6 +61,8 @@ function ClubSettings() {
                         onCreate={settings.createLadder}
                         ratingFunctions={settings.ratingFunctions}
                         ruleSets={settings.ruleSets}
+                        eligibleTeams={settings.eligibleTeams}
+                        onAddTeam={settings.addTeamToLadder}
                         texts={texts}
                     />
                 )}

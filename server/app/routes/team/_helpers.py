@@ -2,9 +2,15 @@ from typing import Any
 
 from flask import abort
 from sqlalchemy import func
+
+from server.app.routes.team._permissions import _is_admin
 from server.extensions import db
 from server.app.models.account import Account, AccountRole
 from server.app.models.team import Team, TeamManagerTeam, TeamManager
+from server.app.models.player import PlayerTeam
+from server.app.models.team_join_request import TeamJoinRequest
+from server.app.models.ladder import Ladder
+from server.app.models.ladder_team import LadderTeam
 
 
 def _get_team_or_404(team_id: int) -> Team:
@@ -152,9 +158,119 @@ def _search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
                 db.or_(
                     Account.first_name.ilike(pattern),
                     Account.last_name.ilike(pattern),
+                    Account.email.ilike(pattern),
                 )
             )
             .order_by(Account.last_name.asc(), Account.first_name.asc())
             .limit(50)
             .all()
         )
+
+# ---------------------------------------------------------------------------
+# count confirmed (accepted) players in a team
+# ---------------------------------------------------------------------------
+
+def _count_confirmed_players(team_id: int) -> int:
+    """Returns the number of players who are already members of the team."""
+    return (
+        db.session.query(func.count())
+        .select_from(PlayerTeam)
+        .filter(PlayerTeam.team_id == team_id)
+        .scalar()
+    )
+
+
+# ---------------------------------------------------------------------------
+# count effective players (confirmed + pending join requests)
+# ---------------------------------------------------------------------------
+
+def _count_effective_players(team_id: int) -> int:
+    """Returns confirmed players + players with a pending join request.
+
+    This reflects the realistic future roster size once all pending
+    requests are accepted.
+    """
+    confirmed = _count_confirmed_players(team_id)
+
+    pending = (
+        db.session.query(func.count())
+        .select_from(TeamJoinRequest)
+        .filter(
+            TeamJoinRequest.team_id == team_id,
+            TeamJoinRequest.status == "pending",
+            )
+        .scalar()
+    )
+
+    return confirmed + pending
+
+
+# ---------------------------------------------------------------------------
+# ladders that would exceed max players after adding one more
+# ---------------------------------------------------------------------------
+
+def _ladders_exceeding_max_after_add(team_id: int) -> list[Ladder]:
+    """Returns every Ladder the team participates in where adding one more
+    player would exceed the sport type's maximum_number_of_players_per_team.
+
+    Uses _count_effective_players(team_id) + 1 as the projected roster size,
+    so pending join requests are already accounted for.
+    """
+    projected = _count_effective_players(team_id) + 1
+
+    team = db.session.get(Team, team_id)
+    if team is None or team.sport_type is None:
+        return []
+
+    max_players = team.sport_type.maximum_number_of_players_per_team
+    if max_players is None:
+        # No cap defined for this sport — nothing can be exceeded.
+        return []
+
+    if projected <= max_players:
+        return []
+
+    # Fetch every ladder this team is enrolled in.
+    ladders = (
+        db.session.query(Ladder)
+        .join(LadderTeam, LadderTeam.ladder_id == Ladder.id)
+        .filter(LadderTeam.team_id == team_id)
+        .all()
+    )
+
+    return ladders
+
+# ---------------------------------------------------------------------------
+# Helper : ladders that would violate min players after removing one
+# ---------------------------------------------------------------------------
+
+def _ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
+    """Returns every Ladder the team participates in where removing one player
+    would drop below the sport type's minimum_number_of_players_on_a_team.
+
+    Uses _count_effective_players(team_id) - 1 as the projected roster size,
+    so pending join requests are already accounted for.
+    """
+    projected = _count_effective_players(team_id) - 1
+
+    team = db.session.get(Team, team_id)
+    if team is None or team.sport_type is None:
+        return []
+
+    min_players = team.sport_type.minimum_number_of_players_on_a_team
+    if min_players is None:
+        # No minimum defined for this sport — nothing can be violated.
+        return []
+
+    if projected >= min_players:
+        return []
+
+    # Fetch every ladder this team is enrolled in.
+    ladders = (
+        db.session.query(Ladder)
+        .join(LadderTeam, LadderTeam.ladder_id == Ladder.id)
+        .filter(LadderTeam.team_id == team_id)
+        .all()
+    )
+
+    return ladders

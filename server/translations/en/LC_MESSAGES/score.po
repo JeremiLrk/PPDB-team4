@@ -1,0 +1,15 @@
+# en — score
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "score.top_players"
+msgstr "Top Players"
+
+msgid "score.top_matches"
+msgstr "Top Matches"
+
+msgid "score.recent_played_matches"
+msgstr "Recent played matches"
+

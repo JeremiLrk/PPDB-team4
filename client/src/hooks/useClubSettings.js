@@ -16,10 +16,12 @@ export function useClubSettings(clubId, texts = {}) {
         city: "",
         sport_type_id: "", // Matches the name attribute in our select
     });
+    const [citySelection, setCitySelection] = useState(null);
 
     const [members, setMembers] = useState([]);
     const [ladders, setLadders] = useState([]);
     const [owners, setOwners] = useState([]);
+    const [eligibleTeams, setEligibleTeams] = useState([]);
 
     const [ratingFunctions, setRatingFunctions] = useState([]);
     const [ruleSets, setRuleSets] = useState([]);
@@ -33,13 +35,14 @@ export function useClubSettings(clubId, texts = {}) {
     useEffect(() => {
         async function fetchClubData() {
             try {
-                const [clubRes, membersRes, ownersRes, laddersRes, ratingsRes, rulesRes] = await Promise.all([
+                const [clubRes, membersRes, ownersRes, laddersRes, ratingsRes, rulesRes, teamsRes] = await Promise.all([
                     fetch(`/api/clubs/${clubId}`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/members`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/owners`, { credentials: "include" }),
                     fetch(`/api/clubs/${clubId}/ladders`, { credentials: "include" }),
                     fetch(`/api/rating-functions`), 
-                    fetch(`/api/rule-sets`)
+                    fetch(`/api/rule-sets`),
+                    fetch(`/api/clubs/${clubId}/eligible-teams`, { credentials: "include" }),
                 ]);
 
                 const clubData = await clubRes.json();
@@ -48,6 +51,7 @@ export function useClubSettings(clubId, texts = {}) {
                 const laddersData = await laddersRes.json();
                 const ratingsData = await ratingsRes.json();
                 const rulesData = await rulesRes.json();
+                const teamsData = await teamsRes.json();
 
                 if (!clubRes.ok) throw new Error(clubData.message);
 
@@ -59,12 +63,14 @@ export function useClubSettings(clubId, texts = {}) {
                     city: clubData.club.city || "",
                     sport_type_id: clubData.club.sport_type_id || "",
                 });
+                setCitySelection(clubData.club.city ? { label: clubData.club.city } : null);
 
                 setMembers(membersData.members || []);
                 setOwners(ownersData.owners || []);
                 setLadders(Array.isArray(laddersData) ? laddersData : (laddersData.ladders || []));
                 setRatingFunctions(ratingsData.ratingFunctions || []);
                 setRuleSets(rulesData.ruleSets || []);
+                setEligibleTeams(teamsData.teams || []);
 
             } catch (err) {
                 setError(err.message);
@@ -81,6 +87,17 @@ export function useClubSettings(clubId, texts = {}) {
             ...prev,
             [e.target.name]: e.target.value,
         }));
+        if (e.target.name === "city") {
+            setCitySelection(null);
+        }
+    };
+
+    const handleCitySelect = (city) => {
+        setFormData((prev) => ({
+            ...prev,
+            city: city.label,
+        }));
+        setCitySelection(city);
     };
 
     const updateClub = async (e) => {
@@ -88,18 +105,33 @@ export function useClubSettings(clubId, texts = {}) {
         setUpdating(true);
         setUpdateMessage(null);
 
+        const selectedCity = citySelection?.label?.trim();
+        if (!selectedCity) {
+            setUpdateMessage({
+                type: "error",
+                text: texts.city_selection_required || "Please choose a real city from the suggestions.",
+            });
+            setUpdating(false);
+            return;
+        }
+
         try {
+            const payload = {
+                ...formData,
+                city: selectedCity,
+            };
+
             const res = await fetch(`/api/clubs/${clubId}`, {
                 method: "PUT",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(payload),
             });
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
 
-            setClub(prev => ({ ...prev, ...formData }));
+            setClub(prev => ({ ...prev, ...payload }));
             setUpdateMessage({ type: "success", text: texts.saved_successfully || "Saved successfully" });
         } catch (err) {
             setUpdateMessage({ type: "error", text: err.message || texts.could_not_save_club || "Could not save club." });
@@ -126,6 +158,23 @@ export function useClubSettings(clubId, texts = {}) {
             setLadders(prev => [...prev, data.ladder]);
         } catch (err) {
             setError(err.message || texts.could_not_create_ladder || "Could not create ladder.");
+        }
+    };
+
+    const addTeamToLadder = async (ladderId, teamId) => {
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/ladders/${ladderId}/teams/${teamId}`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            return data;
+        } catch (err) {
+            setError(err.message || texts.could_not_add_team_to_ladder || "Could not add team to ladder.");
+            throw err;
         }
     };
 
@@ -199,6 +248,24 @@ export function useClubSettings(clubId, texts = {}) {
         }
     };
 
+    const deleteClub = async () => {
+        try {
+            const res = await fetch(`/api/clubs/${clubId}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.message || texts.could_not_delete_club || "Could not delete club.");
+            }
+
+            navigate("/dashboard");
+        } catch (err) {
+            setError(err.message || texts.could_not_delete_club || "Could not delete club.");
+        }
+    };
+
     const searchAccounts = async (query) => {
         if (!query || query.length < 3) return [];
         
@@ -228,6 +295,7 @@ export function useClubSettings(clubId, texts = {}) {
         club,
         formData,
         handleChange,
+        handleCitySelect,
         updateClub,
 
         members,
@@ -238,9 +306,12 @@ export function useClubSettings(clubId, texts = {}) {
         addOwner,
         removeOwner,
         searchAccounts,
+        deleteClub,
 
         ladders,
         createLadder,
+        eligibleTeams,
+        addTeamToLadder,
 
         ratingFunctions,
         ruleSets,

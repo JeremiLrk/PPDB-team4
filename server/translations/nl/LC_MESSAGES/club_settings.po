@@ -1,0 +1,334 @@
+# nl — club_settings
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "club_settings.loading"
+msgstr "Clubinstellingen laden..."
+
+msgid "club_settings.sidebar_title"
+msgstr "Instellingen"
+
+msgid "club_settings.tab_general"
+msgstr "Algemene info"
+
+msgid "club_settings.tab_ladders"
+msgstr "Ladders"
+
+msgid "club_settings.tab_members"
+msgstr "Leden"
+
+msgid "club_settings.tab_rules"
+msgstr "Wedstrijdregels"
+
+msgid "club_settings.tab_owners"
+msgstr "Eigenaren"
+
+msgid "club_settings.tab_home"
+msgstr "Naar clubhome"
+
+msgid "club_settings.overview_title"
+msgstr "Clubinformatie"
+
+msgid "club_settings.overview_name_label"
+msgstr "Naam"
+
+msgid "club_settings.overview_city_label"
+msgstr "Stad"
+
+msgid "club_settings.overview_sport_label"
+msgstr "Sport"
+
+msgid "club_settings.overview_description_title"
+msgstr "Omschrijving"
+
+msgid "club_settings.overview_no_description"
+msgstr "Geen omschrijving opgegeven."
+
+msgid "club_settings.general_title"
+msgstr "Algemene instellingen"
+
+msgid "club_settings.club_name"
+msgstr "Clubnaam"
+
+msgid "club_settings.city"
+msgstr "Stad"
+
+msgid "club_settings.sport"
+msgstr "Sport"
+
+msgid "club_settings.choose_sport"
+msgstr "Kies een sport"
+
+msgid "club_settings.description"
+msgstr "Omschrijving"
+
+msgid "club_settings.save_changes"
+msgstr "Wijzigingen opslaan"
+
+msgid "club_settings.saving"
+msgstr "Opslaan..."
+
+msgid "club_settings.saved_successfully"
+msgstr "Succesvol opgeslagen"
+
+msgid "club_settings.could_not_save_club"
+msgstr "Kon club niet opslaan."
+
+msgid "club_settings.ladder_create_title"
+msgstr "Ladder aanmaken"
+
+msgid "club_settings.ladder_name_placeholder"
+msgstr "Laddernaam"
+
+msgid "club_settings.choose_sport_type"
+msgstr "Kies een sporttype"
+
+msgid "club_settings.choose_rule_set"
+msgstr "Kies een regelset"
+
+msgid "club_settings.choose_rating_function"
+msgstr "Kies ratingsysteem"
+
+msgid "club_settings.ladder_description_placeholder"
+msgstr "Omschrijving"
+
+msgid "club_settings.create_ladder"
+msgstr "Ladder aanmaken"
+
+msgid "club_settings.creating_ladder"
+msgstr "Aanmaken..."
+
+msgid "club_settings.ladders_title"
+msgstr "Ladders"
+
+msgid "club_settings.no_ladders"
+msgstr "Nog geen ladders."
+
+msgid "club_settings.no_ladder_description"
+msgstr "Geen omschrijving"
+
+msgid "club_settings.members_title"
+msgstr "Leden"
+
+msgid "club_settings.no_members"
+msgstr "Nog geen leden."
+
+msgid "club_settings.remove"
+msgstr "Verwijderen"
+
+msgid "club_settings.owners_add_title"
+msgstr "Nieuwe eigenaar toevoegen"
+
+msgid "club_settings.owners_search_placeholder"
+msgstr "Zoek op naam of e-mail..."
+
+msgid "club_settings.owners_no_users"
+msgstr "Geen gebruikers gevonden."
+
+msgid "club_settings.owners_title"
+msgstr "Huidige eigenaren"
+
+msgid "club_settings.owners_no_owners"
+msgstr "Nog geen eigenaren."
+
+msgid "club_settings.owner_label"
+msgstr "Eigenaar"
+
+msgid "club_settings.add"
+msgstr "Toevoegen"
+
+msgid "club_settings.rules_loading_title"
+msgstr "Wedstrijdregels"
+
+msgid "club_settings.rules_loading_text"
+msgstr "Regels laden..."
+
+msgid "club_settings.rules_library_title"
+msgstr "Regelbibliotheek"
+
+msgid "club_settings.rule_name_placeholder"
+msgstr "Regelnaam"
+
+msgid "club_settings.rule_description_placeholder"
+msgstr "Omschrijving"
+
+msgid "club_settings.use_by_others"
+msgstr "Door anderen te gebruiken"
+
+msgid "club_settings.add_rule"
+msgstr "Regel toevoegen"
+
+msgid "club_settings.adding_rule"
+msgstr "Bezig met aanmaken..."
+
+msgid "club_settings.available_rules"
+msgstr "Beschikbare regels"
+
+msgid "club_settings.no_rules"
+msgstr "Nog geen regels."
+
+msgid "club_settings.build_rule_set_title"
+msgstr "Regelset samenstellen"
+
+msgid "club_settings.rule_set_name_placeholder"
+msgstr "Naam van regelset"
+
+msgid "club_settings.select_rules"
+msgstr "Selecteer regels om op te nemen"
+
+msgid "club_settings.save_rule_set"
+msgstr "Regelset opslaan"
+
+msgid "club_settings.saving_rule_set"
+msgstr "Bezig met opslaan..."
+
+msgid "club_settings.existing_rule_sets"
+msgstr "Bestaande regelsets"
+
+msgid "club_settings.contains_rules"
+msgstr "Bevat"
+
+msgid "club_settings.rules_count_suffix"
+msgstr "regels"
+
+msgid "club_settings.no_rule_sets"
+msgstr "Nog geen regelsets."
+
+msgid "club_settings.could_not_load_rules"
+msgstr "Regels konden niet worden geladen."
+
+msgid "club_settings.could_not_create_rule"
+msgstr "Regel kon niet worden aangemaakt."
+
+msgid "club_settings.could_not_create_rule_set"
+msgstr "Regelset kon niet worden aangemaakt."
+
+msgid "club_settings.could_not_attach_rule"
+msgstr "Regel kon niet aan de set worden gekoppeld."
+
+# --- Betwiste wedstrijden pagina ---
+
+msgid "club_settings.tab_disputed"
+msgstr "Betwiste wedstrijden"
+
+msgid "club_settings.disputed_title"
+msgstr "Betwiste wedstrijden"
+
+msgid "club_settings.disputed_description"
+msgstr "Wedstrijden waarbij beide teams een tegenstrijdige score hebben ingediend. Selecteer een wedstrijd om het verschil te bekijken en de beslissende score in te dienen."
+
+msgid "club_settings.disputed_forbidden"
+msgstr "Je hebt geen toestemming om betwiste wedstrijden te bekijken of te beoordelen. Alleen clubeigenaren en beheerders hebben toegang tot dit gedeelte."
+
+msgid "club_settings.disputed_queue_title"
+msgstr "Wachtrij geschillen"
+
+msgid "club_settings.no_disputed"
+msgstr "Momenteel geen betwiste wedstrijden."
+
+msgid "club_settings.select_match_prompt"
+msgstr "Selecteer een betwiste wedstrijd uit de lijst om deze te bekijken en te beoordelen."
+
+msgid "club_settings.submitted_scores"
+msgstr "Ingediende scores"
+
+msgid "club_settings.no_submissions"
+msgstr "Geen ingediende scores gevonden."
+
+msgid "club_settings.ladder_label"
+msgstr "Ladder"
+
+msgid "club_settings.no_ladder"
+msgstr "Geen ladder"
+
+msgid "club_settings.ruleset_label"
+msgstr "Regelset"
+
+msgid "club_settings.no_ruleset"
+msgstr "Geen"
+
+msgid "club_settings.ladder_admin_label"
+msgstr "Ladderbeheerder"
+
+msgid "club_settings.team1"
+msgstr "Team 1"
+
+msgid "club_settings.team2"
+msgstr "Team 2"
+
+msgid "club_settings.rules_snapshot_title"
+msgstr "Regels van kracht ten tijde van de wedstrijd"
+
+msgid "club_settings.no_rules_snapshot"
+msgstr "Geen regels geregistreerd voor deze wedstrijd."
+
+msgid "club_settings.match_id_label"
+msgstr "Wedstrijd"
+
+msgid "club_settings.adjudicate_title"
+msgstr "Beslissende score indienen"
+
+msgid "club_settings.submit_decisive_score"
+msgstr "Beslissende score indienen"
+
+msgid "club_settings.submitting"
+msgstr "Bezig met indienen..."
+
+msgid "club_settings.view_details"
+msgstr "Details"
+
+msgid "club_settings.collapse"
+msgstr "Inklappen"
+
+msgid "club_settings.refresh"
+msgstr "Vernieuwen"
+
+msgid "club_settings.retry"
+msgstr "Opnieuw proberen"
+
+msgid "club_settings.back"
+msgstr "Terug naar instellingen"
+
+msgid "club_settings.add_team_title"
+msgstr "Team aan ladder"
+
+msgid "club_settings.add_team_subtitle"
+msgstr "Selecteer een ladder en een team om ze te koppelen."
+
+msgid "club_settings.select_ladder"
+msgstr "Selecteer een ladder"
+
+msgid "club_settings.select_team"
+msgstr "Selecteer een team"
+
+msgid "club_settings.add_team"
+msgstr "Team toevoegen"
+
+msgid "club_settings.adding_team"
+msgstr "Toevoegen..."
+
+msgid "club_settings.team_added_to_ladder"
+msgstr "Team toegevoegd aan ladder."
+
+msgid "club_settings.could_not_add_team_to_ladder"
+msgstr "Kon team niet aan ladder toevoegen."
+
+msgid "club_settings.delete_club"
+msgstr "Club verwijderen"
+
+msgid "club_settings.delete_modal_title"
+msgstr "Weet je het absoluut zeker?"
+
+msgid "club_settings.delete_modal_warning"
+msgstr "Deze actie kan niet ongedaan worden gemaakt. Dit zal {name} permanent verwijderen."
+
+msgid "club_settings.type_to_confirm"
+msgstr "Typ {name} om te bevestigen:"
+
+msgid "club_settings.understand_delete"
+msgstr "Ik begrijp de gevolgen, verwijder club"
+
+msgid "club_settings.cancel"
+msgstr "Annuleren"

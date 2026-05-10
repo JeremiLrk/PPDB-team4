@@ -1,0 +1,60 @@
+# nl — teams
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "teams.title"
+msgstr "Teams"
+
+msgid "teams.loading_total"
+msgstr "Laden..."
+
+msgid "teams.sort_label"
+msgstr "Sorteren"
+
+msgid "teams.sort_id"
+msgstr "Op ID"
+
+msgid "teams.sort_name"
+msgstr "Op naam"
+
+msgid "teams.page_size_label"
+msgstr "Per keer laden"
+
+msgid "teams.team_singular"
+msgstr "team"
+
+msgid "teams.team_plural"
+msgstr "teams"
+
+msgid "teams.found"
+msgstr "gevonden"
+
+msgid "teams.loading_teams"
+msgstr "Teams laden..."
+
+msgid "teams.empty_state"
+msgstr "Geen teams gevonden."
+
+msgid "teams.showing"
+msgstr "Weergegeven"
+
+msgid "teams.load_more"
+msgstr "Meer laden"
+
+msgid "teams.open"
+msgstr "Openen"
+
+msgid "teams.independent_team"
+msgstr "Onafhankelijk"
+
+msgid "teams.no_sport"
+msgstr "Geen sport"
+
+msgid "teams.club_prefix"
+msgstr "Club"
+
+msgid "teams.sport_prefix"
+msgstr "Sport"
+

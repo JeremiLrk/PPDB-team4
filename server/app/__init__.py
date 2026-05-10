@@ -2,40 +2,52 @@ import os
 from datetime import datetime
 
 import click
-from flask import Flask
+from flask import Flask, jsonify
 
-from server.app.models.match_rule import MatchRuleSet
+from server.app.models.match_rule import MatchRuleSet  # noqa: F401 – needed for db.create_all()
 from server.app.routes.sport_type_routes import sport_type_bp
 from server.app.routes.team import team_bp
 from server.app.routes.match_rule import match_rule_bp, match_rule_set_bp
 from server.app.routes.matcher import matches_bp
 from server.app.routes.match_routes import match_proposals_bp
 from server.config import SECRET_KEY, config_data
-from server.extensions import db
+from server.extensions import babel, cache, db
 from server.app.routes.auth_routes import auth_bp
 from server.app.routes.availability_routes import availability_bp
 from server.app.routes.clubs_routes import clubs_bp
 from server.app.routes.dashboard_routes import dashboard_bp
 from server.app.routes.health_routes import api
+from server.app.routes.city_routes import city_bp
 from server.app.routes.root_routes import root_bp
 from server.app.routes.ladder_routes import ladder_bp
 from server.app.routes.ladders_routes import ladders_bp
 from server.app.routes.rule_set_routes import rule_set_bp
 from server.app.routes.rating_function_routes import rating_function_bp
 from server.app.routes.weather_routes import weather
-from server.app.routes.texts_routes import texts
 from server.app.utils.db_loader import load_sql
 from server.app.utils.seed_table import seed_table
-from server.app.models.page_text import PageText
 from server.app.models.account import Account, AccountRole
 from server.app.models.ladder import LadderRatingFunction
 from server.app.models.match import MatchStatus
 from server.app.models.venue_type import VenueType
+from server.app.models.sport_type import SportType
 from server.app.services.weekly_match_proposal_service import (
     generate_weekly_match_proposals,
     next_week_start,
 )
 from sqlalchemy import text
+
+
+def _init_cache(app: Flask) -> None:
+    redis_url = os.getenv("REDIS_URL", "").strip()
+    if app.testing or not redis_url:
+        app.config["CACHE_TYPE"] = "NullCache"
+    else:
+        app.config["CACHE_TYPE"] = "RedisCache"
+        app.config["CACHE_REDIS_URL"] = redis_url
+        app.config["CACHE_KEY_PREFIX"] = "ppdb:"
+    cache.init_app(app)
+
 
 def create_app():
     app = Flask(__name__)
@@ -45,8 +57,21 @@ def create_app():
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = SECRET_KEY
+    app.config["BABEL_DEFAULT_LOCALE"] = "en"
+    app.config["BABEL_SUPPORTED_LOCALES"] = ["en", "nl"]
+    app.config["BABEL_TRANSLATION_DIRECTORIES"] = "translations"
 
     db.init_app(app)
+
+    def get_locale():
+        from flask import request
+        lang = request.args.get("lang")
+        if lang in app.config["BABEL_SUPPORTED_LOCALES"]:
+            return lang
+        return app.config["BABEL_DEFAULT_LOCALE"]
+
+    babel.init_app(app, locale_selector=get_locale)
+    _init_cache(app)
 
     should_reset_db = os.getenv("RESET_DB_ON_STARTUP", "").lower() in {"1", "true", "yes"}
     if should_reset_db:
@@ -58,14 +83,26 @@ def create_app():
             db.session.commit()
             print("Database schema reset complete.")
 
+    @app.errorhandler(Exception)
+    def handle_http_exception(e):
+        from werkzeug.exceptions import HTTPException
+        if isinstance(e, HTTPException):
+            return jsonify({"description": e.description}), e.code
+        raise e
+
     _register_blueprints(app)
     _register_cli_commands(app)
     init_db(app)
 
     should_seed = os.getenv("SEED_ON_STARTUP", "").lower() in {"1", "true", "yes"}
-    if should_seed:
+    # Flask's debug reloader imports the app twice. The child process is the
+    # one that actually serves requests, so only seed there to avoid doing the
+    # heavy demo build in the parent watchdog process as well.
+    if should_seed and os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         seed_verbose = os.getenv("SEED_VERBOSE", "1").lower() not in {"0", "false", "no"}
         seed_db(app, verbose=seed_verbose)
+    elif should_seed:
+        print("[seed_db] Skipping startup seed in Flask reloader parent process.")
 
     @app.get("/")
     def root():
@@ -83,8 +120,8 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(ladder_bp)
     app.register_blueprint(matches_bp)
     app.register_blueprint(clubs_bp)
+    app.register_blueprint(city_bp)
     app.register_blueprint(dashboard_bp)
-    app.register_blueprint(texts)
     app.register_blueprint(team_bp)
     app.register_blueprint(sport_type_bp)
     app.register_blueprint(match_rule_bp)
@@ -176,11 +213,12 @@ def init_db(app: Flask):
             "server/sql/club_and_team.sql",
             "server/sql/match_rules.sql",
             "server/sql/schema.sql",
+            "server/sql/match.sql",
             "server/sql/triggers.sql"
         ])
         db.create_all()
 
-        _seed_page_texts()
+
         _seed_reference_tables()
 
         print("[init_db] Database initialisation complete.")
@@ -192,36 +230,13 @@ def seed_db(app: Flask, verbose: bool = True):
     Runs only when explicitly requested (SEED_ON_STARTUP=1 or called directly).
     Safe to run repeatedly — all helpers use get-or-create logic.
     """
-    from server.seeds.seed_teams_and_users import seed_teams_and_users
+    from server.seeds.seed_teams_and_users__match_edition import seed_teams_and_users
     with app.app_context():
         print("[seed_db] Running seed_teams_and_users...")
         seed_teams_and_users(verbose=verbose)
         print("[seed_db] Seed complete.")
 
 
-def _seed_page_texts():
-    page_text_files = [
-        "server/seeds/page_text_base.json",
-        "server/seeds/page_text_home.json",
-        "server/seeds/page_text_authorization.json",
-        "server/seeds/page_text_ladder.json",
-        "server/seeds/page_text_score.json",
-        "server/seeds/page_text_dashboard.json",
-        "server/seeds/page_text_landing.json",
-        "server/seeds/page_text_club_home.json",
-        "server/seeds/page_text_clubs.json",
-        "server/seeds/page_text_teams.json",
-        "server/seeds/page_text_team_detail.json",
-        "server/seeds/page_text_team_settings.json",
-        "server/seeds/page_text_club_settings.json",
-        "server/seeds/page_text_matches.json",
-    ]
-    for path in page_text_files:
-        seed_table(
-            model=PageText,
-            seeds_file=path,
-            unique_fields=["page", "key", "language"],
-        )
 
 def _seed_reference_tables():
     seed_table(
@@ -247,5 +262,10 @@ def _seed_reference_tables():
     seed_table(
         model=VenueType,
         seeds_file="server/seeds/venue_type.json",
+        unique_fields=["name"],
+    )
+    seed_table(
+        model=SportType,
+        seeds_file="server/seeds/sport_type.json",
         unique_fields=["name"],
     )

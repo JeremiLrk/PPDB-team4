@@ -9,7 +9,7 @@ from server.app.models.match import MatchProposal, MatchPlayed, MatchStatus
 from server.app.models.player import Player
 from server.app.models.club_player import ClubPlayer
 from server.extensions import db
-from server.app.models.account import Account
+from server.app.models.account import Account, Administrator
 from server.config import SECRET_KEY
 from server.app.services.club_notifications import send_join_request_confirmation_to_player
 from server.app.services.club_notifications import send_join_request_notification_to_owner
@@ -64,7 +64,6 @@ def _serialize_upcoming_matches(account):
             {
                 "id": match.id,
                 "status": match.status.to_dict() if match.status else None,
-                "location": match.location,
                 "team1Id": match.team1_id,
                 "team1Name": match.team1.name if match.team1 else None,
                 "team1ClubName": match.team1.club.name if match.team1 and match.team1.club else None,
@@ -80,6 +79,10 @@ def _serialize_upcoming_matches(account):
     return upcoming_matches
 
 
+def _is_admin(account_id: int) -> bool:
+    return Administrator.query.filter_by(id=account_id).first() is not None
+
+
 @dashboard_bp.get("/me/dashboard")
 def get_my_dashboard():
     user_id = _get_current_user_id_from_cookie()
@@ -92,36 +95,44 @@ def get_my_dashboard():
 
     clubs_map = {}
 
-    club_owner = ClubOwner.query.filter_by(id=user_id).first()
+    if _is_admin(user_id):
+        admin_clubs = Club.query.order_by(Club.name.asc()).all()
+        for club in admin_clubs:
+            clubs_map[club.id] = {
+                **club.serialize(),
+                "membership_status": "owner",
+            }
+    else:
+        club_owner = ClubOwner.query.filter_by(id=user_id).first()
 
-    if club_owner:
-        owned_links = ClubOwnerClub.query.filter_by(
-            club_owner_id=club_owner.id
-        ).all()
+        if club_owner:
+            owned_links = ClubOwnerClub.query.filter_by(
+                club_owner_id=club_owner.id
+            ).all()
 
-        owned_ids = [link.club_id for link in owned_links]
+            owned_ids = [link.club_id for link in owned_links]
 
-        if owned_ids:
-            owned_clubs = Club.query.filter(Club.id.in_(owned_ids)).all()
+            if owned_ids:
+                owned_clubs = Club.query.filter(Club.id.in_(owned_ids)).all()
 
-            for club in owned_clubs:
-                clubs_map[club.id] = {
-                    **club.serialize(),
-                    "membership_status": "owner"
-                }
+                for club in owned_clubs:
+                    clubs_map[club.id] = {
+                        **club.serialize(),
+                        "membership_status": "owner"
+                    }
 
-    member_links = ClubPlayer.query.filter_by(player_id=user_id).all()
-    member_ids = [link.club_id for link in member_links]
+        member_links = ClubPlayer.query.filter_by(player_id=user_id).all()
+        member_ids = [link.club_id for link in member_links]
 
-    if member_ids:
-        member_clubs = Club.query.filter(Club.id.in_(member_ids)).all()
+        if member_ids:
+            member_clubs = Club.query.filter(Club.id.in_(member_ids)).all()
 
-        for club in member_clubs:
-            if club.id not in clubs_map:
-                clubs_map[club.id] = {
-                    **club.serialize(),
-                    "membership_status": "member"
-                }
+            for club in member_clubs:
+                if club.id not in clubs_map:
+                    clubs_map[club.id] = {
+                        **club.serialize(),
+                        "membership_status": "member"
+                    }
 
     join_requests = ClubJoinRequest.query.filter_by(user_id=user_id).all()
 
@@ -142,22 +153,29 @@ def get_join_requests_for_owner():
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
 
-    club_owner = ClubOwner.query.filter_by(id=user_id).first()
-    if not club_owner:
-        return jsonify({"message": "Not a club owner"}), 403
+    if _is_admin(user_id):
+        results = (
+            db.session.query(ClubJoinRequest, Account.first_name)
+            .join(Account, ClubJoinRequest.user_id == Account.id)
+            .all()
+        )
+    else:
+        club_owner = ClubOwner.query.filter_by(id=user_id).first()
+        if not club_owner:
+            return jsonify({"message": "Not a club owner"}), 403
 
-    owner_links = ClubOwnerClub.query.filter_by(club_owner_id=club_owner.id).all()
-    club_ids = [link.club_id for link in owner_links]
+        owner_links = ClubOwnerClub.query.filter_by(club_owner_id=club_owner.id).all()
+        club_ids = [link.club_id for link in owner_links]
 
-    if not club_ids:
-        return jsonify({"requests": []}), 200
+        if not club_ids:
+            return jsonify({"requests": []}), 200
 
-    results = (
-        db.session.query(ClubJoinRequest, Account.first_name)
-        .join(Account, ClubJoinRequest.user_id == Account.id)
-        .filter(ClubJoinRequest.club_id.in_(club_ids))
-        .all()
-    )
+        results = (
+            db.session.query(ClubJoinRequest, Account.first_name)
+            .join(Account, ClubJoinRequest.user_id == Account.id)
+            .filter(ClubJoinRequest.club_id.in_(club_ids))
+            .all()
+        )
 
     data = []
     for request_obj, first_name in results:
@@ -254,11 +272,10 @@ def decide_request():
 
     # Security
     is_owner = ClubOwnerClub.query.filter_by(
-        club_owner_id=owner_id, 
+        club_owner_id=owner_id,
         club_id=club_id
     ).first()
-    
-    if not is_owner:
+    if not is_owner and not _is_admin(owner_id):
         return jsonify({"message": "You do not have permission to manage this club"}), 403
 
     if decision == "approved":
@@ -370,11 +387,10 @@ def delete_club():
         return jsonify({"message": "Club not found"}), 404
     
     is_owner = ClubOwnerClub.query.filter_by(
-        club_owner_id=owner_id, 
+        club_owner_id=owner_id,
         club_id=club_id
     ).first()
-    
-    if not is_owner:
+    if not is_owner and not _is_admin(owner_id):
         return jsonify({"message": "You do not have permission to manage this club"}), 403
     
     try:

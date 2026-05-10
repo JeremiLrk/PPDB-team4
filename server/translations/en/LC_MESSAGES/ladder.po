@@ -1,0 +1,45 @@
+# en — ladder
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "ladder.join_ladder"
+msgstr "Join the Ladder"
+
+msgid "ladder.ladder"
+msgstr "Ladder"
+
+msgid "ladder.back_to_club"
+msgstr "Back to club"
+
+msgid "ladder.ladder_rankings"
+msgstr "Ladder Rankings"
+
+msgid "ladder.loading_rankings"
+msgstr "Loading rankings..."
+
+msgid "ladder.loading_ladders"
+msgstr "Loading ladders..."
+
+msgid "ladder.no_ladders"
+msgstr "No ladders available for this club."
+
+msgid "ladder.no_players"
+msgstr "No players in this ladder yet."
+
+msgid "ladder.rank"
+msgstr "Rank"
+
+msgid "ladder.player"
+msgstr "Player"
+
+msgid "ladder.rating"
+msgstr "Rating"
+
+msgid "ladder.ruleset_label"
+msgstr "Ruleset"
+
+msgid "ladder.system_label"
+msgstr "System"
+

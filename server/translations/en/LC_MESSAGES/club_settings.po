@@ -1,0 +1,334 @@
+# en — club_settings
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "club_settings.loading"
+msgstr "Loading club settings..."
+
+msgid "club_settings.sidebar_title"
+msgstr "Settings"
+
+msgid "club_settings.tab_general"
+msgstr "General info"
+
+msgid "club_settings.tab_ladders"
+msgstr "Ladders"
+
+msgid "club_settings.tab_members"
+msgstr "Members"
+
+msgid "club_settings.tab_rules"
+msgstr "Match rules"
+
+msgid "club_settings.tab_owners"
+msgstr "Owners"
+
+msgid "club_settings.tab_home"
+msgstr "Go to club home"
+
+msgid "club_settings.overview_title"
+msgstr "Club information"
+
+msgid "club_settings.overview_name_label"
+msgstr "Name"
+
+msgid "club_settings.overview_city_label"
+msgstr "City"
+
+msgid "club_settings.overview_sport_label"
+msgstr "Sport"
+
+msgid "club_settings.overview_description_title"
+msgstr "Description"
+
+msgid "club_settings.overview_no_description"
+msgstr "No description provided."
+
+msgid "club_settings.general_title"
+msgstr "General settings"
+
+msgid "club_settings.club_name"
+msgstr "Club name"
+
+msgid "club_settings.city"
+msgstr "City"
+
+msgid "club_settings.sport"
+msgstr "Sport"
+
+msgid "club_settings.choose_sport"
+msgstr "Choose a sport"
+
+msgid "club_settings.description"
+msgstr "Description"
+
+msgid "club_settings.save_changes"
+msgstr "Save changes"
+
+msgid "club_settings.saving"
+msgstr "Saving..."
+
+msgid "club_settings.saved_successfully"
+msgstr "Saved successfully"
+
+msgid "club_settings.could_not_save_club"
+msgstr "Could not save club."
+
+msgid "club_settings.ladder_create_title"
+msgstr "Create ladder"
+
+msgid "club_settings.ladder_name_placeholder"
+msgstr "Ladder name"
+
+msgid "club_settings.choose_sport_type"
+msgstr "Choose a sport type"
+
+msgid "club_settings.choose_rule_set"
+msgstr "Choose a ruleset"
+
+msgid "club_settings.choose_rating_function"
+msgstr "Choose a rating system"
+
+msgid "club_settings.ladder_description_placeholder"
+msgstr "Description"
+
+msgid "club_settings.create_ladder"
+msgstr "Create ladder"
+
+msgid "club_settings.creating_ladder"
+msgstr "Creating..."
+
+msgid "club_settings.ladders_title"
+msgstr "Ladders"
+
+msgid "club_settings.no_ladders"
+msgstr "No ladders yet."
+
+msgid "club_settings.no_ladder_description"
+msgstr "No description"
+
+msgid "club_settings.members_title"
+msgstr "Members"
+
+msgid "club_settings.no_members"
+msgstr "No members yet."
+
+msgid "club_settings.remove"
+msgstr "Remove"
+
+msgid "club_settings.owners_add_title"
+msgstr "Add new owner"
+
+msgid "club_settings.owners_search_placeholder"
+msgstr "Search by name or email..."
+
+msgid "club_settings.owners_no_users"
+msgstr "No users found."
+
+msgid "club_settings.owners_title"
+msgstr "Current owners"
+
+msgid "club_settings.owners_no_owners"
+msgstr "No owners yet."
+
+msgid "club_settings.owner_label"
+msgstr "Owner"
+
+msgid "club_settings.add"
+msgstr "Add"
+
+msgid "club_settings.rules_loading_title"
+msgstr "Match rules"
+
+msgid "club_settings.rules_loading_text"
+msgstr "Loading rules..."
+
+msgid "club_settings.rules_library_title"
+msgstr "Rule library"
+
+msgid "club_settings.rule_name_placeholder"
+msgstr "Rule name"
+
+msgid "club_settings.rule_description_placeholder"
+msgstr "Description"
+
+msgid "club_settings.use_by_others"
+msgstr "Usable by others"
+
+msgid "club_settings.add_rule"
+msgstr "Add rule"
+
+msgid "club_settings.adding_rule"
+msgstr "Adding..."
+
+msgid "club_settings.available_rules"
+msgstr "Available rules"
+
+msgid "club_settings.no_rules"
+msgstr "No rules yet."
+
+msgid "club_settings.build_rule_set_title"
+msgstr "Build a ruleset"
+
+msgid "club_settings.rule_set_name_placeholder"
+msgstr "Ruleset name"
+
+msgid "club_settings.select_rules"
+msgstr "Select rules to include"
+
+msgid "club_settings.save_rule_set"
+msgstr "Save ruleset"
+
+msgid "club_settings.saving_rule_set"
+msgstr "Saving..."
+
+msgid "club_settings.existing_rule_sets"
+msgstr "Existing rulesets"
+
+msgid "club_settings.contains_rules"
+msgstr "Contains"
+
+msgid "club_settings.rules_count_suffix"
+msgstr "rules"
+
+msgid "club_settings.no_rule_sets"
+msgstr "No rulesets yet."
+
+msgid "club_settings.could_not_load_rules"
+msgstr "Could not load rules."
+
+msgid "club_settings.could_not_create_rule"
+msgstr "Could not create rule."
+
+msgid "club_settings.could_not_create_rule_set"
+msgstr "Could not create ruleset."
+
+msgid "club_settings.could_not_attach_rule"
+msgstr "Could not attach rule to ruleset."
+
+# --- Disputed matches page ---
+
+msgid "club_settings.tab_disputed"
+msgstr "Disputed matches"
+
+msgid "club_settings.disputed_title"
+msgstr "Disputed matches"
+
+msgid "club_settings.disputed_description"
+msgstr "Matches where both teams submitted conflicting scores. Select a match to review the difference and submit the decisive score."
+
+msgid "club_settings.disputed_forbidden"
+msgstr "You do not have permission to view or adjudicate disputed matches. Only club owners and administrators can access this section."
+
+msgid "club_settings.disputed_queue_title"
+msgstr "Dispute queue"
+
+msgid "club_settings.no_disputed"
+msgstr "No disputed matches at this time."
+
+msgid "club_settings.select_match_prompt"
+msgstr "Select a disputed match from the list to review and adjudicate it."
+
+msgid "club_settings.submitted_scores"
+msgstr "Submitted scores"
+
+msgid "club_settings.no_submissions"
+msgstr "No submissions found."
+
+msgid "club_settings.ladder_label"
+msgstr "Ladder"
+
+msgid "club_settings.no_ladder"
+msgstr "No ladder"
+
+msgid "club_settings.ruleset_label"
+msgstr "Rule set"
+
+msgid "club_settings.no_ruleset"
+msgstr "None"
+
+msgid "club_settings.ladder_admin_label"
+msgstr "Ladder admin"
+
+msgid "club_settings.team1"
+msgstr "Team 1"
+
+msgid "club_settings.team2"
+msgstr "Team 2"
+
+msgid "club_settings.rules_snapshot_title"
+msgstr "Rules in effect at match time"
+
+msgid "club_settings.no_rules_snapshot"
+msgstr "No rules recorded for this match."
+
+msgid "club_settings.match_id_label"
+msgstr "Match"
+
+msgid "club_settings.adjudicate_title"
+msgstr "Submit decisive score"
+
+msgid "club_settings.submit_decisive_score"
+msgstr "Submit decisive score"
+
+msgid "club_settings.submitting"
+msgstr "Submitting..."
+
+msgid "club_settings.view_details"
+msgstr "Details"
+
+msgid "club_settings.collapse"
+msgstr "Collapse"
+
+msgid "club_settings.refresh"
+msgstr "Refresh"
+
+msgid "club_settings.retry"
+msgstr "Retry"
+
+msgid "club_settings.back"
+msgstr "Back to settings"
+
+msgid "club_settings.add_team_title"
+msgstr "Team to ladder"
+
+msgid "club_settings.add_team_subtitle"
+msgstr "Select a ladder and a team to link them."
+
+msgid "club_settings.select_ladder"
+msgstr "Select a ladder"
+
+msgid "club_settings.select_team"
+msgstr "Select a team"
+
+msgid "club_settings.add_team"
+msgstr "Add team"
+
+msgid "club_settings.adding_team"
+msgstr "Adding..."
+
+msgid "club_settings.team_added_to_ladder"
+msgstr "Team added to ladder."
+
+msgid "club_settings.could_not_add_team_to_ladder"
+msgstr "Could not add team to ladder."
+
+msgid "club_settings.delete_club"
+msgstr "Delete club"
+
+msgid "club_settings.delete_modal_title"
+msgstr "Are you absolutely sure?"
+
+msgid "club_settings.delete_modal_warning"
+msgstr "This action cannot be undone. This will permanently delete {name}."
+
+msgid "club_settings.type_to_confirm"
+msgstr "Type {name} to confirm:"
+
+msgid "club_settings.understand_delete"
+msgstr "I understand the consequences, delete club"
+
+msgid "club_settings.cancel"
+msgstr "Cancel"

@@ -19,11 +19,13 @@ def roundHalfAwayFromZero(value: float) -> int:
 
 
 def expectedScore(player_rating: int, opponent_rating: int) -> float:
+    # Cap the rating gap so extreme mismatches do not produce huge swings.
     diff = max(-ELO_DIFFERENCE_CAP, min(ELO_DIFFERENCE_CAP, opponent_rating - player_rating))
     return 1 / (1 + (ELO_BASE ** (diff / ELO_SCALE)))
 
 
 def kFactor(rating: int, matches_played: int) -> int:
+    # Newer teams move faster; very strong established teams move slower.
     if matches_played < 30:
         return 40
     if rating >= 2400:
@@ -32,6 +34,7 @@ def kFactor(rating: int, matches_played: int) -> int:
 
 
 def actualScore(score_for: int, score_against: int) -> float:
+    # Convert the final result into the Elo win/loss/draw scale.
     if score_for > score_against:
         return 1.0
     if score_for < score_against:
@@ -40,6 +43,7 @@ def actualScore(score_for: int, score_against: int) -> float:
 
 
 def recomputeLadderRanks(ladder_id: int) -> None:
+    # Rank is derived from rating, so any rating change requires a resort.
     rows = (
         LadderTeam.query
         .filter_by(ladder_id=ladder_id)
@@ -59,6 +63,8 @@ def apply_elo_for_match_result(team1_id: int, team2_id: int, score_team1: int, s
     lt1 = aliased(LadderTeam)
     lt2 = aliased(LadderTeam)
 
+    # A match may exist in multiple ladders; update every ladder where both
+    # teams are present.
     ladder_pairs = (
         db.session.query(lt1, lt2)
         .join(
@@ -88,6 +94,7 @@ def apply_elo_for_match_result(team1_id: int, team2_id: int, score_team1: int, s
         expected1 = expectedScore(rating1, rating2)
         expected2 = expectedScore(rating2, rating1)
 
+        # Apply the rounded rating delta to each side independently.
         delta1 = roundHalfAwayFromZero(k1 * (score1 - expected1))
         delta2 = roundHalfAwayFromZero(k2 * (score2 - expected2))
 

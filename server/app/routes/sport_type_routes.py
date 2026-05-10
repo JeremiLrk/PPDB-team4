@@ -1,9 +1,11 @@
 from flask import Blueprint, jsonify
 from server.app.models.sport_type import SportType
+from server.extensions import cache
 
 sport_type_bp = Blueprint("sport_type", __name__, url_prefix="/api/sport-types")
 
 @sport_type_bp.route("", methods=["GET"])
+@cache.cached(timeout=600, key_prefix="sport_types")
 def get_sport_types():
   sport_types = SportType.query.order_by(SportType.name).all()
   return jsonify({

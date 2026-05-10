@@ -1,0 +1,62 @@
+# nl — matches
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "matches.title"
+msgstr "Wekelijkse wedstrijdvoorstellen"
+
+msgid "matches.refresh"
+msgstr "Vernieuwen"
+
+msgid "matches.loading"
+msgstr "Wedstrijdvoorstellen laden..."
+
+msgid "matches.empty"
+msgstr "Nog geen wedstrijdvoorstellen."
+
+msgid "matches.retry"
+msgstr "Opnieuw proberen"
+
+msgid "matches.accept"
+msgstr "Accepteren"
+
+msgid "matches.reject"
+msgstr "Weigeren"
+
+msgid "matches.cancel"
+msgstr "Annuleren"
+
+msgid "matches.reset_pending"
+msgstr "Opnieuw in afwachting zetten"
+
+msgid "matches.managed_matches"
+msgstr "Beheerde wedstrijden"
+
+msgid "matches.managed_matches_subtitle"
+msgstr "Wedstrijden voor teams en clubs die je beheert."
+
+msgid "matches.player_matches"
+msgstr "Spelerwedstrijden"
+
+msgid "matches.player_matches_subtitle"
+msgstr "Wedstrijden met teams waarop je speelt."
+
+msgid "matches.no_managed_matches"
+msgstr "Nog geen beheerde wedstrijdvoorstellen."
+
+msgid "matches.no_player_matches"
+msgstr "Nog geen spelerwedstrijdvoorstellen."
+
+msgid "matches.report_score"
+msgstr "Score toevoegen"
+
+msgid "matches.adjudicate_title"
+msgstr "Beslissende score indienen"
+
+msgid "matches.score_waiting"
+msgstr "Score ingediend. Wachten op het andere team."
+
+msgid "matches.score_finalized"
+msgstr "Score vastgelegd."

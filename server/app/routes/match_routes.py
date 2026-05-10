@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func, or_
@@ -14,20 +14,26 @@ from server.app.models.match import (
     MatchProposal,
     MatchRejected,
     MatchStatus,
+    _serialize_team_contacts,
+    teams_share_players,
 )
 from server.app.models.team import Team, TeamManager
 from server.app.models.venue_type import VenueType
 from server.app.services.weekly_match_proposal_service import (
     generate_weekly_match_proposals,
+    latest_allowed_proposal_week_start,
     next_week_start,
 )
 from server.app.services.elo_service import apply_elo_for_match_result
 from server.extensions import db
 
 match_proposals_bp = Blueprint("match_proposals", __name__, url_prefix="/api/matches")
+ARCHIVE_AFTER_DAYS = 30
 
 
 def proposal_payload(proposal: MatchProposal):
+    # This serializer is shared by the list, create, and status endpoints so
+    # the frontend sees one stable proposal shape regardless of where it came from.
     return {
         "id": proposal.id,
         "proposed_by_user_id": proposal.proposed_by_user_id,
@@ -42,11 +48,28 @@ def proposal_payload(proposal: MatchProposal):
         "proposed_end_at": proposal.proposed_end_at.isoformat() + "Z" if proposal.proposed_end_at else None,
         "created_at": proposal.created_at.isoformat() + "Z" if proposal.created_at else None,
         "updated_at": proposal.updated_at.isoformat() + "Z" if proposal.updated_at else None,
-        "location": proposal.location,
         "venue_type_id": proposal.venue_type_id,
         "team1_name": proposal.team1.name if proposal.team1 else None,
         "team2_name": proposal.team2.name if proposal.team2 else None,
+        "team1_club_id": proposal.team1.club_id if proposal.team1 else None,
+        "team2_club_id": proposal.team2.club_id if proposal.team2 else None,
+        "team1_club_city": proposal.team1.club.city if proposal.team1 and proposal.team1.club else None,
+        "team2_club_city": proposal.team2.club.city if proposal.team2 and proposal.team2.club else None,
+        "team1_contacts": _serialize_team_contacts(proposal.team1),
+        "team2_contacts": _serialize_team_contacts(proposal.team2),
+        "score_status": proposal.score_status,
+        "score_submissions": [submission.to_dict() for submission in proposal.score_submissions],
     }
+
+
+def is_archived_proposal(proposal: MatchProposal, *, reference_date: date | None = None) -> bool:
+    # Archiving is week-based, not status-based: older proposals move out of the
+    # default list even if they were never explicitly accepted or rejected.
+    if proposal.week_start_date is None:
+        return False
+    today = reference_date or datetime.utcnow().date()
+    cutoff = today - timedelta(days=ARCHIVE_AFTER_DAYS)
+    return proposal.week_start_date < cutoff
 
 
 def parse_timestamp(value):
@@ -151,6 +174,8 @@ def can_respond_to_proposal(account, team1, team2):
 def create_match_proposal(account):
     data = request.get_json() or {}
 
+    # The create flow validates identity, permissions, scheduling, and sport
+    # compatibility before the proposal row is inserted.
     team1_id = data.get("team1_id")
     team2_id = data.get("team2_id")
     if not team1_id or not team2_id:
@@ -173,6 +198,8 @@ def create_match_proposal(account):
     can_manage_either_team = can_manage_team(account, team1) or can_manage_team(account, team2)
     if not can_manage_either_team:
         return jsonify({"message": "Forbidden: you must manage at least one of the teams."}), 403
+    if teams_share_players(team1, team2):
+        return jsonify({"message": "team1_id and team2_id cannot share players."}), 422
 
     proposed_start_at = parse_timestamp(data.get("proposed_start_at"))
     proposed_end_at = parse_timestamp(data.get("proposed_end_at"))
@@ -184,6 +211,10 @@ def create_match_proposal(account):
     week_start_date = parse_date(data.get("week_start_date"))
     if not week_start_date:
         week_start_date = week_start_for(proposed_start_at)
+    if week_start_date > latest_allowed_proposal_week_start():
+        return jsonify(
+            {"message": "week_start_date cannot be more than 2 weeks ahead."}
+        ), 422
 
     week_end_date = week_start_date + timedelta(days=6)
     if not (week_start_date <= proposed_start_at.date() <= week_end_date):
@@ -210,7 +241,8 @@ def create_match_proposal(account):
         if not venue_exists:
             return jsonify({"message": "venue_type_id not found."}), 404
 
-    # Canonical pair ordering for DB constraint: team1_id < team2_id.
+    # Canonical pair ordering keeps the uniqueness constraint stable no matter
+    # which side the caller picked first in the UI.
     ordered_team1_id, ordered_team2_id = sorted((team1_id, team2_id))
 
     proposal = MatchProposal(
@@ -240,6 +272,8 @@ def create_match_proposal(account):
 @match_proposals_bp.get("/proposals")
 @login_required
 def list_match_proposals(account):
+    # The list endpoint applies role-based visibility first, then archive and
+    # team/week filters so the frontend can drive all views with one hook.
     query = MatchProposal.query
     visible_team_ids = resolve_visible_team_ids(account)
 
@@ -252,6 +286,15 @@ def list_match_proposals(account):
                 MatchProposal.team2_id.in_(visible_team_ids),
             )
         )
+
+    archived_requested = request.args.get("archived", "").strip().lower() in {"1", "true", "yes", "on"}
+    today = datetime.utcnow().date()
+    cutoff = today - timedelta(days=ARCHIVE_AFTER_DAYS)
+    archival_filter = MatchProposal.week_start_date.isnot(None)
+    if archived_requested:
+        query = query.filter(archival_filter, MatchProposal.week_start_date < cutoff)
+    else:
+        query = query.filter(or_(MatchProposal.week_start_date.is_(None), MatchProposal.week_start_date >= cutoff))
 
     team_id = request.args.get("team_id")
     if team_id is not None:
@@ -283,6 +326,8 @@ def list_match_proposals(account):
 def generate_weekly_proposals(account):
     data = request.get_json() or {}
 
+    # This endpoint is the manual entry point for the weekly generator used by
+    # the scheduler and by admins who want to backfill proposals.
     week_start_date = parse_date(data.get("week_start_date")) if data.get("week_start_date") else next_week_start()
     if not week_start_date:
         return jsonify({"message": "week_start_date must be YYYY-MM-DD."}), 422
@@ -302,21 +347,29 @@ def generate_weekly_proposals(account):
     if duration_minutes <= 0:
         return jsonify({"message": "duration_minutes must be greater than zero."}), 422
 
+    if week_start_date > latest_allowed_proposal_week_start():
+        return jsonify({"message": "week_start_date cannot be more than 2 weeks ahead."}), 422
+
     managed_team_ids = resolve_managed_team_ids(account)
-    result = generate_weekly_match_proposals(
-        proposed_by_user_id=account.id,
-        week_start_date=week_start_date,
-        ladder_id=ladder_id,
-        managed_team_ids=managed_team_ids,
-        duration_minutes=duration_minutes,
-        location=data.get("location"),
-    )
+    try:
+        result = generate_weekly_match_proposals(
+            proposed_by_user_id=account.id,
+            week_start_date=week_start_date,
+            ladder_id=ladder_id,
+            managed_team_ids=managed_team_ids,
+            duration_minutes=duration_minutes,
+            location=data.get("location"),
+        )
+    except ValueError as exc:
+        return jsonify({"message": str(exc)}), 422
     return jsonify(result), 201
 
 
 @match_proposals_bp.patch("/proposals/<int:proposal_id>/status")
 @login_required
 def update_match_proposal_status(account, proposal_id):
+    # Status updates are locked to the participants, the proposer, or admins.
+    # The same endpoint also records side data like accepted/rejected reasons.
     proposal = MatchProposal.query.filter_by(id=proposal_id).with_for_update().first()
     if not proposal:
         return jsonify({"message": "Match proposal not found."}), 404
@@ -340,12 +393,31 @@ def update_match_proposal_status(account, proposal_id):
         return jsonify({"message": f"Unknown status '{status_name}'."}), 422
 
     current_status_name = proposal.status.name.lower() if proposal.status else None
-
     normalized_status = next_status.name.lower()
+
     if current_status_name == "played" and normalized_status != "played":
         return jsonify({"message": "Played matches are immutable and cannot change status."}), 409
 
+    def clear_mutually_exclusive_rows(*, keep_played: bool = False):
+        proposal.accepted = None
+        proposal.rejected = None
+        proposal.cancelled = None
+        if not keep_played:
+            proposal.played = None
+
+    if normalized_status == "pending":
+        if current_status_name == "pending":
+            return jsonify({"proposal": proposal_payload(proposal)}), 200
+
+        clear_mutually_exclusive_rows(keep_played=True)
+        proposal.status_id = next_status.id
+        proposal.updated_at = datetime.utcnow()
+        db.session.commit()
+        return jsonify({"proposal": proposal_payload(proposal)}), 200
+
     if normalized_status == "accepted":
+        proposal.rejected = None
+        proposal.cancelled = None
         accepted = db.session.get(MatchAccepted, proposal.id)
         if not accepted:
             accepted = MatchAccepted(id=proposal.id)
@@ -353,6 +425,8 @@ def update_match_proposal_status(account, proposal_id):
         accepted.response_by_user_id = account.id
         accepted.response_text = data.get("response_text")
     elif normalized_status == "rejected":
+        proposal.accepted = None
+        proposal.cancelled = None
         rejected = db.session.get(MatchRejected, proposal.id)
         if not rejected:
             rejected = MatchRejected(id=proposal.id)
@@ -360,12 +434,16 @@ def update_match_proposal_status(account, proposal_id):
         rejected.response_by_user_id = account.id
         rejected.response_text = data.get("response_text")
     elif normalized_status == "cancelled":
+        proposal.accepted = None
+        proposal.rejected = None
         cancelled = db.session.get(MatchCancelled, proposal.id)
         if not cancelled:
             cancelled = MatchCancelled(id=proposal.id)
             db.session.add(cancelled)
         cancelled.reason = data.get("reason")
     elif normalized_status == "played":
+        # "Played" is the only status that also writes a score row and may
+        # trigger Elo updates.
         if current_status_name == "played":
             existing_played = db.session.get(MatchPlayed, proposal.id)
             if not existing_played:

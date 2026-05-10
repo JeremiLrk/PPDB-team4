@@ -1,0 +1,33 @@
+# nl — base
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "base.hero_title"
+msgstr "Van harte welkom"
+
+msgid "base.clubs"
+msgstr "Clubs"
+
+msgid "base.teams"
+msgstr "Teams"
+
+msgid "base.dashboard"
+msgstr "Dashboard"
+
+msgid "base.pending"
+msgstr "In behandeling"
+
+msgid "base.checking"
+msgstr "Controleren…"
+
+msgid "base.online"
+msgstr "Online"
+
+msgid "base.offline"
+msgstr "Offline"
+
+msgid "base.e404"
+msgstr "404 - Pagina niet gevonden"
+

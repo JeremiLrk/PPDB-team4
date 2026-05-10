@@ -1,6 +1,6 @@
 import buttonStyles from "@/style/common/Buttons.module.css";
 import commonStyles from "@/style/common/Common.module.css";
-import panelStyles from "@/style/common/Panel.module.css";
+import styles from "@/style/matches/MatchProposalCard.module.css";
 import MatchProposalCard from "@/components/matches/MatchProposalCard.jsx";
 
 export default function MatchProposalList({
@@ -10,40 +10,57 @@ export default function MatchProposalList({
     submitting,
     onReload,
     onStatusChange,
+    onReportScore,
+    reportingMatchId,
+    scoreValues,
+    onScoreChange,
+    onScoreSubmit,
+    onCancelScore,
+    scoreSubmitting,
+    canUpdateProposal,
     texts = {},
     statusTexts = {},
+    emptyText,
 }) {
+    if (loading) {
+        return <p className={commonStyles.muted}>{texts.loading || "Match proposals loading..."}</p>;
+    }
+
+    if (error) {
+        return (
+            <div style={{ display: "grid", gap: "0.7rem" }}>
+                <p className={commonStyles.muted}>{error}</p>
+                <button className={buttonStyles.primaryButton} type="button" onClick={onReload}>
+                    {texts.retry || "Retry"}
+                </button>
+            </div>
+        );
+    }
+
+    if (proposals.length === 0) {
+        return <p className={commonStyles.muted}>{emptyText || texts.empty || "No match proposals yet."}</p>;
+    }
+
     return (
-        <>
-            {error ? (
-                <div style={{ display: "grid", gap: "0.7rem" }}>
-                    <p className={commonStyles.muted}>{error}</p>
-                    <button className={buttonStyles.primaryButton} type="button" onClick={onReload}>
-                        {texts.retry || "Retry"}
-                    </button>
-                </div>
-            ) : null}
-
-            {loading ? <p className={commonStyles.muted}>{texts.loading || "Match proposals loading..."}</p> : null}
-
-            {!loading && !error && proposals.length === 0 ? (
-                <p className={commonStyles.muted}>{texts.empty || "No match proposals yet."}</p>
-            ) : null}
-
-            {!loading && proposals.length > 0 ? (
-                <ul className={panelStyles.list}>
-                    {proposals.map((proposal) => (
-                        <MatchProposalCard
-                            key={proposal.id}
-                            proposal={proposal}
-                            disabled={submitting}
-                            onStatusChange={onStatusChange}
-                            texts={texts}
-                            statusTexts={statusTexts}
-                        />
-                    ))}
-                </ul>
-            ) : null}
-        </>
+        <ul className={styles.list}>
+            {proposals.map((proposal) => (
+                <MatchProposalCard
+                    key={proposal.id}
+                    proposal={proposal}
+                    disabled={submitting}
+                    onStatusChange={onStatusChange}
+                    onReportScore={onReportScore}
+                    reportingMatchId={reportingMatchId}
+                    scoreValues={scoreValues}
+                    onScoreChange={onScoreChange}
+                    onScoreSubmit={onScoreSubmit}
+                    onCancelScore={onCancelScore}
+                    scoreSubmitting={scoreSubmitting}
+                    canUpdate={canUpdateProposal ? canUpdateProposal(proposal) : true}
+                    texts={texts}
+                    statusTexts={statusTexts}
+                />
+            ))}
+        </ul>
     );
 }

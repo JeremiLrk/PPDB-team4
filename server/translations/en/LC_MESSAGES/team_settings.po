@@ -1,0 +1,186 @@
+# en — team_settings
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "team_settings.add_manager_title"
+msgstr "Add Manager"
+
+msgid "team_settings.add_manager_btn"
+msgstr "Add Manager"
+
+msgid "team_settings.add_manager_aria"
+msgstr "Add manager to team"
+
+msgid "team_settings.manager_added_success"
+msgstr "Manager added!"
+
+msgid "team_settings.confirm_add_manager"
+msgstr "Add Manager"
+
+msgid "team_settings.permissions_label"
+msgstr "Permissions for this manager:"
+
+msgid "team_settings.perm_can_rename"
+msgstr "Rename team"
+
+msgid "team_settings.perm_can_delete"
+msgstr "Delete team"
+
+msgid "team_settings.perm_can_edit_players"
+msgstr "Edit players"
+
+msgid "team_settings.perm_can_edit_managers"
+msgstr "Edit managers"
+
+msgid "team_settings.select_btn"
+msgstr "Select"
+
+msgid "team_settings.selected_account_label"
+msgstr "Adding as manager:"
+
+msgid "team_settings.search_placeholder"
+msgstr "Name, email, or ID…"
+
+msgid "team_settings.search_hint"
+msgstr "Type to search accounts."
+
+msgid "team_settings.no_results"
+msgstr "No accounts found."
+
+msgid "team_settings.loading_team"
+msgstr "Team loading..."
+
+msgid "team_settings.back_to_teams"
+msgstr "Back to teams"
+
+msgid "team_settings.back_to_team"
+msgstr "Back to team"
+
+msgid "team_settings.login_required"
+msgstr "You must be logged in to open this page."
+
+msgid "team_settings.login_button"
+msgstr "Log in"
+
+msgid "team_settings.access_denied"
+msgstr "Access denied. You do not have permission to manage this team."
+
+msgid "team_settings.breadcrumb_settings"
+msgstr "Settings"
+
+msgid "team_settings.settings_title"
+msgstr "Team settings"
+
+msgid "team_settings.managers_title"
+msgstr "Managers"
+
+msgid "team_settings.players_title"
+msgstr "Players"
+
+msgid "team_settings.loading_managers"
+msgstr "Managers loading..."
+
+msgid "team_settings.loading_players"
+msgstr "Players loading..."
+
+msgid "team_settings.no_managers"
+msgstr "No managers in this team yet."
+
+msgid "team_settings.no_players"
+msgstr "No players in this team yet. Add one above."
+
+msgid "team_settings.retry"
+msgstr "Retry"
+
+msgid "team_settings.club_label"
+msgstr "Club"
+
+msgid "team_settings.independent_team"
+msgstr "Independent"
+
+msgid "team_settings.settings_aria"
+msgstr "Settings for"
+
+msgid "team_settings.rename_team_title"
+msgstr "Rename Team"
+
+msgid "team_settings.rename_team_success"
+msgstr "Team renamed!"
+
+msgid "team_settings.rename_team_submit"
+msgstr "Rename"
+
+msgid "team_settings.rename_team_new_name"
+msgstr "New Name"
+
+msgid "team_settings.add_player_title"
+msgstr "Add Player"
+
+msgid "team_settings.add_player_btn"
+msgstr "Add Player"
+
+msgid "team_settings.add_player_aria"
+msgstr "Add player to team"
+
+msgid "team_settings.add_player_search_placeholder"
+msgstr "Name, email, or ID…"
+
+msgid "team_settings.add_player_search_hint"
+msgstr "Type to search accounts."
+
+msgid "team_settings.add_player_no_results"
+msgstr "No accounts found."
+
+msgid "team_settings.added_label"
+msgstr "Added"
+
+msgid "team_settings.remove_player_title"
+msgstr "Remove Player"
+
+msgid "team_settings.remove_player_submit"
+msgstr "Remove"
+
+msgid "team_settings.removing"
+msgstr "Removing…"
+
+msgid "team_settings.confirm_remove_player"
+msgstr "Confirm player removal"
+
+msgid "team_settings.confirm_remove_player_text"
+msgstr "Are you sure you want to remove this player from the team?"
+
+msgid "team_settings.remove_manager_title"
+msgstr "Remove Manager"
+
+msgid "team_settings.remove_manager_submit"
+msgstr "Remove"
+
+msgid "team_settings.confirm_remove_manager"
+msgstr "Confirm manager removal"
+
+msgid "team_settings.confirm_remove_manager_text"
+msgstr "Are you sure you want to remove this manager from the team?"
+
+msgid "team_settings.add_player_warn_exceed"
+msgstr "Adding this player would exceed team size limits in active ladders."
+
+msgid "team_settings.add_player_warn_ladders"
+msgstr "Affected ladders:"
+
+msgid "team_settings.add_player_confirm_exceed"
+msgstr "Add Anyway"
+
+msgid "team_settings.cancel_btn"
+msgstr "Cancel"
+
+msgid "team_settings.remove_player_warn_violate"
+msgstr "Removing this player would drop below minimum team size in active ladders."
+
+msgid "team_settings.remove_player_warn_ladders"
+msgstr "Affected ladders:"
+
+msgid "team_settings.remove_player_confirm_violate"
+msgstr "Remove Anyway"
+

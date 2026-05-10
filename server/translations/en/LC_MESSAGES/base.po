@@ -1,0 +1,33 @@
+# en — base
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "base.hero_title"
+msgstr "Welcome"
+
+msgid "base.clubs"
+msgstr "Clubs"
+
+msgid "base.teams"
+msgstr "Teams"
+
+msgid "base.dashboard"
+msgstr "Dashboard"
+
+msgid "base.pending"
+msgstr "Pending"
+
+msgid "base.checking"
+msgstr "Checking…"
+
+msgid "base.online"
+msgstr "Online"
+
+msgid "base.offline"
+msgstr "Offline"
+
+msgid "base.e404"
+msgstr "404 - Page Not Found"
+

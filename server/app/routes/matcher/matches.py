@@ -19,7 +19,10 @@ from server.app.models.match import (
     MatchPlayed,
     MatchCancelled,
     MatchStatus,
+    teams_share_players,
 )
+from server.app.models.ladder import Ladder
+from server.app.models.ladder_team import LadderTeam
 from server.app.services.elo_service import apply_elo_for_match_result
 
 
@@ -35,7 +38,7 @@ matches_core_bp = Blueprint("matches_core", __name__)
 def create_match_proposal(account: Account) -> tuple[Response, int]:
     """
     POST /api/matches
-    Body: { team1Id, team2Id, sportTypeId, rulesetId?, location?, venueTypeId? }
+    Body: { team1Id, team2Id, ladderId?, sportTypeId?, rulesetId?, location?, venueTypeId? }
 
     Allowed for: Administrator, ClubOwner (with can_create_match), TeamManager of either team.
     """
@@ -48,21 +51,58 @@ def create_match_proposal(account: Account) -> tuple[Response, int]:
     team1_id = data.get("team1Id")
     team2_id = data.get("team2Id")
     sport_type_id = data.get("sportTypeId")
+    ladder_id = data.get("ladderId")
 
     if not team1_id or not team2_id:
         abort(422, description="Fields 'team1Id' and 'team2Id' are required.")
-    if not sport_type_id:
-        abort(422, description="Field 'sportTypeId' is required.")
     if team1_id == team2_id:
         abort(422, description="A team cannot play against itself.")
 
     team1 = _get_team_or_404(team1_id)
     team2 = _get_team_or_404(team2_id)
 
+    ladder = None
+    if ladder_id is not None:
+        try:
+            ladder_id = int(ladder_id)
+        except (TypeError, ValueError):
+            abort(422, description="Field 'ladderId' must be an integer.")
+
+        ladder = Ladder.query.get(ladder_id)
+        if not ladder:
+            abort(404, description=f"Ladder {ladder_id} not found.")
+
+        ladder_team_ids = {
+            row.team_id
+            for row in LadderTeam.query.filter(LadderTeam.ladder_id == ladder.id).all()
+        }
+        if team1.id not in ladder_team_ids or team2.id not in ladder_team_ids:
+            abort(422, description="Both teams must be registered in the selected ladder.")
+
+        if not sport_type_id:
+            sport_type_id = ladder.sport_type_id
+
+    if not sport_type_id:
+        abort(422, description="Field 'sportTypeId' is required when no ladder sport is available.")
+
+    try:
+        sport_type_id = int(sport_type_id)
+    except (TypeError, ValueError):
+        abort(422, description="Field 'sportTypeId' must be an integer.")
+
+    if ladder and ladder.sport_type_id and sport_type_id != int(ladder.sport_type_id):
+        abort(422, description="Field 'sportTypeId' must match the selected ladder sport.")
+    if team1.sport_type_id and sport_type_id != int(team1.sport_type_id):
+        abort(422, description="Field 'sportTypeId' must match team1 sport type.")
+    if team2.sport_type_id and sport_type_id != int(team2.sport_type_id):
+        abort(422, description="Field 'sportTypeId' must match team2 sport type.")
+
     if not _can_manage_either_team(resolved, team1, team2):
         abort(403, description="Forbidden: you do not have permission to create a match for these teams.")
+    if teams_share_players(team1, team2):
+        abort(422, description="A match proposal cannot include the same player on both teams.")
 
-    ruleset_id    = data.get("rulesetId")
+    ruleset_id    = data.get("rulesetId") or (ladder.ruleset_id if ladder else None)
     rule_snapshot = data.get("ruleSnapshot")  # NEW: optional JSONB snapshot of ruleset at proposal time
     location      = data.get("location", "").strip() or None
     venue_type_id = data.get("venueTypeId")
@@ -71,6 +111,7 @@ def create_match_proposal(account: Account) -> tuple[Response, int]:
         sport_type_id = sport_type_id,
         rule_snapshot = rule_snapshot,
         ruleset_id    = ruleset_id,
+        ladder_id     = ladder_id,
         team1_id      = team1_id,
         team2_id      = team2_id,
         status_id     = MatchStatus.PENDING,
@@ -348,4 +389,3 @@ def cancel_match(account: Account, match_id: int) -> tuple[Response, int]:
         "message": "Match cancelled.",
         "match":   proposal.to_dict_full(),
     }), 200
-

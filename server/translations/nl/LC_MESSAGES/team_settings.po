@@ -1,0 +1,186 @@
+# nl — team_settings
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "team_settings.add_manager_title"
+msgstr "Manager toevoegen"
+
+msgid "team_settings.add_manager_btn"
+msgstr "Manager toevoegen"
+
+msgid "team_settings.add_manager_aria"
+msgstr "Manager aan team toevoegen"
+
+msgid "team_settings.manager_added_success"
+msgstr "Manager toegevoegd!"
+
+msgid "team_settings.confirm_add_manager"
+msgstr "Toevoegen"
+
+msgid "team_settings.permissions_label"
+msgstr "Rechten voor deze manager:"
+
+msgid "team_settings.perm_can_rename"
+msgstr "Team hernoemen"
+
+msgid "team_settings.perm_can_delete"
+msgstr "Team verwijderen"
+
+msgid "team_settings.perm_can_edit_players"
+msgstr "Spelers bewerken"
+
+msgid "team_settings.perm_can_edit_managers"
+msgstr "Managers bewerken"
+
+msgid "team_settings.select_btn"
+msgstr "Selecteren"
+
+msgid "team_settings.selected_account_label"
+msgstr "Wordt toegevoegd als manager:"
+
+msgid "team_settings.search_placeholder"
+msgstr "Naam, e-mail of ID…"
+
+msgid "team_settings.search_hint"
+msgstr "Typ om accounts te zoeken."
+
+msgid "team_settings.no_results"
+msgstr "Geen accounts gevonden."
+
+msgid "team_settings.loading_team"
+msgstr "Team laden..."
+
+msgid "team_settings.back_to_teams"
+msgstr "Terug naar teams"
+
+msgid "team_settings.back_to_team"
+msgstr "Terug naar team"
+
+msgid "team_settings.login_required"
+msgstr "Je moet ingelogd zijn om deze pagina te openen."
+
+msgid "team_settings.login_button"
+msgstr "Inloggen"
+
+msgid "team_settings.access_denied"
+msgstr "Toegang geweigerd. Je hebt geen rechten om dit team te beheren."
+
+msgid "team_settings.breadcrumb_settings"
+msgstr "Instellingen"
+
+msgid "team_settings.settings_title"
+msgstr "Teaminstellingen"
+
+msgid "team_settings.managers_title"
+msgstr "Beheerders"
+
+msgid "team_settings.players_title"
+msgstr "Spelers"
+
+msgid "team_settings.loading_managers"
+msgstr "Beheerders laden..."
+
+msgid "team_settings.loading_players"
+msgstr "Spelers laden..."
+
+msgid "team_settings.no_managers"
+msgstr "Nog geen beheerders in dit team."
+
+msgid "team_settings.no_players"
+msgstr "Nog geen spelers in dit team. Voeg er hierboven toe."
+
+msgid "team_settings.retry"
+msgstr "Opnieuw proberen"
+
+msgid "team_settings.club_label"
+msgstr "Club"
+
+msgid "team_settings.independent_team"
+msgstr "Onafhankelijk"
+
+msgid "team_settings.settings_aria"
+msgstr "Instellingen voor"
+
+msgid "team_settings.rename_team_title"
+msgstr "Team hernoemen"
+
+msgid "team_settings.rename_team_success"
+msgstr "Team hernoemd!"
+
+msgid "team_settings.rename_team_submit"
+msgstr "Hernoemen"
+
+msgid "team_settings.rename_team_new_name"
+msgstr "Nieuwe naam"
+
+msgid "team_settings.add_player_title"
+msgstr "Speler toevoegen"
+
+msgid "team_settings.add_player_btn"
+msgstr "Speler toevoegen"
+
+msgid "team_settings.add_player_aria"
+msgstr "Speler aan team toevoegen"
+
+msgid "team_settings.add_player_search_placeholder"
+msgstr "Naam, e-mail of ID…"
+
+msgid "team_settings.add_player_search_hint"
+msgstr "Typ om accounts te zoeken."
+
+msgid "team_settings.add_player_no_results"
+msgstr "Geen accounts gevonden."
+
+msgid "team_settings.added_label"
+msgstr "Toegevoegd"
+
+msgid "team_settings.remove_player_title"
+msgstr "Speler verwijderen"
+
+msgid "team_settings.remove_player_submit"
+msgstr "Verwijderen"
+
+msgid "team_settings.removing"
+msgstr "Bezig met verwijderen…"
+
+msgid "team_settings.confirm_remove_player"
+msgstr "Bevestig het verwijderen van de speler"
+
+msgid "team_settings.confirm_remove_player_text"
+msgstr "Weet je zeker dat je deze speler uit het team wilt verwijderen?"
+
+msgid "team_settings.remove_manager_title"
+msgstr "Manager verwijderen"
+
+msgid "team_settings.remove_manager_submit"
+msgstr "Verwijderen"
+
+msgid "team_settings.confirm_remove_manager"
+msgstr "Bevestig het verwijderen van de manager"
+
+msgid "team_settings.confirm_remove_manager_text"
+msgstr "Weet je zeker dat je deze manager uit het team wilt verwijderen?"
+
+msgid "team_settings.add_player_warn_exceed"
+msgstr "Het toevoegen van deze speler zou de limieten van teamgrootte in actieve ladders overschrijden."
+
+msgid "team_settings.add_player_warn_ladders"
+msgstr "Getroffen ladders:"
+
+msgid "team_settings.add_player_confirm_exceed"
+msgstr "Toch toevoegen"
+
+msgid "team_settings.cancel_btn"
+msgstr "Annuleren"
+
+msgid "team_settings.remove_player_warn_violate"
+msgstr "Het verwijderen van deze speler zou onder het minimale teamformaat in actieve ladders vallen."
+
+msgid "team_settings.remove_player_warn_ladders"
+msgstr "Getroffen ladders:"
+
+msgid "team_settings.remove_player_confirm_violate"
+msgstr "Toch verwijderen"
+

@@ -42,6 +42,9 @@ class _ClubQueryStub:
     def filter(self, *args, **kwargs):
         return self
 
+    def order_by(self, *args, **kwargs):
+        return self
+
     def all(self):
         return []
 
@@ -92,6 +95,7 @@ def test_get_my_dashboard_returns_payload_when_account_exists(monkeypatch):
     fake_user = SimpleNamespace(id=7, email="demo@netrank.test", role="user")
 
     monkeypatch.setattr(dashboard_routes, "_get_current_user_id_from_cookie", lambda: 7)
+    monkeypatch.setattr(dashboard_routes, "_is_admin", lambda account_id: False)
     monkeypatch.setattr(
         dashboard_routes,
         "Account",
@@ -115,3 +119,54 @@ def test_get_my_dashboard_returns_payload_when_account_exists(monkeypatch):
         "my_requests": [],
         "my_club_creation_requests": [],
     }
+
+
+def test_get_my_dashboard_admin_sees_all_clubs(monkeypatch):
+    app = Flask(__name__)
+    fake_user = SimpleNamespace(id=1, email="admin@netrank.test", role="administrator")
+    fake_clubs = [
+        SimpleNamespace(
+            id=10,
+            serialize=lambda: {"id": 10, "name": "Club A"},
+        ),
+        SimpleNamespace(
+            id=11,
+            serialize=lambda: {"id": 11, "name": "Club B"},
+        ),
+    ]
+
+    class _AdminClubQueryStub:
+        def order_by(self, *args, **kwargs):
+            return self
+
+        def all(self):
+            return fake_clubs
+
+    class _ClubNameStub:
+        def asc(self):
+            return self
+
+    class _AdminClubStub:
+        query = _AdminClubQueryStub()
+        name = _ClubNameStub()
+
+    monkeypatch.setattr(dashboard_routes, "_get_current_user_id_from_cookie", lambda: 1)
+    monkeypatch.setattr(dashboard_routes, "_is_admin", lambda account_id: True)
+    monkeypatch.setattr(
+        dashboard_routes,
+        "Account",
+        SimpleNamespace(query=_QueryStub(fake_user)),
+    )
+    monkeypatch.setattr(dashboard_routes, "ClubOwner", _ClubOwnerStub)
+    monkeypatch.setattr(dashboard_routes, "ClubOwnerClub", SimpleNamespace(query=_ClubOwnerClubQueryStub()))
+    monkeypatch.setattr(dashboard_routes, "ClubPlayer", _ClubPlayerStub)
+    monkeypatch.setattr(dashboard_routes, "Club", _AdminClubStub)
+    monkeypatch.setattr(dashboard_routes, "ClubJoinRequest", _JoinRequestStub)
+
+    with app.test_request_context("/api/me/dashboard"):
+        response, status = dashboard_routes.get_my_dashboard()
+
+    payload = response.get_json()
+    assert status == 200
+    assert [club["name"] for club in payload["clubs"]] == ["Club A", "Club B"]
+    assert all(club["membership_status"] == "owner" for club in payload["clubs"])

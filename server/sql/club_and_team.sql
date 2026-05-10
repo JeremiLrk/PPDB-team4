@@ -7,9 +7,9 @@
 CREATE TABLE IF NOT EXISTS club (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(64) NOT NULL,
-    description VARCHAR(512) NOT NULL,
+    description VARCHAR(512),
     sport_type_id BIGINT,
-    city VARCHAR(128) NOT NULL,
+    city VARCHAR(128),
 
     CONSTRAINT fk_club_sport_type_id
         FOREIGN KEY (sport_type_id)
@@ -159,3 +159,33 @@ CREATE TABLE IF NOT EXISTS team_manager_team (
     CONSTRAINT pk_team_manager_team
         PRIMARY KEY (team_manager_id, team_id)
 );
+
+CREATE TABLE IF NOT EXISTS team_join_request (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    team_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    date TIMESTAMPTZ NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+
+    CONSTRAINT fk_team_join_request_team
+        FOREIGN KEY (team_id)
+            REFERENCES team(id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT fk_team_join_request_user
+        FOREIGN KEY (user_id)
+            REFERENCES account(id)
+            ON DELETE CASCADE,
+
+    CONSTRAINT pk_team_join_request
+        PRIMARY KEY (id)
+);
+
+-- Only one pending request allowed per (team_id, user_id) pair at a time.
+-- Rejected/accepted requests do not block new pending ones.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_team_join_request_pending
+    ON team_join_request (team_id, user_id)
+    WHERE status = 'pending';
+
+CREATE INDEX IF NOT EXISTS idx_team_join_request_status
+    ON team_join_request(team_id, status);

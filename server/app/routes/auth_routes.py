@@ -20,6 +20,9 @@ MAIL_FROM = os.environ["MAIL_FROM"]
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api")
 
+ALLOWED_ACCOUNT_GENDERS = frozenset({"male", "female", "other"})
+
+
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
     data = request.get_json() or {}
@@ -28,12 +31,25 @@ def signup():
     first_name = data.get("firstName")
     last_name = data.get("lastName")
     date_of_birth = data.get("dateOfBirth")
+    gender = (data.get("gender") or "").strip()
+    phone = (data.get("phoneNumber") or "").strip()
 
-    if not email or not password or not first_name or not last_name or not date_of_birth:
+    if (
+        not email
+        or not password
+        or not first_name
+        or not last_name
+        or not date_of_birth
+        or not gender
+        or not phone
+    ):
         return jsonify({"message": "Missing credentials."}), 400
 
+    if gender not in ALLOWED_ACCOUNT_GENDERS:
+        return jsonify({"message": "gender must be male, female, or other."}), 400
+
     try:
-        register_user(email, password, first_name, last_name, date_of_birth)
+        register_user(email, password, first_name, last_name, date_of_birth, gender=gender, phone=phone)
 
         token = generate_verification_token(email)
         params: resend.Emails.SendParams = {
@@ -106,6 +122,11 @@ def me(account: Account):
 
     base["managedTeamIds"] = managed_team_ids
 
+    player_team_ids = []
+    if account.player:
+        player_team_ids = [t.id for t in account.player.teams]
+    base["playerTeamIds"] = player_team_ids
+
     club_ids = []
     if account.team_manager and account.team_manager.club_owner:
         club_ids = [c.id for c in account.team_manager.club_owner.clubs]
@@ -123,6 +144,8 @@ def update_me(account: Account):
 
     first_name = (data.get("firstName") or "").strip()
     last_name = (data.get("lastName") or "").strip()
+    gender = (data.get("gender") or "").strip()
+    phone = (data.get("phoneNumber") or "").strip()
     date_of_birth_raw = data.get("dateOfBirth")
 
     if not first_name or not last_name:
@@ -137,9 +160,17 @@ def update_me(account: Account):
         except ValueError:
             return jsonify({"message": "dateOfBirth must be a valid ISO date (YYYY-MM-DD)."}), 400
 
+    if not gender or not phone:
+        return jsonify({"message": "Gender and phone number are required."}), 400
+
+    if gender not in ALLOWED_ACCOUNT_GENDERS:
+        return jsonify({"message": "gender must be male, female, or other."}), 400
+
     account.first_name = first_name
     account.last_name = last_name
     account.date_of_birth = parsed_date_of_birth
+    account.gender = gender
+    account.phone = phone
 
     db.session.add(account)
     db.session.commit()

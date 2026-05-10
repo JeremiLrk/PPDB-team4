@@ -1,17 +1,14 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { getTexts } from "virtual:i18n";
 
+/**
+ * Returns translations for the given page and language.
+ *
+ * The data is bundled with the Vite plugin (vite-plugin-i18n.js) —
+ * no HTTP requests are made.
+ *
+ * The API is identical to the old hook: { key: translatedString }
+ */
 export function usePageTexts(page, lang = "en") {
-    const [texts, setTexts] = useState({});
-
-    useEffect(() => {
-        fetch(`/api/texts/page/${page}?lang=${lang}`)
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);  // Check status
-                return res.json();
-            })
-            .then(setTexts)
-            .catch(err => console.error("Failed to load texts:", err));
-    }, [page, lang]);
-
-    return texts;
+    return useMemo(() => getTexts(page, lang), [page, lang]);
 }
