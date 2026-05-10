@@ -1,6 +1,4 @@
-import commonStyles from "@/style/common/Common.module.css";
 import styles from "@/style/matches/MatchProposalCard.module.css";
-import ItemCard from "@/components/common/ItemCard.jsx";
 import { statusLabel } from "@/components/dashboard/dashboardUtils.js";
 import { useWeather } from "@/hooks/useWeather.js";
 
@@ -14,7 +12,6 @@ function formatDateTime(value) {
     const parsed = parseDate(value);
     if (!parsed) return value || "-";
 
-    // These values are already normalized by the hook; this is just display formatting.
     return parsed.toLocaleString([], {
         dateStyle: "medium",
         timeStyle: "short",
@@ -22,56 +19,135 @@ function formatDateTime(value) {
 }
 
 function formatTemplate(template, values = {}) {
-    // Keep the text tokens flexible so the translations can reuse one template
-    // for multiple clubs, dates, and weather states.
     return Object.entries(values).reduce(
         (output, [key, value]) => output.replaceAll(`{${key}}`, String(value ?? "")),
         template,
     );
 }
 
-function statusClass(status) {
-    const normalized = (status || "pending").toLowerCase();
-    if (normalized === "accepted" || normalized === "approved") {
-        return commonStyles.statusApproved;
-    }
-    if (normalized === "rejected") {
-        return commonStyles.statusRejected;
-    }
-    if (normalized === "cancelled" || normalized === "canceled") {
-        return commonStyles.statusCancelled;
-    }
-    return commonStyles.statusPending;
+function normalizeStatus(status) {
+    return String(status || "pending").toLowerCase();
 }
 
-function formatContact(contact) {
-    if (!contact) return "";
-    // The backend may send either a compact name/email pair or a more
-    // structured contact object; normalize both into one label.
+function statusTone(status) {
+    const normalized = normalizeStatus(status);
+    if (normalized === "accepted" || normalized === "approved") return styles.statusApproved;
+    if (normalized === "rejected") return styles.statusRejected;
+    if (normalized === "cancelled" || normalized === "canceled") return styles.statusCancelled;
+    return styles.statusPending;
+}
+
+function normalizeContact(contact) {
+    if (!contact) return null;
+
     const name = contact.name || [contact.firstName, contact.lastName].filter(Boolean).join(" ").trim();
     const email = contact.email || contact.value || "";
+    const phone = contact.phoneNumber || contact.phone || "";
 
-    if (name && email && name !== email) {
-        return `${name} <${email}>`;
-    }
-
-    return name || email || "";
+    return {
+        id: contact.id || email || name || phone,
+        name,
+        email,
+        phone,
+    };
 }
 
-function formatContactList(contacts = []) {
-    // Multiple contacts are rendered as one readable comma-separated line.
-    return contacts
-        .map(formatContact)
-        .filter(Boolean)
-        .join(", ");
+function CalendarIcon() {
+    return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+                d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1.5A2.5 2.5 0 0 1 22 6.5v12A2.5 2.5 0 0 1 19.5 21h-15A2.5 2.5 0 0 1 2 18.5v-12A2.5 2.5 0 0 1 4.5 4H6V3a1 1 0 0 1 1-1Zm12.5 8h-15v8.5c0 .28.22.5.5.5h14a.5.5 0 0 0 .5-.5V10Zm-14-4A.5.5 0 0 0 5 6.5V8h14V6.5a.5.5 0 0 0-.5-.5h-14Z"
+                fill="currentColor"
+            />
+        </svg>
+    );
+}
+
+function UserIcon() {
+    return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+                d="M12 12.2a4.1 4.1 0 1 0 0-8.2 4.1 4.1 0 0 0 0 8.2Zm0 2c-3.74 0-7 1.86-7 4.2V21h14v-2.6c0-2.34-3.26-4.2-7-4.2Z"
+                fill="currentColor"
+            />
+        </svg>
+    );
+}
+
+function MailIcon() {
+    return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+                d="M4.5 5.5h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Zm0 2 7.5 5 7.5-5h-15Zm15 9v-6.18l-6.94 4.63a1 1 0 0 1-1.12 0L4.5 10.32V16.5h15Z"
+                fill="currentColor"
+            />
+        </svg>
+    );
+}
+
+function PhoneIcon() {
+    return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+                d="M7.2 3.5a2.2 2.2 0 0 1 2.06 1.42l1.03 2.73a2.2 2.2 0 0 1-.52 2.31l-1.1 1.1a14.4 14.4 0 0 0 5.33 5.33l1.1-1.1a2.2 2.2 0 0 1 2.31-.52l2.73 1.03a2.2 2.2 0 0 1 1.42 2.06v1.95A2.2 2.2 0 0 1 19.38 22C10.94 22 3.5 14.56 3.5 6.12A2.2 2.2 0 0 1 5.7 3.5H7.2Zm0 2H5.7a.2.2 0 0 0-.2.2c0 7.34 5.96 13.3 13.3 13.3a.2.2 0 0 0 .2-.2v-1.95a.2.2 0 0 0-.13-.19l-2.73-1.03a.2.2 0 0 0-.21.05l-1.44 1.44a1 1 0 0 1-1.1.2 16.4 16.4 0 0 1-7.58-7.58 1 1 0 0 1 .2-1.1l1.44-1.44a.2.2 0 0 0 .05-.21L9.1 5.83a.2.2 0 0 0-.19-.13Z"
+                fill="currentColor"
+            />
+        </svg>
+    );
+}
+
+function CloudIcon() {
+    return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+                d="M7.7 19h9.7A4.6 4.6 0 1 0 16 10.1 6.4 6.4 0 0 0 3.6 13a4.3 4.3 0 0 0 4.1 6Z"
+                fill="currentColor"
+            />
+        </svg>
+    );
+}
+
+function ContactBlock({ teamName, contacts, fallbackLabel }) {
+    const normalizedContacts = (contacts || []).map(normalizeContact).filter(Boolean);
+
+    return (
+        <section className={styles.contactBlock}>
+            <p className={styles.contactTeam}>{teamName}</p>
+            <div className={styles.contactList}>
+                {normalizedContacts.length > 0 ? normalizedContacts.map((contact) => (
+                    <div className={styles.contactRow} key={contact.id}>
+                        {contact.name ? (
+                            <div className={styles.contactLine}>
+                                <span className={styles.contactIcon}><UserIcon /></span>
+                                <span className={styles.contactPrimary}>{contact.name}</span>
+                            </div>
+                        ) : null}
+                        {contact.email ? (
+                            <div className={styles.contactLine}>
+                                <span className={styles.contactIcon}><MailIcon /></span>
+                                <span>{contact.email}</span>
+                            </div>
+                        ) : null}
+                        {contact.phone ? (
+                            <div className={styles.contactLine}>
+                                <span className={styles.contactIcon}><PhoneIcon /></span>
+                                <span>{contact.phone}</span>
+                            </div>
+                        ) : null}
+                    </div>
+                )) : (
+                    <p className={styles.contactFallback}>{fallbackLabel}</p>
+                )}
+            </div>
+        </section>
+    );
 }
 
 export default function MatchProposalCard({ proposal, disabled, onStatusChange, texts = {}, statusTexts = {} }) {
-    const normalizedStatus = (proposal.status || "pending").toLowerCase();
-    // Pending proposals can be acted on directly; finalized ones can only be
-    // moved back to pending when the backend allows it.
+    const normalizedStatus = normalizeStatus(proposal.status);
     const canRespond = normalizedStatus === "pending";
     const canCancel = normalizedStatus === "accepted";
+    const canReset = normalizedStatus !== "pending";
     const weatherClubId = proposal.team1ClubId || proposal.team2ClubId || null;
     const weatherCity = proposal.team1ClubCity || proposal.team2ClubCity || "";
     const weatherDate = formatDateTime(proposal.proposedStartAt);
@@ -96,31 +172,92 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
     });
 
     return (
-        <ItemCard>
-            <div>
-                {/* The top block is pure display: teams, time, contacts, and weather. */}
-                <p className={commonStyles.primaryText}>
-                    {proposal.team1Name} vs {proposal.team2Name}
-                </p>
-                <p className={commonStyles.secondaryText}>
-                    {proposedDateLabel}: {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
-                </p>
-                {(proposal.team1Contacts?.length || proposal.team2Contacts?.length) ? (
-                    // Contact info comes from the proposal payload so the card
-                    // does not need to reach back into the team models.
-                    <div className={commonStyles.secondaryText} style={{ display: "grid", gap: "0.2rem" }}>
-                        <p style={{ margin: 0 }}>
-                            {proposal.team1Name || texts.team1 || "Team 1"}: {formatContactList(proposal.team1Contacts)}
+        <li className={styles.card}>
+            <div className={styles.iconBox} aria-hidden="true">
+                <CalendarIcon />
+            </div>
+
+            <div className={styles.content}>
+                <div className={styles.headerRow}>
+                    <div className={styles.headingBlock}>
+                        <p className={styles.title}>
+                            {proposal.team1Name} vs {proposal.team2Name}
                         </p>
-                        <p style={{ margin: 0 }}>
-                            {proposal.team2Name || texts.team2 || "Team 2"}: {formatContactList(proposal.team2Contacts)}
+                        <p className={styles.subtitle}>
+                            {proposedDateLabel}: {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
                         </p>
                     </div>
-                ) : null}
+
+                    <span className={`${styles.statusPill} ${statusTone(proposal.status)}`}>
+                        {statusLabel(proposal.status, statusTexts)}
+                    </span>
+                </div>
+
+                <div className={styles.divider} />
+
+                <div className={styles.bodyRow}>
+                    <div className={styles.contactsGrid}>
+                        <ContactBlock
+                            teamName={proposal.team1Name || texts.team1 || "Team 1"}
+                            contacts={proposal.team1Contacts}
+                            fallbackLabel={texts.no_contacts || "No contact info"}
+                        />
+                        <ContactBlock
+                            teamName={proposal.team2Name || texts.team2 || "Team 2"}
+                            contacts={proposal.team2Contacts}
+                            fallbackLabel={texts.no_contacts || "No contact info"}
+                        />
+                    </div>
+
+                    <div className={styles.actions}>
+                        {canRespond ? (
+                            <>
+                                <button
+                                    className={styles.acceptButton}
+                                    type="button"
+                                    disabled={disabled}
+                                    onClick={() => onStatusChange(proposal.id, "accepted")}
+                                >
+                                    {texts.accept || "Accept"}
+                                </button>
+                                <button
+                                    className={styles.rejectButton}
+                                    type="button"
+                                    disabled={disabled}
+                                    onClick={() => onStatusChange(proposal.id, "rejected")}
+                                >
+                                    {texts.reject || "Reject"}
+                                </button>
+                            </>
+                        ) : null}
+
+                        {canCancel ? (
+                            <button
+                                className={styles.cancelButton}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => onStatusChange(proposal.id, "cancelled")}
+                            >
+                                {texts.cancel || "Cancel"}
+                            </button>
+                        ) : null}
+
+                        {canReset ? (
+                            <button
+                                className={styles.resetButton}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => onStatusChange(proposal.id, "pending")}
+                            >
+                                {texts.set_pending || texts.reset || "Set pending"}
+                            </button>
+                        ) : null}
+                    </div>
+                </div>
+
                 {weatherClubId ? (
-                    // Weather is fetched per club/date so the proposal can show
-                    // conditions for the venue tied to the match.
-                    <p className={commonStyles.secondaryText}>
+                    <p className={styles.weatherLine}>
+                        <span className={styles.weatherIcon}><CloudIcon /></span>
                         {weatherLoading
                             ? weatherLoadingText
                             : weatherTemp !== null
@@ -129,50 +266,6 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                     </p>
                 ) : null}
             </div>
-
-            <div
-                className={styles.actionRow}
-            >
-                {/* The status pill reflects the last server state, not local UI guesses. */}
-                <span className={`${commonStyles.statusPill} ${statusClass(proposal.status)}`}>
-                    {statusLabel(proposal.status, statusTexts)}
-                </span>
-
-                {canRespond ? (
-                    <>
-                        {/* These buttons map directly to the status patch endpoint. */}
-                        <button
-                            className={styles.acceptButton}
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => onStatusChange(proposal.id, "accepted")}
-                        >
-                            {texts.accept || "Accept"}
-                        </button>
-                        <button
-                            className={styles.rejectButton}
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => onStatusChange(proposal.id, "rejected")}
-                        >
-                            {texts.reject || "Reject"}
-                        </button>
-                    </>
-                ) : null}
-
-                {/* Once a proposal is accepted, the UI still allows cancelling it
-                    instead of exposing the generic reset-to-pending action. */}
-                {canCancel ? (
-                    <button
-                        className={styles.cancelButton}
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => onStatusChange(proposal.id, "cancelled")}
-                    >
-                        {texts.cancel || "Cancel"}
-                    </button>
-                ) : null}
-            </div>
-        </ItemCard>
+        </li>
     );
 }

@@ -97,9 +97,14 @@ def test_seeded_non_demo_proposals_use_player_contacts(seeded_client: FlaskClien
         contact["email"]
         for contact in proposal["team1_contacts"] + proposal["team2_contacts"]
     }
+    phone_numbers = {
+        contact["phoneNumber"]
+        for contact in proposal["team1_contacts"] + proposal["team2_contacts"]
+    }
     assert "jeremilorek@outlook.com" not in emails
     assert "nina.jacobs@example.com" not in emails
     assert "alice.moore@example.com" in emails or "bob.taylor@example.com" in emails
+    assert all(phone_numbers)
 
 
 def test_match_proposals_hide_archived_history_until_requested(seeded_client: FlaskClient, seeded_app: Flask):
@@ -167,6 +172,8 @@ def test_player_can_see_and_accept_weekly_proposal(seeded_client: FlaskClient):
     assert player_demo_proposal["status"] == "pending"
     assert any(contact["email"] == "jeremilorek@outlook.com" for contact in player_demo_proposal["team1_contacts"])
     assert any(contact["email"] == "robin.vermeulen@example.com" for contact in player_demo_proposal["team2_contacts"])
+    assert any(contact["phoneNumber"] == "+32 470 11 22 33" for contact in player_demo_proposal["team1_contacts"])
+    assert any(contact["phoneNumber"] for contact in player_demo_proposal["team2_contacts"])
 
     accept_response = seeded_client.patch(
         f"/api/matches/proposals/{player_demo_proposal['id']}/status",
@@ -176,7 +183,7 @@ def test_player_can_see_and_accept_weekly_proposal(seeded_client: FlaskClient):
     assert accept_response.get_json()["proposal"]["status"] == "accepted"
 
 
-def test_accepted_proposal_cannot_be_reset_to_pending(seeded_client: FlaskClient):
+def test_accepted_proposal_can_be_reset_to_pending(seeded_client: FlaskClient):
     loginDemoPlayer(seeded_client)
     player_demo_proposal = findPlayerDemoProposal(seeded_client)
 
@@ -190,8 +197,26 @@ def test_accepted_proposal_cannot_be_reset_to_pending(seeded_client: FlaskClient
         f"/api/matches/proposals/{player_demo_proposal['id']}/status",
         json={"status": "pending"},
     )
-    assert pending_response.status_code == 409
-    assert "cannot be reset to pending" in pending_response.get_json()["message"]
+    assert pending_response.status_code == 200
+    assert pending_response.get_json()["proposal"]["status"] == "pending"
+
+
+def test_rejected_proposal_can_be_reset_to_pending(seeded_client: FlaskClient):
+    loginDemoPlayer(seeded_client)
+    player_demo_proposal = findPlayerDemoProposal(seeded_client)
+
+    reject_response = seeded_client.patch(
+        f"/api/matches/proposals/{player_demo_proposal['id']}/status",
+        json={"status": "rejected"},
+    )
+    assert reject_response.status_code == 200
+
+    pending_response = seeded_client.patch(
+        f"/api/matches/proposals/{player_demo_proposal['id']}/status",
+        json={"status": "pending"},
+    )
+    assert pending_response.status_code == 200
+    assert pending_response.get_json()["proposal"]["status"] == "pending"
 
 
 def test_played_result_updates_elo_rating_matches_played_and_rank(seeded_client: FlaskClient, seeded_app: Flask):

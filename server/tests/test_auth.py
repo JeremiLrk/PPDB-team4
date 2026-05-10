@@ -193,6 +193,7 @@ def test_me_success(client: FlaskClient):
     assert data["account"]["dateOfBirth"] == "2000-01-01"
     assert data["account"]["gender"] == "male"
     assert data["account"]["phoneNumber"] == "+32 470 99 00 01"
+    assert data["account"]["playerTeamIds"] == []
 
 
 def test_patch_me_profile_fields(client: FlaskClient):

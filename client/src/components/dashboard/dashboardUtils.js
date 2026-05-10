@@ -16,7 +16,7 @@ export function getDashboardTabs(texts) {
 
 export function statusClass(status) {
     const value = (status || "pending").toLowerCase()
-    if (value === "approved") return styles.statusApproved
+    if (value === "approved" || value === "accepted") return styles.statusApproved
     if (value === "rejected") return styles.statusRejected
     if (value === "cancelled") return styles.statusCancelled
     return styles.statusPending
@@ -25,6 +25,7 @@ export function statusClass(status) {
 export function statusLabel(status, texts = {}) {
     const value = (status || "pending").toLowerCase()
     if (value === "approved") return texts.status_approved || "Approved"
+    if (value === "accepted") return texts.status_accepted || "Accepted"
     if (value === "rejected") return texts.status_rejected || "Rejected"
     if (value === "cancelled") return texts.status_cancelled || "Cancelled"
     return texts.status_pending || "Pending"

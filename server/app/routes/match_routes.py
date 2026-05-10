@@ -395,10 +395,15 @@ def update_match_proposal_status(account, proposal_id):
     normalized_status = next_status.name.lower()
     if current_status_name == "played" and normalized_status != "played":
         return jsonify({"message": "Played matches are immutable and cannot change status."}), 409
-    if normalized_status == "pending" and current_status_name != "pending":
-        return jsonify({"message": "Match proposals cannot be reset to pending after a response."}), 409
-
-    if normalized_status == "accepted":
+    if normalized_status == "pending":
+        proposal.status_id = next_status.id
+        for model in (MatchAccepted, MatchRejected, MatchCancelled, MatchPlayed):
+            row = db.session.get(model, proposal.id)
+            if row:
+                db.session.delete(row)
+        for submission in list(proposal.score_submissions):
+            db.session.delete(submission)
+    elif normalized_status == "accepted":
         accepted = db.session.get(MatchAccepted, proposal.id)
         if not accepted:
             accepted = MatchAccepted(id=proposal.id)

@@ -12,6 +12,7 @@ Seeding order:
 """
 
 import datetime
+import hashlib
 from werkzeug.security import generate_password_hash
 from server.extensions import db
 from server.app.models.availability_block import AvailabilityBlock
@@ -38,6 +39,7 @@ from server.app.services.weekly_match_proposal_service import (
 )
 
 TAG = "[seed:teams_and_users]"
+DEFAULT_SEED_GENDER = "other"
 
 
 # ---------------------------------------------------------------------------
@@ -77,6 +79,11 @@ def get_or_create_sport(name: str, min_p: int, max_p: int, verbose: bool = True)
     return sport
 
 
+def _fake_phone_for_email(email: str) -> str:
+    digest = hashlib.sha1(email.encode("utf-8")).hexdigest()
+    return f"+32 470 {digest[0:2]} {digest[2:4]} {digest[4:6]}"
+
+
 def make_account(
     first: str,
     last: str,
@@ -84,13 +91,21 @@ def make_account(
     role: AccountRole,
     password: str = "Password123!",
     force_password_update: bool = False,
+    gender: str = DEFAULT_SEED_GENDER,
+    phone: str | None = None,
 ) -> tuple:
     """Returns (account, created: bool)."""
     existing = Account.query.filter_by(email=email).first()
     if existing:
         if force_password_update:
             existing.password_hash = generate_password_hash(password)
+        desired_phone = phone or _fake_phone_for_email(email)
+        if existing.gender != gender:
+            existing.gender = gender
+        if existing.phone != desired_phone:
+            existing.phone = desired_phone
         return existing, False
+    desired_phone = phone or _fake_phone_for_email(email)
     acc = Account(
         first_name=first,
         last_name=last,
@@ -98,6 +113,8 @@ def make_account(
         password_hash=generate_password_hash(password),
         account_role_id=role.id,
         date_of_birth=datetime.date(1990, 1, 1),
+        gender=gender,
+        phone=desired_phone,
         is_verified=True,
     )
     db.session.add(acc)
@@ -890,8 +907,11 @@ def seed_teams_and_users(verbose: bool = True) -> None:
     owners = []   # list of (Account, TeamManager, ClubOwner, Club, SportType)
     try:
         for first, last, email, pwd, club_name, city, sport in OWNER_DATA:
+            gender = "male" if email == "jeremilorek@outlook.com" else DEFAULT_SEED_GENDER
+            phone = "+32 470 11 22 33" if email == "jeremilorek@outlook.com" else None
             acc, _  = make_account(first, last, email, role_manager,
-                                   password=pwd, force_password_update=True)
+                                   password=pwd, force_password_update=True,
+                                   gender=gender, phone=phone)
             if not acc.is_verified:
                 acc.is_verified = True
             tm, _   = make_manager(acc)
@@ -1293,14 +1313,51 @@ def seed_teams_and_users(verbose: bool = True) -> None:
                 team2_id=player_demo_opponent.id,
                 proposed_by_user_id=opponent_acc.id,
             )
-            if len(player_demo_weeks) > 1:
-                set_match_proposal_accepted(
-                    week_start_date=player_demo_weeks[1],
-                    team1_id=player_demo_team.id,
-                    team2_id=player_demo_opponent.id,
-                    accepted_by_user_id=opponent_acc.id,
-                    response_text="Accepted by opponent for dashboard upcoming matches demo",
-                )
+        if len(player_demo_weeks) > 1:
+            set_match_proposal_accepted(
+                week_start_date=player_demo_weeks[1],
+                team1_id=player_demo_team.id,
+                team2_id=player_demo_opponent.id,
+                accepted_by_user_id=opponent_acc.id,
+                response_text="Accepted by opponent for dashboard upcoming matches demo",
+            )
+
+        jeremi_team = club_teams[0][0]
+        future_opponent_team = club_teams[0][2]
+        future_match_date = datetime.date.today() + datetime.timedelta(days=3)
+        future_match_week_start = future_match_date - datetime.timedelta(days=future_match_date.weekday())
+        future_match_start = datetime.datetime.combine(
+            future_match_date,
+            datetime.time(hour=19, minute=0),
+        )
+        created_future_match = ensure_pending_proposal(
+            week_start_date=future_match_week_start,
+            team1_id=jeremi_team.id,
+            team2_id=future_opponent_team.id,
+            proposed_by_user_id=jeremi_acc.id,
+            sport_type_id=tennis.id,
+            proposed_start_at=future_match_start,
+            proposed_end_at=future_match_start + datetime.timedelta(hours=1),
+            location="NetRank Club Court 1",
+        )
+        if not created_future_match:
+            set_match_proposal_pending(
+                week_start_date=future_match_week_start,
+                team1_id=jeremi_team.id,
+                team2_id=future_opponent_team.id,
+                proposed_by_user_id=jeremi_acc.id,
+            )
+        future_match = find_match_proposal(
+            future_match_week_start,
+            jeremi_team.id,
+            future_opponent_team.id,
+        )
+        if future_match:
+            future_match.proposed_by_user_id = jeremi_acc.id
+            future_match.proposed_start_at = future_match_start
+            future_match.proposed_end_at = future_match_start + datetime.timedelta(hours=1)
+            future_match.location = "NetRank Club Court 1"
+            future_match.sport_type_id = tennis.id
 
         # Join requests for demo
         upsert_club_join_request(owners[0][3].id, opponent_acc.id, days_ago=2)

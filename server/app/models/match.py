@@ -45,6 +45,7 @@ def _serialize_contact_info(account: Account) -> dict:
         "id": account.id,
         "name": _contact_display_name(account),
         "email": account.email,
+        "phoneNumber": account.phone,
     }
 
 

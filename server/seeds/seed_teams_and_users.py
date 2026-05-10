@@ -8,6 +8,7 @@ Seeding order:
 """
 
 import datetime
+import hashlib
 from werkzeug.security import generate_password_hash
 from server.extensions import db
 from server.app.models.availability_block import AvailabilityBlock
@@ -28,6 +29,7 @@ from server.app.models.match import MatchAccepted, MatchCancelled, MatchProposal
 from server.app.services.weekly_match_proposal_service import generate_weekly_match_proposals, next_week_start
 
 TAG = "[seed:teams_and_users]"
+DEFAULT_SEED_GENDER = "other"
 
 
 # -- Helpers -------------------------------------------------------------------
@@ -65,6 +67,11 @@ def get_or_create_sport(name: str, min_p: int, max_p: int, verbose: bool = True)
   return sport
 
 
+def _fake_phone_for_email(email: str) -> str:
+  digest = hashlib.sha1(email.encode("utf-8")).hexdigest()
+  return f"+32 470 {digest[0:2]} {digest[2:4]} {digest[4:6]}"
+
+
 def make_account(
     first: str,
     last: str,
@@ -72,13 +79,21 @@ def make_account(
     role: AccountRole,
     password: str = "Password123!",
     force_password_update: bool = False,
+    gender: str = DEFAULT_SEED_GENDER,
+    phone: str | None = None,
 ) -> tuple:
   """Returns (account, created: bool)."""
   existing = Account.query.filter_by(email=email).first()
   if existing:
     if force_password_update:
       existing.password_hash = generate_password_hash(password)
+    desired_phone = phone or _fake_phone_for_email(email)
+    if existing.gender != gender:
+      existing.gender = gender
+    if existing.phone != desired_phone:
+      existing.phone = desired_phone
     return existing, False
+  desired_phone = phone or _fake_phone_for_email(email)
   acc = Account(
     first_name=first,
     last_name=last,
@@ -86,8 +101,8 @@ def make_account(
     password_hash=generate_password_hash(password),
     account_role_id=role.id,
     date_of_birth=datetime.date(1995, 1, 1),
-    gender="other",
-    phone="+32 470 00 00 01",
+    gender=gender,
+    phone=desired_phone,
     is_verified=True,
   )
   db.session.add(acc)
