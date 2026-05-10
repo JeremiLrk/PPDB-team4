@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, abort
-from server.extensions import db
+from server.extensions import cache, db
 from server.app.models.account import Account, Administrator
 from server.app.models.team import Team, TeamManagerTeam, TeamManager
 from server.app.decorators.login_required import login_required
@@ -12,6 +12,7 @@ core_bp = Blueprint("team_core", __name__)
 
 
 @core_bp.route("/<int:team_id>", methods=["GET"])
+@cache.memoize(timeout=300)
 def get_team(team_id: int):
     """GET /api/teams/<team_id> — public."""
     team = _get_team_or_404(team_id)
@@ -21,6 +22,7 @@ def get_team(team_id: int):
 
 
 @core_bp.route("", methods=["GET"])
+@cache.cached(timeout=300, query_string=True, key_prefix="teams_list")
 def get_teams():
     """GET /api/teams?from=0&to=20&sort=name — public."""
     offset, limit, sort_col =  _parse_pagination(request.args)
@@ -35,7 +37,7 @@ def get_teams():
         "teams": [t.to_dict() for t in teams],
     }), 200
 
-
+# Not used anywhere?
 @core_bp.route("/by-club/<int:club_id>", methods=["GET"])
 def get_teams_by_club(club_id: int):
     """GET /api/teams/by-club/<club_id>?from=0&to=20&sort=name"""
@@ -112,6 +114,8 @@ def create_team(account: Account):
         )
         db.session.add(assoc)
 
+    cache.delete("teams_list")
+
     db.session.commit()
     return jsonify({
         "message": "Team created successfully.",
@@ -128,6 +132,10 @@ def delete_team(account: Account, team_id: int):
 
     db.session.delete(team)
     db.session.commit()
+
+    cache.delete_memoized(get_team, team_id)
+    cache.delete("teams_list")
+
     return jsonify({
         "message": "Team deleted successfully."
     }), 200
@@ -160,6 +168,10 @@ def rename_team(account: Account, team_id: int):
 
     team.name = name
     db.session.commit()
+
+    cache.delete_memoized(get_team, team_id)
+    cache.delete("teams_list")
+
     return jsonify({
         "message": "Team renamed successfully.",
         "team": team.to_dict()

@@ -4,7 +4,7 @@ from server.app.decorators import login_required
 from server.app.models.club import Club
 from server.app.services.auth_service import verify_user
 from server.app.models.ladder import Ladder
-from server.extensions import db
+from server.extensions import cache, db
 from server.app.models.account import Account
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
@@ -17,6 +17,7 @@ from sqlalchemy import or_
 clubs_bp = Blueprint("clubs", __name__, url_prefix="/api")
 
 @clubs_bp.get("/clubs")
+@cache.cached(timeout=300, key_prefix="clubs_list")
 def list_clubs():
     db_clubs = Club.query.order_by(Club.name.asc()).all()
     clubs = [{
@@ -30,6 +31,7 @@ def list_clubs():
     return jsonify({"clubs": clubs}), 200
 
 @clubs_bp.get("/clubs/<int:club_id>")
+@cache.memoize(timeout=300)
 def get_club(club_id: int):
     club = Club.query.filter_by(id=club_id).first()
     if not club:
@@ -139,12 +141,15 @@ def create_club():
     # 5. Persist
     db.session.commit()
 
+    cache.delete("clubs_list")
+
     return jsonify({
         "message": "Club succesvol aangemaakt!", 
         "club": {"id": new_club.id, "name": new_club.name}
     }), 201
 
 @clubs_bp.get("/clubs/<int:club_id>/ladders")
+@cache.memoize(timeout=300)
 def get_club_ladders(club_id: int):
     # Haal alle ladders op die bij deze specifieke club horen
     ladders = Ladder.query.filter_by(club_id=club_id).all()
@@ -192,6 +197,9 @@ def update_club(club_id: int):
     club.sport_type_id = data.get("sport_type_id", club.sport_type_id)
 
     db.session.commit()
+
+    cache.delete_memoized(get_club, club_id)
+    cache.delete("clubs_list")
 
     return jsonify({"message": "Club updated successfully"}), 200
 
@@ -321,6 +329,7 @@ def create_ladder(club_id: int):
     if not test:
         return jsonify({"message": "Forbidden"}), 903
 
+    cache.delete_memoized(get_club_ladders, club_id)
 
     return jsonify({
         "ladder": {
@@ -439,6 +448,7 @@ def remove_club_owner(club_id: int, owner_id: int):
 
     return jsonify({"message": "Owner removed successfully"}), 200
 @clubs_bp.get("/accounts/search")
+@cache.cached(timeout=90, query_string=True)
 def search_accounts():
     query = request.args.get("q", "").strip()
     

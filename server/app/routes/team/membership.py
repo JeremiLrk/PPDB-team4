@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, Response, abort
 
-from server.extensions import db
+from server.extensions import cache, db
 from server.app.decorators import login_required
 from server.app.models.account import Account
 from server.app.models.player import Player, PlayerTeam
@@ -58,6 +58,8 @@ def add_manager_to_team(account: Account, team_id: int) -> tuple[Response, int]:
     db.session.add(assoc)
     db.session.commit()
 
+    cache.delete_memoized(get_team_managers, team_id)
+
     return jsonify({
         "message": "Manager added successfully.",
         "manager": target.team_manager.to_dict()
@@ -91,12 +93,15 @@ def remove_manager_from_team(account: Account, team_id: int, account_id: int):
     _handle_team_after_last_manager_removed(team)
     db.session.commit()
 
+    cache.delete_memoized(get_team_managers, team_id)
+
     return jsonify({
         "message": "Manager removed successfully."
     }), 200
 
 
 @membership_bp.route("/<int:team_id>/players", methods=["GET"])
+@cache.memoize(timeout=300)
 def get_team_players(team_id: int):
     """GET /api/teams/<team_id>/players — list of team players."""
 
@@ -170,6 +175,8 @@ def add_player_to_team(account: Account, team_id: int):
     db.session.add(assoc)
     db.session.commit()
 
+    cache.delete_memoized(get_team_players, team_id)
+
     return jsonify({
         "message": "Player added successfully.",
         "player": target.to_dict(include = ["player"])
@@ -197,6 +204,9 @@ def remove_player_from_team(account: Account, team_id: int, account_id: int):
 
     db.session.delete(assoc)
     db.session.commit()
+
+    cache.delete_memoized(get_team_players, team_id)
+
     return jsonify({
         "message": "Player removed successfully."
     }), 200
@@ -204,6 +214,7 @@ def remove_player_from_team(account: Account, team_id: int, account_id: int):
 
 @membership_bp.route("/<int:team_id>/players/search", methods=["GET"])
 @login_required
+@cache.memoize(timeout=90)
 def search_accounts_not_in_team(account: Account, team_id: int):
     """GET /api/teams/<team_id>/players/search?q=<string>."""
     team = _get_team_or_404(team_id)
@@ -241,6 +252,7 @@ def get_my_permissions(account: Account, team_id: int):
 
 @membership_bp.route("/<int:team_id>/managers/search", methods=["GET"])
 @login_required
+@cache.memoize(timeout=90)
 def search_accounts_not_manager_of_team(account: Account, team_id: int):
     """GET /api/teams/<team_id>/managers/search?q=<string>.
 
@@ -271,6 +283,7 @@ def search_accounts_not_manager_of_team(account: Account, team_id: int):
     }), 200
 
 @membership_bp.route("/<int:team_id>/managers", methods=["GET"])
+@cache.memoize(timeout=300)
 def get_team_managers(team_id: int):
     """GET /api/teams/<team_id>/managers — a list of team managers with their rights."""
     team = _get_team_or_404(team_id)
