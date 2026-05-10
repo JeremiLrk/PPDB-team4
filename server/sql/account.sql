@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS account (
     first_name VARCHAR(32),
     last_name VARCHAR(32),
     date_of_birth DATE,
+    gender VARCHAR(32),
+    phone VARCHAR(64),
     email VARCHAR(254) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL DEFAULT 'account',
@@ -23,6 +25,9 @@ CREATE TABLE IF NOT EXISTS account (
     CONSTRAINT pk_account
         PRIMARY KEY (id)
 );
+
+ALTER TABLE account ADD COLUMN IF NOT EXISTS gender VARCHAR(32);
+ALTER TABLE account ADD COLUMN IF NOT EXISTS phone VARCHAR(64);
 
 CREATE TABLE IF NOT EXISTS administrator (
     id BIGINT,

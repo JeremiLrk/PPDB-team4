@@ -1,0 +1,21 @@
+# nl — clubs
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+
+msgid "clubs.loading"
+msgstr "Clubs laden..."
+
+msgid "clubs.title"
+msgstr "Alle clubs"
+
+msgid "clubs.subtitle"
+msgstr "Kies een club om de club-homepage te openen, of start je eigen club!"
+
+msgid "clubs.unknown_city"
+msgstr "Onbekende stad"
+
+msgid "clubs.sport_not_set"
+msgstr "Sport niet ingesteld"
+

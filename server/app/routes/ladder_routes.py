@@ -39,7 +39,7 @@ def get_ladder_rows(club_id, ladder_id):
 @ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>/details")
 def get_ladder_details(club_id, ladder_id):
     result = (
-        db.session.query(Ladder, SportType.name, MatchRuleSet.name, LadderRatingFunction.name)
+        db.session.query(Ladder, SportType.name, MatchRuleSet, LadderRatingFunction.name)
         .outerjoin(SportType, Ladder.sport_type_id == SportType.id)
         .outerjoin(MatchRuleSet, Ladder.ruleset_id == MatchRuleSet.id)
         .outerjoin(LadderRatingFunction, Ladder.ladder_rating_function_id == LadderRatingFunction.id)
@@ -50,7 +50,7 @@ def get_ladder_details(club_id, ladder_id):
     if not result:
         return jsonify({"message": "Ladder not found"}), 404
 
-    ladder, sport_name, ruleset_name, rating_func_name = result
+    ladder, sport_name, rule_set, rating_func_name = result
 
     return jsonify(
         {
@@ -58,7 +58,7 @@ def get_ladder_details(club_id, ladder_id):
             "name": ladder.name,
             "description": ladder.description,
             "sport_type": sport_name,
-            "ruleset": ruleset_name,
+            "ruleset": rule_set.to_dict() if rule_set else None,
             "rating_function": rating_func_name,
         }
     )

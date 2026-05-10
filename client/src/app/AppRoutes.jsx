@@ -11,6 +11,7 @@ import NotFound from "@/pages/NotFound.jsx";
 import ForgotPassword from "@/pages/ForgotPassword.jsx";
 import ResetPassword from "@/pages/ResetPassword.jsx";
 import ClubSettings from "@/pages/ClubSettings.jsx";
+import ClubDisputedMatchesPage from "@/pages/ClubDisputedMatchesPage.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 import ProtectedRoute from "./ProtectedRoute";
 import Teams from "@/pages/Teams.jsx";
@@ -50,6 +51,11 @@ export default function AppRoutes() {
             <Route path="/clubs/:clubId/settings" element={
                     <ProtectedRoute>
                         <ClubSettings />
+                    </ProtectedRoute>
+                }/>
+            <Route path="/clubs/:clubId/settings/disputed" element={
+                    <ProtectedRoute>
+                        <ClubDisputedMatchesPage />
                     </ProtectedRoute>
                 }/>
             <Route path="/verify-email/:token" element={<VerifyEmail />} />

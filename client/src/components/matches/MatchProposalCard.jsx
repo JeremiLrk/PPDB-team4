@@ -2,6 +2,7 @@ import commonStyles from "@/style/common/Common.module.css";
 import styles from "@/style/matches/MatchProposalCard.module.css";
 import ItemCard from "@/components/common/ItemCard.jsx";
 import { statusLabel } from "@/components/dashboard/dashboardUtils.js";
+import { useWeather } from "@/hooks/useWeather.js";
 
 function parseDate(value) {
     if (!value) return null;
@@ -13,10 +14,20 @@ function formatDateTime(value) {
     const parsed = parseDate(value);
     if (!parsed) return value || "-";
 
+    // These values are already normalized by the hook; this is just display formatting.
     return parsed.toLocaleString([], {
         dateStyle: "medium",
         timeStyle: "short",
     });
+}
+
+function formatTemplate(template, values = {}) {
+    // Keep the text tokens flexible so the translations can reuse one template
+    // for multiple clubs, dates, and weather states.
+    return Object.entries(values).reduce(
+        (output, [key, value]) => output.replaceAll(`{${key}}`, String(value ?? "")),
+        template,
+    );
 }
 
 function statusClass(status) {
@@ -33,34 +44,103 @@ function statusClass(status) {
     return commonStyles.statusPending;
 }
 
+function formatContact(contact) {
+    if (!contact) return "";
+    // The backend may send either a compact name/email pair or a more
+    // structured contact object; normalize both into one label.
+    const name = contact.name || [contact.firstName, contact.lastName].filter(Boolean).join(" ").trim();
+    const email = contact.email || contact.value || "";
+
+    if (name && email && name !== email) {
+        return `${name} <${email}>`;
+    }
+
+    return name || email || "";
+}
+
+function formatContactList(contacts = []) {
+    // Multiple contacts are rendered as one readable comma-separated line.
+    return contacts
+        .map(formatContact)
+        .filter(Boolean)
+        .join(", ");
+}
+
 export default function MatchProposalCard({ proposal, disabled, onStatusChange, texts = {}, statusTexts = {} }) {
     const normalizedStatus = (proposal.status || "pending").toLowerCase();
+    // Pending proposals can be acted on directly; finalized ones can only be
+    // moved back to pending when the backend allows it.
     const canRespond = normalizedStatus === "pending";
-    const canResetToPending = normalizedStatus !== "pending";
+    const canCancel = normalizedStatus === "accepted";
+    const weatherClubId = proposal.team1ClubId || proposal.team2ClubId || null;
+    const weatherCity = proposal.team1ClubCity || proposal.team2ClubCity || "";
+    const weatherDate = formatDateTime(proposal.proposedStartAt);
+    const { weather, loading: weatherLoading } = useWeather(weatherClubId, proposal.proposedStartAt);
+    const weatherDescription = weather?.weather?.[0]?.description || "";
+    const weatherTemp = Number.isFinite(weather?.main?.temp) ? Math.round(weather.main.temp) : null;
+    const weatherLocation = weatherCity || weather?.name || texts.club || "club";
+    const proposedDateLabel = texts.proposed_date || "Proposed date";
+    const weatherLoadingLabel = texts.weather_loading || "Weather for {city} on {date} loading...";
+    const weatherAvailableLabel = texts.weather_available || "Weather for {city} on {date}: {temp}°C{description}";
+    const weatherUnavailableLabel = texts.weather_unavailable || "Weather for {city} on {date} unavailable";
+    const weatherLoadingText = formatTemplate(weatherLoadingLabel, { city: weatherLocation, date: weatherDate });
+    const weatherAvailableText = formatTemplate(weatherAvailableLabel, {
+        city: weatherLocation,
+        date: weatherDate,
+        temp: weatherTemp ?? "-",
+        description: weatherDescription ? `, ${weatherDescription}` : "",
+    });
+    const weatherUnavailableText = formatTemplate(weatherUnavailableLabel, {
+        city: weatherLocation,
+        date: weatherDate,
+    });
 
     return (
         <ItemCard>
             <div>
+                {/* The top block is pure display: teams, time, contacts, and weather. */}
                 <p className={commonStyles.primaryText}>
                     {proposal.team1Name} vs {proposal.team2Name}
                 </p>
                 <p className={commonStyles.secondaryText}>
-                    {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
+                    {proposedDateLabel}: {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
                 </p>
-                {proposal.location ? (
-                    <p className={commonStyles.secondaryText}>{proposal.location}</p>
+                {(proposal.team1Contacts?.length || proposal.team2Contacts?.length) ? (
+                    // Contact info comes from the proposal payload so the card
+                    // does not need to reach back into the team models.
+                    <div className={commonStyles.secondaryText} style={{ display: "grid", gap: "0.2rem" }}>
+                        <p style={{ margin: 0 }}>
+                            {proposal.team1Name || texts.team1 || "Team 1"}: {formatContactList(proposal.team1Contacts)}
+                        </p>
+                        <p style={{ margin: 0 }}>
+                            {proposal.team2Name || texts.team2 || "Team 2"}: {formatContactList(proposal.team2Contacts)}
+                        </p>
+                    </div>
+                ) : null}
+                {weatherClubId ? (
+                    // Weather is fetched per club/date so the proposal can show
+                    // conditions for the venue tied to the match.
+                    <p className={commonStyles.secondaryText}>
+                        {weatherLoading
+                            ? weatherLoadingText
+                            : weatherTemp !== null
+                                ? weatherAvailableText
+                                : weatherUnavailableText}
+                    </p>
                 ) : null}
             </div>
 
             <div
                 className={styles.actionRow}
             >
+                {/* The status pill reflects the last server state, not local UI guesses. */}
                 <span className={`${commonStyles.statusPill} ${statusClass(proposal.status)}`}>
                     {statusLabel(proposal.status, statusTexts)}
                 </span>
 
                 {canRespond ? (
                     <>
+                        {/* These buttons map directly to the status patch endpoint. */}
                         <button
                             className={styles.acceptButton}
                             type="button"
@@ -77,25 +157,19 @@ export default function MatchProposalCard({ proposal, disabled, onStatusChange, 
                         >
                             {texts.reject || "Reject"}
                         </button>
-                        <button
-                            className={styles.cancelButton}
-                            type="button"
-                            disabled={disabled}
-                            onClick={() => onStatusChange(proposal.id, "cancelled")}
-                        >
-                            {texts.cancel || "Cancel"}
-                        </button>
                     </>
                 ) : null}
 
-                {canResetToPending ? (
+                {/* Once a proposal is accepted, the UI still allows cancelling it
+                    instead of exposing the generic reset-to-pending action. */}
+                {canCancel ? (
                     <button
-                        className={styles.resetButton}
+                        className={styles.cancelButton}
                         type="button"
                         disabled={disabled}
-                        onClick={() => onStatusChange(proposal.id, "pending")}
+                        onClick={() => onStatusChange(proposal.id, "cancelled")}
                     >
-                        {texts.reset_pending || "Set back to pending"}
+                        {texts.cancel || "Cancel"}
                     </button>
                 ) : null}
             </div>

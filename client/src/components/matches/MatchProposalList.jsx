@@ -15,6 +15,8 @@ export default function MatchProposalList({
 }) {
     return (
         <>
+            {/* The list stays thin: it only chooses which state to show and
+                delegates the actual proposal rendering to the card component. */}
             {error ? (
                 <div style={{ display: "grid", gap: "0.7rem" }}>
                     <p className={commonStyles.muted}>{error}</p>
@@ -24,6 +26,8 @@ export default function MatchProposalList({
                 </div>
             ) : null}
 
+            {/* Loading, empty, and populated states are mutually exclusive so the
+                user never sees stale proposals under a spinner or error message. */}
             {loading ? <p className={commonStyles.muted}>{texts.loading || "Match proposals loading..."}</p> : null}
 
             {!loading && !error && proposals.length === 0 ? (

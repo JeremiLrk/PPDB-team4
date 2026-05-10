@@ -1,0 +1,390 @@
+# en — dashboard
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "dashboard.loading_dashboard"
+msgstr "Loading dashboard..."
+
+msgid "dashboard.signed_in_as"
+msgstr "Signed in as"
+
+msgid "dashboard.unknown_user"
+msgstr "unknown"
+
+msgid "dashboard.dashboard_tabs_aria"
+msgstr "Dashboard tabs"
+
+msgid "dashboard.tab_overview"
+msgstr "Overview"
+
+msgid "dashboard.tab_profile"
+msgstr "My Profile"
+
+msgid "dashboard.tab_availability"
+msgstr "Availability Calendar"
+
+msgid "dashboard.tab_search"
+msgstr "Search Clubs"
+
+msgid "dashboard.tab_requests"
+msgstr "My Requests"
+
+msgid "dashboard.tab_create_club"
+msgstr "Add your own club"
+
+msgid "dashboard.tab_teams"
+msgstr "My Teams"
+
+msgid "dashboard.tab_matches"
+msgstr "Matches"
+
+msgid "dashboard.tab_manage_club"
+msgstr "Manage your clubs"
+
+msgid "dashboard.my_teams"
+msgstr "My Teams"
+
+msgid "dashboard.no_teams_yet"
+msgstr "You are not a member of any team yet."
+
+msgid "dashboard.sort_id"
+msgstr "By ID"
+
+msgid "dashboard.sort_name"
+msgstr "By name"
+
+msgid "dashboard.per_page"
+msgstr "per page"
+
+msgid "dashboard.loading_teams"
+msgstr "Teams loading..."
+
+msgid "dashboard.showing"
+msgstr "Showing"
+
+msgid "dashboard.load_more"
+msgstr "Load more"
+
+msgid "dashboard.create_team_title"
+msgstr "Create Team"
+
+msgid "dashboard.new_team"
+msgstr "New Team"
+
+msgid "dashboard.team_name"
+msgstr "Team Name *"
+
+msgid "dashboard.team_name_placeholder"
+msgstr "e.g. Red Hawks"
+
+msgid "dashboard.club_optional"
+msgstr "Club (optional)"
+
+msgid "dashboard.no_club"
+msgstr "- No club -"
+
+msgid "dashboard.sport_optional"
+msgstr "Sport (optional)"
+
+msgid "dashboard.loading_sport"
+msgstr "Loading…"
+
+msgid "dashboard.any_sport"
+msgstr "- Any sport -"
+
+msgid "dashboard.team_created"
+msgstr "Team created!"
+
+msgid "dashboard.create_team"
+msgstr "Create Team"
+
+msgid "dashboard.switch_to_light_mode"
+msgstr "Switch to light mode"
+
+msgid "dashboard.switch_to_dark_mode"
+msgstr "Switch to dark mode"
+
+msgid "dashboard.light_mode"
+msgstr "Light mode"
+
+msgid "dashboard.dark_mode"
+msgstr "Dark mode"
+
+msgid "dashboard.go_to_home"
+msgstr "Go to home"
+
+msgid "dashboard.home"
+msgstr "Home"
+
+msgid "dashboard.sign_out"
+msgstr "Sign out"
+
+msgid "dashboard.my_clubs"
+msgstr "My Clubs"
+
+msgid "dashboard.no_clubs_yet"
+msgstr "You are not a member of any club yet."
+
+msgid "dashboard.member_status"
+msgstr "member"
+
+msgid "dashboard.open"
+msgstr "Open"
+
+msgid "dashboard.club_prefix"
+msgstr "Club"
+
+msgid "dashboard.sport_prefix"
+msgstr "Sport"
+
+msgid "dashboard.independent_team"
+msgstr "Independent"
+
+msgid "dashboard.quick_highlights"
+msgstr "Quick Highlights"
+
+msgid "dashboard.join_requests"
+msgstr "Join requests"
+
+msgid "dashboard.requests_i_sent"
+msgstr "Requests I sent"
+
+msgid "dashboard.pending_join_requests"
+msgstr "Pending join requests"
+
+msgid "dashboard.incoming_join_requests"
+msgstr "Incoming requests to review"
+
+msgid "dashboard.no_clubs_owned"
+msgstr "You don't own any clubs yet."
+
+msgid "dashboard.no_incoming_requests"
+msgstr "No incoming requests yet."
+
+msgid "dashboard.wants_to_join"
+msgstr "wants to join"
+
+msgid "dashboard.settings"
+msgstr "Settings"
+
+msgid "dashboard.club_registration_requests"
+msgstr "Club registration requests"
+
+msgid "dashboard.search_clubs"
+msgstr "Search Clubs"
+
+msgid "dashboard.search_by_name"
+msgstr "Search by club name"
+
+msgid "dashboard.loading_clubs"
+msgstr "Loading clubs..."
+
+msgid "dashboard.no_clubs_found"
+msgstr "No clubs found."
+
+msgid "dashboard.joined"
+msgstr "Joined"
+
+msgid "dashboard.request_to_join"
+msgstr "Request to Join"
+
+msgid "dashboard.my_join_requests"
+msgstr "My Join Requests"
+
+msgid "dashboard.no_join_requests_yet"
+msgstr "No join requests yet."
+
+msgid "dashboard.unknown_club"
+msgstr "Unknown club"
+
+msgid "dashboard.requested_prefix"
+msgstr "Requested"
+
+msgid "dashboard.availability_title"
+msgstr "My Availability"
+
+msgid "dashboard.date"
+msgstr "Date"
+
+msgid "dashboard.start_time"
+msgstr "Start time"
+
+msgid "dashboard.end_time"
+msgstr "End time"
+
+msgid "dashboard.adding"
+msgstr "Adding..."
+
+msgid "dashboard.add_availability_block"
+msgstr "Add availability block"
+
+msgid "dashboard.availability_blocks"
+msgstr "Your blocks"
+
+msgid "dashboard.availability_upcoming_matches"
+msgstr "Upcoming matches"
+
+msgid "dashboard.no_upcoming_matches"
+msgstr "No upcoming matches scheduled."
+
+msgid "dashboard.week_of"
+msgstr "Week of"
+
+msgid "dashboard.date_tbd"
+msgstr "Date/time TBD"
+
+msgid "dashboard.loading"
+msgstr "Loading..."
+
+msgid "dashboard.no_availability_blocks"
+msgstr "No availability blocks yet."
+
+msgid "dashboard.delete"
+msgstr "Delete"
+
+msgid "dashboard.could_not_load_availability"
+msgstr "Could not load availability."
+
+msgid "dashboard.fill_all_availability_fields"
+msgstr "Please fill all availability fields."
+
+msgid "dashboard.availability_future_only"
+msgstr "Start time must be in the future."
+
+msgid "dashboard.availability_start_before_end"
+msgstr "Start time must be before end time."
+
+msgid "dashboard.could_not_add_availability"
+msgstr "Could not add availability."
+
+msgid "dashboard.availability_added"
+msgstr "Availability block added."
+
+msgid "dashboard.could_not_delete_availability"
+msgstr "Could not delete availability."
+
+msgid "dashboard.availability_deleted"
+msgstr "Availability block deleted."
+
+msgid "dashboard.request_your_club"
+msgstr "Request Your Own Club"
+
+msgid "dashboard.club_name"
+msgstr "Club Name"
+
+msgid "dashboard.club_name_placeholder"
+msgstr "What is your club's name?"
+
+msgid "dashboard.city"
+msgstr "City"
+
+msgid "dashboard.city_placeholder"
+msgstr "City where your club is based"
+
+msgid "dashboard.main_sport"
+msgstr "Main Sport"
+
+msgid "dashboard.main_sport_placeholder"
+msgstr "Padel"
+
+msgid "dashboard.description"
+msgstr "Description"
+
+msgid "dashboard.description_placeholder"
+msgstr "Tell us what your club is about and why you want to use our platform"
+
+msgid "dashboard.submitting"
+msgstr "Submitting..."
+
+msgid "dashboard.submit_club_request"
+msgstr "Submit Club Request"
+
+msgid "dashboard.my_club_registration_requests"
+msgstr "My Club Registration Requests"
+
+msgid "dashboard.no_club_registration_requests_yet"
+msgstr "No club registration requests yet."
+
+msgid "dashboard.new_club"
+msgstr "New Club"
+
+msgid "dashboard.unknown_city"
+msgstr "Unknown city"
+
+msgid "dashboard.status_pending"
+msgstr "Pending"
+
+msgid "dashboard.status_approved"
+msgstr "Approved"
+
+msgid "dashboard.status_rejected"
+msgstr "Rejected"
+
+msgid "dashboard.status_cancelled"
+msgstr "Cancelled"
+
+msgid "dashboard.club_name_required"
+msgstr "Club name is required."
+
+msgid "dashboard.could_not_submit_club_request"
+msgstr "Could not submit your club request right now."
+
+msgid "dashboard.club_request_submitted"
+msgstr "Club request submitted."
+
+msgid "dashboard.profile_title"
+msgstr "My Profile"
+
+msgid "dashboard.profile_description"
+msgstr "Update your personal information."
+
+msgid "dashboard.first_name"
+msgstr "First name"
+
+msgid "dashboard.last_name"
+msgstr "Last name"
+
+msgid "dashboard.date_of_birth"
+msgstr "Date of birth"
+
+msgid "dashboard.save_changes"
+msgstr "Save changes"
+
+msgid "dashboard.profile_required_fields"
+msgstr "First name and last name are required."
+
+msgid "dashboard.profile_updated_success"
+msgstr "Profile updated successfully."
+
+msgid "dashboard.profile_update_failed"
+msgstr "Could not update profile."
+
+msgid "dashboard.change_password_title"
+msgstr "Change password"
+
+msgid "dashboard.current_password"
+msgstr "Current password"
+
+msgid "dashboard.new_password"
+msgstr "New password"
+
+msgid "dashboard.repeat_password"
+msgstr "Repeat password"
+
+msgid "dashboard.update_password"
+msgstr "Update password"
+
+msgid "dashboard.password_updated_success"
+msgstr "Password updated successfully."
+
+msgid "dashboard.password_update_failed"
+msgstr "Could not update password."
+
+msgid "dashboard.current_and_new_password_required"
+msgstr "Current password and new password are required."
+
+msgid "dashboard.passwords_do_not_match"
+msgstr "Passwords do not match."
+

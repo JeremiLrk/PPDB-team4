@@ -58,7 +58,7 @@ test("authenticated user can open menu and navigate to dashboard", async () => {
   });
 
   await user.click(screen.getByRole("button", { name: "Demo User ▾" }));
-  await user.click(screen.getByRole("button", { name: "Dashboard" }));
+  await user.click(screen.getByRole("menuitem", { name: "Dashboard" }));
 
   expect(screen.getByTestId("pathname")).toHaveTextContent("/dashboard");
 });
@@ -79,7 +79,7 @@ test("logout clears local auth state and returns to landing page", async () => {
   });
 
   await user.click(screen.getByRole("button", { name: "Demo User ▾" }));
-  await user.click(screen.getByRole("button", { name: "Uitloggen" }));
+  await user.click(screen.getByRole("menuitem", { name: "Uitloggen" }));
 
   await waitFor(() => {
     expect(global.fetch).toHaveBeenCalledWith(

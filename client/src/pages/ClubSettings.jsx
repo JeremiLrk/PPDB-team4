@@ -45,6 +45,7 @@ function ClubSettings() {
                     <ClubGeneral
                         formData={settings.formData}
                         onChange={settings.handleChange}
+                        onCitySelect={settings.handleCitySelect}
                         onSubmit={settings.updateClub}
                         updating={settings.updating}
                         updateMessage={settings.updateMessage}

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { notify } from "@/hooks/useNotify.js"
+import { GENDER_VALUES } from "@/constants/genderOptions.js"
 
 export function useRegister(setUser) {
     const [email, setEmail] = useState("")
@@ -8,10 +9,23 @@ export function useRegister(setUser) {
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
     const [dateOfBirth, setDateOfBirth] = useState("")
+    const [gender, setGender] = useState("")
+    const [phoneNumber, setPhoneNumber] = useState("")
     const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+
+        if (!GENDER_VALUES.includes(gender)) {
+            notify.error("Please select your gender.")
+            return
+        }
+
+        const trimmedPhone = phoneNumber.trim()
+        if (!trimmedPhone) {
+            notify.error("Phone number is required.")
+            return
+        }
 
         try {
             const response = await fetch("/api/signup", {
@@ -24,6 +38,8 @@ export function useRegister(setUser) {
                     firstName,
                     lastName,
                     dateOfBirth,
+                    gender,
+                    phoneNumber: trimmedPhone,
                 }),
             })
 
@@ -58,6 +74,10 @@ export function useRegister(setUser) {
         setLastName,
         dateOfBirth,
         setDateOfBirth,
+        gender,
+        setGender,
+        phoneNumber,
+        setPhoneNumber,
         handleSubmit,
     }
 }

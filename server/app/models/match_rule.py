@@ -6,72 +6,25 @@ if TYPE_CHECKING:
     from server.app.models.account import Account
     from server.app.models.club import Club
 
-
-class MatchRule(db.Model):
-    __tablename__ = "match_rule"
-
-    id          = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    name        = db.Column(db.String(64), nullable=False)
-    description = db.Column(db.String(512), nullable=True)
-
-    can_be_used_by_others = db.Column(db.Boolean, nullable=False, default=True)
-
-    creator_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey("account.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-    club_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey("club.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-
-    created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
-    is_active  = db.Column(db.Boolean, nullable=False, default=True)
-
-    # FIX: було db.ForeignKey("account.id"), має бути match_rule.id
-    replaced_by = db.Column(
-        db.BigInteger,
-        db.ForeignKey("match_rule.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-
-    # Relationships
-    creator      = db.relationship("Account", foreign_keys=[creator_id])
-    club         = db.relationship("Club",    foreign_keys=[club_id])
-    replacement  = db.relationship("MatchRule", remote_side="MatchRule.id", foreign_keys=[replaced_by])
-
-    rule_set_associations = db.relationship(
-        "MatchRuleSetRule",
-        back_populates="rule",
-        cascade="all, delete-orphan",
-    )
-
-    @property
-    def rule_sets(self) -> list[MatchRuleSet]:
-        return [a.rule_set for a in self.rule_set_associations]
-
-    def to_dict(self) -> dict:
-        return {
-            "id":                self.id,
-            "name":              self.name,
-            "description":       self.description,
-            "canBeUsedByOthers": self.can_be_used_by_others,
-            "creatorId":         self.creator_id,
-            "clubId":            self.club_id,
-            "createdAt":         self.created_at.isoformat() if self.created_at else None,
-            "isActive":          self.is_active,
-            "replacedBy":        self.replaced_by,
-        }
+VALID_MATCH_FORMATS    = {"best_of_3", "timed", "pro_set"}
+VALID_THIRD_SET_FORMATS = {"full_set", "super_tiebreak"}
+VALID_DEUCE_RULES      = {"advantage", "golden_point"}
+VALID_GAME_FORMATS     = {"singles", "doubles"}
 
 
 class MatchRuleSet(db.Model):
     __tablename__ = "match_rule_set"
 
     id          = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    name        = db.Column(db.String(64), nullable=False)
+    name        = db.Column(db.String(64),  nullable=False)
     description = db.Column(db.String(512), nullable=True)
+
+    match_format           = db.Column(db.String(20), nullable=False, default="best_of_3")
+    timed_duration_minutes = db.Column(db.Integer,    nullable=True)
+    pro_set_games          = db.Column(db.Integer,    nullable=True)
+    third_set_format       = db.Column(db.String(20), nullable=False, default="super_tiebreak")
+    deuce_rule             = db.Column(db.String(20), nullable=False, default="advantage")
+    game_format            = db.Column(db.String(20), nullable=False, default="doubles")
 
     can_be_used_by_others = db.Column(db.Boolean, nullable=False, default=True)
 
@@ -86,45 +39,21 @@ class MatchRuleSet(db.Model):
         nullable=True,
     )
 
-    # Relationships
     creator = db.relationship("Account", foreign_keys=[creator_id])
     club    = db.relationship("Club",    foreign_keys=[club_id])
 
-    rule_associations = db.relationship(
-        "MatchRuleSetRule",
-        back_populates="rule_set",
-        cascade="all, delete-orphan",
-    )
-
-    @property
-    def rules(self) -> list[MatchRule]:
-        return [a.rule for a in self.rule_associations]
-
     def to_dict(self) -> dict:
         return {
-            "id":                self.id,
-            "name":              self.name,
-            "description":       self.description,
-            "canBeUsedByOthers": self.can_be_used_by_others,
-            "creatorId":         self.creator_id,
-            "clubId":            self.club_id,
-            "ruleIds":           [a.match_rule_id for a in self.rule_associations],
+            "id":                   self.id,
+            "name":                 self.name,
+            "description":          self.description,
+            "matchFormat":          self.match_format,
+            "timedDurationMinutes": self.timed_duration_minutes,
+            "proSetGames":          self.pro_set_games,
+            "thirdSetFormat":       self.third_set_format,
+            "deuceRule":            self.deuce_rule,
+            "gameFormat":           self.game_format,
+            "canBeUsedByOthers":    self.can_be_used_by_others,
+            "creatorId":            self.creator_id,
+            "clubId":               self.club_id,
         }
-
-
-class MatchRuleSetRule(db.Model):
-    __tablename__ = "match_rule_set_rule"
-
-    match_rule_set_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey("match_rule_set.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-    match_rule_id = db.Column(
-        db.BigInteger,
-        db.ForeignKey("match_rule.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-
-    rule_set = db.relationship("MatchRuleSet", back_populates="rule_associations")
-    rule     = db.relationship("MatchRule",    back_populates="rule_set_associations")

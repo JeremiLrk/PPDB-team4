@@ -1,3 +1,4 @@
+import { useState } from "react";
 import animationStyles from "@/style/common/Animation.module.css";
 import buttonStyles from "@/style/common/Buttons.module.css";
 import panelStyles from "@/style/common/Panel.module.css";
@@ -6,10 +7,14 @@ import MatchProposalList from "@/components/matches/MatchProposalList.jsx";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
+import { useTeams }     from "@/hooks/teams/useTeams.js";
+import CreateMatchButton    from "@/components/matches/CreateMatchButton.jsx";
+
 export default function MatchProposalsTab() {
     const { lang } = useLangContext();
     const texts = usePageTexts("matches", lang);
     const dashboardTexts = usePageTexts("dashboard", lang);
+    const [showArchived, setShowArchived] = useState(false);
     const {
         proposals,
         loading,
@@ -17,7 +22,18 @@ export default function MatchProposalsTab() {
         submitting,
         load,
         setProposalStatus,
-    } = useMatchProposals();
+    } = useMatchProposals({ archived: showArchived });
+
+    // Only the teams the account actively manages are eligible for match creation.
+    // The button uses this list to build the proposal wizard.
+    const {
+        teams: managedTeams,
+        loading: managedLoading,
+    } = useTeams({ endpoint: "/api/teams/my" });
+
+    function handleMatchCreated() {
+        void load();
+    }
 
     return (
         <article
@@ -46,8 +62,29 @@ export default function MatchProposalsTab() {
                     onClick={load}
                     disabled={loading}
                 >
+                    {/* Manual refresh always re-reads the proposals from the backend. */}
                     {texts.refresh || "Refresh"}
                 </button>
+
+                <button
+                    className={buttonStyles.primaryButton}
+                    type="button"
+                    onClick={() => setShowArchived((current) => !current)}
+                    disabled={loading}
+                >
+                    {/* This is just a filter switch; the hook asks the API again. */}
+                    {showArchived
+                        ? (texts.show_active || "Show active")
+                        : (texts.show_archived || "Show archived")}
+                </button>
+
+                {/* Wait for managed teams so the wizard gets the actual eligible list. */}
+                {!managedLoading && (
+                    <CreateMatchButton
+                        managedTeams={managedTeams}
+                        onCreated={handleMatchCreated}
+                    />
+                )}
             </div>
 
             <MatchProposalList

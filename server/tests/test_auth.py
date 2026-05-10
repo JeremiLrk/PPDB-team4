@@ -14,9 +14,28 @@ from server.extensions import db
 def _unique_email() -> str:
     return f"test-{uuid.uuid4()}@example.com"
 
+
+def _signup_body(email: str, **overrides):
+    body = {
+        "email": email,
+        "password": "password123",
+        "firstName": "Test",
+        "lastName": "Account",
+        "dateOfBirth": "2000-01-01",
+        "gender": "male",
+        "phoneNumber": "+32 470 99 00 01",
+    }
+    body.update(overrides)
+    return body
+
+
 def test_signup_success(client: FlaskClient, app: Flask):
     email = _unique_email()
-    payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"}
+    payload = _signup_body(
+        email,
+        gender="female",
+        phoneNumber="+32 470 12 34 56",
+    )
     response = client.post("/api/signup", json=payload)
 
     assert response.status_code == 201
@@ -32,6 +51,18 @@ def test_signup_success(client: FlaskClient, app: Flask):
         assert account.last_name == "Account"
         assert str(account.date_of_birth) == "2000-01-01"
         assert account.is_verified is True
+        assert account.gender == "female"
+        assert account.phone == "+32 470 12 34 56"
+
+
+def test_signup_invalid_gender(client: FlaskClient):
+    email = _unique_email()
+    response = client.post(
+        "/api/signup",
+        json=_signup_body(email, gender="invalid"),
+    )
+    assert response.status_code == 400
+    assert response.get_json()["message"] == "gender must be male, female, or other."
 
 
 def test_signup_missing_credentials(client: FlaskClient):
@@ -45,7 +76,7 @@ def test_signup_missing_credentials(client: FlaskClient):
 
 def test_signup_short_password(client: FlaskClient):
     email = _unique_email()
-    payload = {"email": email, "password": "pass", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"}
+    payload = _signup_body(email, password="pass")
     response = client.post("/api/signup", json=payload)
 
     assert response.status_code == 400
@@ -59,17 +90,15 @@ def test_signup_existing_user(client: FlaskClient, app: Flask):
         # Create baseline user through the same API flow to keep required fields consistent.
         response = client.post(
             "/api/signup",
-            json={
-                "email": email,
-                "password": "password123",
-                "firstName": "Existing",
-                "lastName": "User",
-                "dateOfBirth": "2000-01-01",
-            },
+            json=_signup_body(
+                email,
+                firstName="Existing",
+                lastName="User",
+            ),
         )
         assert response.status_code == 201
 
-    payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"}
+    payload = _signup_body(email)
     response = client.post("/api/signup", json=payload)
 
     assert response.status_code == 400
@@ -78,8 +107,7 @@ def test_signup_existing_user(client: FlaskClient, app: Flask):
 
 def test_login_success(client: FlaskClient):
     email = _unique_email()
-    signup_payload = {"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"}
-    client.post("/api/signup", json=signup_payload)
+    client.post("/api/signup", json=_signup_body(email))
 
     response = client.post("/api/login", json={"email": email, "password": "password123"})
 
@@ -90,14 +118,14 @@ def test_login_success(client: FlaskClient):
 def test_login_unverified_user(client: FlaskClient):
     # New signup flow auto-verifies users, so login should succeed directly.
     email = _unique_email()
-    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "User", "dateOfBirth": "2000-01-01"})
+    client.post("/api/signup", json=_signup_body(email, lastName="User"))
     response = client.post("/api/login", json={"email": email, "password": "password123"})
     assert response.status_code == 200
 
 
 def test_login_invalid_credentials(client: FlaskClient):
     email = _unique_email()
-    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"})
+    client.post("/api/signup", json=_signup_body(email))
 
     payload = {"email": email, "password": "wrongpassword"}
     response = client.post("/api/login", json=payload)
@@ -108,7 +136,7 @@ def test_login_invalid_credentials(client: FlaskClient):
 
 def test_login_missing_credentials(client: FlaskClient):
     email = _unique_email()
-    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"})
+    client.post("/api/signup", json=_signup_body(email))
 
     payload = {"email": email}
     response = client.post("/api/login", json=payload)
@@ -119,7 +147,7 @@ def test_login_missing_credentials(client: FlaskClient):
 
 def test_login_jwt_cookie(client: FlaskClient):
     email = _unique_email()
-    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"})
+    client.post("/api/signup", json=_signup_body(email))
 
     client.post("/api/login", json={"email": email, "password": "password123"})
 
@@ -134,7 +162,7 @@ def test_login_jwt_cookie(client: FlaskClient):
 def test_logout_jwt_cookie(client: FlaskClient):
     email = _unique_email()
 
-    client.post("/api/signup", json={"email": email, "password": "password123", "firstName": "Test", "lastName": "Account", "dateOfBirth": "2000-01-01"})
+    client.post("/api/signup", json=_signup_body(email))
 
     client.post("/api/login", json={"email": email, "password": "password123"})
     cookie = client.get_cookie("access_token")
@@ -150,7 +178,7 @@ def test_logout_jwt_cookie(client: FlaskClient):
 
 def test_me_success(client: FlaskClient):
     email = _unique_email()
-    client.post("/api/signup",json={"email": email,"password": "password123","firstName": "Test","lastName": "Account","dateOfBirth": "2000-01-01"})
+    client.post("/api/signup", json=_signup_body(email))
 
     login_response = client.post("/api/login", json={"email": email, "password": "password123"})
     assert login_response.status_code == 200
@@ -162,6 +190,45 @@ def test_me_success(client: FlaskClient):
     assert data["account"]["email"] == email
     assert data["account"]["firstName"] == "Test"
     assert data["account"]["lastName"] == "Account"
+    assert data["account"]["dateOfBirth"] == "2000-01-01"
+    assert data["account"]["gender"] == "male"
+    assert data["account"]["phoneNumber"] == "+32 470 99 00 01"
+
+
+def test_patch_me_profile_fields(client: FlaskClient):
+    email = _unique_email()
+    client.post(
+        "/api/signup",
+        json=_signup_body(
+            email,
+            phoneNumber="+32 471 00 11 22",
+        ),
+    )
+    client.post("/api/login", json={"email": email, "password": "password123"})
+
+    response = client.patch(
+        "/api/me",
+        json={
+            "firstName": "Updated",
+            "lastName": "Name",
+            "dateOfBirth": "1999-05-05",
+            "gender": "other",
+            "phoneNumber": "+32 2 123 45 67",
+        },
+    )
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["account"]["firstName"] == "Updated"
+    assert body["account"]["lastName"] == "Name"
+    assert body["account"]["dateOfBirth"] == "1999-05-05"
+    assert body["account"]["gender"] == "other"
+    assert body["account"]["phoneNumber"] == "+32 2 123 45 67"
+
+    me = client.get("/api/me")
+    assert me.status_code == 200
+    acc = me.get_json()["account"]
+    assert acc["gender"] == "other"
+    assert acc["phoneNumber"] == "+32 2 123 45 67"
 
 
 def test_me_unauthorized(client: FlaskClient):
@@ -174,10 +241,10 @@ def test_me_unauthorized(client: FlaskClient):
 def test_is_manager_true(client: FlaskClient, app: Flask):
     # 1. Create and log in an account (cookie is stored in the test client)
     email = _unique_email()
-    client.post("/api/signup", json={
-        "email": email, "password": "password123", 
-        "firstName": "Manager", "lastName": "Account", "dateOfBirth": "2000-01-01"
-    })
+    client.post(
+        "/api/signup",
+        json=_signup_body(email, firstName="Manager"),
+    )
     login_response = client.post("/api/login", json={"email": email, "password": "password123"})
     assert login_response.status_code == 200
 
@@ -205,10 +272,10 @@ def test_is_manager_true(client: FlaskClient, app: Flask):
 def test_is_manager_false(client: FlaskClient, app: Flask):
     # 1. Create and log in a account
     email = _unique_email()
-    client.post("/api/signup", json={
-        "email": email, "password": "password123", 
-        "firstName": "Regular", "lastName": "Account", "dateOfBirth": "2000-01-01"
-    })
+    client.post(
+        "/api/signup",
+        json=_signup_body(email, firstName="Regular"),
+    )
     login_response = client.post("/api/login", json={"email": email, "password": "password123"})
     assert login_response.status_code == 200
 

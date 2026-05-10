@@ -1,23 +1,34 @@
-import commonStyles from "@/style/common/Common.module.css";
-import animationStyles from "@/style/common/Animation.module.css";
-import panelStyles from "@/style/common/Panel.module.css";
-import formStyles from "@/style/common/Forms.module.css";
-import buttonStyles from "@/style/common/Buttons.module.css";
+import commonStyles     from "@/style/common/Common.module.css";
+import animationStyles  from "@/style/common/Animation.module.css";
+import panelStyles      from "@/style/common/Panel.module.css";
+import formStyles       from "@/style/common/Forms.module.css";
+import buttonStyles     from "@/style/common/Buttons.module.css";
+
+import TeamCard             from "@/components/dashboard/TeamCard.jsx";
+import CreateTeamButton     from "@/components/team/CreateTeamButton.jsx";
 
 
-import TeamCard from "@/components/dashboard/TeamCard.jsx";
-import CreateTeamButton from "@/components/team/CreateTeamButton.jsx";
-import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
-import { useMyTeams } from "@/hooks/dashboard/useMyTeams.js";
-import { useMyClubs } from "@/hooks/useMyClubs.js";
+import { useCurrentUserContext }    from "@/context/useCurrentUserContext.jsx";
+import { useMyTeams }   from "@/hooks/dashboard/useMyTeams.js";
+import { useMyClubs }   from "@/hooks/useMyClubs.js";
 
 
 const PAGE_SIZE_OPTIONS = [6, 12, 24];
 
+/**
+ * TeamsTab
+ *
+ * Dashboard tab that lists all teams the current account is involved with
+ * and provides two action buttons:
+ *
+ *   CreateTeamButton  - existing flow to create a new team
+ *
+ * managedTeams (teams from /api/teams/my) are fetched here so that
+ */
 export function TeamsTab({ texts, theme }) {
-
     const { currentUser } = useCurrentUserContext();
 
+    // All teams the account is involved with (my-all) — shown in the list
     const {
         teams,
         total,
@@ -41,16 +52,32 @@ export function TeamsTab({ texts, theme }) {
             <article className={`${panelStyles.panel}`}>
 
                 {/* Header row */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
-
+                <div style={{
+                    display:        "flex",
+                    alignItems:     "center",
+                    justifyContent: "space-between",
+                    flexWrap:       "wrap",
+                    gap:            "0.75rem",
+                }}>
                     <h3 className={panelStyles.panelTitle} style={{ margin: 0 }}>
                         {texts?.my_teams || "My Teams"}
                         {total !== null && (
-                            <span className={panelStyles.panelCounter} style={{ marginLeft: "0.6rem" }}>{total}</span>
+                            <span
+                                className={panelStyles.panelCounter}
+                                style={{ marginLeft: "0.6rem" }}
+                            >
+                                {total}
+                            </span>
                         )}
                     </h3>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                    <div style={{
+                        display:    "flex",
+                        alignItems: "center",
+                        gap:        "0.6rem",
+                        flexWrap:   "wrap",
+                    }}>
+                        {/* Sort selector */}
                         <select
                             className={formStyles.searchInput}
                             style={{ width: "auto", marginBottom: 0 }}
@@ -59,13 +86,14 @@ export function TeamsTab({ texts, theme }) {
                             disabled={loading}
                         >
                             {[
-                                { value: "id", label: texts?.sort_id || "By ID" },
+                                { value: "id",   label: texts?.sort_id   || "By ID"   },
                                 { value: "name", label: texts?.sort_name || "By name" },
                             ].map(o => (
                                 <option key={o.value} value={o.value}>{o.label}</option>
                             ))}
                         </select>
 
+                        {/* Page size selector */}
                         <select
                             className={formStyles.searchInput}
                             style={{ width: "auto", marginBottom: 0 }}
@@ -74,11 +102,21 @@ export function TeamsTab({ texts, theme }) {
                             disabled={loading}
                         >
                             {PAGE_SIZE_OPTIONS.map(n => (
-                            <option key={n} value={n}>{n} {texts?.per_page || "per page"}</option>
+                                <option key={n} value={n}>
+                                    {n} {texts?.per_page || "per page"}
+                                </option>
                             ))}
                         </select>
 
-                        <CreateTeamButton clubs={myClubs} onCreated={handleTeamCreated} theme={theme} texts={texts}/>
+                        {/* Create new team */}
+                        <CreateTeamButton
+                            clubs={myClubs}
+                            onCreated={handleTeamCreated}
+                            theme={theme}
+                            texts={texts}
+                        />
+
+
                     </div>
                 </div>
 
@@ -96,23 +134,34 @@ export function TeamsTab({ texts, theme }) {
                 {teams.length > 0 && (
                     <ul className={panelStyles.list} style={{ margin: 0, padding: 0 }}>
                         {teams.map(team => (
-                            <TeamCard key={team.id} team={team} texts={texts} currentUser={currentUser} />
+                            <TeamCard
+                                key={team.id}
+                                team={team}
+                                texts={texts}
+                                currentUser={currentUser}
+                            />
                         ))}
                     </ul>
                 )}
 
-                {/* Loading */}
+                {/* Loading indicator */}
                 {loading && (
-                    <p className={commonStyles.muted}>{texts?.loading_teams || "Teams laden…"}</p>
+                    <p className={commonStyles.muted}>
+                        {texts?.loading_teams || "Teams laden..."}
+                    </p>
                 )}
 
                 {/* Load more */}
                 {!loading && hasMore && teams.length > 0 && (
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                         <span className={commonStyles.muted} style={{ fontSize: "0.82rem" }}>
-                            {texts?.showing || "Weergegeven"} {teams.length}{total !== null ? ` / ${total}` : ""}
+                            {texts?.showing || "Weergegeven"} {teams.length}
+                            {total !== null ? ` / ${total}` : ""}
                         </span>
-                        <button className={buttonStyles.primaryButton} onClick={() => void loadMore()}>
+                        <button
+                            className={buttonStyles.primaryButton}
+                            onClick={() => void loadMore()}
+                        >
                             {texts?.load_more || "Meer laden"}
                         </button>
                     </div>

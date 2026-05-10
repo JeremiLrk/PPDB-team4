@@ -1,3 +1,30 @@
 [
-  {"name": "standard", "description": "do not cheat"}
+  {
+    "name": "Standaard Tennis",
+    "description": "Best of 3 sets, voordeel bij deuce, supertiebreak als derde set, dubbelspel.",
+    "match_format": "best_of_3",
+    "third_set_format": "super_tiebreak",
+    "deuce_rule": "advantage",
+    "game_format": "doubles",
+    "can_be_used_by_others": true
+  },
+  {
+    "name": "Standaard Padel",
+    "description": "Best of 3 sets, golden point bij deuce, supertiebreak als derde set, dubbelspel.",
+    "match_format": "best_of_3",
+    "third_set_format": "super_tiebreak",
+    "deuce_rule": "golden_point",
+    "game_format": "doubles",
+    "can_be_used_by_others": true
+  },
+  {
+    "name": "Tennis op Tijd (60 min)",
+    "description": "Spelen op tijd, 60 minuten, meeste gewonnen games wint. Golden point bij deuce.",
+    "match_format": "timed",
+    "timed_duration_minutes": 60,
+    "third_set_format": "super_tiebreak",
+    "deuce_rule": "golden_point",
+    "game_format": "doubles",
+    "can_be_used_by_others": true
+  }
 ]
