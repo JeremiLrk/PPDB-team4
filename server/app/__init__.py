@@ -17,6 +17,7 @@ from server.app.routes.availability_routes import availability_bp
 from server.app.routes.clubs_routes import clubs_bp
 from server.app.routes.dashboard_routes import dashboard_bp
 from server.app.routes.health_routes import api
+from server.app.routes.city_routes import city_bp
 from server.app.routes.root_routes import root_bp
 from server.app.routes.ladder_routes import ladder_bp
 from server.app.routes.ladders_routes import ladders_bp
@@ -74,9 +75,14 @@ def create_app():
     init_db(app)
 
     should_seed = os.getenv("SEED_ON_STARTUP", "").lower() in {"1", "true", "yes"}
-    if should_seed:
+    # Flask's debug reloader imports the app twice. The child process is the
+    # one that actually serves requests, so only seed there to avoid doing the
+    # heavy demo build in the parent watchdog process as well.
+    if should_seed and os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         seed_verbose = os.getenv("SEED_VERBOSE", "1").lower() not in {"0", "false", "no"}
         seed_db(app, verbose=seed_verbose)
+    elif should_seed:
+        print("[seed_db] Skipping startup seed in Flask reloader parent process.")
 
     @app.get("/")
     def root():
@@ -94,6 +100,7 @@ def _register_blueprints(app: Flask):
     app.register_blueprint(ladder_bp)
     app.register_blueprint(matches_bp)
     app.register_blueprint(clubs_bp)
+    app.register_blueprint(city_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(team_bp)
     app.register_blueprint(sport_type_bp)

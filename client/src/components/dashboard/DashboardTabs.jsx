@@ -6,6 +6,7 @@ import dashStyles from "@/style/ClubSettings.module.css";
 
 import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js";
 import { GENDER_SELECT_OPTIONS, GENDER_VALUES } from "@/constants/genderOptions.js";
+import CityAutocompleteField from "@/components/common/CityAutocompleteField.jsx";
 
 function profileGenderFromUser(user) {
     const g = user?.gender
@@ -710,6 +711,7 @@ export function CreateClubTab({
     clubRequestSubmitting,
     clubRequestMessage,
     onFieldChange,
+    onCitySelect,
     onSubmit,
     texts,
     sportTypes = [],
@@ -737,12 +739,10 @@ export function CreateClubTab({
                     <div className={styles.formRow}>
                         <div className={styles.formGroup}>
                             <label className={styles.formLabel}>{texts?.city || defaultText(lang, "City", "Stad")}</label>
-                            <input
-                                className={styles.formInput}
-                                type="text"
-                                name="city"
+                            <CityAutocompleteField
                                 value={clubRequestForm.city}
                                 onChange={onFieldChange}
+                                onSelect={onCitySelect}
                                 placeholder={texts?.city_placeholder || defaultText(lang, "City where your club is based", "Stad waar je club gevestigd is")}
                                 required
                             />
@@ -1062,9 +1062,6 @@ export function AvailabilityTab({
                                         <p className={styles.primaryText}>{formatMatchTitle(match)}</p>
                                         <p className={styles.secondaryText}>
                                             {formatUpcomingMatchDate(match, texts, lang)}
-                                        </p>
-                                        <p className={styles.secondaryText}>
-                                            {match.location || texts?.unknown_location || defaultText(lang, "Unknown location", "Onbekende locatie")}
                                         </p>
                                     </div>
                                     <span className={`${styles.statusPill} ${styles.statusApproved}`}>

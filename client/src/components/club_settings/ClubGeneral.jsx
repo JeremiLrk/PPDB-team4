@@ -1,8 +1,10 @@
 import styles from "@/style/ClubSettings.module.css";
+import CityAutocompleteField from "@/components/common/CityAutocompleteField.jsx";
 
 export function ClubGeneral({
     formData,
     onChange,
+    onCitySelect,
     onSubmit,
     updating,
     updateMessage,
@@ -31,12 +33,12 @@ export function ClubGeneral({
                     {/* CITY */}
                     <label className={styles.formLabel}>
                         {texts.city || "Stad"}
-                        <input
-                            className={styles.formInput}
-                            type="text"
-                            name="city"
+                        <CityAutocompleteField
                             value={formData.city || ""}
                             onChange={onChange}
+                            onSelect={onCitySelect}
+                            placeholder={texts.city_placeholder || "Stad waar je club gevestigd is"}
+                            required
                         />
                     </label>
 

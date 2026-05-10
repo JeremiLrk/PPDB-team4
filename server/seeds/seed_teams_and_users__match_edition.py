@@ -12,6 +12,7 @@ Seeding order:
 """
 
 import datetime
+import hashlib
 from werkzeug.security import generate_password_hash
 from server.extensions import db
 from server.app.models.availability_block import AvailabilityBlock
@@ -31,12 +32,14 @@ from server.app.models.ladder_team import LadderTeam
 from server.app.models.match import (
     MatchAccepted, MatchCancelled, MatchPlayed, MatchProposal,
     MatchRejected, MatchScoreSubmission, MatchStatus, SubmissionRole,
+    teams_share_players,
 )
 from server.app.services.weekly_match_proposal_service import (
     generate_weekly_match_proposals, next_week_start,
 )
 
 TAG = "[seed:teams_and_users]"
+DEFAULT_SEED_GENDER = "other"
 
 
 # ---------------------------------------------------------------------------
@@ -76,6 +79,11 @@ def get_or_create_sport(name: str, min_p: int, max_p: int, verbose: bool = True)
     return sport
 
 
+def _fake_phone_for_email(email: str) -> str:
+    digest = hashlib.sha1(email.encode("utf-8")).hexdigest()
+    return f"+32 470 {digest[0:2]} {digest[2:4]} {digest[4:6]}"
+
+
 def make_account(
     first: str,
     last: str,
@@ -83,13 +91,21 @@ def make_account(
     role: AccountRole,
     password: str = "Password123!",
     force_password_update: bool = False,
+    gender: str = DEFAULT_SEED_GENDER,
+    phone: str | None = None,
 ) -> tuple:
     """Returns (account, created: bool)."""
     existing = Account.query.filter_by(email=email).first()
     if existing:
         if force_password_update:
             existing.password_hash = generate_password_hash(password)
+        desired_phone = phone or _fake_phone_for_email(email)
+        if existing.gender != gender:
+            existing.gender = gender
+        if existing.phone != desired_phone:
+            existing.phone = desired_phone
         return existing, False
+    desired_phone = phone or _fake_phone_for_email(email)
     acc = Account(
         first_name=first,
         last_name=last,
@@ -97,6 +113,8 @@ def make_account(
         password_hash=generate_password_hash(password),
         account_role_id=role.id,
         date_of_birth=datetime.date(1990, 1, 1),
+        gender=gender,
+        phone=desired_phone,
         is_verified=True,
     )
     db.session.add(acc)
@@ -437,6 +455,10 @@ def _make_proposal(
     ).first()
     if existing:
         return None
+    team1 = db.session.get(Team, t1)
+    team2 = db.session.get(Team, t2)
+    if teams_share_players(team1, team2):
+        return None
     proposal = MatchProposal(
         proposed_by_user_id=proposed_by_user_id,
         sport_type_id=sport_type_id,
@@ -575,6 +597,7 @@ def seed_ladder_matches(
     managers: list,        # list of Account objects (managers), one per team (same order)
     sport_type_id: int,
     proposed_by_user_id: int,
+    week_offset_start: int,
     pending_count: int = 5,
     accepted_count: int = 5,
     rejected_count: int = 5,
@@ -602,19 +625,54 @@ def seed_ladder_matches(
         "pending": 0, "accepted": 0, "rejected": 0,
         "cancelled": 0, "played": 0, "disputed": 0,
     }
-    week_counter = -30  # go into the past for historical matches
+    # Keep a bounded window: enough history for archiving, but never more than
+    # 2 weeks ahead so the seeded proposals stay realistic.
+    week_offsets = list(range(week_offset_start, week_offset_start + 10))
+    pair_week_queue = [
+        (t1, t2, m1, m2, _week(offset))
+        for offset in week_offsets
+        for (t1, t2, m1, m2) in pairs
+    ]
 
-    def _next_pair_and_week():
-        nonlocal week_counter
-        idx = 0
-        while True:
-            t1, t2, m1, m2 = pairs[idx % len(pairs)]
-            w = _week(week_counter)
-            week_counter += 1
-            idx += 1
-            yield t1, t2, m1, m2, w
+    # The seed is idempotent, so on later startups most or all of these slots
+    # may already exist. Build the missing-slot list once and iterate over it
+    # deterministically instead of looping until a counter increments forever.
+    existing_keys = {
+        (row.team1_id, row.team2_id, row.week_start_date)
+        for row in MatchProposal.query.filter_by(ladder_id=ladder.id)
+        .with_entities(
+            MatchProposal.team1_id,
+            MatchProposal.team2_id,
+            MatchProposal.week_start_date,
+        )
+        .all()
+    }
 
-    gen = _next_pair_and_week()
+    pair_has_shared_players: dict[tuple[int, int], bool] = {}
+    available_slots = []
+    for t1, t2, m1, m2, w in pair_week_queue:
+        ordered_pair = tuple(sorted((t1.id, t2.id)))
+        key = (ordered_pair[0], ordered_pair[1], w)
+        if key in existing_keys:
+            continue
+        if ordered_pair not in pair_has_shared_players:
+            pair_has_shared_players[ordered_pair] = teams_share_players(t1, t2)
+        if pair_has_shared_players[ordered_pair]:
+            continue
+        available_slots.append((t1, t2, m1, m2, w))
+
+    if not available_slots:
+        return counts
+
+    slot_index = 0
+
+    def _take_slot():
+        nonlocal slot_index
+        if slot_index >= len(available_slots):
+            return None
+        slot = available_slots[slot_index]
+        slot_index += 1
+        return slot
 
     def _proposal(t1, t2, m1, w):
         start = _dt(w + datetime.timedelta(days=1), hour=14)
@@ -628,61 +686,67 @@ def seed_ladder_matches(
             proposed_start_at=start,
             proposed_end_at=start + datetime.timedelta(hours=2),
             location=f"{ladder.name} Court",
-        )
+    )
 
     # --- PENDING ---
     while counts["pending"] < pending_count:
-        t1, t2, m1, m2, w = next(gen)
+        slot = _take_slot()
+        if slot is None:
+            break
+        t1, t2, m1, m2, w = slot
         p = _proposal(t1, t2, m1, w)
-        if p is None:
-            continue
         _make_pending(p)
         counts["pending"] += 1
 
     # --- ACCEPTED ---
     while counts["accepted"] < accepted_count:
-        t1, t2, m1, m2, w = next(gen)
+        slot = _take_slot()
+        if slot is None:
+            break
+        t1, t2, m1, m2, w = slot
         p = _proposal(t1, t2, m1, w)
-        if p is None:
-            continue
         _make_accepted(p, by_user_id=m2.id)
         counts["accepted"] += 1
 
     # --- REJECTED ---
     while counts["rejected"] < rejected_count:
-        t1, t2, m1, m2, w = next(gen)
+        slot = _take_slot()
+        if slot is None:
+            break
+        t1, t2, m1, m2, w = slot
         p = _proposal(t1, t2, m1, w)
-        if p is None:
-            continue
         _make_rejected(p, by_user_id=m2.id)
         counts["rejected"] += 1
 
     # --- CANCELLED ---
     while counts["cancelled"] < cancelled_count:
-        t1, t2, m1, m2, w = next(gen)
+        slot = _take_slot()
+        if slot is None:
+            break
+        t1, t2, m1, m2, w = slot
         p = _proposal(t1, t2, m1, w)
-        if p is None:
-            continue
         _make_accepted(p, by_user_id=m2.id)
         _make_cancelled(p)
         counts["cancelled"] += 1
 
     # --- PLAYED ---
     while counts["played"] < played_count:
-        t1, t2, m1, m2, w = next(gen)
+        slot = _take_slot()
+        if slot is None:
+            break
+        t1, t2, m1, m2, w = slot
         p = _proposal(t1, t2, m1, w)
-        if p is None:
-            continue
         _make_accepted(p, by_user_id=m2.id)
         _make_played(p, score_t1=2, score_t2=1, by_user_id=m1.id)
         counts["played"] += 1
 
     # --- DISPUTED ---
     while counts["disputed"] < disputed_count:
-        t1, t2, m1, m2, w = next(gen)
+        slot = _take_slot()
+        if slot is None:
+            break
+        t1, t2, m1, m2, w = slot
         p = _proposal(t1, t2, m1, w)
-        if p is None:
-            continue
         _make_disputed(p, by_user1_id=m1.id, by_user2_id=m2.id)
         counts["disputed"] += 1
 
@@ -763,6 +827,10 @@ def ensure_pending_proposal(
         week_start_date=week_start_date, team1_id=t1, team2_id=t2
     ).first():
         return False
+    team1 = db.session.get(Team, t1)
+    team2 = db.session.get(Team, t2)
+    if teams_share_players(team1, team2):
+        return False
     db.session.add(MatchProposal(
         proposed_by_user_id=proposed_by_user_id,
         sport_type_id=sport_type_id,
@@ -839,8 +907,11 @@ def seed_teams_and_users(verbose: bool = True) -> None:
     owners = []   # list of (Account, TeamManager, ClubOwner, Club, SportType)
     try:
         for first, last, email, pwd, club_name, city, sport in OWNER_DATA:
+            gender = "male" if email == "jeremilorek@outlook.com" else DEFAULT_SEED_GENDER
+            phone = "+32 470 11 22 33" if email == "jeremilorek@outlook.com" else None
             acc, _  = make_account(first, last, email, role_manager,
-                                   password=pwd, force_password_update=True)
+                                   password=pwd, force_password_update=True,
+                                   gender=gender, phone=phone)
             if not acc.is_verified:
                 acc.is_verified = True
             tm, _   = make_manager(acc)
@@ -999,6 +1070,49 @@ def seed_teams_and_users(verbose: bool = True) -> None:
         raise
     log(f"{TAG} [5/8] Team managers OK", verbose)
 
+    TEAM_PLAYER_ROSTER = [
+        ("Alice",  "Moore",     "alice.moore@example.com"),
+        ("Bob",    "Taylor",    "bob.taylor@example.com"),
+        ("Carol",  "Anderson",  "carol.anderson@example.com"),
+        ("Dave",   "Thomas",    "dave.thomas@example.com"),
+        ("Eve",    "Jackson",   "eve.jackson@example.com"),
+        ("Frank",  "White",     "frank.white@example.com"),
+        ("Grace",  "Harris",    "grace.harris@example.com"),
+        ("Henry",  "Martin",    "henry.martin@example.com"),
+        ("Iris",   "Garcia",    "iris.garcia@example.com"),
+        ("Jake",   "Martinez",  "jake.martinez@example.com"),
+        ("Karen",  "Robinson",  "karen.robinson@example.com"),
+        ("Leo",    "Clark",     "leo.clark@example.com"),
+        ("Mia",    "Rodriguez", "mia.rodriguez@example.com"),
+        ("Nick",   "Lewis",     "nick.lewis@example.com"),
+        ("Olivia", "Lee",       "olivia.lee@example.com"),
+        ("Paul",   "Walker",    "paul.walker@example.com"),
+        ("Quinn",  "Hall",      "quinn.hall@example.com"),
+        ("Rachel", "Allen",     "rachel.allen@example.com"),
+        ("Steve",  "Young",     "steve.young@example.com"),
+        ("Tina",   "Hernandez", "tina.hernandez@example.com"),
+        ("Uma",    "King",      "uma.king@example.com"),
+        ("Victor", "Wright",    "victor.wright@example.com"),
+        ("Wendy",  "Lopez",     "wendy.lopez@example.com"),
+        ("Xander", "Hill",      "xander.hill@example.com"),
+        ("Yara",   "Scott",     "yara.scott@example.com"),
+        ("Zack",   "Green",     "zack.green@example.com"),
+        ("Amy",    "Adams",     "amy.adams@example.com"),
+        ("Brian",  "Baker",     "brian.baker@example.com"),
+    ]
+    try:
+        for i, (team, (first_name, last_name, email)) in enumerate(zip(all_teams_flat, TEAM_PLAYER_ROSTER)):
+            club_idx = i // 4
+            acc, _ = make_account(first_name, last_name, email, role_player)
+            ensure_player_on_team(acc, team)
+            ensure_team_players_in_club(team, owners[club_idx][3])
+            log(f"{TAG}   player '{email}' -> '{team.name}'", verbose)
+    except Exception as e:
+        print(f"{TAG} ERROR seeding team players: {e}")
+        db.session.rollback()
+        raise
+    log(f"{TAG} [5/8] Team players OK", verbose)
+
     # ------------------------------------------------------------------
     # 6. Ladders — 2 ladders per club = 14 total
     # ------------------------------------------------------------------
@@ -1092,16 +1206,18 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             rot_mgrs = [team_managers[t.id] for t in rotated]
 
             # Seed 20+ of each match type per ladder (30 total each type across both)
-            for ladder, t_list, m_list in [
+            for local_slot, (ladder, t_list, m_list) in enumerate([
                 (ladder_a, teams_in_club, mgrs),
                 (ladder_b, rotated, rot_mgrs),
-            ]:
+            ]):
+                week_offset_start = -137 + ((club_idx * 2 + local_slot) * 10)
                 counts = seed_ladder_matches(
                     ladder=ladder,
                     teams=t_list,
                     managers=m_list,
                     sport_type_id=sport_id,
                     proposed_by_user_id=owners[club_idx][0].id,
+                    week_offset_start=week_offset_start,
                     pending_count=10,
                     accepted_count=10,
                     rejected_count=10,
@@ -1197,14 +1313,51 @@ def seed_teams_and_users(verbose: bool = True) -> None:
                 team2_id=player_demo_opponent.id,
                 proposed_by_user_id=opponent_acc.id,
             )
-            if len(player_demo_weeks) > 1:
-                set_match_proposal_accepted(
-                    week_start_date=player_demo_weeks[1],
-                    team1_id=player_demo_team.id,
-                    team2_id=player_demo_opponent.id,
-                    accepted_by_user_id=opponent_acc.id,
-                    response_text="Accepted by opponent for dashboard upcoming matches demo",
-                )
+        if len(player_demo_weeks) > 1:
+            set_match_proposal_accepted(
+                week_start_date=player_demo_weeks[1],
+                team1_id=player_demo_team.id,
+                team2_id=player_demo_opponent.id,
+                accepted_by_user_id=opponent_acc.id,
+                response_text="Accepted by opponent for dashboard upcoming matches demo",
+            )
+
+        jeremi_team = club_teams[0][0]
+        future_opponent_team = club_teams[0][2]
+        future_match_date = datetime.date.today() + datetime.timedelta(days=3)
+        future_match_week_start = future_match_date - datetime.timedelta(days=future_match_date.weekday())
+        future_match_start = datetime.datetime.combine(
+            future_match_date,
+            datetime.time(hour=19, minute=0),
+        )
+        created_future_match = ensure_pending_proposal(
+            week_start_date=future_match_week_start,
+            team1_id=jeremi_team.id,
+            team2_id=future_opponent_team.id,
+            proposed_by_user_id=jeremi_acc.id,
+            sport_type_id=tennis.id,
+            proposed_start_at=future_match_start,
+            proposed_end_at=future_match_start + datetime.timedelta(hours=1),
+            location="NetRank Club Court 1",
+        )
+        if not created_future_match:
+            set_match_proposal_pending(
+                week_start_date=future_match_week_start,
+                team1_id=jeremi_team.id,
+                team2_id=future_opponent_team.id,
+                proposed_by_user_id=jeremi_acc.id,
+            )
+        future_match = find_match_proposal(
+            future_match_week_start,
+            jeremi_team.id,
+            future_opponent_team.id,
+        )
+        if future_match:
+            future_match.proposed_by_user_id = jeremi_acc.id
+            future_match.proposed_start_at = future_match_start
+            future_match.proposed_end_at = future_match_start + datetime.timedelta(hours=1)
+            future_match.location = "NetRank Club Court 1"
+            future_match.sport_type_id = tennis.id
 
         # Join requests for demo
         upsert_club_join_request(owners[0][3].id, opponent_acc.id, days_ago=2)

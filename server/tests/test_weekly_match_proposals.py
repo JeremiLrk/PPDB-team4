@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import math
 
 from flask import Flask
@@ -7,11 +7,12 @@ from flask.testing import FlaskClient
 from server.app.models.account import Account
 from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
-from server.app.models.match import MatchProposal
+from server.app.models.match import MatchProposal, MatchStatus
 from server.app.models.team import Team
 from server.app.services.weekly_match_proposal_service import (
     auto_generation_not_before,
     generate_weekly_match_proposals,
+    latest_allowed_proposal_week_start,
     next_week_start,
 )
 import server.app.services.weekly_match_proposal_service as weekly_service
@@ -61,6 +62,94 @@ def test_seeded_player_demo_teams_share_one_ladder(seeded_app: Flask):
         assert team_names == ["Player Demo A", "Player Demo B"]
 
 
+def test_seeded_match_proposals_span_past_and_future(seeded_app: Flask):
+    with seeded_app.app_context():
+        today = date.today()
+        archived_cutoff = today - timedelta(days=30)
+
+        past_count = MatchProposal.query.filter(MatchProposal.week_start_date < archived_cutoff).count()
+        future_count = MatchProposal.query.filter(MatchProposal.week_start_date > today).count()
+        latest_week = (
+            MatchProposal.query.filter(MatchProposal.week_start_date.isnot(None))
+            .order_by(MatchProposal.week_start_date.desc())
+            .first()
+        )
+
+        assert past_count > 0
+        assert future_count > 0
+        assert latest_week is not None
+        assert latest_week.week_start_date <= latest_allowed_proposal_week_start()
+
+
+def test_seeded_non_demo_proposals_use_player_contacts(seeded_client: FlaskClient):
+    loginDemoPlayer(seeded_client)
+
+    list_response = seeded_client.get("/api/matches/proposals?archived=1")
+    assert list_response.status_code == 200
+    proposals = list_response.get_json()["proposals"]
+    proposal = next(
+        (item for item in proposals if item["team1_name"] == "NetRank Aces" or item["team2_name"] == "NetRank Aces"),
+        None,
+    )
+    assert proposal is not None
+
+    emails = {
+        contact["email"]
+        for contact in proposal["team1_contacts"] + proposal["team2_contacts"]
+    }
+    phone_numbers = {
+        contact["phoneNumber"]
+        for contact in proposal["team1_contacts"] + proposal["team2_contacts"]
+    }
+    assert "jeremilorek@outlook.com" not in emails
+    assert "nina.jacobs@example.com" not in emails
+    assert "alice.moore@example.com" in emails or "bob.taylor@example.com" in emails
+    assert all(phone_numbers)
+
+
+def test_match_proposals_hide_archived_history_until_requested(seeded_client: FlaskClient, seeded_app: Flask):
+    loginDemoPlayer(seeded_client)
+
+    with seeded_app.app_context():
+        team1 = Team.query.filter_by(name="Player Demo A").first()
+        team2 = Team.query.filter_by(name="Player Demo B").first()
+        rejected_status = MatchStatus.query.filter_by(name="rejected").first()
+        assert team1 is not None
+        assert team2 is not None
+        assert rejected_status is not None
+
+        archived_week = date.today() - timedelta(days=60)
+        archived_proposal = MatchProposal.query.filter_by(
+            team1_id=team1.id,
+            team2_id=team2.id,
+            week_start_date=archived_week,
+        ).first()
+        if archived_proposal is None:
+            archived_proposal = MatchProposal(
+                proposed_by_user_id=Account.query.filter_by(email="nina.jacobs@example.com").first().id,
+                sport_type_id=team1.sport_type_id,
+                team1_id=team1.id,
+                team2_id=team2.id,
+                status_id=rejected_status.id,
+                week_start_date=archived_week,
+                proposed_start_at=datetime.combine(archived_week + timedelta(days=1), datetime.min.time()),
+                proposed_end_at=datetime.combine(archived_week + timedelta(days=1), datetime.min.time()) + timedelta(hours=1),
+            )
+            db.session.add(archived_proposal)
+            db.session.commit()
+        archived_id = archived_proposal.id
+
+    active_response = seeded_client.get("/api/matches/proposals")
+    assert active_response.status_code == 200
+    active_ids = {proposal["id"] for proposal in active_response.get_json()["proposals"]}
+    assert archived_id not in active_ids
+
+    archived_response = seeded_client.get("/api/matches/proposals?archived=1")
+    assert archived_response.status_code == 200
+    archived_ids = {proposal["id"] for proposal in archived_response.get_json()["proposals"]}
+    assert archived_id in archived_ids
+
+
 def test_demo_account_is_player_on_non_managed_ladder_team(seeded_app: Flask):
     with seeded_app.app_context():
         account = Account.query.filter_by(email="jeremilorek@outlook.com").first()
@@ -81,6 +170,10 @@ def test_player_can_see_and_accept_weekly_proposal(seeded_client: FlaskClient):
     player_demo_proposal = findPlayerDemoProposal(seeded_client)
     assert player_demo_proposal["team2_name"] == "Player Demo B"
     assert player_demo_proposal["status"] == "pending"
+    assert any(contact["email"] == "jeremilorek@outlook.com" for contact in player_demo_proposal["team1_contacts"])
+    assert any(contact["email"] == "robin.vermeulen@example.com" for contact in player_demo_proposal["team2_contacts"])
+    assert any(contact["phoneNumber"] == "+32 470 11 22 33" for contact in player_demo_proposal["team1_contacts"])
+    assert any(contact["phoneNumber"] for contact in player_demo_proposal["team2_contacts"])
 
     accept_response = seeded_client.patch(
         f"/api/matches/proposals/{player_demo_proposal['id']}/status",
@@ -90,7 +183,7 @@ def test_player_can_see_and_accept_weekly_proposal(seeded_client: FlaskClient):
     assert accept_response.get_json()["proposal"]["status"] == "accepted"
 
 
-def test_player_can_set_accepted_proposal_back_to_pending(seeded_client: FlaskClient):
+def test_accepted_proposal_can_be_reset_to_pending(seeded_client: FlaskClient):
     loginDemoPlayer(seeded_client)
     player_demo_proposal = findPlayerDemoProposal(seeded_client)
 
@@ -99,6 +192,24 @@ def test_player_can_set_accepted_proposal_back_to_pending(seeded_client: FlaskCl
         json={"status": "accepted"},
     )
     assert accept_response.status_code == 200
+
+    pending_response = seeded_client.patch(
+        f"/api/matches/proposals/{player_demo_proposal['id']}/status",
+        json={"status": "pending"},
+    )
+    assert pending_response.status_code == 200
+    assert pending_response.get_json()["proposal"]["status"] == "pending"
+
+
+def test_rejected_proposal_can_be_reset_to_pending(seeded_client: FlaskClient):
+    loginDemoPlayer(seeded_client)
+    player_demo_proposal = findPlayerDemoProposal(seeded_client)
+
+    reject_response = seeded_client.patch(
+        f"/api/matches/proposals/{player_demo_proposal['id']}/status",
+        json={"status": "rejected"},
+    )
+    assert reject_response.status_code == 200
 
     pending_response = seeded_client.patch(
         f"/api/matches/proposals/{player_demo_proposal['id']}/status",
@@ -274,8 +385,16 @@ def test_weekly_generation_skips_pair_when_rematch_cooldown_active(seeded_app: F
         assert account is not None
         assert ladder is not None
 
-        future_week = next_week_start() + timedelta(days=35)
+        future_week = next_week_start() - timedelta(weeks=10)
         monkeypatch.setattr(weekly_service, "meets_rematch_cooldown", lambda *_args, **_kwargs: False)
+        monkeypatch.setattr(
+            weekly_service,
+            "find_common_team_window",
+            lambda *_args, **_kwargs: weekly_service.TimeWindow(
+                start=datetime.combine(future_week + timedelta(days=1), datetime.min.time()),
+                end=datetime.combine(future_week + timedelta(days=1), datetime.min.time()) + timedelta(hours=1),
+            ),
+        )
 
         result = generate_weekly_match_proposals(
             proposed_by_user_id=account.id,
@@ -288,3 +407,27 @@ def test_weekly_generation_skips_pair_when_rematch_cooldown_active(seeded_app: F
 
         assert result["created_count"] == 0
         assert any(row["reason"] == "rematch_cooldown" for row in result["skipped"])
+
+
+def test_weekly_generation_rejects_weeks_too_far_ahead(seeded_app: Flask):
+    with seeded_app.app_context():
+        account = Account.query.filter_by(email="jeremilorek@outlook.com").first()
+        ladder = Ladder.query.filter_by(name="Player Demo Singles").first()
+        assert account is not None
+        assert ladder is not None
+
+        future_week = latest_allowed_proposal_week_start() + timedelta(weeks=1)
+
+        try:
+            generate_weekly_match_proposals(
+                proposed_by_user_id=account.id,
+                week_start_date=future_week,
+                ladder_id=ladder.id,
+                managed_team_ids=None,
+                duration_minutes=60,
+                location="Player Demo Court 1",
+            )
+        except ValueError as exc:
+            assert "more than 2 weeks ahead" in str(exc)
+        else:
+            raise AssertionError("Expected ValueError for overly future proposal week.")

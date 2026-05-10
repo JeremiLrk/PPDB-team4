@@ -11,6 +11,7 @@ from server.app.models.club_owner_club import ClubOwnerClub
 from server.app.models.club_player import ClubPlayer
 from server.app.models.team import TeamManager
 from server.app.routes.dashboard_routes import _get_current_user_id_from_cookie
+from server.app.services.city_service import resolve_city_label
 from sqlalchemy import or_
 
 clubs_bp = Blueprint("clubs", __name__, url_prefix="/api")
@@ -84,7 +85,14 @@ def create_club():
     if not club_name:
         return jsonify({"message": "Clubnaam is verplicht"}), 400
 
-    city = (data.get("city") or "Unknown").strip() or "Unknown"
+    city_input = (data.get("city") or "").strip()
+    if not city_input:
+        return jsonify({"message": "City is required."}), 400
+
+    city = resolve_city_label(city_input)
+    if not city:
+        return jsonify({"message": "Please select a real city from the suggestions."}), 400
+
     description = (data.get("description") or "Club created by user").strip() or "Club created by user"
     sport_type_id = data.get("sport_type_id")
     sport_name = data.get("sport")
@@ -169,7 +177,18 @@ def update_club(club_id: int):
 
     club.name = data.get("name", club.name)
     club.description = data.get("description", club.description)
-    club.city = data.get("city", club.city)
+
+    if "city" in data:
+        city_input = (data.get("city") or "").strip()
+        if not city_input:
+            return jsonify({"message": "City is required."}), 400
+
+        city = resolve_city_label(city_input)
+        if not city:
+            return jsonify({"message": "Please select a real city from the suggestions."}), 400
+
+        club.city = city
+
     club.sport_type_id = data.get("sport_type_id", club.sport_type_id)
 
     db.session.commit()
@@ -465,4 +484,3 @@ def list_my_clubs(account: Account):
     db_clubs = Club.query.filter(Club.id.in_(club_ids)).order_by(Club.name.asc()).all()
     clubs = [{"id": club.id, "name": club.name} for club in db_clubs]
     return jsonify({"clubs": clubs}), 200
-

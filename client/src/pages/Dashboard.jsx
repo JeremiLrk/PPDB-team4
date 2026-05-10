@@ -148,6 +148,7 @@ function Dashboard() {
                         clubRequestSubmitting={workspace.clubRequestSubmitting}
                         clubRequestMessage={workspace.clubRequestMessage}
                         onFieldChange={workspace.onClubRequestFieldChange}
+                        onCitySelect={workspace.onClubRequestCitySelect}
                         onSubmit={workspace.onClubRequestSubmit}
                         texts={dashboardTexts}
                         sportTypes={workspace.sportTypes}

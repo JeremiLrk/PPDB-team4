@@ -56,6 +56,10 @@ class Account(db.Model):
         if self.team_manager:
             managed_team_ids = [t.id for t in self.team_manager.teams]
 
+        player_team_ids = []
+        if self.player:
+            player_team_ids = [t.id for t in self.player.teams]
+
         # IDs of clubs the account owns (only for ClubOwner)
         club_ids = []
         if isinstance(resolved, ClubOwner):
@@ -72,6 +76,7 @@ class Account(db.Model):
             "role":           role,
             "roles":          [role],
             "managedTeamIds": managed_team_ids,
+            "playerTeamIds":   player_team_ids,
             "clubIds":        club_ids,
         }
 

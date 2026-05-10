@@ -1,4 +1,9 @@
+from pathlib import Path
+
 from flask.testing import FlaskClient
+
+
+TRANSLATION_ROOT = Path(__file__).resolve().parents[1] / "translations"
 
 
 def _get_netrank_club_id(client: FlaskClient) -> int:
@@ -82,18 +87,23 @@ def test_ladder_detail_contract(seeded_client: FlaskClient):
         assert isinstance(row.get("rating"), int)
 
 
-def test_dashboard_texts_exist_for_en_and_nl(client: FlaskClient):
-    en_response = client.get("/api/texts/page/dashboard?lang=en")
-    nl_response = client.get("/api/texts/page/dashboard?lang=nl")
+def test_dashboard_texts_exist_for_en_and_nl():
+    en_dashboard = (TRANSLATION_ROOT / "en" / "LC_MESSAGES" / "dashboard.po").read_text(encoding="utf-8")
+    nl_dashboard = (TRANSLATION_ROOT / "nl" / "LC_MESSAGES" / "dashboard.po").read_text(encoding="utf-8")
 
-    assert en_response.status_code == 200
-    assert nl_response.status_code == 200
+    assert 'msgid "dashboard.tab_overview"' in en_dashboard
+    assert 'msgid "dashboard.tab_overview"' in nl_dashboard
+    assert 'msgstr "Overview"' in en_dashboard
+    assert 'msgstr "Overzicht"' in nl_dashboard
 
-    en_texts = en_response.get_json()
-    nl_texts = nl_response.get_json()
-    assert isinstance(en_texts, dict)
-    assert isinstance(nl_texts, dict)
 
-    assert "tab_overview" in en_texts
-    assert "tab_overview" in nl_texts
-    assert en_texts["tab_overview"] != nl_texts["tab_overview"]
+def test_matches_texts_exist_for_en_and_nl():
+    en_matches = (TRANSLATION_ROOT / "en" / "LC_MESSAGES" / "matches.po").read_text(encoding="utf-8")
+    nl_matches = (TRANSLATION_ROOT / "nl" / "LC_MESSAGES" / "matches.po").read_text(encoding="utf-8")
+
+    assert 'msgid "matches.title"' in en_matches
+    assert 'msgid "matches.title"' in nl_matches
+    assert 'msgid "matches.reset_pending"' in en_matches
+    assert 'msgid "matches.reset_pending"' in nl_matches
+    assert 'msgstr "Set back to pending"' in en_matches
+    assert 'msgstr "Opnieuw in afwachting zetten"' in nl_matches

@@ -319,6 +319,9 @@ msgstr "Pending"
 msgid "dashboard.status_approved"
 msgstr "Approved"
 
+msgid "dashboard.status_accepted"
+msgstr "Accepted"
+
 msgid "dashboard.status_rejected"
 msgstr "Rejected"
 
@@ -387,4 +390,3 @@ msgstr "Current password and new password are required."
 
 msgid "dashboard.passwords_do_not_match"
 msgstr "Passwords do not match."
-

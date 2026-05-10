@@ -43,12 +43,12 @@ function canProposeMath(account) {
  * CreateMatchButton
  *
  * Self-contained trigger button + dropdown panel that walks the account
- * through a four-step wizard to propose a new match:
+ * through a three-step wizard to propose a new match:
  *
  *   Step 0 - choose which managed team will be team1
  *   Step 1 - choose which ladder that team is registered in
  *   Step 2 - choose the opponent (team2) from the same ladder
- *   Step 3 - optional location field
+ *   Step 3 - submit proposal
  *
  * Props
  * -----
@@ -78,7 +78,6 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
         selectedLadderId, setSelectedLadderId,
         peers,            peersLoading,    peersError,
         selectedPeerId,   setSelectedPeerId,
-        location,         setLocation,
         submit,
     } = useCreateMatch({ managedTeams, onCreated });
 
@@ -102,7 +101,7 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
             closePanel={closePanel}
 
             step={step}
-            totalSteps={4}
+            totalSteps={3}
             onNext={nextStep}
             onBack={prevStep}
             onSubmit={submit}
@@ -218,24 +217,6 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
                         </ul>
                     </>
                 )}
-            </FormPage>
-
-            {/* ---- Step 3: optional details --------------------------- */}
-            <FormPage active={step === 3}>
-                <Field label={t("create_match_location", "Location (optional)")}>
-                    <input
-                        className={formStyles.formInput}
-                        type="text"
-                        placeholder={t(
-                            "create_match_location_placeholder",
-                            "e.g. Court 3, Club Annex",
-                        )}
-                        value={location}
-                        onChange={e => setLocation(e.target.value)}
-                        disabled={isLoading}
-                        autoFocus
-                    />
-                </Field>
             </FormPage>
 
         </FormPanel>

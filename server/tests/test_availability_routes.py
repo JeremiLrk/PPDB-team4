@@ -1,9 +1,11 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, time
 
 from flask.testing import FlaskClient
 
 from server.app.models.account import Account
+from server.extensions import db
 from server.app.models.ladder import Ladder
+from server.app.models.availability_block import AvailabilityBlock
 from server.app.services.availability_service import list_blocks_for_user
 from server.app.services.weekly_match_proposal_service import (
     generate_weekly_match_proposals,
@@ -58,11 +60,37 @@ def test_seeded_demo_availability_uses_weekly_recurrence(seeded_app):
 def test_weekly_availability_still_drives_match_generation(seeded_app):
     with seeded_app.app_context():
         account = Account.query.filter_by(email="jeremilorek@outlook.com").first()
+        opponent = Account.query.filter_by(email="robin.vermeulen@example.com").first()
         ladder = Ladder.query.filter_by(name="Player Demo Singles").first()
         assert account is not None
+        assert opponent is not None
         assert ladder is not None
 
-        future_week = next_week_start() + timedelta(days=35)
+        future_week = next_week_start() - timedelta(weeks=1)
+        match_day = future_week + timedelta(days=1)
+        start_at = datetime.combine(match_day, time(hour=18))
+        end_at = start_at + timedelta(hours=2)
+        db.session.add(
+            AvailabilityBlock(
+                user_id=account.id,
+                weekday=match_day.weekday(),
+                start_time=time(hour=18),
+                end_time=time(hour=20),
+                start_at=start_at,
+                end_at=end_at,
+            )
+        )
+        db.session.add(
+            AvailabilityBlock(
+                user_id=opponent.id,
+                weekday=match_day.weekday(),
+                start_time=time(hour=18),
+                end_time=time(hour=20),
+                start_at=start_at,
+                end_at=end_at,
+            )
+        )
+        db.session.flush()
         result = generate_weekly_match_proposals(
             proposed_by_user_id=account.id,
             week_start_date=future_week,

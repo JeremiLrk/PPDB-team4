@@ -34,6 +34,101 @@ if TYPE_CHECKING:
     from server.app.models.account import Account
 
 
+def _contact_display_name(account: Account) -> str:
+    parts = [account.first_name, account.last_name]
+    name = " ".join(part.strip() for part in parts if part and part.strip())
+    return name or account.email
+
+
+def _serialize_contact_info(account: Account) -> dict:
+    return {
+        "id": account.id,
+        "name": _contact_display_name(account),
+        "email": account.email,
+        "phoneNumber": account.phone,
+    }
+
+
+def _team_contact_accounts(team) -> list[Account]:
+    if not team:
+        return []
+
+    accounts = []
+    if getattr(team, "players", None):
+        accounts.extend(
+            player.account
+            for player in team.players
+            if getattr(player, "account", None)
+        )
+    if not accounts and getattr(team, "managers", None):
+        accounts.extend(
+            manager.account
+            for manager in team.managers
+            if getattr(manager, "account", None)
+        )
+
+    seen_ids: set[int] = set()
+    unique_accounts = []
+    for account in accounts:
+        if account.id in seen_ids:
+            continue
+        seen_ids.add(account.id)
+        unique_accounts.append(account)
+
+    return sorted(
+        unique_accounts,
+        key=lambda account: (
+            (account.last_name or "").lower(),
+            (account.first_name or "").lower(),
+            account.email.lower(),
+            account.id,
+        ),
+    )
+
+
+def _serialize_team_contacts(team) -> list[dict]:
+    return [_serialize_contact_info(account) for account in _team_contact_accounts(team)]
+
+
+def _team_player_accounts(team) -> list[Account]:
+    if not team:
+        return []
+
+    accounts = []
+    if getattr(team, "players", None):
+        accounts.extend(
+            player.account
+            for player in team.players
+            if getattr(player, "account", None)
+        )
+
+    seen_ids: set[int] = set()
+    unique_accounts = []
+    for account in accounts:
+        if account.id in seen_ids:
+            continue
+        seen_ids.add(account.id)
+        unique_accounts.append(account)
+
+    return sorted(
+        unique_accounts,
+        key=lambda account: (
+            (account.last_name or "").lower(),
+            (account.first_name or "").lower(),
+            account.email.lower(),
+            account.id,
+        ),
+    )
+
+
+def team_player_account_ids(team) -> set[int]:
+    return {account.id for account in _team_player_accounts(team)}
+
+
+def teams_share_players(team1, team2) -> bool:
+    return bool(team_player_account_ids(team1) & team_player_account_ids(team2))
+
+
 # ---------------------------------------------------------------------------
 # Submission-role constants
 # ---------------------------------------------------------------------------
@@ -339,7 +434,12 @@ class MatchProposal(db.Model):
             "updatedAt":        self.updated_at.isoformat() + "Z" if self.updated_at else None,
             "team1Name":        self.team1.name if self.team1 else None,
             "team2Name":        self.team2.name if self.team2 else None,
-            "location":         self.location,
+            "team1ClubId":      self.team1.club_id if self.team1 else None,
+            "team2ClubId":      self.team2.club_id if self.team2 else None,
+            "team1ClubCity":    self.team1.club.city if self.team1 and self.team1.club else None,
+            "team2ClubCity":    self.team2.club.city if self.team2 and self.team2.club else None,
+            "team1Contacts":    _serialize_team_contacts(self.team1),
+            "team2Contacts":    _serialize_team_contacts(self.team2),
             "venueTypeId":      self.venue_type_id,
             "ruleSnapshot":     self.rule_snapshot,
             "scoreStatus":      self.score_status,
