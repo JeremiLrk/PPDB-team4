@@ -11,7 +11,7 @@ from server.app.routes.match_rule import match_rule_bp, match_rule_set_bp
 from server.app.routes.matcher import matches_bp
 from server.app.routes.match_routes import match_proposals_bp
 from server.config import SECRET_KEY, config_data
-from server.extensions import db
+from server.extensions import cache, db
 from server.app.routes.auth_routes import auth_bp
 from server.app.routes.availability_routes import availability_bp
 from server.app.routes.clubs_routes import clubs_bp
@@ -37,6 +37,18 @@ from server.app.services.weekly_match_proposal_service import (
 )
 from sqlalchemy import text
 
+
+def _init_cache(app: Flask) -> None:
+    redis_url = os.getenv("REDIS_URL", "").strip()
+    if app.testing or not redis_url:
+        app.config["CACHE_TYPE"] = "NullCache"
+    else:
+        app.config["CACHE_TYPE"] = "RedisCache"
+        app.config["CACHE_REDIS_URL"] = redis_url
+        app.config["CACHE_KEY_PREFIX"] = "ppdb:"
+    cache.init_app(app)
+
+
 def create_app():
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -47,6 +59,7 @@ def create_app():
     app.config["SECRET_KEY"] = SECRET_KEY
 
     db.init_app(app)
+    _init_cache(app)
 
     should_reset_db = os.getenv("RESET_DB_ON_STARTUP", "").lower() in {"1", "true", "yes"}
     if should_reset_db:
