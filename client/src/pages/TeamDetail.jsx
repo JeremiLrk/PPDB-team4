@@ -9,6 +9,7 @@ import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import { useTeamAchievements } from "@/hooks/useLadder.js";
 
 export default function TeamDetail() {
     const { teamId } = useParams();
@@ -18,6 +19,7 @@ export default function TeamDetail() {
     const texts = usePageTexts("team_detail", lang);
     const { team, loading, error } = useTeam(teamId);
     const { members, loading: membersLoading, error: membersError, total, reload} = useTeamMembers(teamId);
+    const { data: achievementsData } = useTeamAchievements(teamId);
 
     if (loading) {
         return (
@@ -72,6 +74,18 @@ export default function TeamDetail() {
                 <InfoCard label={texts.team_id_label || "Team ID"} value={`#${team.id}`} />
             </div>
 
+            {/* Achievements */}
+            {achievementsData?.ladders?.length > 0 && (
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Achievements</h2>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.75rem", marginTop: "0.75rem" }}>
+                        {achievementsData.ladders.map(row => (
+                            <LadderStatCard key={row.ladder_id} row={row} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Players */}
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
@@ -113,6 +127,35 @@ export default function TeamDetail() {
 }
 
 /*  Local sub-components  */
+
+function LadderStatCard({ row }) {
+    return (
+        <div style={{
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: "0.75rem",
+            padding: "1rem",
+            background: "rgba(255,255,255,0.03)",
+        }}>
+            <p style={{ fontWeight: 600, marginBottom: "0.25rem", fontSize: "0.95rem" }}>{row.ladder_name}</p>
+            <p style={{ fontSize: "0.75rem", color: "var(--color-muted, #94a3b8)", marginBottom: "0.75rem" }}>{row.club_name} · Rank #{row.rank ?? "—"}</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", fontSize: "0.8rem" }}>
+                <Stat label="Wins" value={row.wins} />
+                <Stat label="Rating" value={row.rating} />
+                <Stat label="Best streak" value={row.best_win_streak} suffix="🔥" />
+                <Stat label="Best #1 reign" value={row.best_rank1_streak} suffix="👑" />
+            </div>
+        </div>
+    );
+}
+
+function Stat({ label, value, suffix }) {
+    return (
+        <div>
+            <p style={{ color: "var(--color-muted, #94a3b8)", fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</p>
+            <p style={{ fontWeight: 700, fontSize: "1rem" }}>{value ?? 0}{suffix ? " " + suffix : ""}</p>
+        </div>
+    );
+}
 
 function Tag({ label, muted }) {
     return (

@@ -73,6 +73,46 @@ function RulesetModal({ ruleset, onClose }) {
     );
 }
 
+function topOf(players, key) {
+    if (!players.length) return null;
+    return players.reduce((best, p) => ((p[key] ?? 0) > (best[key] ?? 0) ? p : best), players[0]);
+}
+
+function AchievementCard({ icon, label, name, value, unit }) {
+    if (!name || value === 0) return null;
+    return (
+        <div className="flex flex-col gap-1 rounded-xl border border-white/10 bg-white/5 p-4">
+            <span className="text-xl">{icon}</span>
+            <p className="text-xs text-slate-500 uppercase tracking-wider mt-1">{label}</p>
+            <p className="text-sm font-semibold text-slate-200 truncate">{name}</p>
+            <p className="text-2xl font-bold text-white">{value} <span className="text-sm font-normal text-slate-400">{unit}</span></p>
+        </div>
+    );
+}
+
+function TopAchievements({ players }) {
+    const mostWins     = topOf(players, "wins");
+    const bestStreak   = topOf(players, "best_win_streak");
+    const bestRank1    = topOf(players, "best_rank1_streak");
+
+    const cards = [
+        { icon: "🏆", label: "Most wins",        name: mostWins?.name,   value: mostWins?.wins ?? 0,                unit: "wins" },
+        { icon: "🔥", label: "Best win streak",  name: bestStreak?.name, value: bestStreak?.best_win_streak ?? 0,  unit: "in a row" },
+        { icon: "👑", label: "Longest #1 reign", name: bestRank1?.name,  value: bestRank1?.best_rank1_streak ?? 0, unit: "matches" },
+    ].filter(c => c.value > 0);
+
+    if (!cards.length) return null;
+
+    return (
+        <div className="mt-8">
+            <h2 className="text-lg font-semibold text-slate-200 mb-3">Top Achievements</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {cards.map(c => <AchievementCard key={c.label} {...c} />)}
+            </div>
+        </div>
+    );
+}
+
 function Ladder() {
     const { clubId, ladderId } = useParams();
     const navigate = useNavigate();
@@ -151,6 +191,8 @@ function Ladder() {
                                 <th className="p-4 font-medium">{texts.rank || "Rank"}</th>
                                 <th className="p-4 font-medium">{texts.player || "Player"}</th>
                                 <th className="p-4 font-medium">{texts.rating || "Rating"}</th>
+                                <th className="p-4 font-medium hidden sm:table-cell">W</th>
+                                <th className="p-4 font-medium hidden sm:table-cell">Streak</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -169,12 +211,25 @@ function Ladder() {
                                     </td>
                                     <td className="p-4 font-medium text-slate-200">{player.name}</td>
                                     <td className="p-4 font-mono text-blue-400">{player.rating}</td>
+                                    <td className="p-4 text-slate-300 hidden sm:table-cell">{player.wins ?? 0}</td>
+                                    <td className="p-4 hidden sm:table-cell">
+                                        {(player.win_streak ?? 0) > 0 ? (
+                                            <span className="text-green-400 font-semibold">🔥 {player.win_streak}</span>
+                                        ) : (
+                                            <span className="text-slate-500">—</span>
+                                        )}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 )}
             </div>
+
+            {/* Top Achievements */}
+            {!p_loading && players.length > 0 && (
+                <TopAchievements players={players} />
+            )}
 
             {showRuleset && ladder?.ruleset && (
                 <RulesetModal

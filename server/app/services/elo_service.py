@@ -54,6 +54,27 @@ def recomputeLadderRanks(ladder_id: int) -> None:
         row.rank = rank
 
 
+def _update_achievement_stats(
+    row_winner: LadderTeam | None,
+    row_loser: LadderTeam | None,
+    ladder_id: int,
+) -> None:
+    if row_winner is not None:
+        row_winner.wins = (row_winner.wins or 0) + 1
+        row_winner.win_streak = (row_winner.win_streak or 0) + 1
+        row_winner.best_win_streak = max(row_winner.best_win_streak or 0, row_winner.win_streak)
+    if row_loser is not None:
+        row_loser.win_streak = 0
+
+    all_rows = LadderTeam.query.filter_by(ladder_id=ladder_id).all()
+    for row in all_rows:
+        if row.rank == 1:
+            row.rank1_streak = (row.rank1_streak or 0) + 1
+            row.best_rank1_streak = max(row.best_rank1_streak or 0, row.rank1_streak)
+        else:
+            row.rank1_streak = 0
+
+
 def apply_elo_for_match_result(team1_id: int, team2_id: int, score_team1: int, score_team2: int) -> list[dict]:
     """
     Apply Elo updates on every ladder where both teams participate.
@@ -104,6 +125,13 @@ def apply_elo_for_match_result(team1_id: int, team2_id: int, score_team1: int, s
         row2.matches_played = played2 + 1
 
         recomputeLadderRanks(row1.ladder_id)
+
+        if score_team1 > score_team2:
+            _update_achievement_stats(row1, row2, row1.ladder_id)
+        elif score_team2 > score_team1:
+            _update_achievement_stats(row2, row1, row1.ladder_id)
+        else:
+            _update_achievement_stats(None, None, row1.ladder_id)
 
         updates.append(
             {
