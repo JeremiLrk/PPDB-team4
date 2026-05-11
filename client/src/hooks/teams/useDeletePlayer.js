@@ -19,15 +19,15 @@ export function useDeletePlayer({ teamId, playerId, onDeleted } = {}) {
         setViolateWarning(null);
     }, []);
 
-    const confirmDelete = useCallback(async (confirmViolate = false) => {
+    const confirmDelete = useCallback(async (confirmDropLadders = false) => {
         setLoading(true);
         setError(null);
         setViolateWarning(null);
         try {
             // Build URL with confirmation flag if needed
             let url = `/api/teams/${teamId}/players/${playerId}`;
-            if (confirmViolate) {
-                url += "?confirmViolate=true";
+            if (confirmDropLadders) {
+                url += "?confirmDropLadders=true";
             }
 
             const res  = await fetch(url, {

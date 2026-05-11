@@ -2,6 +2,7 @@ import commonStyles from "@/style/common/Common.module.css";
 import formStyles   from "@/style/common/Forms.module.css";
 import panelStyles  from "@/style/common/Panel.module.css";
 import teamStyles   from "@/style/TeamSettings.module.css";
+import btnStyles  from "@/style/common/Buttons.module.css";
 
 import { useAddPlayer } from "@/hooks/teams/useAddPlayer.js";
 import { PlusIcon }     from "@/components/icon/PlusIcon.jsx";
@@ -83,27 +84,27 @@ export default function AddPlayerButton({ teamId, onAdded }) {
                         </p>
                         {confirmWarning.ladders && confirmWarning.ladders.length > 0 && (
                             <div className={teamStyles.laddersList}>
-                                <p className={commonStyles.secondaryText}>
+                                <p className={commonStyles.warningText}>
                                     {texts.add_player_warn_ladders || "Affected ladders:"}
                                 </p>
                                 <ul className={panelStyles.list}>
                                     {confirmWarning.ladders.map(ladder => (
-                                        <li key={ladder.id} className={teamStyles.ladderItem}>
+                                        <li key={ladder.id} className={`${teamStyles.ladderItem} ${commonStyles.warningText}`}>
                                             {ladder.name}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
                         )}
-                        <div className={teamStyles.confirmButtons}>
+                        <div >
                             <button
-                                className={`${formStyles.btn} ${formStyles.btnSecondary}`}
+                                className={`${btnStyles.submitButton} ${formStyles.btnSecondary}`}
                                 onClick={() => setConfirmWarning(null)}
                             >
                                 {texts.cancel_btn || "Cancel"}
                             </button>
                             <button
-                                className={`${formStyles.btn} ${formStyles.btnPrimary}`}
+                                className={`${btnStyles.nextBtn} ${formStyles.btnSecondary}`}
                                 onClick={handleConfirmExceed}
                                 disabled={addingId}
                             >
