@@ -39,15 +39,37 @@
 }
 
 .langSwitcher {
-    @apply flex items-center gap-1;
+    display: flex;
+    align-items: center;
+    gap: 0.18rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 0.22rem;
+    background: rgba(15, 23, 42, 0.5);
 }
 
 .langButton {
-    @apply rounded border border-white/15 px-2.5 py-1 text-xs text-slate-200 hover:bg-white/10 transition;
+    border-radius: 999px;
+    border: none;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+    background: transparent;
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease;
+    line-height: 1;
+}
+
+.langButton:hover {
+    color: #cbd5e1;
 }
 
 .langButtonActive {
-    @apply border-indigo-400 text-indigo-300 bg-white/5;
+    background: rgba(56, 189, 248, 0.2);
+    color: #67e8f9;
 }
 
 /* Buttons */
@@ -56,7 +78,14 @@
 }
 
 .headerPrimaryButton {
-    @apply rounded-xl bg-indigo-500 px-4 py-2 text-sm font-medium hover:bg-indigo-400 transition;
+    @apply rounded-xl px-4 py-2 text-sm font-medium transition;
+    background: linear-gradient(130deg, #67e8f9, #34d399);
+    color: #042a36;
+    border: none;
+}
+.headerPrimaryButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(45, 212, 191, 0.3);
 }
 
 /* Account dropdown */
@@ -78,4 +107,139 @@
 
 .userDropdownItem {
     @apply w-full rounded px-3 py-2 text-left text-sm hover:bg-white/10;
+}
+
+.themeButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    padding: 0;
+    flex-shrink: 0;
+}
+.themeButton:hover {
+    color: #67e8f9;
+    border-color: rgba(56, 189, 248, 0.4);
+    background: rgba(56, 189, 248, 0.08);
+}
+.themeButton svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.mobileThemeBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+.mobileThemeBtn svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+/* Hamburger toggle — base styles first, then media queries override display */
+.mobileToggle {
+    display: none;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 0.5rem;
+    color: #e2e8f0;
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hide nav and right section on mobile; show hamburger */
+@media (max-width: 767px) {
+    .headerNav { display: none; }
+    .headerRight > *:not(.mobileToggle) { display: none; }
+    .mobileToggle { display: flex; }
+}
+@media (min-width: 768px) {
+    .mobileToggle { display: none; }
+    .mobileDrawer { display: none; }
+}
+
+.mobileDrawer {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    background: rgba(2,6,23,0.97);
+    backdrop-filter: blur(12px);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mobileNav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.mobileNavLink {
+    background: none;
+    border: none;
+    color: #e2e8f0;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.65rem 0.5rem;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.mobileNavLink:hover { background: rgba(255,255,255,0.08); }
+
+.mobileLang {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.mobileLang .langButton {
+    text-align: center;
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    border-radius: 0.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: #94a3b8;
+}
+
+.mobileLang .langButtonActive {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.14);
+    color: #67e8f9;
+}
+
+.mobileAuth {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.mobileAuth .headerButton,
+.mobileAuth .headerPrimaryButton {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+}
+
+.dangerBtn {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    color: #fca5a5 !important;
 }

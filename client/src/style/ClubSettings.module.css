@@ -280,10 +280,13 @@
     transition: transform 0.22s ease, box-shadow 0.24s ease, border-color 0.2s ease;
 }
 
-.panel:hover {
-    transform: translateY(-2px);
-    border-color: var(--nav-active-border);
-    box-shadow: 0 12px 28px rgba(2, 132, 199, 0.14);
+/* Only apply hover lift on real pointer devices — not touch, where :hover sticks */
+@media (hover: hover) {
+    .panel:hover {
+        transform: translateY(-2px);
+        border-color: var(--nav-active-border);
+        box-shadow: 0 12px 28px rgba(2, 132, 199, 0.14);
+    }
 }
 
 .panelTopRow {
@@ -314,6 +317,8 @@
 .formInput,
 .formTextarea {
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     border: 1px solid var(--input-border);
     background: var(--input-bg);
     color: var(--text-primary);
@@ -419,10 +424,12 @@
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.discoverCard:hover {
-    transform: translateY(-3px);
-    border-color: var(--nav-active-border);
-    box-shadow: 0 10px 24px rgba(2, 132, 199, 0.16);
+@media (hover: hover) {
+    .discoverCard:hover {
+        transform: translateY(-3px);
+        border-color: var(--nav-active-border);
+        box-shadow: 0 10px 24px rgba(2, 132, 199, 0.16);
+    }
 }
 
 .actionRow {
@@ -498,9 +505,67 @@
     gap: 1rem;
 }
 
+.availabilityLayout {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 1100px) {
+    .availabilityLayout {
+        grid-template-columns: 1.1fr 0.9fr;
+    }
+}
+
 .availabilityStack {
     display: grid;
     gap: 1rem;
+}
+
+.weeklyStrip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.3rem;
+    margin-bottom: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.weeklyDay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.32rem;
+    padding: 0.5rem 0.15rem 0.45rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--muted-border);
+    background: rgba(255, 255, 255, 0.02);
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.weeklyDayActive {
+    border-color: rgba(56, 189, 248, 0.4);
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.weeklyDayLabel {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+}
+
+.weeklyDayActive .weeklyDayLabel {
+    color: #67e8f9;
+}
+
+.weeklyDayDot {
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 5px rgba(56, 189, 248, 0.55);
 }
 
 .availabilityList {
@@ -532,6 +597,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.7rem;
+    min-width: 0;
 }
 
 .formLabel {
@@ -540,6 +606,7 @@
     font-size: 0.84rem;
     font-weight: 600;
     color: var(--text-secondary);
+    min-width: 0;
 }
 
 .formActions {

@@ -125,7 +125,7 @@ function Ladder() {
     const [showRuleset, setShowRuleset] = useState(false);
 
     return (
-        <div className="mx-auto max-w-4xl p-6">
+        <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
 
             {/* Header & Navigation */}
             <div className="mb-8">

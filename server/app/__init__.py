@@ -88,7 +88,8 @@ def create_app():
         from werkzeug.exceptions import HTTPException
         if isinstance(e, HTTPException):
             return jsonify({"description": e.description}), e.code
-        raise e
+        app.logger.exception(e)
+        return jsonify({"description": "Internal server error"}), 500
 
     _register_blueprints(app)
     _register_cli_commands(app)
@@ -214,7 +215,8 @@ def init_db(app: Flask):
             "server/sql/match_rules.sql",
             "server/sql/schema.sql",
             "server/sql/match.sql",
-            "server/sql/triggers.sql"
+            "server/sql/triggers.sql",
+            "server/sql/migration_achievements.sql",
         ])
         db.create_all()
 

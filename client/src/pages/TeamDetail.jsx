@@ -78,7 +78,7 @@ export default function TeamDetail() {
             {achievementsData?.ladders?.length > 0 && (
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>Achievements</h2>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.75rem", marginTop: "0.75rem" }}>
+                    <div className={styles.achievementGrid}>
                         {achievementsData.ladders.map(row => (
                             <LadderStatCard key={row.ladder_id} row={row} />
                         ))}
@@ -130,29 +130,24 @@ export default function TeamDetail() {
 
 function LadderStatCard({ row }) {
     return (
-        <div style={{
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "0.75rem",
-            padding: "1rem",
-            background: "rgba(255,255,255,0.03)",
-        }}>
-            <p style={{ fontWeight: 600, marginBottom: "0.25rem", fontSize: "0.95rem" }}>{row.ladder_name}</p>
-            <p style={{ fontSize: "0.75rem", color: "var(--color-muted, #94a3b8)", marginBottom: "0.75rem" }}>{row.club_name} · Rank #{row.rank ?? "—"}</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", fontSize: "0.8rem" }}>
-                <Stat label="Wins" value={row.wins} />
-                <Stat label="Rating" value={row.rating} />
-                <Stat label="Best streak" value={row.best_win_streak} suffix="🔥" />
-                <Stat label="Best #1 reign" value={row.best_rank1_streak} suffix="👑" />
+        <div className={styles.ladderStatCard}>
+            <p className={styles.ladderStatName}>{row.ladder_name}</p>
+            <p className={styles.ladderStatMeta}>{row.club_name} · Rank #{row.rank ?? "—"}</p>
+            <div className={styles.ladderStatGrid}>
+                <LadderStat label="Wins" value={row.wins} />
+                <LadderStat label="Rating" value={row.rating} />
+                <LadderStat label="Best streak" value={`${row.best_win_streak} 🔥`} />
+                <LadderStat label="Best #1 reign" value={`${row.best_rank1_streak} 👑`} />
             </div>
         </div>
     );
 }
 
-function Stat({ label, value, suffix }) {
+function LadderStat({ label, value }) {
     return (
-        <div>
-            <p style={{ color: "var(--color-muted, #94a3b8)", fontSize: "0.7rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</p>
-            <p style={{ fontWeight: 700, fontSize: "1rem" }}>{value ?? 0}{suffix ? " " + suffix : ""}</p>
+        <div className={styles.ladderStatItem}>
+            <p className={styles.ladderStatLabel}>{label}</p>
+            <p className={styles.ladderStatValue}>{value ?? 0}</p>
         </div>
     );
 }

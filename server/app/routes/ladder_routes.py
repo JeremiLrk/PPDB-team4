@@ -46,7 +46,7 @@ def get_eligible_teams(account, club_id: int):
 @ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>/players")
 def get_players(club_id, ladder_id):
     rows = get_all_players_ladder(ladder_id)
-    return [
+    return jsonify([
         {
             "id": team.id,
             "name": team.name,
@@ -59,7 +59,7 @@ def get_players(club_id, ladder_id):
             "best_rank1_streak": ladder_team.best_rank1_streak or 0,
         }
         for team, ladder_team in rows
-    ]
+    ])
 
 
 @ladder_bp.get("/teams/<int:team_id>/achievements")
