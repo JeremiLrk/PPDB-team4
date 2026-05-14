@@ -155,8 +155,8 @@ class MatchStatus(db.Model):
     PENDING   = 1
     ACCEPTED  = 2
     REJECTED  = 3
-    PLAYED    = 4
-    CANCELLED = 5
+    CANCELLED = 4
+    PLAYED    = 5
 
     def to_dict(self) -> dict:
         return {"id": self.id, "name": self.name}
