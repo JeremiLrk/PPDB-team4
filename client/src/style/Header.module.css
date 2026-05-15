@@ -243,3 +243,114 @@
     border-color: rgba(239, 68, 68, 0.4) !important;
     color: #fca5a5 !important;
 }
+
+/* Light mode overrides */
+:global(html.light) .langSwitcher {
+    background: rgba(248, 250, 252, 0.85);
+    border-color: rgba(71, 85, 105, 0.25);
+}
+
+:global(html.light) .langButton {
+    color: #475569;
+}
+
+:global(html.light) .langButton:hover {
+    color: #0f172a;
+}
+
+:global(html.light) .langButtonActive {
+    background: rgba(14, 165, 233, 0.15);
+    color: #0284c7;
+}
+
+:global(html.light) .themeButton {
+    border-color: rgba(71, 85, 105, 0.3);
+    color: #475569;
+}
+
+:global(html.light) .themeButton:hover {
+    color: #0284c7;
+    border-color: rgba(14, 165, 233, 0.5);
+    background: rgba(14, 165, 233, 0.08);
+}
+
+:global(html.light) .userButton {
+    border-color: rgba(71, 85, 105, 0.3);
+    color: #334155;
+}
+
+:global(html.light) .userDropdown {
+    background: rgba(248, 250, 252, 0.98);
+    border-color: rgba(71, 85, 105, 0.18);
+    color: #0f172a;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+:global(html.light) .userDropdownItem {
+    color: #334155;
+}
+
+:global(html.light) .userDropdownItem:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+:global(html.light) .mobileDrawer {
+    background: rgba(248, 250, 252, 0.98);
+    border-color: rgba(71, 85, 105, 0.15);
+}
+
+:global(html.light) .mobileNavLink {
+    color: #1e293b;
+}
+
+:global(html.light) .mobileNavLink:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+:global(html.light) .mobileLang .langButton {
+    border-color: rgba(71, 85, 105, 0.2);
+    background: rgba(0, 0, 0, 0.04);
+    color: #475569;
+}
+
+:global(html.light) .mobileLang .langButtonActive {
+    border-color: #0ea5e9;
+    background: rgba(14, 165, 233, 0.12);
+    color: #0284c7;
+}
+
+:global(html.light) .headerButton {
+    border-color: rgba(71, 85, 105, 0.35);
+    color: #334155;
+}
+
+:global(html.light) .headerButton:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+:global(html.light) .dangerBtn {
+    border-color: rgba(239, 68, 68, 0.55) !important;
+    color: #b91c1c !important;
+}
+
+:global(html.light) .mobileToggle {
+    border-color: rgba(71, 85, 105, 0.3);
+    color: #334155;
+}
+
+:global(html.light) .navLink {
+    color: #334155;
+}
+:global(html.light) .navLink:hover {
+    color: #0f172a;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+:global(html.light) .brandButton {
+    color: #0f172a;
+    font-weight: 800;
+}
+:global(html.light) .brandButton:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #0891b2;
+}

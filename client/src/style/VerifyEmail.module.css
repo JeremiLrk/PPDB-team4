@@ -23,3 +23,23 @@
 .verifyLink:hover {
     color: #67e8f9;
 }
+
+
+/*  Light mode overrides  */
+
+:global(html.light) .verifyCard {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(71, 85, 105, 0.2);
+}
+:global(html.light) .verifyTitle {
+    color: #0f172a;
+}
+:global(html.light) .verifySubtitle {
+    color: #475569;
+}
+:global(html.light) .verifyLink {
+    color: #0284c7;
+}
+:global(html.light) .verifyLink:hover {
+    color: #0369a1;
+}

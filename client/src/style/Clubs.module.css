@@ -89,3 +89,27 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
+
+
+/*  Light mode overrides  */
+
+:global(html.light) .title {
+    color: #0f172a;
+}
+:global(html.light) .subtitle {
+    color: #475569;
+}
+:global(html.light) .clubButton {
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(71, 85, 105, 0.2);
+    color: #0f172a;
+}
+:global(html.light) .clubButton:hover {
+    background: rgba(255, 255, 255, 0.96);
+}
+:global(html.light) .clubMeta {
+    color: #475569;
+}
+:global(html.light) .sportGroupTitle {
+    color: #64748b;
+}

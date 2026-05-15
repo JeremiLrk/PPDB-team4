@@ -87,3 +87,40 @@
     color: #67e8f9;
 }
 
+
+/*  Light mode overrides  */
+
+:global(html.light) .card {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(71, 85, 105, 0.2);
+}
+:global(html.light) .headerTitle {
+    color: #0f172a;
+}
+:global(html.light) .headerSubtitle {
+    color: #475569;
+}
+:global(html.light) .formLabel {
+    color: #0f172a;
+}
+:global(html.light) .formInput {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(71, 85, 105, 0.35);
+    color: #0f172a;
+}
+:global(html.light) .footerText {
+    color: #475569;
+}
+:global(html.light) .footerLink {
+    color: #0284c7;
+}
+:global(html.light) .footerLink:hover {
+    color: #0369a1;
+}
+:global(html.light) .footerLinkGuest {
+    color: #0284c7;
+}
+:global(html.light) .footerLinkGuest:hover {
+    color: #0369a1;
+}
+

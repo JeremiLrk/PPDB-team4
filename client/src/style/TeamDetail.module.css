@@ -196,6 +196,83 @@
     .section { padding: 0.85rem; }
 }
 
+
+/*  Light mode overrides  */
+
+:global(html.light) .backBtn {
+    color: #475569;
+}
+:global(html.light) .backBtn:hover {
+    color: #0f172a;
+}
+:global(html.light) .hero {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(14, 165, 233, 0.28);
+}
+:global(html.light) .name {
+    color: #0f172a;
+}
+:global(html.light) .tag {
+    border-color: rgba(14, 165, 233, 0.45);
+    background: rgba(186, 230, 253, 0.55);
+    color: #0369a1;
+}
+:global(html.light) .tagMuted {
+    border-color: rgba(71, 85, 105, 0.25);
+    background: rgba(241, 245, 249, 0.85);
+    color: #475569;
+}
+:global(html.light) .infoCard {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(71, 85, 105, 0.18);
+}
+:global(html.light) .infoLabel {
+    color: #64748b;
+}
+:global(html.light) .infoValue {
+    color: #0f172a;
+}
+:global(html.light) .section {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(71, 85, 105, 0.18);
+}
+:global(html.light) .sectionTitle {
+    color: #0f172a;
+}
+:global(html.light) .inlineState {
+    color: #64748b;
+}
+:global(html.light) .retryBtn {
+    border-color: rgba(71, 85, 105, 0.3);
+    color: #475569;
+}
+:global(html.light) .retryBtn:hover {
+    border-color: #0284c7;
+    color: #0284c7;
+}
+:global(html.light) .state {
+    color: #64748b;
+}
+:global(html.light) .error {
+    color: #7f1d1d;
+}
+:global(html.light) .ladderStatCard {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(71, 85, 105, 0.18);
+}
+:global(html.light) .ladderStatName {
+    color: #0f172a;
+}
+:global(html.light) .ladderStatMeta {
+    color: #64748b;
+}
+:global(html.light) .ladderStatLabel {
+    color: #64748b;
+}
+:global(html.light) .ladderStatValue {
+    color: #0f172a;
+}
+
 /*  Achievement ladder cards  */
 .achievementGrid {
     display: grid;

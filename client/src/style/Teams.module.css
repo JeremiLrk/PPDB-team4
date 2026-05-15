@@ -248,6 +248,63 @@
     to { transform: rotate(360deg); }
 }
 
+
+/*  Light mode overrides  */
+
+:global(html.light) .title {
+    color: #0f172a;
+}
+:global(html.light) .subtitle {
+    color: #475569;
+}
+:global(html.light) .controlLabel {
+    color: #475569;
+}
+:global(html.light) .select {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-color: rgba(71, 85, 105, 0.35);
+    color: #0f172a;
+}
+:global(html.light) .card {
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(71, 85, 105, 0.2);
+}
+:global(html.light) .card:hover {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(14, 165, 233, 0.48);
+}
+:global(html.light) .cardName {
+    color: #0f172a;
+}
+:global(html.light) .badge {
+    border-color: rgba(14, 165, 233, 0.45);
+    background: rgba(186, 230, 253, 0.55);
+    color: #0369a1;
+}
+:global(html.light) .badgeMuted {
+    border-color: rgba(71, 85, 105, 0.25);
+    background: rgba(241, 245, 249, 0.8);
+    color: #475569;
+}
+:global(html.light) .loadMoreBtn {
+    border-color: rgba(8, 145, 178, 0.7);
+    background: linear-gradient(120deg, rgba(8, 145, 178, 0.18), rgba(5, 150, 105, 0.14));
+    color: #0f172a;
+}
+:global(html.light) .error {
+    color: #7f1d1d;
+}
+:global(html.light) .footer {
+    border-top-color: rgba(71, 85, 105, 0.18);
+}
+:global(html.light) .counter {
+    color: #475569;
+}
+:global(html.light) .stateRow {
+    color: #475569;
+}
+
+
 @media (max-width: 640px) {
     .header {
         flex-direction: column;
