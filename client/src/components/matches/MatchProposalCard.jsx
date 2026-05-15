@@ -36,6 +36,7 @@ function statusTone(status) {
     if (normalized === "accepted" || normalized === "approved") return styles.statusApproved;
     if (normalized === "rejected") return styles.statusRejected;
     if (normalized === "cancelled" || normalized === "canceled") return styles.statusCancelled;
+    if (normalized === "played" || normalized === "finished") return styles.statusFinished;
     return styles.statusPending;
 }
 
@@ -157,17 +158,27 @@ export default function MatchProposalCard({
     onCancelScore,
     scoreSubmitting = false,
     canUpdate = true,
+    currentUserId,
     texts = {},
     statusTexts = {},
 }) {
     const normalizedStatus = normalizeStatus(proposal.status);
     const scoreStatus = String(proposal.scoreStatus || "not_submitted").toLowerCase();
     const scoreSubmissions = Array.isArray(proposal.scoreSubmissions) ? proposal.scoreSubmissions : [];
-    const canRespond = normalizedStatus === "pending" && canUpdate;
+    const currentUserHasAccepted = Number(proposal.acceptedByUserId) === Number(currentUserId);
+    const canRespond = normalizedStatus === "pending" && canUpdate && !currentUserHasAccepted;
     const canCancel = normalizedStatus === "accepted" && canUpdate;
     const canResetPending = normalizedStatus !== "pending" && normalizedStatus !== "played" && canUpdate;
-    const hasScoreSubmission = scoreSubmissions.length > 0 || scoreStatus !== "not_submitted";
+    const currentUserSubmittedScore = scoreSubmissions.some(
+        (submission) => Number(submission.submittedBy) === Number(currentUserId),
+    );
+    const hasScoreSubmission = currentUserSubmittedScore || scoreStatus === "resolved" || scoreStatus === "disputed";
     const canScore = normalizedStatus === "accepted" && typeof onReportScore === "function" && !hasScoreSubmission;
+    const displayedStatus = scoreStatus === "resolved"
+        ? "finished"
+        : proposal.acceptanceStatus === "waiting_for_other"
+        ? "waiting_for_other"
+        : proposal.status;
     const isReportingScore = reportingMatchId === proposal.id;
     const weatherClubId = proposal.team1ClubId || proposal.team2ClubId || null;
     const weatherCity = proposal.team1ClubCity || proposal.team2ClubCity || "";
@@ -191,6 +202,15 @@ export default function MatchProposalCard({
         city: weatherLocation,
         date: weatherDate,
     });
+    const clubNames = Array.from(
+        new Set([proposal.team1ClubName, proposal.team2ClubName].filter(Boolean)),
+    );
+    const clubLabel = clubNames.length > 0 ? clubNames.join(" vs ") : (texts.no_club || "No club");
+    const scoreNoticeText = scoreStatus === "resolved"
+        ? (texts.score_finalized || "Result confirmed. Elo ratings updated.")
+        : scoreStatus === "disputed"
+            ? (texts.score_disputed || "Scores do not match. A club manager will decide the decisive score.")
+            : (texts.score_waiting || "Score submitted. Waiting for the other team.");
 
     return (
         <li className={styles.card}>
@@ -207,10 +227,17 @@ export default function MatchProposalCard({
                         <p className={styles.subtitle}>
                             {proposedDateLabel}: {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
                         </p>
+                        <p className={styles.clubMeta}>
+                            {(texts.club || "Club")}: {clubLabel}
+                        </p>
                     </div>
 
-                    <span className={`${styles.statusPill} ${statusTone(proposal.status)}`}>
-                        {statusLabel(proposal.status, statusTexts)}
+                    <span className={`${styles.statusPill} ${statusTone(displayedStatus)}`}>
+                        {displayedStatus === "waiting_for_other"
+                            ? (texts.waiting_for_other_player || "Waiting for other player")
+                            : displayedStatus === "finished"
+                                ? (statusTexts.status_finished || "Finished")
+                            : statusLabel(proposal.status, statusTexts)}
                     </span>
                 </div>
 
@@ -332,9 +359,7 @@ export default function MatchProposalCard({
 
                 {hasScoreSubmission ? (
                     <div className={`${styles.scoreNotice} ${scoreStatus === "resolved" ? styles.scoreNoticeFinalized : styles.scoreNoticePending}`}>
-                        {scoreStatus === "resolved"
-                            ? (texts.score_finalized || "Score finalized.")
-                            : (texts.score_waiting || "Score submitted. Waiting for the other team.")}
+                        {scoreNoticeText}
                     </div>
                 ) : null}
 

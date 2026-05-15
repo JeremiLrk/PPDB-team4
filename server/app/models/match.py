@@ -394,11 +394,18 @@ class MatchProposal(db.Model):
         if isinstance(resolved, Administrator):
             return True
 
-        if isinstance(resolved, ClubOwner) and self.ladder is not None:
-            return any(
-                a.club_id == self.ladder.club_id
-                for a in resolved.club_associations
-            )
+        if isinstance(resolved, ClubOwner):
+            owned_club_ids = {a.club_id for a in resolved.club_associations}
+            match_club_ids = {
+                club_id
+                for club_id in (
+                    self.ladder.club_id if self.ladder is not None else None,
+                    self.team1.club_id if self.team1 is not None else None,
+                    self.team2.club_id if self.team2 is not None else None,
+                )
+                if club_id is not None
+            }
+            return bool(owned_club_ids & match_club_ids)
 
         return False
 

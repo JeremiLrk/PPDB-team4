@@ -18,6 +18,7 @@ export default function MatchProposalList({
     onCancelScore,
     scoreSubmitting,
     canUpdateProposal,
+    currentUserId,
     texts = {},
     statusTexts = {},
     emptyText,
@@ -57,6 +58,7 @@ export default function MatchProposalList({
                     onCancelScore={onCancelScore}
                     scoreSubmitting={scoreSubmitting}
                     canUpdate={canUpdateProposal ? canUpdateProposal(proposal) : true}
+                    currentUserId={currentUserId}
                     texts={texts}
                     statusTexts={statusTexts}
                 />

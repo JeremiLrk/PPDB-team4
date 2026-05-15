@@ -233,6 +233,7 @@ export default function MatchProposalsTab() {
                             onCancelScore={() => setReportingMatchId(null)}
                             scoreSubmitting={scoreSubmitting}
                             canUpdateProposal={canUpdateProposal}
+                            currentUserId={currentUser?.id}
                             texts={texts}
                             statusTexts={dashboardTexts}
                             emptyText={managedEmptyLabel}
@@ -261,6 +262,7 @@ export default function MatchProposalsTab() {
                             onCancelScore={() => setReportingMatchId(null)}
                             scoreSubmitting={scoreSubmitting}
                             canUpdateProposal={canUpdateProposal}
+                            currentUserId={currentUser?.id}
                             texts={texts}
                             statusTexts={dashboardTexts}
                             emptyText={playerEmptyLabel}

@@ -43,6 +43,9 @@ msgstr "Wedstrijden"
 msgid "dashboard.tab_manage_club"
 msgstr "Beheer je clubs"
 
+msgid "dashboard.status_finished"
+msgstr "Afgerond"
+
 msgid "dashboard.my_teams"
 msgstr "Mijn teams"
 

@@ -40,7 +40,7 @@ export default function ClubDisputedMatchesPage() {
         error:     disputedError,
         forbidden,
         reload,
-    } = useDisputedMatches();
+    } = useDisputedMatches(clubId);
 
     // Which match is selected for detail view (left panel)
     const [selectedId, setSelectedId] = useState(null);

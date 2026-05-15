@@ -26,6 +26,8 @@ function normalizeMatchProposal(raw = {}) {
     return {
         id: readField(raw, "id", "proposal_id", "proposalId"),
         proposedByUserId: readField(raw, "proposed_by_user_id", "proposedByUserId"),
+        acceptedByUserId: readField(raw, "accepted_by_user_id", "acceptedByUserId"),
+        acceptanceStatus: readField(raw, "acceptance_status", "acceptanceStatus"),
         team1Id,
         team2Id,
         team1Name:
@@ -40,6 +42,8 @@ function normalizeMatchProposal(raw = {}) {
         weekStartDate: readField(raw, "week_start_date", "weekStartDate"),
         team1ClubId: readField(raw, "team1_club_id", "team1ClubId"),
         team2ClubId: readField(raw, "team2_club_id", "team2ClubId"),
+        team1ClubName: readField(raw, "team1_club_name", "team1ClubName") || "",
+        team2ClubName: readField(raw, "team2_club_name", "team2ClubName") || "",
         team1ClubCity: readField(raw, "team1_club_city", "team1ClubCity") || "",
         team2ClubCity: readField(raw, "team2_club_city", "team2ClubCity") || "",
         team1Contacts,

@@ -34,9 +34,12 @@ ARCHIVE_AFTER_DAYS = 30
 def proposal_payload(proposal: MatchProposal):
     # This serializer is shared by the list, create, and status endpoints so
     # the frontend sees one stable proposal shape regardless of where it came from.
+    accepted_by_user_id = proposal.accepted.response_by_user_id if proposal.accepted else None
     return {
         "id": proposal.id,
         "proposed_by_user_id": proposal.proposed_by_user_id,
+        "accepted_by_user_id": accepted_by_user_id,
+        "acceptance_status": "waiting_for_other" if accepted_by_user_id and proposal.status and proposal.status.name.lower() == "pending" else None,
         "sport_type_id": proposal.sport_type_id,
         "ruleset_id": proposal.ruleset_id,
         "team1_id": proposal.team1_id,
@@ -53,6 +56,8 @@ def proposal_payload(proposal: MatchProposal):
         "team2_name": proposal.team2.name if proposal.team2 else None,
         "team1_club_id": proposal.team1.club_id if proposal.team1 else None,
         "team2_club_id": proposal.team2.club_id if proposal.team2 else None,
+        "team1_club_name": proposal.team1.club.name if proposal.team1 and proposal.team1.club else None,
+        "team2_club_name": proposal.team2.club.name if proposal.team2 and proposal.team2.club else None,
         "team1_club_city": proposal.team1.club.city if proposal.team1 and proposal.team1.club else None,
         "team2_club_city": proposal.team2.club.city if proposal.team2 and proposal.team2.club else None,
         "team1_contacts": _serialize_team_contacts(proposal.team1),
@@ -167,6 +172,16 @@ def can_respond_to_proposal(account, team1, team2):
         (team1 and (can_manage_team(account, team1) or is_player_on_team(account, team1)))
         or (team2 and (can_manage_team(account, team2) or is_player_on_team(account, team2)))
     )
+
+
+def acceptance_side_for(account, team1, team2):
+    team1_member = team1 and (can_manage_team(account, team1) or is_player_on_team(account, team1))
+    team2_member = team2 and (can_manage_team(account, team2) or is_player_on_team(account, team2))
+    if team1_member and not team2_member:
+        return "team1"
+    if team2_member and not team1_member:
+        return "team2"
+    return None
 
 
 @match_proposals_bp.post("/proposals")
@@ -422,8 +437,26 @@ def update_match_proposal_status(account, proposal_id):
         if not accepted:
             accepted = MatchAccepted(id=proposal.id)
             db.session.add(accepted)
-        accepted.response_by_user_id = account.id
-        accepted.response_text = data.get("response_text")
+            accepted.response_by_user_id = account.id
+            accepted.response_text = data.get("response_text")
+            if not is_admin:
+                proposal.status_id = resolve_status("pending").id
+                proposal.updated_at = datetime.utcnow()
+                db.session.commit()
+                return jsonify({"proposal": proposal_payload(proposal)}), 200
+
+        first_acceptor = db.session.get(type(account), accepted.response_by_user_id) if accepted.response_by_user_id else None
+        first_side = acceptance_side_for(first_acceptor, team1, team2) if first_acceptor else None
+        current_side = acceptance_side_for(account, team1, team2)
+        if first_side and current_side and first_side == current_side and not is_admin:
+            proposal.status_id = resolve_status("pending").id
+            proposal.updated_at = datetime.utcnow()
+            db.session.commit()
+            return jsonify({"proposal": proposal_payload(proposal)}), 200
+
+        if not accepted.response_by_user_id:
+            accepted.response_by_user_id = account.id
+        accepted.response_text = data.get("response_text") or accepted.response_text
     elif normalized_status == "rejected":
         proposal.accepted = None
         proposal.cancelled = None

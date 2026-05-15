@@ -782,6 +782,57 @@ class TestGetScoreRoute:
 class TestDisputedRoute:
     """GET /api/matches/disputed"""
 
+    def test_seeded_disputed_matches_have_clubs_and_admin_can_filter(self, seeded_app, client, monkeypatch):
+        """Every seeded disputed match is tied to a club and administrator can filter by club."""
+        with seeded_app.app_context():
+            admin_acc = Account.query.filter_by(email="admin@netrank.test").first()
+            assert admin_acc is not None
+            disputed = [
+                proposal
+                for proposal in MatchProposal.query.all()
+                if proposal.score_status == "disputed"
+            ]
+            assert disputed
+            for proposal in disputed:
+                club_ids = {
+                    club_id
+                    for club_id in (
+                        proposal.ladder.club_id if proposal.ladder is not None else None,
+                        proposal.team1.club_id if proposal.team1 is not None else None,
+                        proposal.team2.club_id if proposal.team2 is not None else None,
+                    )
+                    if club_id is not None
+                }
+                assert club_ids, f"Disputed proposal {proposal.id} has no club context"
+
+            target_club_id = next(iter({
+                proposal.team1.club_id
+                for proposal in disputed
+                if proposal.team1 is not None and proposal.team1.club_id is not None
+            }))
+            expected_ids = {
+                proposal.id
+                for proposal in disputed
+                if target_club_id in {
+                    club_id
+                    for club_id in (
+                        proposal.ladder.club_id if proposal.ladder is not None else None,
+                        proposal.team1.club_id if proposal.team1 is not None else None,
+                        proposal.team2.club_id if proposal.team2 is not None else None,
+                    )
+                    if club_id is not None
+                }
+            }
+
+        authed = _authed_client(client, monkeypatch, admin_acc)
+        all_resp = authed.get("/api/matches/disputed")
+        assert all_resp.status_code == 200
+        assert all_resp.get_json()["total"] >= len(expected_ids)
+
+        club_resp = authed.get(f"/api/matches/disputed?club_id={target_club_id}")
+        assert club_resp.status_code == 200
+        assert {match["id"] for match in club_resp.get_json()["matches"]} == expected_ids
+
     def test_ladder_admin_sees_disputed_match(self, seeded_app, client, monkeypatch):
         """ClubOwner of the ladder's club receives disputed matches they can resolve."""
         with seeded_app.app_context():
@@ -808,6 +859,46 @@ class TestDisputedRoute:
         body = resp.get_json()
         assert body["total"] == 1
         assert body["matches"][0]["id"] == pid
+
+    def test_club_owner_can_filter_disputes_by_club(self, seeded_app, client, monkeypatch):
+        """ClubOwner can request disputed matches for one specific managed club."""
+        with seeded_app.app_context():
+            club_a = _club("Club A")
+            club_b = _club("Club B")
+            club_c = _club("Club C")
+            club_b_id = club_b.id
+            club_c_id = club_c.id
+            admin_acc = _account("admin@test.com")
+            _club_owner(admin_acc, club_a)
+            db.session.add(ClubOwnerClub(club_owner_id=admin_acc.id, club_id=club_b.id, can_manage_match=True))
+
+            disputed_ids = []
+            for club, suffix in ((club_a, "a"), (club_b, "b"), (club_c, "c")):
+                t1, t2 = _team(club, f"T1 {suffix}"), _team(club, f"T2 {suffix}")
+                mgr1 = _account(f"m1-{suffix}@test.com")
+                mgr2 = _account(f"m2-{suffix}@test.com")
+                _team_manager(mgr1, t1)
+                _team_manager(mgr2, t2)
+                proposal = _proposal(t1, t2)
+                _add_submission(proposal, mgr1, SubmissionRole.TEAM1_SIDE, 2, 1)
+                _add_submission(proposal, mgr2, SubmissionRole.TEAM2_SIDE, 1, 2)
+                disputed_ids.append(proposal.id)
+            db.session.commit()
+
+        authed = _authed_client(client, monkeypatch, admin_acc)
+        resp = authed.get("/api/matches/disputed")
+
+        assert resp.status_code == 200
+        visible_ids = {match["id"] for match in resp.get_json()["matches"]}
+        assert visible_ids == set(disputed_ids[:2])
+
+        club_b_resp = authed.get(f"/api/matches/disputed?club_id={club_b_id}")
+        assert club_b_resp.status_code == 200
+        assert {match["id"] for match in club_b_resp.get_json()["matches"]} == {disputed_ids[1]}
+
+        club_c_resp = authed.get(f"/api/matches/disputed?club_id={club_c_id}")
+        assert club_c_resp.status_code == 200
+        assert club_c_resp.get_json()["matches"] == []
 
     def test_team_manager_sees_empty_disputed_list(self, seeded_app, client, monkeypatch):
         """Ordinary team manager without ladder admin rights sees no disputed matches."""
