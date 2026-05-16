@@ -2,10 +2,12 @@ from pathlib import Path
 
 from flask.testing import FlaskClient
 
+from server.app.models.account import Account
 from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
 from server.app.models.match import MatchProposal, MatchStatus
-from server.app.models.team import Team
+from server.app.models.player import PlayerTeam
+from server.app.models.team import Team, TeamManagerTeam
 from server.extensions import db
 
 
@@ -65,6 +67,71 @@ def test_manager_only_demo_match_is_seeded(seeded_app):
         assert proposal is not None
         assert proposal.status_id == MatchStatus.ACCEPTED
         assert proposal.played is None
+
+        jeremi = Account.query.filter_by(email="jeremilorek@outlook.com").first()
+        lrk = Account.query.filter_by(email="lrk.j@outlook.com").first()
+        assert jeremi is not None
+        assert lrk is not None
+        assert jeremi.team_manager is not None
+        assert lrk.team_manager is not None
+
+        assert TeamManagerTeam.query.filter_by(
+            team_manager_id=jeremi.team_manager.id,
+            team_id=rows[0].team_id,
+        ).count() == 1
+        assert TeamManagerTeam.query.filter_by(
+            team_manager_id=lrk.team_manager.id,
+            team_id=rows[1].team_id,
+        ).count() == 1
+
+        for team_name in team_names:
+            team = Team.query.filter_by(name=team_name).first()
+            assert team is not None
+            assert PlayerTeam.query.filter_by(team_id=team.id).count() == 1
+
+        assert jeremi.player is not None
+        assert rows[0].team_id not in {team.id for team in jeremi.player.teams}
+        assert lrk.player is None
+
+
+def test_manager_only_demo_match_score_flow(seeded_app, seeded_client: FlaskClient):
+    with seeded_app.app_context():
+        ladder = Ladder.query.filter_by(name="Manager Demo Singles").first()
+        assert ladder is not None
+        proposal = MatchProposal.query.filter_by(ladder_id=ladder.id).first()
+        assert proposal is not None
+        match_id = proposal.id
+
+    login_jeremi = seeded_client.post(
+        "/api/login",
+        json={"email": "jeremilorek@outlook.com", "password": "qwertyuiop"},
+    )
+    assert login_jeremi.status_code == 200
+
+    first = seeded_client.post(
+        f"/api/matches/{match_id}/score",
+        json={"score_team1": 2, "score_team2": 1},
+    )
+    assert first.status_code == 201
+    first_body = first.get_json()
+    assert first_body["submission"]["submittedByRole"] == "team1_side"
+    assert first_body["finalized"] is False
+
+    login_lrk = seeded_client.post(
+        "/api/login",
+        json={"email": "lrk.j@outlook.com", "password": "qwertyuiop"},
+    )
+    assert login_lrk.status_code == 200
+
+    second = seeded_client.post(
+        f"/api/matches/{match_id}/score",
+        json={"score_team1": 2, "score_team2": 1},
+    )
+    assert second.status_code == 201
+    second_body = second.get_json()
+    assert second_body["submission"]["submittedByRole"] == "team2_side"
+    assert second_body["finalized"] is True
+    assert second_body["resolvedScore"] == {"scoreTeam1": 2, "scoreTeam2": 1}
 
 
 def test_top_players_contract_and_sorting(seeded_client: FlaskClient):

@@ -201,6 +201,9 @@ def _can_score_for_team(account: Account, team, *, resolved=None) -> bool:
     if _can_manage_match(resolved, team):
         return True
 
+    if account.team_manager is not None and account.team_manager.can_manage_match_in(team):
+        return True
+
     return account.player is not None and team in account.player.teams
 
 

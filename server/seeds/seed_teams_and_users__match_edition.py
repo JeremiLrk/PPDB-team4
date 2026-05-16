@@ -1473,19 +1473,41 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             future_match.location = "NetRank Club Court 1"
             future_match.sport_type_id = tennis.id
 
-        lrk_acc, _ = make_account(
+        lrk_manager_acc, _ = make_account(
             "LRK",
-            "Debug",
+            "Manager",
             "lrk.j@outlook.com",
-            role_player,
+            role_manager,
             password="qwertyuiop",
             force_password_update=True,
         )
+        fake_player_a, _ = make_account(
+            "Manager",
+            "DemoA",
+            "manager.demo.a@example.com",
+            role_player,
+            password="Password123!",
+            force_password_update=True,
+        )
+        fake_player_b, _ = make_account(
+            "Manager",
+            "DemoB",
+            "manager.demo.b@example.com",
+            role_player,
+            password="Password123!",
+            force_password_update=True,
+        )
+        player_demo_partner_acc, _ = make_account(
+            "Robin",
+            "Vermeulen",
+            "robin.vermeulen@example.com",
+            role_player,
+            password="Password123!",
+        )
 
         # Manager-only demo fixture:
-        # Jeremi and LRK manage opposing teams in Player Demo Club, but neither
-        # of them is a club owner there. This lets us verify the team-manager
-        # score flow without involving the club-owner adjudication path.
+        # Jeremi is a club owner elsewhere in the seed, but this match should
+        # still resolve through his team-manager relation for Player Demo Club.
         manager_demo_team_a, _ = make_team(
             "Manager Demo A",
             tennis,
@@ -1499,7 +1521,7 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             verbose=verbose,
         )
         jeremi_manager = owners[0][1]
-        lrk_manager, _ = make_manager(lrk_acc)
+        lrk_manager, _ = make_manager(lrk_manager_acc)
         if not TeamManagerTeam.query.filter_by(team_manager_id=jeremi_manager.id, team_id=manager_demo_team_a.id).first():
             db.session.add(TeamManagerTeam(
                 team_manager_id=jeremi_manager.id,
@@ -1532,6 +1554,10 @@ def seed_teams_and_users(verbose: bool = True) -> None:
         )
         get_or_create_ladder_team(manager_demo_ladder.id, manager_demo_team_a.id, rank=1, rating=1125, matches_played=0)
         get_or_create_ladder_team(manager_demo_ladder.id, manager_demo_team_b.id, rank=2, rating=1105, matches_played=0)
+        ensure_player_on_team(fake_player_a, manager_demo_team_a)
+        ensure_player_on_team(fake_player_b, manager_demo_team_b)
+        ensure_team_players_in_club(manager_demo_team_a, player_demo_club)
+        ensure_team_players_in_club(manager_demo_team_b, player_demo_club)
 
         manager_demo_week_start = demo_week_start + datetime.timedelta(days=14)
         manager_demo_start = datetime.datetime.combine(
@@ -1567,7 +1593,7 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             manager_demo_proposal.proposed_start_at = manager_demo_start
             manager_demo_proposal.proposed_end_at = manager_demo_start + datetime.timedelta(hours=1)
             manager_demo_proposal.location = "Manager Demo Court"
-            _make_accepted(manager_demo_proposal, by_user_id=lrk_acc.id)
+            _make_accepted(manager_demo_proposal, by_user_id=lrk_manager_acc.id)
         lrk_debug_team, _ = make_team(
             "LRK Debug Opponent",
             tennis,
@@ -1581,7 +1607,7 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             verbose=verbose,
         )
         ensure_player_on_team(jeremi_acc, jeremi_debug_team)
-        ensure_player_on_team(lrk_acc, lrk_debug_team)
+        ensure_player_on_team(player_demo_partner_acc, lrk_debug_team)
         ensure_team_players_in_club(jeremi_debug_team, player_demo_club)
         ensure_team_players_in_club(lrk_debug_team, player_demo_club)
 
