@@ -211,35 +211,7 @@ export default function MatchProposalsTab() {
 
             {!loading && !roleLoading && !error ? (
                 <div className={styles.sections}>
-                    <section className={styles.section}>
-                        <SectionHeader
-                            title={managedTitle}
-                            subtitle={managedSubtitle}
-                            count={managedProposals.length}
-                        />
-                        <MatchProposalList
-                            proposals={managedProposals}
-                            loading={false}
-                            submitting={submitting}
-                            onReload={load}
-                            onStatusChange={setProposalStatus}
-                            onReportScore={openScoring}
-                            reportingMatchId={reportingMatchId}
-                            scoreValues={scoreValues}
-                            onScoreChange={(field, value) =>
-                                setScoreValues((current) => ({ ...current, [field]: value }))
-                            }
-                            onScoreSubmit={submitScore}
-                            onCancelScore={() => setReportingMatchId(null)}
-                            scoreSubmitting={scoreSubmitting}
-                            canUpdateProposal={canUpdateProposal}
-                            currentUserId={currentUser?.id}
-                            texts={texts}
-                            statusTexts={dashboardTexts}
-                            emptyText={managedEmptyLabel}
-                        />
-                    </section>
-
+                    {/* Player-owned matches stay above managed matches so the tab reflects what the user is directly involved in first. */}
                     <section className={styles.section}>
                         <SectionHeader
                             title={playerTitle}
@@ -266,6 +238,35 @@ export default function MatchProposalsTab() {
                             texts={texts}
                             statusTexts={dashboardTexts}
                             emptyText={playerEmptyLabel}
+                        />
+                    </section>
+
+                    <section className={styles.section}>
+                        <SectionHeader
+                            title={managedTitle}
+                            subtitle={managedSubtitle}
+                            count={managedProposals.length}
+                        />
+                        <MatchProposalList
+                            proposals={managedProposals}
+                            loading={false}
+                            submitting={submitting}
+                            onReload={load}
+                            onStatusChange={setProposalStatus}
+                            onReportScore={openScoring}
+                            reportingMatchId={reportingMatchId}
+                            scoreValues={scoreValues}
+                            onScoreChange={(field, value) =>
+                                setScoreValues((current) => ({ ...current, [field]: value }))
+                            }
+                            onScoreSubmit={submitScore}
+                            onCancelScore={() => setReportingMatchId(null)}
+                            scoreSubmitting={scoreSubmitting}
+                            canUpdateProposal={canUpdateProposal}
+                            currentUserId={currentUser?.id}
+                            texts={texts}
+                            statusTexts={dashboardTexts}
+                            emptyText={managedEmptyLabel}
                         />
                     </section>
                 </div>

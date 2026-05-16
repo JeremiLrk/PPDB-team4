@@ -8,13 +8,13 @@ Unit (service layer — no HTTP):
   - submit_score resolves team2_side role for team2 manager
   - match is auto-finalized when both sides submit identical scores
   - match enters 'disputed' state when sides submit different scores
-  - ladder_admin submission finalizes a disputed match
+  - ladder_admin submission finalizes a disputed match or an authoritative first submission
   - duplicate submission for the same role raises ScoreSubmissionError (409)
   - submission on already-finalized match raises ScoreSubmissionError (409)
   - submission on cancelled match raises ScoreSubmissionError (409)
   - negative scores raise ScoreSubmissionError (422)
   - account with no team relation raises ScoreSubmissionError (403)
-  - ladder_admin submission rejected when match is not yet disputed
+  - club managers and "both teams" managers finalize immediately on submit
 
 Integration (HTTP routes):
   - POST /api/matches/<id>/score returns 201 and submission data
@@ -347,8 +347,8 @@ class TestLadderAdminAdjudication:
             assert proposal.score_status == "resolved"
             assert proposal.played.score_team1 == 2
 
-    def test_ladder_admin_submission_rejected_when_not_disputed(self, seeded_app):
-        """Admin adjudication is refused when no dispute exists yet."""
+    def test_club_owner_submits_final_score_without_waiting_for_dispute(self, seeded_app):
+        """ClubOwner submissions are authoritative even before a dispute exists."""
         with seeded_app.app_context():
             club = _club()
             t1, t2 = _team(club, "T1"), _team(club, "T2")
@@ -357,11 +357,38 @@ class TestLadderAdminAdjudication:
             ladder = _ladder(club)
             proposal = _proposal(t1, t2, ladder=ladder)
 
-            with pytest.raises(ScoreSubmissionError) as exc:
-                submit_score(proposal, admin_acc, 2, 0)
+            submission, finalized = submit_score(proposal, admin_acc, 2, 0)
+            db.session.commit()
+            db.session.refresh(proposal)
 
-            assert exc.value.status_code == 409
-            assert "not yet disputed" in str(exc.value).lower() or "only allowed" in str(exc.value).lower()
+            assert submission.submitted_by_role == SubmissionRole.LADDER_ADMIN.value
+            assert finalized is True
+            assert proposal.score_status == "resolved"
+            assert proposal.played is not None
+            assert proposal.played.score_team1 == 2
+            assert proposal.played.score_team2 == 0
+
+    def test_manager_of_both_teams_finalizes_immediately(self, seeded_app):
+        """A single team manager who controls both teams can finalize immediately."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            dual_mgr = _account("dual@test.com")
+            _team_manager(dual_mgr, t1)
+            db.session.add(TeamManagerTeam(team_manager_id=dual_mgr.id, team_id=t2.id, can_manage_match=True))
+            db.session.flush()
+            proposal = _proposal(t1, t2)
+
+            submission, finalized = submit_score(proposal, dual_mgr, 3, 1)
+            db.session.commit()
+            db.session.refresh(proposal)
+
+            assert submission.submitted_by_role == SubmissionRole.LADDER_ADMIN.value
+            assert finalized is True
+            assert proposal.score_status == "resolved"
+            assert proposal.played is not None
+            assert proposal.played.score_team1 == 3
+            assert proposal.played.score_team2 == 1
 
 
 class TestSubmissionGuards:
@@ -483,6 +510,29 @@ class TestPostScoreRoute:
         body = resp.get_json()
         assert body["submission"]["submittedByRole"] == SubmissionRole.TEAM1_SIDE.value
         assert body["scoreStatus"] == "not_submitted"
+
+    def test_club_owner_submission_finalizes_immediately(self, seeded_app, client, monkeypatch):
+        """A club owner's score submission is final right away."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            admin_acc = _account("owner@test.com")
+            _club_owner(admin_acc, club)
+            proposal = _proposal(t1, t2)
+            db.session.commit()
+            pid = proposal.id
+
+        resp = _authed_client(client, monkeypatch, admin_acc).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 4, "score_team2": 2},
+        )
+
+        assert resp.status_code == 201
+        body = resp.get_json()
+        assert body["submission"]["submittedByRole"] == SubmissionRole.LADDER_ADMIN.value
+        assert body["finalized"] is True
+        assert body["resolvedScore"] == {"scoreTeam1": 4, "scoreTeam2": 2}
+        assert body["scoreStatus"] == "resolved"
 
     def test_both_sides_agree_returns_finalized_true(self, seeded_app, client, monkeypatch):
         """When both sides submit matching scores, response contains finalized=true."""

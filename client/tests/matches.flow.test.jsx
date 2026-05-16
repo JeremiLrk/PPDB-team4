@@ -186,6 +186,69 @@ function renderWithContexts(ui, { lang = "en", currentUser = null, route = "/" }
 }
 
 describe("Match frontend flows", () => {
+    test("player matches render above managed matches", async () => {
+        matchProposalsState.proposals = [
+            {
+                id: 1,
+                proposedByUserId: 9,
+                team1Id: 12,
+                team2Id: 13,
+                team1Name: "Player Team",
+                team2Name: "Other Team",
+                team1ClubId: 1,
+                team2ClubId: 1,
+                team1ClubName: "NetRank Club",
+                team2ClubName: "NetRank Club",
+                team1ClubCity: "Antwerp",
+                team2ClubCity: "Antwerp",
+                team1Contacts: [],
+                team2Contacts: [],
+                status: "pending",
+                scoreStatus: "not_submitted",
+                scoreSubmissions: [],
+                proposedStartAt: "2026-05-14T18:00:00Z",
+                proposedEndAt: "2026-05-14T19:00:00Z",
+            },
+            {
+                id: 2,
+                proposedByUserId: 9,
+                team1Id: 11,
+                team2Id: 14,
+                team1Name: "Managed Team",
+                team2Name: "Other Team",
+                team1ClubId: 1,
+                team2ClubId: 1,
+                team1ClubName: "NetRank Club",
+                team2ClubName: "NetRank Club",
+                team1ClubCity: "Antwerp",
+                team2ClubCity: "Antwerp",
+                team1Contacts: [],
+                team2Contacts: [],
+                status: "pending",
+                scoreStatus: "not_submitted",
+                scoreSubmissions: [],
+                proposedStartAt: "2026-05-15T18:00:00Z",
+                proposedEndAt: "2026-05-15T19:00:00Z",
+            },
+        ];
+
+        renderWithContexts(<MatchProposalsTab />, {
+            currentUser: {
+                id: 7,
+                role: "team_manager",
+                managedTeamIds: [11],
+                clubIds: [1],
+                playerTeamIds: [12],
+            },
+        });
+
+        expect(await screen.findByText("Player matches")).toBeInTheDocument();
+        expect(screen.getByText("Managed matches")).toBeInTheDocument();
+        expect(
+            screen.getByText("Player matches").compareDocumentPosition(screen.getByText("Managed matches")) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+    });
+
     test("weekly proposals tab can accept a proposal and submit a score", async () => {
         const user = userEvent.setup();
 
