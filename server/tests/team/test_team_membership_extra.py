@@ -286,8 +286,8 @@ class TestAddPlayerWarning:
             _authed_client(client, monkeypatch, Account.query.get(acc_id))
 
         resp = client.post(
-            f"/api/teams/{team_id}/players?confirmDropLadders=true",
-            json={"accountId": target_id},
+            f"/api/teams/{team_id}/players",
+            json={"accountId": target_id, "confirmDropLadders": True},
         )
         assert resp.status_code == 201
 
@@ -355,7 +355,8 @@ class TestRemovePlayerWarning:
             _authed_client(client, monkeypatch, Account.query.get(acc_id))
 
         resp = client.delete(
-            f"/api/teams/{team_id}/players/{target_id}?confirmDropLadders=true"
+            f"/api/teams/{team_id}/players/{target_id}",
+            json={"confirmDropLadders": True},
         )
         assert resp.status_code == 200
 
@@ -642,8 +643,8 @@ class TestAddPlayerDropsLadderOnConfirm:
             _authed_client(client, monkeypatch, Account.query.get(ids["mgr_acc_id"]))
 
         resp = client.post(
-            f"/api/teams/{ids['team_id']}/players?confirmDropLadders=true",
-            json={"accountId": ids["target_acc_id"]},
+            f"/api/teams/{ids['team_id']}/players",
+            json={"accountId": ids["target_acc_id"], "confirmDropLadders": True},
         )
         assert resp.status_code == 201
         body = resp.get_json()
@@ -667,8 +668,8 @@ class TestAddPlayerDropsLadderOnConfirm:
             _authed_client(client, monkeypatch, Account.query.get(ids["mgr_acc_id"]))
 
         resp = client.post(
-            f"/api/teams/{ids['team_id']}/players?confirmDropLadders=true",
-            json={"accountId": ids["target_acc_id"]},
+            f"/api/teams/{ids['team_id']}/players",
+            json={"accountId": ids["target_acc_id"], "confirmDropLadders": True},
         )
         assert resp.status_code == 201
 
@@ -743,7 +744,8 @@ class TestRemovePlayerDropsLadderOnConfirm:
             _authed_client(client, monkeypatch, Account.query.get(ids["mgr_acc_id"]))
 
         resp = client.delete(
-            f"/api/teams/{ids['team_id']}/players/{ids['target_acc_id']}?confirmDropLadders=true"
+            f"/api/teams/{ids['team_id']}/players/{ids['target_acc_id']}",
+            json={"confirmDropLadders": True},
         )
         assert resp.status_code == 200
         body = resp.get_json()
@@ -767,7 +769,8 @@ class TestRemovePlayerDropsLadderOnConfirm:
             _authed_client(client, monkeypatch, Account.query.get(ids["mgr_acc_id"]))
 
         resp = client.delete(
-            f"/api/teams/{ids['team_id']}/players/{ids['target_acc_id']}?confirmDropLadders=true"
+            f"/api/teams/{ids['team_id']}/players/{ids['target_acc_id']}",
+            json={"confirmDropLadders": True},
         )
         assert resp.status_code == 200
 

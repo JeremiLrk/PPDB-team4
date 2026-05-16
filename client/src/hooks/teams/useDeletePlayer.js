@@ -24,14 +24,10 @@ export function useDeletePlayer({ teamId, playerId, onDeleted } = {}) {
         setError(null);
         setViolateWarning(null);
         try {
-            // Build URL with confirmation flag if needed
-            let url = `/api/teams/${teamId}/players/${playerId}`;
-            if (confirmDropLadders) {
-                url += "?confirmDropLadders=true";
-            }
-
-            const res  = await fetch(url, {
-                method: "DELETE",
+            const res  = await fetch(`/api/teams/${teamId}/players/${playerId}`, {
+                method:  "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body:    JSON.stringify({ confirmDropLadders: confirmDropLadders }),
             });
             const data = await res.json().catch(() => ({}));
 

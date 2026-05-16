@@ -249,7 +249,8 @@ def remove_player_from_team(account: Account, team_id: int, account_id: int):
     violating_ladders = _ladders_violating_min_after_remove(team_id)
 
     if violating_ladders:
-        confirm = request.args.get("confirmDropLadders", False) == True
+        data_del = request.get_json(silent=True) or {}
+        confirm = data_del.get("confirmDropLadders") is True
         if not confirm:
             # Warn the client; no DB changes made yet.
             return jsonify({
