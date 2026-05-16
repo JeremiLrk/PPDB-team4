@@ -21,7 +21,8 @@ from ._helpers import (
 )
 from ._permissions import (
     _can_edit_players_or_403,
-    _can_edit_managers_or_403, _get_permissions
+    _can_edit_managers_or_403, _get_permissions,
+    _is_admin, _is_owner_of_team_club,
 )
 from .requests import get_team_players, get_team_managers
 
@@ -54,6 +55,22 @@ def add_manager_to_team(account: Account, team_id: int) -> tuple[Response, int]:
     can_delete         = data.get("canDelete", True)
     can_edit_players   = data.get("canEditPlayers", True)
     can_edit_managers  = data.get("canEditManagers", True)
+
+    # A manager cannot grant permissions they don't have themselves.
+    # Admins and club owners always have all permissions, so these checks only
+    # apply to regular team managers.
+    resolved = account.resolved_role
+    if not (_is_admin(resolved) or _is_owner_of_team_club(resolved, team)):
+        caller_perms = _get_permissions(resolved, team)
+        if can_rename and not caller_perms["canRename"]:
+            abort(403, description="Forbidden: you cannot grant canRename - you do not have this permission yourself.")
+        if can_delete and not caller_perms["canDelete"]:
+            abort(403, description="Forbidden: you cannot grant canDelete - you do not have this permission yourself.")
+        if can_edit_players and not caller_perms["canEditPlayers"]:
+            abort(403, description="Forbidden: you cannot grant canEditPlayers - you do not have this permission yourself.")
+        if can_edit_managers and not caller_perms["canEditManagers"]:
+            abort(403, description="Forbidden: you cannot grant canEditManagers - you do not have this permission yourself.")
+
     assoc = TeamManagerTeam(
         team_manager_id=target.team_manager.id,
         team_id=team.id,
@@ -268,4 +285,3 @@ def remove_player_from_team(account: Account, team_id: int, account_id: int):
         ]
 
     return jsonify(response_body), 200
-

@@ -13,7 +13,7 @@ import { FormPage }              from "@/components/forms/FormPage.jsx";
 import ItemCard                  from "@/components/common/ItemCard.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 
-// Назви полів прав → ключ перекладу
+
 const PERMISSION_KEYS = [
     { field: "canRename",       textKey: "perm_can_rename"        },
     { field: "canDelete",       textKey: "perm_can_delete"        },
@@ -29,11 +29,11 @@ const PERMISSION_FALLBACKS = {
 };
 
 /**
- * Перевірка can_edit_managers на фронтенді.
- * Відзеркалює логіку _can_edit_managers() на сервері:
- *   Administrator / ClubOwner — завжди true.
- *   TeamManager — перевіряємо account.managerPermissions?.[teamId]?.canEditManagers.
- *   Якщо ваш /api/me ще не повертає managerPermissions — fallback через managedTeamIds.
+ * Checking can_edit_managers on the frontend.
+ * Mirrors the logic of _can_edit_managers() on the server:
+ * Administrator / ClubOwner — always true.
+ * TeamManager — checking account.managerPermissions?.[teamId]?.canEditManagers.
+ * If your /api/me doesn't yet return managerPermissions — fallback via managedTeamIds.
  */
 function canEditManagers(account, team) {
     if (!account || !team) return false;
@@ -50,8 +50,8 @@ function canEditManagers(account, team) {
     if (roles.includes("team_manager")) {
         const perms = account.managerPermissions?.[team.id];
         if (perms !== undefined) return perms.canEditManagers;
-        // Fallback: якщо managerPermissions недоступні — показуємо кнопку,
-        // сервер однаково поверне 403 якщо права відсутні.
+        // Fallback: if managerPermissions are not available — show the button,
+        // the server will still return 403 if the permissions are missing.
         return account.managedTeamIds?.includes(team.id) ?? false;
     }
 
@@ -59,12 +59,12 @@ function canEditManagers(account, team) {
 }
 
 /**
- * AddManagerButton — dropdown-панель для пошуку та додавання менеджера команди.
+ * AddManagerButton — dropdown panel for searching and adding a team manager.
  *
  * Props:
- *   teamId   {number|string}  — ID команди
- *   team     {object}         — об'єкт команди { id, clubId, … }
- *   onAdded  {() => void}     — колбек після успішного додавання
+ * teamId {number|string} — Team ID
+ * team {object} — Team object { id, clubId, … }
+ * onAdded {() => void} — Callback after successful addition
  */
 export default function AddManagerButton({ teamId, team, onAdded }) {
     const { currentUser } = useCurrentUserContext();
@@ -83,7 +83,7 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
         inputRef,
     } = useAddManager({ teamId, onAdded });
 
-    // Рендеримо кнопку лише якщо поточний користувач може редагувати менеджерів
+    // Render the button only if the current user can edit managers
     if (!canEditManagers(currentUser, team)) return null;
 
     const t = (key, fallback) => texts[key] ?? fallback;
@@ -110,11 +110,11 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
             submitLabel={t("confirm_add_manager", "Beheerder toevoegen")}
             canNext={step === 1}
 
-            error={addErr || searchErr || null}
+            error={addErr ? (texts[addErr] ?? addErr) : (searchErr || null)}
             ariaLabel={t("add_manager_aria", "Beheerder aan team toevoegen")}
             panelClassName={teamStyles.addPlayerPanel}
         >
-            {/* ── Сторінка 0: пошук акаунту ── */}
+            {/* ── Page 0: account search ── */}
             <FormPage active={step === 0}>
 
                 <div className={teamStyles.searchRow}>
@@ -157,7 +157,7 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
                 )}
             </FormPage>
 
-            {/* ── Сторінка 1: права нового менеджера ── */}
+            {/* ── Page 1: new manager rights ── */}
             <FormPage active={step === 1}>
 
                 {selected && (
@@ -201,7 +201,7 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
     );
 }
 
-/* ── Sub-компоненти ──────────────────────────────────────────────────────── */
+/* ── Sub-components ──────────────────────────────────────────────────────── */
 
 function SearchResultCard({ account, selectLabel, onSelect }) {
     const fullName = [account.firstName, account.lastName]

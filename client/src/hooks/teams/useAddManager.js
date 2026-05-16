@@ -1,10 +1,10 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 
 /**
- * useAddManager - керує пошуком акаунту та додаванням менеджера команди.
+ * useAddManager - controls the account search and adding of a team manager.
  *
- * Крок 0: пошук акаунту
- * Крок 1: вибір прав (TeamManagerTeam)
+ * Step 0: Account search
+ * Step 1: Select rights (TeamManagerTeam)
  *
  * @param {{ teamId: number|string, onAdded?: (manager: object) => void }} options
  */
@@ -55,7 +55,7 @@ export function useAddManager({ teamId, onAdded } = {}) {
         });
     }, []);
 
-    // Авто-фокус при відкритті першої сторінки
+    // Auto-focus when opening the first page
     useEffect(() => {
         if (isOpen && step === 0) {
             const t = setTimeout(() => inputRef.current?.focus(), 60);
@@ -63,7 +63,7 @@ export function useAddManager({ teamId, onAdded } = {}) {
         }
     }, [isOpen, step]);
 
-    // Debounced-пошук — лише на кроці 0
+    // Debounced search — only at step 0
     useEffect(() => {
         if (!isOpen || step !== 0) return;
 
@@ -103,7 +103,7 @@ export function useAddManager({ teamId, onAdded } = {}) {
         setStep(1);
     }, []);
 
-    // Повернутися на крок 0
+    // Return to step 0
     const goBack = useCallback(() => {
         setStep(0);
         setSelected(null);
@@ -114,7 +114,7 @@ export function useAddManager({ teamId, onAdded } = {}) {
         setPermissions(prev => ({ ...prev, [key]: !prev[key] }));
     }, []);
 
-    // Відправити запит на сервер
+    // Send request to server
     const submit = useCallback(async () => {
         if (!selected) return;
         setAddingId(selected.id);
@@ -133,7 +133,7 @@ export function useAddManager({ teamId, onAdded } = {}) {
                 }),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data?.message || "Failed to add manager.");
+            if (!res.ok) throw new Error(data?.description || data?.message || "Failed to add manager.");
 
             setAddedIds(prev => new Set(prev).add(selected.id));
             setIsSuccess(true);
