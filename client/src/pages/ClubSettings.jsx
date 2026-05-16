@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { useClubSettings } from "@/hooks/useClubSettings";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
-import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 import ClubSidebar from "@/components/club_settings/ClubSidebar.jsx";
 import ClubOverview from "@/components/club_settings/ClubOverview.jsx";
@@ -19,8 +18,6 @@ function ClubSettings() {
     const { lang } = useLangContext();
     const texts = usePageTexts("club_settings", lang);
     const settings = useClubSettings(clubId, texts);
-    const { theme } = useThemeContext();
-    const isLight = theme === "light";
 
     if (!texts.sidebar_title) {
         return <div className={styles.loading}>{texts.loading || "Club laden..."}</div>;
@@ -31,14 +28,14 @@ function ClubSettings() {
     }
 
     return (
-        <section className={`${styles.shell} ${isLight ? styles.light : ""}`}>
+        <section className={styles.shell}>
             <ClubSidebar
                 activeTab={settings.activeTab}
                 onTabChange={settings.setActiveTab}
                 texts={texts}
             />
 
-            <div className={styles.workspace}>
+            <div className={styles.settings}>
 
                 {settings.activeTab === "overview" && (
                     <ClubOverview club={settings.club} texts={texts} />

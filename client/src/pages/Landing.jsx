@@ -2,13 +2,11 @@ import { useNavigate } from "react-router-dom";
 import styles from "@/style/Landing.module.css";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
-import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 
 function Landing() {
     const navigate = useNavigate();
     const { lang } = useLangContext();
     const landingTexts = usePageTexts("landing", lang);
-    const { currentUser } = useCurrentUserContext();
 
     if (!landingTexts.explore_clubs) {
         return <div className={styles.page} />;
@@ -61,20 +59,9 @@ function Landing() {
                     <button onClick={() => navigate("/clubs")} className={styles.primaryButton}>
                         {landingTexts.explore_clubs || "Explore clubs"}
                     </button>
-                    {currentUser ? (
-                        <button onClick={() => navigate("/dashboard")} className={styles.secondaryButton}>
-                            {landingTexts.open_dashboard || "Open dashboard"}
-                        </button>
-                    ) : (
-                        <>
-                            <button onClick={() => navigate("/login")} className={styles.secondaryButton}>
-                                {landingTexts.login || "Log in"}
-                            </button>
-                            <button onClick={() => navigate("/register")} className={styles.secondaryButton}>
-                                {landingTexts.register || "Sign up"}
-                            </button>
-                        </>
-                    )}
+                    <button onClick={() => navigate("/dashboard")} className={styles.secondaryButton}>
+                        {landingTexts.open_dashboard || "Open dashboard"}
+                    </button>
                 </div>
             </section>
 

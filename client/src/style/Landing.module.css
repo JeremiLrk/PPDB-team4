@@ -46,7 +46,7 @@
 }
 
 .titleGradient {
-    background: linear-gradient(110deg, #f8fbff 0%, #67e8f9 35%, #10b981 100%);
+    background: linear-gradient(110deg, #f8fbff 0%, #67e8f9 32%, #34d399 70%, #a78bfa 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -267,53 +267,4 @@
     .actions button {
         width: 100%;
     }
-}
-
-
-/*  Light mode overrides  */
-
-:global(html.light) .page {
-    color: #0f172a;
-}
-:global(html.light) .kicker {
-    color: #0369a1;
-}
-:global(html.light) .stepsSection h2 {
-    color: #1e3a5f;
-}
-:global(html.light) .timelineColumn {
-    background: rgba(255, 255, 255, 0.72);
-    border-color: rgba(71, 85, 105, 0.2);
-}
-:global(html.light) .columnTitle {
-    color: #0369a1;
-}
-:global(html.light) .altCard {
-    background: rgba(255, 255, 255, 0.82);
-    border-color: rgba(71, 85, 105, 0.2);
-}
-:global(html.light) .altCard:hover {
-    border-color: rgba(14, 165, 233, 0.52);
-}
-:global(html.light) .altMeta {
-    color: #0369a1;
-}
-:global(html.light) .altCard h4 {
-    color: #0f172a;
-}
-:global(html.light) .altCard p {
-    color: #334155;
-}
-:global(html.light) .secondaryButton {
-    color: #0f172a;
-    border-color: rgba(71, 85, 105, 0.35);
-    background: rgba(255, 255, 255, 0.6);
-}
-:global(html.light) .secondaryButton:hover {
-    background: rgba(255, 255, 255, 0.85);
-}
-:global(html.light) .titleGradient {
-    background: linear-gradient(110deg, #0c4a6e 0%, #0891b2 45%, #047857 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
 }

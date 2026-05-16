@@ -80,11 +80,6 @@ CREATE TABLE IF NOT EXISTS ladder_team (
     rank INT,
     rating INT DEFAULT 1000,
     matches_played INT DEFAULT 0,
-    wins INT NOT NULL DEFAULT 0,
-    win_streak INT NOT NULL DEFAULT 0,
-    best_win_streak INT NOT NULL DEFAULT 0,
-    rank1_streak INT NOT NULL DEFAULT 0,
-    best_rank1_streak INT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_ladder_team_ladder
         FOREIGN KEY (ladder_id)

@@ -370,25 +370,6 @@
     }
 }
 
-/*  Light mode overrides  */
-
-:global(html.light) .statusApproved {
-    color: #065f46;
-    border-color: rgba(16, 185, 129, 0.45);
-    background: rgba(209, 250, 229, 0.8);
-}
-:global(html.light) .statusRejected {
-    color: #7f1d1d;
-    border-color: rgba(239, 68, 68, 0.45);
-    background: rgba(254, 226, 226, 0.8);
-}
-:global(html.light) .scoreNoticeFinalized {
-    color: #065f46;
-    background: rgba(209, 250, 229, 0.8);
-    border-color: rgba(16, 185, 129, 0.35);
-}
-
-
 @media (max-width: 720px) {
     .headerRow {
         flex-direction: column;

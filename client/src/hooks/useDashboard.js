@@ -19,13 +19,14 @@ export function useDashboard() {
 
         async function loadDashboard() {
             try {
+                // TODO(team): replace this with the real API contract once auth/roles are finalized.
                 const response = await fetch("/api/me/dashboard", {
                     credentials: "include",
                 });
-
+/* 
                 if (!response.ok) {
                     throw new Error("Dashboard data kon niet geladen worden.");
-                }
+                } */
 
                 const data = await response.json();
                 if (alive) {
