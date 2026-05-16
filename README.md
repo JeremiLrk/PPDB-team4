@@ -2,82 +2,37 @@
 
 NetRank is a club, team, and ladder management platform for organizing matches, handling disputes, and tracking ladder rankings with an Elo-based rating system.
 
-## What The Project Does
-
-NetRank supports the full workflow for competitive club play:
-
-- Players create and manage availability for match planning.
-- Clubs can be searched and joined through join requests.
-- Club members can create and manage teams.
-- Weekly match proposals can be accepted, rejected, reset, and scored.
-- Disputed match results can be reviewed and resolved by authorized club staff.
-- Ladder rankings are updated automatically after finalized results.
-- Match rule sets can be created, edited, and assigned to ladders.
-- Club and ladder settings can be managed from the dashboard.
-
-## Core Features
-
-### Player Dashboard
-
-- Edit profile details.
-- Change password.
-- Add and remove availability blocks.
-- View dashboard notifications and club-related actions.
-
-### Club Management
-
-- Search for clubs.
-- Send join requests.
-- Review incoming join requests as a club admin.
-- Create clubs and manage membership.
-- Work with teams inside a club.
-
-### Ladder Management
-
-- Browse ladders for a club.
-- View ladder standings and team rankings.
-- Add teams to ladders.
-- Assign ladders to specific rule sets.
-- Use ladder-specific rating behavior with Elo updates.
-
-### Match Flow
-
-- Generate weekly match proposals.
-- Accept or reject proposed matches.
-- Submit scores from both sides.
-- Detect conflicting submissions as disputed matches.
-- Let ladder admins resolve disputes.
-- Finalize results and update ladder rankings automatically.
-
-### Rulesets
-
-- Create new match rule sets.
-- Update existing rule sets.
-- Delete unused rule sets.
-- Configure structured rules such as match format, third set handling, deuce rules, and game format.
-
-### Disputed Matches
-
-- View disputed matches in a dedicated review area.
-- Inspect both sides' submitted scores.
-- See the linked ladder and ruleset for the match.
-- Resolve the result when you have permission to do so.
-
-## Technology Stack
-
-- Backend: Python, Flask, SQLAlchemy
-- Database: PostgreSQL
-- Frontend: React
-- Local development: Node.js/npm
-- Optional cache/session support: Redis when `REDIS_URL` is configured
-
 ## Requirements
 
 - Python 3.11
 - PostgreSQL
 - Node.js 20+
 - npm
-- Redis optional, used only when `REDIS_URL` is configured
+- Redis is optional and only used when `REDIS_URL` is configured
+
+## Environment
+
+The backend loads environment variables from `server/.env`.
+
+Required backend variables:
+
+- `PW_RESET_SALT`
+- `RESEND_API_KEY`
+- `FRONTEND_URL`
+- `MAIL_FROM`
+- `WEATHER_API_KEY` - required for club creation city lookup and weather display
+
+Optional backend variables:
+
+- `SECRET_KEY` - defaults to a development value if not set
+- `EMAIL_VERIFICATION_SALT` - defaults to `email-verify-salt`
+- `REDIS_URL` - enables Redis-backed cache/session support
+
+Startup flags read by the Flask app:
+
+- `RESET_DB_ON_STARTUP` - drops and recreates the database schema on startup
+- `SEED_ON_STARTUP` - seeds demo data on startup
+- `SEED_VERBOSE` - controls seed logging when `SEED_ON_STARTUP` is enabled
 
 ## Install
 
@@ -97,29 +52,27 @@ npm install
 
 ## Run
 
-The project includes a helper script for local development. It starts the backend, frontend, and PostgreSQL services expected by the app.
+The easiest way to start everything locally is the helper script from the project root:
 
 ```bash
 ./dev_tools/start_project.sh
 ```
 
-To start with the demo seed as well:
+To start with demo seed data:
 
 ```bash
 ./dev_tools/start_project.sh --seed
 ```
 
-If the backend is already running on port `5000`, start with:
+If the backend is already running on port `5000`, restart the local processes first:
 
 ```bash
 ./dev_tools/start_project.sh --restart --seed
 ```
 
-or stop the existing backend and frontend processes before launching again.
+If you want to start services manually, use separate terminals.
 
-If you want to control the services manually, use separate terminals.
-
-Without seed:
+Without seed data:
 
 ```bash
 # terminal 1
@@ -131,7 +84,7 @@ cd client
 npm run dev
 ```
 
-With seed:
+With seed data:
 
 ```bash
 # terminal 1
@@ -147,16 +100,83 @@ The manual startup path assumes PostgreSQL is already running.
 
 ## Test
 
-Run the full backend test suite from the project root after activating the virtual environment:
+Run the backend test suite from the project root after activating the virtual environment:
 
 ```bash
 source .venv/bin/activate
 python -m pytest
 ```
 
-Frontend tests:
+Run the frontend tests:
 
 ```bash
 cd client
 npm test
 ```
+
+## Features
+
+NetRank is built around a clear hierarchy of users and competitive objects.
+
+```text
+Account
+|-- Player
+|-- TeamManager
+|   |-- ClubOwner
+|-- Administrator
+
+Club
+|-- Teams
+|-- Ladders
+    |-- Ladder teams
+    |-- Rulesets
+    |-- Match proposals
+    |-- Score submissions
+    |-- Disputed matches
+```
+
+### User Roles
+
+- `Account` is the base identity for every user. It stores login details, profile data, and verification state.
+- `Player` is the user type for someone who takes part in teams and match activity.
+- `TeamManager` is the role for handling team administration.
+- `ClubOwner` is the role for managing clubs and the teams inside them.
+- `Administrator` is the top-level role for platform-wide moderation and dispute handling.
+
+### Clubs And Teams
+
+- Clubs are the main organizational unit in the platform.
+- A club can contain multiple teams.
+- Teams can contain players and managers.
+- Team managers and club owners do not have the same scope of access, which keeps ownership and day-to-day management separated.
+- Users can search for clubs, request to join them, and review join requests when they have permission.
+
+### Ladders
+
+- Ladders belong to clubs and define the competition structure.
+- A ladder decides which teams participate, which ruleset is used, and how rankings are calculated.
+- Teams can be added to a ladder when they qualify for that competition.
+- Ladder standings are updated automatically after matches are finalized.
+
+### Match Flow
+
+- Match proposals are created between eligible teams.
+- The proposal is then accepted or rejected by the invited side.
+- After the match is played, both sides can submit a score.
+- If both submissions match, the result is finalized automatically.
+- If the submissions differ, the match becomes disputed.
+- Club owners or administrators can resolve disputed matches when they have the right permissions.
+- Final results update the ladder ranking automatically.
+
+### Rulesets
+
+- Rulesets store the match rules that a ladder uses.
+- They define things like match format, third-set handling, deuce rules, and game format.
+- The same ruleset can be reused across multiple ladders so the competition rules stay consistent.
+
+### Player Dashboard
+
+- Users can edit profile details and password.
+- Users can manage availability blocks.
+- Users can see notifications and account-specific actions from one place.
+- The dashboard gives a single view of the clubs and teams the account is connected to.
