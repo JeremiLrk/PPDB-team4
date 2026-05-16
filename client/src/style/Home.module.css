@@ -2,6 +2,7 @@
 
 .page {
     position: relative;
+    width: 100%;
     min-height: 100vh;
     overflow: hidden;
     color: #f8fafc;
@@ -22,11 +23,7 @@
 .pageOverlay {
     position: fixed;
     inset: 0;
-    background:
-        radial-gradient(circle at 20% 20%, rgba(45, 212, 191, 0.12), transparent 30%),
-        radial-gradient(circle at 80% 25%, rgba(59, 130, 246, 0.16), transparent 32%),
-        radial-gradient(circle at 50% 78%, rgba(14, 165, 233, 0.10), transparent 28%),
-        linear-gradient(180deg, rgba(8, 15, 35, 0.78) 0%, rgba(6, 17, 40, 0.88) 34%, rgba(4, 13, 31, 0.95) 100%);
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.78) 0%, rgba(2, 6, 23, 0.88) 55%, rgba(2, 6, 23, 0.97) 100%);
 }
 
 .container {
@@ -239,8 +236,8 @@
 }
 
 .primaryAction {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.98), rgba(45, 212, 191, 0.92));
-    color: #04111f;
+    background: linear-gradient(130deg, #67e8f9, #34d399);
+    color: #042a36;
     box-shadow: 0 14px 30px rgba(34, 211, 238, 0.18);
 }
 
@@ -474,4 +471,105 @@
     .performerRating {
         align-items: flex-start;
     }
+}
+
+@media (max-width: 900px) {
+    .container {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+    .ladderAside { order: 3; }
+    .clubMain    { order: 1; min-height: auto; }
+    .scoreboardAside { order: 2; }
+    .heroPanel { min-height: auto; }
+}
+
+
+/*  Light mode overrides  */
+
+:global(html.light) .pageBackdrop {
+    background-color: #dbeafe;
+}
+
+:global(html.light) .pageOverlay {
+    background: linear-gradient(180deg,
+        rgba(219, 234, 254, 0.62) 0%,
+        rgba(219, 234, 254, 0.78) 55%,
+        rgba(219, 234, 254, 0.94) 100%);
+}
+
+:global(html.light) .heroPanel {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(71, 85, 105, 0.18);
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.08);
+}
+
+:global(html.light) .clubTitle {
+    color: #0f172a;
+}
+
+:global(html.light) .clubDescription {
+    color: rgba(15, 23, 42, 0.8);
+}
+
+:global(html.light) .ladderContainer,
+:global(html.light) .scoreboardContainer {
+    background: rgba(255, 255, 255, 0.82) !important;
+    border-color: rgba(71, 85, 105, 0.2) !important;
+}
+
+:global(html.light) .ladderContainerText,
+:global(html.light) .scoreboardContainerText {
+    color: #0f172a;
+}
+
+:global(html.light) .ladderButton {
+    border-color: rgba(71, 85, 105, 0.22) !important;
+    background: rgba(255, 255, 255, 0.55) !important;
+    color: #0f172a !important;
+}
+
+:global(html.light) .ladderButton:hover {
+    background: rgba(255, 255, 255, 0.88) !important;
+}
+
+/* Active tab states — defined AFTER the base override so !important cascade wins */
+
+.ladderButtonActive {
+    background: rgba(99, 102, 241, 0.18) !important;
+    border-left: 4px solid #6366f1 !important;
+    border-color: #6366f1 !important;
+    color: #e0e7ff !important;
+}
+
+:global(html.light) .ladderButtonActive {
+    background: #e0e7ff !important;
+    border-left: 4px solid #4338ca !important;
+    border-color: #4338ca !important;
+    color: #312e81 !important;
+}
+
+.ladderButtonActiveDanger {
+    background: rgba(239, 68, 68, 0.16) !important;
+    border-left: 4px solid #ef4444 !important;
+    border-color: #ef4444 !important;
+    color: #fecaca !important;
+}
+
+:global(html.light) .ladderButtonActiveDanger {
+    background: #fee2e2 !important;
+    border-left: 4px solid #dc2626 !important;
+    border-color: #dc2626 !important;
+    color: #7f1d1d !important;
+}
+
+:global(html.light) .scoreboardCardTeam {
+    background: rgba(0, 0, 0, 0.03) !important;
+    color: #0f172a;
+}
+
+:global(html.light) .secondaryAction {
+    color: #0f172a;
+    border-color: rgba(71, 85, 105, 0.3);
+    background: rgba(255, 255, 255, 0.55);
 }

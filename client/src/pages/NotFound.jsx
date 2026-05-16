@@ -9,10 +9,10 @@ const NotFound = () => {
     const home_texts = usePageTexts("home", lang);
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center">
             <h1 className="text-3xl font-semibold">{base_texts.e404}</h1>
 
-            <Link to="/" className="mt-6 text-indigo-400 hover:text-indigo-300 underline">
+            <Link to="/" className="mt-6 underline" style={{ color: "#38bdf8" }}>
                 {home_texts.home}
             </Link>
         </div>

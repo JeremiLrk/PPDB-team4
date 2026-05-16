@@ -28,15 +28,6 @@ function Dashboard() {
     const dashboardTexts = usePageTexts("dashboard", lang)
     const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts, lang)
 
-    // Sync theme to <body> so portals rendered via createPortal inherit CSS variables
-    useEffect(() => {
-        if (workspace.theme === "light") {
-            document.body.classList.add(commonStyles.light);
-        } else {
-            document.body.classList.remove(commonStyles.light);
-        }
-        return () => document.body.classList.remove(commonStyles.light);
-    }, [workspace.theme, commonStyles.light]);
 
     if (workspace.loading|| !dashboardTexts.tab_overview) {
         return (

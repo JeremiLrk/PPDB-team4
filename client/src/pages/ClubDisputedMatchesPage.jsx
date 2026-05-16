@@ -5,6 +5,7 @@ import { useClubSettings } from "@/hooks/useClubSettings.js";
 import { useDisputedMatches } from "@/hooks/matches/useDisputedMatches.js";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 import ClubSidebar from "@/components/club_settings/ClubSidebar.jsx";
 import styles from "@/style/ClubSettings.module.css";
@@ -31,6 +32,8 @@ export default function ClubDisputedMatchesPage() {
     // Pull shared club data (same hook as ClubSettings) so sidebar has the
     // same context as all other settings tabs.
     const settings = useClubSettings(clubId, texts);
+    const { theme } = useThemeContext();
+    const isLight = theme === "light";
 
     // Disputed-match data
     const {
@@ -113,7 +116,7 @@ export default function ClubDisputedMatchesPage() {
     // Render
     // -----------------------------------------------------------------------
     return (
-        <section className={styles.shell}>
+        <section className={`${styles.shell} ${isLight ? styles.light : ""}`}>
 
             {/* Sidebar — same as ClubSettings, "disputed" is the active tab */}
             <ClubSidebar

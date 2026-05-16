@@ -6,9 +6,7 @@ import { notify } from "@/hooks/useNotify.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 import { useTeams } from "@/hooks/teams/useTeams.js";
 import { useSportTypes } from "@/hooks/useSportTypes.js"
-
-const DEFAULT_THEME = "dark"
-const THEME_STORAGE_KEY = "dashboard_theme"
+import { useThemeContext } from "@/context/useThemeContext.jsx"
 
 const EMPTY_CLUB_REQUEST_FORM = {
     name: "",
@@ -83,6 +81,7 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     const { dashboardData, loading, error } = useDashboard();
     const { setCurrentUser } = useCurrentUserContext();
     const { sportTypes } = useSportTypes();
+    const { theme, toggleTheme } = useThemeContext();
     const {
         clubs: discoverClubs,
         loading: discoverLoading,
@@ -91,9 +90,6 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
 
     const [activeTab, setActiveTab] = useState("overview")
     const [searchTerm, setSearchTerm] = useState("")
-    const [theme, setTheme] = useState(
-        () => localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME,
-    )
 
     const [clubRequestForm, setClubRequestForm] = useState(
         EMPTY_CLUB_REQUEST_FORM,
@@ -156,16 +152,6 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     } = useTeams({ pageSize: 12, sort: "name", endpoint: "/api/teams/my-all" });
 
     // Persist dashboard-specific theme preference between sessions.
-    useEffect(() => {
-        localStorage.setItem(THEME_STORAGE_KEY, theme)
-    }, [theme])
-
-    function onThemeToggle() {
-        setTheme((previousTheme) =>
-            previousTheme === "dark" ? "light" : "dark",
-        )
-    }
-
     function onGoHome() {
         navigate("/")
     }
@@ -551,7 +537,7 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         availabilityLoading,
         availabilitySubmitting,
         availabilityMessage,
-        onThemeToggle,
+        onThemeToggle: toggleTheme,
         onGoHome,
         onSignOut,
         onClubRequestSubmit,

@@ -46,14 +46,53 @@ def get_eligible_teams(account, club_id: int):
 @ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>/players")
 def get_players(club_id, ladder_id):
     rows = get_all_players_ladder(ladder_id)
-    return [
+    return jsonify([
         {
             "id": team.id,
             "name": team.name,
             "rating": ladder_team.rating,
+            "matches_played": ladder_team.matches_played or 0,
+            "wins": ladder_team.wins or 0,
+            "win_streak": ladder_team.win_streak or 0,
+            "best_win_streak": ladder_team.best_win_streak or 0,
+            "rank1_streak": ladder_team.rank1_streak or 0,
+            "best_rank1_streak": ladder_team.best_rank1_streak or 0,
         }
         for team, ladder_team in rows
-    ]
+    ])
+
+
+@ladder_bp.get("/teams/<int:team_id>/achievements")
+def get_team_achievements(team_id: int):
+    from server.app.models.ladder import Ladder
+    from server.app.models.club import Club
+
+    rows = (
+        db.session.query(LadderTeam, Ladder, Club)
+        .join(Ladder, LadderTeam.ladder_id == Ladder.id)
+        .join(Club, Ladder.club_id == Club.id)
+        .filter(LadderTeam.team_id == team_id)
+        .all()
+    )
+
+    return jsonify({
+        "ladders": [
+            {
+                "ladder_id": lt.ladder_id,
+                "ladder_name": ladder.name,
+                "club_name": club.name,
+                "rank": lt.rank,
+                "rating": lt.rating or 1000,
+                "matches_played": lt.matches_played or 0,
+                "wins": lt.wins or 0,
+                "win_streak": lt.win_streak or 0,
+                "best_win_streak": lt.best_win_streak or 0,
+                "rank1_streak": lt.rank1_streak or 0,
+                "best_rank1_streak": lt.best_rank1_streak or 0,
+            }
+            for lt, ladder, club in rows
+        ]
+    })
 
 
 @ladder_bp.post("/clubs/<int:club_id>/ladders/<int:ladder_id>/teams/<int:team_id>")

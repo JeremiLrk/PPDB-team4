@@ -36,8 +36,8 @@ function Clubs() {
         if (filteredClubs.length === 0) return null;
 
         return (
-          <div key={sport.id} style={{ marginTop: "1.5rem" }}>
-            <h3 style={{ margin: 0, fontSize: "1.125rem", fontWeight: 600 }}>{sport.name}</h3>
+          <div key={sport.id} className={styles.sportGroup}>
+            <h3 className={styles.sportGroupTitle}>{sport.name}</h3>
             <div className={styles.grid}>
               {filteredClubs.map((club) => (
                 <button

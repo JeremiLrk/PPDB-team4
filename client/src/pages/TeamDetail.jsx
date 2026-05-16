@@ -9,6 +9,7 @@ import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import { useTeamAchievements } from "@/hooks/useLadder.js";
 
 export default function TeamDetail() {
     const { teamId } = useParams();
@@ -18,6 +19,7 @@ export default function TeamDetail() {
     const texts = usePageTexts("team_detail", lang);
     const { team, loading, error } = useTeam(teamId);
     const { members, loading: membersLoading, error: membersError, total, reload} = useTeamMembers(teamId);
+    const { data: achievementsData } = useTeamAchievements(teamId);
 
     if (loading) {
         return (
@@ -72,6 +74,18 @@ export default function TeamDetail() {
                 <InfoCard label={texts.team_id_label || "Team ID"} value={`#${team.id}`} />
             </div>
 
+            {/* Achievements */}
+            {achievementsData?.ladders?.length > 0 && (
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Achievements</h2>
+                    <div className={styles.achievementGrid}>
+                        {achievementsData.ladders.map(row => (
+                            <LadderStatCard key={row.ladder_id} row={row} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Players */}
             <div className={styles.section}>
                 <div className={styles.sectionHeader}>
@@ -113,6 +127,30 @@ export default function TeamDetail() {
 }
 
 /*  Local sub-components  */
+
+function LadderStatCard({ row }) {
+    return (
+        <div className={styles.ladderStatCard}>
+            <p className={styles.ladderStatName}>{row.ladder_name}</p>
+            <p className={styles.ladderStatMeta}>{row.club_name} · Rank #{row.rank ?? "—"}</p>
+            <div className={styles.ladderStatGrid}>
+                <LadderStat label="Wins" value={row.wins} />
+                <LadderStat label="Rating" value={row.rating} />
+                <LadderStat label="Best streak" value={`${row.best_win_streak} 🔥`} />
+                <LadderStat label="Best #1 reign" value={`${row.best_rank1_streak} 👑`} />
+            </div>
+        </div>
+    );
+}
+
+function LadderStat({ label, value }) {
+    return (
+        <div className={styles.ladderStatItem}>
+            <p className={styles.ladderStatLabel}>{label}</p>
+            <p className={styles.ladderStatValue}>{value ?? 0}</p>
+        </div>
+    );
+}
 
 function Tag({ label, muted }) {
     return (
