@@ -2,6 +2,12 @@ from pathlib import Path
 
 from flask.testing import FlaskClient
 
+from server.app.models.ladder import Ladder
+from server.app.models.ladder_team import LadderTeam
+from server.app.models.match import MatchProposal, MatchStatus
+from server.app.models.team import Team
+from server.extensions import db
+
 
 TRANSLATION_ROOT = Path(__file__).resolve().parents[1] / "translations"
 
@@ -40,6 +46,25 @@ def test_demo_ladders_include_expected_names(seeded_client: FlaskClient):
     ladder_names = {ladder.get("name") for ladder in ladders}
     assert "Men's Singles" in ladder_names
     assert "U14 Singles" in ladder_names
+
+
+def test_manager_only_demo_match_is_seeded(seeded_app):
+    with seeded_app.app_context():
+        ladder = Ladder.query.filter_by(name="Manager Demo Singles").first()
+        assert ladder is not None
+
+        rows = (
+            LadderTeam.query.filter_by(ladder_id=ladder.id)
+            .order_by(LadderTeam.rank.asc())
+            .all()
+        )
+        team_names = [db.session.get(Team, row.team_id).name for row in rows]
+        assert team_names == ["Manager Demo A", "Manager Demo B"]
+
+        proposal = MatchProposal.query.filter_by(ladder_id=ladder.id).first()
+        assert proposal is not None
+        assert proposal.status_id == MatchStatus.ACCEPTED
+        assert proposal.played is None
 
 
 def test_top_players_contract_and_sorting(seeded_client: FlaskClient):

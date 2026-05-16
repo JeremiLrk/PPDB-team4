@@ -1481,6 +1481,93 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             password="qwertyuiop",
             force_password_update=True,
         )
+
+        # Manager-only demo fixture:
+        # Jeremi and LRK manage opposing teams in Player Demo Club, but neither
+        # of them is a club owner there. This lets us verify the team-manager
+        # score flow without involving the club-owner adjudication path.
+        manager_demo_team_a, _ = make_team(
+            "Manager Demo A",
+            tennis,
+            club_id=player_demo_club.id,
+            verbose=verbose,
+        )
+        manager_demo_team_b, _ = make_team(
+            "Manager Demo B",
+            tennis,
+            club_id=player_demo_club.id,
+            verbose=verbose,
+        )
+        jeremi_manager = owners[0][1]
+        lrk_manager, _ = make_manager(lrk_acc)
+        if not TeamManagerTeam.query.filter_by(team_manager_id=jeremi_manager.id, team_id=manager_demo_team_a.id).first():
+            db.session.add(TeamManagerTeam(
+                team_manager_id=jeremi_manager.id,
+                team_id=manager_demo_team_a.id,
+                can_rename=True,
+                can_delete=True,
+                can_edit_players=True,
+                can_edit_managers=True,
+                can_manage_match=True,
+            ))
+        if not TeamManagerTeam.query.filter_by(team_manager_id=lrk_manager.id, team_id=manager_demo_team_b.id).first():
+            db.session.add(TeamManagerTeam(
+                team_manager_id=lrk_manager.id,
+                team_id=manager_demo_team_b.id,
+                can_rename=True,
+                can_delete=True,
+                can_edit_players=True,
+                can_edit_managers=True,
+                can_manage_match=True,
+            ))
+        db.session.flush()
+
+        manager_demo_ladder, _ = get_or_create_ladder(
+            club_id=player_demo_club.id,
+            name="Manager Demo Singles",
+            description="Demo ladder where Jeremi and LRK are team managers but not club owners.",
+            sport_type_id=tennis.id,
+            ladder_rating_function_id=rating_fn_id,
+            ruleset_id=ruleset_id,
+        )
+        get_or_create_ladder_team(manager_demo_ladder.id, manager_demo_team_a.id, rank=1, rating=1125, matches_played=0)
+        get_or_create_ladder_team(manager_demo_ladder.id, manager_demo_team_b.id, rank=2, rating=1105, matches_played=0)
+
+        manager_demo_week_start = demo_week_start + datetime.timedelta(days=14)
+        manager_demo_start = datetime.datetime.combine(
+            manager_demo_week_start + datetime.timedelta(days=2),
+            datetime.time(hour=20, minute=0),
+        )
+        manager_demo_proposal = find_match_proposal(
+            manager_demo_week_start,
+            manager_demo_team_a.id,
+            manager_demo_team_b.id,
+        )
+        if manager_demo_proposal is None:
+            _make_proposal(
+                team1_id=manager_demo_team_a.id,
+                team2_id=manager_demo_team_b.id,
+                sport_type_id=tennis.id,
+                ladder_id=manager_demo_ladder.id,
+                proposed_by_user_id=jeremi_acc.id,
+                week_start_date=manager_demo_week_start,
+                proposed_start_at=manager_demo_start,
+                proposed_end_at=manager_demo_start + datetime.timedelta(hours=1),
+                location="Manager Demo Court",
+            )
+            manager_demo_proposal = find_match_proposal(
+                manager_demo_week_start,
+                manager_demo_team_a.id,
+                manager_demo_team_b.id,
+            )
+        if manager_demo_proposal:
+            manager_demo_proposal.proposed_by_user_id = jeremi_acc.id
+            manager_demo_proposal.ladder_id = manager_demo_ladder.id
+            manager_demo_proposal.sport_type_id = tennis.id
+            manager_demo_proposal.proposed_start_at = manager_demo_start
+            manager_demo_proposal.proposed_end_at = manager_demo_start + datetime.timedelta(hours=1)
+            manager_demo_proposal.location = "Manager Demo Court"
+            _make_accepted(manager_demo_proposal, by_user_id=lrk_acc.id)
         lrk_debug_team, _ = make_team(
             "LRK Debug Opponent",
             tennis,
