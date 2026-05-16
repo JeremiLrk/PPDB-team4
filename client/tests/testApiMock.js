@@ -547,14 +547,54 @@ const PAGE_TEXTS = {
         en: {
             loading_ladders: "Loading ladders...",
             loading_club: "Loading club...",
+            loading_summary: "Loading overview...",
             log_in: "Log in",
             manage_club: "Manage club",
+            tagline: "Compete. Challenge. Climb the ladder.",
+            subtagline: "The competitive ranking system for clubs.",
+            performers_title: "Top performers",
+            upcoming_title: "Upcoming matches",
+            latest_results_title: "Latest results",
+            no_ladders: "No ladders available yet.",
+            no_performers: "No performers available yet.",
+            no_upcoming_matches: "No upcoming matches scheduled.",
+            no_latest_results: "No latest results available.",
+            load_more: "Load more",
+            accepted: "Accepted",
+            disputed: "Disputed",
+            final: "Final",
+            rating_label: "Rating",
+            ladders_count: "Ladders",
+            performers_count: "Performers",
+            upcoming_count: "Upcoming",
+            ladder_label: "Ladder",
+            performer_label: "Club performer",
         },
         nl: {
             loading_ladders: "Ladders laden...",
             loading_club: "Club laden...",
+            loading_summary: "Overzicht laden...",
             log_in: "Inloggen",
             manage_club: "Club beheren",
+            tagline: "Speel. Challenge. Klim op de ladder.",
+            subtagline: "Het competitieve rankingsysteem voor clubs.",
+            performers_title: "Uitblinkers",
+            upcoming_title: "Aankomende wedstrijden",
+            latest_results_title: "Recentste resultaten",
+            no_ladders: "Nog geen ladders beschikbaar.",
+            no_performers: "Nog geen uitblinkers beschikbaar.",
+            no_upcoming_matches: "Er staan nog geen aankomende wedstrijden gepland.",
+            no_latest_results: "Nog geen recente resultaten beschikbaar.",
+            load_more: "Meer laden",
+            accepted: "Geaccepteerd",
+            disputed: "In dispuut",
+            final: "Definitief",
+            rating_label: "Rating",
+            ladders_count: "Ladders",
+            performers_count: "Uitblinkers",
+            upcoming_count: "Aankomend",
+            ladder_label: "Ladder",
+            performer_label: "Clubuitblinker",
         },
     },
 };
@@ -588,6 +628,36 @@ export function mockApi(options = {}) {
         club = { id: 1, name: "NetRank Club", description: "Mock data club", sport: "Padel", city: "Antwerp" },
         ladders = [{ id: 11, name: "Men's Singles" }, { id: 12, name: "U14 Singles" }],
         topPlayers = [{ id: 1, name: "Thomas", rating: 1290 }],
+        clubHomeSummary = null,
+        upcomingMatches = [
+            {
+                id: 101,
+                team1Id: 11,
+                team2Id: 12,
+                team1Name: "NetRank Club A",
+                team2Name: "Riverside Club",
+                ladderName: "Men's Singles League",
+                status: "accepted",
+                scoreStatus: "not_submitted",
+                proposedStartAt: "2026-05-21T10:00:00Z",
+                proposedEndAt: "2026-05-21T11:00:00Z",
+            },
+        ],
+        latestResults = [
+            {
+                id: 201,
+                team1Id: 11,
+                team2Id: 12,
+                team1Name: "NetRank Club A",
+                team2Name: "Riverside Club",
+                ladderName: "Men's Singles League",
+                status: "played",
+                scoreStatus: "resolved",
+                scoreTeam1: 3,
+                scoreTeam2: 1,
+                playedAt: "2026-05-12T10:00:00Z",
+            },
+        ],
         teams = [{ id: 201, name: "NetRank Aces", clubId: 1, sportTypeId: 4 }],
         players = [],
     } = options;
@@ -643,6 +713,18 @@ export function mockApi(options = {}) {
         if (path === `/api/clubs/${club.id}`) return jsonResponse({ club });
         if (path === `/api/clubs/${club.id}/ladders`) return jsonResponse({ ladders });
         if (path === `/api/clubs/${club.id}/top-players`) return jsonResponse({ players: topPlayers });
+        if (path === `/api/clubs/${club.id}/home-summary`) {
+            // The club home page expects a summary payload with ladders plus separate upcoming and results slices.
+            return jsonResponse(
+                clubHomeSummary || {
+                    club,
+                    ladders,
+                    performers: topPlayers,
+                    upcoming_matches: upcomingMatches,
+                    latest_results: latestResults,
+                },
+            );
+        }
         if (path === "/api/teams" || path === "/api/teams/my-all") {
             return jsonResponse({ total: teams.length, from: 0, to: teams.length, teams });
         }

@@ -63,6 +63,39 @@ def test_top_players_contract_and_sorting(seeded_client: FlaskClient):
     assert ratings == sorted(ratings, reverse=True)
 
 
+def test_club_home_summary_contract(seeded_client: FlaskClient):
+    club_id = _get_netrank_club_id(seeded_client)
+    response = seeded_client.get(f"/api/clubs/{club_id}/home-summary")
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert isinstance(payload, dict)
+    assert isinstance(payload.get("club"), dict)
+    assert payload["club"]["id"] == club_id
+
+    ladders = payload.get("ladders", [])
+    performers = payload.get("performers", [])
+    upcoming = payload.get("upcoming_matches", [])
+    results = payload.get("latest_results", [])
+
+    assert isinstance(ladders, list)
+    assert isinstance(performers, list)
+    assert isinstance(upcoming, list)
+    assert isinstance(results, list)
+    assert len(ladders) > 0
+    assert len(performers) > 0
+    assert len(upcoming) > 3
+    assert len(results) > 0
+
+    performer_ratings = [row["rating"] for row in performers]
+    assert performer_ratings == sorted(performer_ratings, reverse=True)
+
+    assert all(match.get("ladderName") for match in upcoming)
+    assert all(match.get("ladderName") for match in results)
+    assert all(match.get("status") == "accepted" for match in upcoming)
+    assert all(match.get("status") == "played" for match in results)
+
+
 def test_ladder_detail_contract(seeded_client: FlaskClient):
     club_id = _get_netrank_club_id(seeded_client)
     ladders_response = seeded_client.get(f"/api/clubs/{club_id}/ladders")

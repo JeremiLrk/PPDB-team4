@@ -1,42 +1,37 @@
-import { useState, useEffect } from "react"; 
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import tennisBackground from "@/assets/tennis.jpg";
-import padelBackground from "@/assets/padel.jpg";
 import styles from "@/style/Home.module.css";
-import { useLadders } from "@/hooks/useLadders";
-import { useTopPlayers } from "@/hooks/useTopPlayers";
-import useClub from "@/hooks/useClub";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
-
-function getHeroBackground(sport) {
-    const normalized = (sport || "").toString().toLowerCase();
-    if (normalized.includes("tennis")) return tennisBackground;
-    if (normalized.includes("padel")) return padelBackground;
-    return null;
-}
+import { useClubHomeSummary } from "@/hooks/useClubHomeSummary";
 
 function ClubHome() {
     const { clubId } = useParams();
     const navigate = useNavigate();
     const { lang } = useLangContext();
     const { currentUser, loadingUser } = useCurrentUserContext();
-    
+
     const [isManager, setIsManager] = useState(false);
+    // Keep each section independently paginated so the summary stays compact on load.
+    const [upcomingVisible, setUpcomingVisible] = useState(3);
+    const [resultsVisible, setResultsVisible] = useState(3);
 
     const ladderTexts = usePageTexts("ladder", lang);
-    const scoreTexts = usePageTexts("score", lang);
     const clubHomeTexts = usePageTexts("club_home", lang);
-    const { ladders, loading } = useLadders(clubId);
-    const { club, loading: clubLoading, error: clubError } = useClub(clubId);
-    const { players: topPlayers, loading: topLoading } = useTopPlayers(clubId);
-    const medals = ["🥇", "🥈", "🥉"];
-    const heroBackground = getHeroBackground(club?.sport);
+    const { summary, loading, error } = useClubHomeSummary(clubId);
+
+    const club = summary.club;
+    const ladders = summary.ladders;
+    const performers = summary.performers;
+    const upcomingMatches = summary.upcomingMatches;
+    const latestResults = summary.latestResults;
 
     useEffect(() => {
         const checkManagerStatus = async () => {
             try {
+                // Manager access is fetched separately so the hero can toggle the
+                // settings CTA without waiting on the full club summary payload.
                 const response = await fetch(`/api/clubs/${clubId}/is_manager`);
                 if (response.ok) {
                     const data = await response.json();
@@ -53,103 +48,219 @@ function ClubHome() {
         }
     }, [clubId]);
 
-    const clubHomeStyle = heroBackground
-        ? { "--club-home-bg": `url(${heroBackground})` }
-        : undefined;
-
     return (
-        <div
-            className={styles.page}
-            style={clubHomeStyle}
-        >
+        <div className={styles.page}>
             <div className={styles.pageBackdrop} aria-hidden="true" />
             <div className={styles.pageOverlay} aria-hidden="true" />
 
             <div className={styles.container}>
-                <aside className={styles.ladderAside}>
-                    <section className={styles.ladderContainer}>
-                        <h2 className={styles.ladderContainerText}>{ladderTexts.ladder || "Ladder"}</h2>
+                <aside className={`${styles.panel} ${styles.laddersPanel}`}>
+                    <div className={styles.panelHeader}>
+                        <h2 className={styles.panelTitle}>{ladderTexts.ladder || "Ladders"}</h2>
+                    </div>
 
-                        <div className={styles.ladderCard}>
-                            {loading && <p>{clubHomeTexts.loading_ladders || "Ladders laden..."}</p>}
-
-                            {!loading &&
-                                ladders.map((ladder) => (
+                    <div className={styles.panelBody}>
+                        {loading && <p className={styles.muted}>{clubHomeTexts.loading_summary || "Loading overview..."}</p>}
+                        {!loading && !error && ladders.length === 0 && (
+                            <p className={styles.muted}>{clubHomeTexts.no_ladders || "No ladders available yet."}</p>
+                        )}
+                        {!loading && ladders.length > 0 && (
+                            <div className={styles.linkList}>
+                                {ladders.map((ladder) => (
                                     <button
                                         key={ladder.id}
-                                        onClick={() =>
-                                            navigate(`/clubs/${clubId}/ladders/${ladder.id}`)
-                                        }
-                                        className={styles.ladderButton}
+                                        onClick={() => navigate(`/clubs/${clubId}/ladders/${ladder.id}`)}
+                                        className={styles.linkCard}
                                     >
-                                        {ladder.name}
+                                        <span className={styles.linkLabel}>{ladder.name}</span>
+                                        <span className={styles.linkArrow}>›</span>
                                     </button>
                                 ))}
-                        </div>
-                    </section>
+                            </div>
+                        )}
+                    </div>
                 </aside>
 
-                <main className={styles.clubMain}>
-                    <section className={styles.heroPanel}>
-                        {clubLoading && <h1>{clubHomeTexts.loading_club || "Club laden..."}</h1>}
-                        {clubError && <h1>{clubHomeTexts.error_loading_club || "Fout bij laden van club"}</h1>}
-                        {!clubLoading && club && (
-                            <>
-                                <h1 className={styles.clubTitle}>{club.name}</h1>
-                                <p className={styles.clubDescription}>{club.description}</p>
+                <section className={`${styles.heroPanel} ${styles.heroGridCard}`}>
+                    <div className={styles.heroEyebrow}>
+                        {club?.sport || clubHomeTexts.club_label || "Club"}
+                    </div>
 
+                    {loading && !club && (
+                        <h1 className={styles.heroTitle}>{clubHomeTexts.loading_club || "Loading club..."}</h1>
+                    )}
+
+                    {error && (
+                        <h1 className={styles.heroTitle}>{clubHomeTexts.error_loading_club || "Error loading club"}</h1>
+                    )}
+
+                    {!loading && club && (
+                        <>
+                            <h1 className={styles.heroTitle}>{club.name}</h1>
+                            <p className={styles.heroSubtitle}>
+                                {club.description || clubHomeTexts.subtagline || "The competitive ranking system for clubs."}
+                            </p>
+
+                            <div className={styles.heroActions}>
                                 {isManager && (
-                                    <div className={styles.heroActions}>
-                                        <button
-                                            onClick={() => navigate(`/clubs/${clubId}/settings`)}
-                                            className={styles.manageButton}
-                                        >
-                                            ⚙️ {clubHomeTexts.manage_club || "Club beheren"}
-                                        </button>
-                                    </div>
+                                    <button
+                                        onClick={() => navigate(`/clubs/${clubId}/settings`)}
+                                        className={styles.primaryAction}
+                                    >
+                                        {clubHomeTexts.manage_club || "Manage club"}
+                                    </button>
                                 )}
 
                                 {!loadingUser && !currentUser ? (
-                                    <div className={styles.heroActions}>
+                                    <>
                                         <button
                                             onClick={() => navigate("/register")}
                                             className={styles.primaryAction}
                                         >
-                                            {ladderTexts.join_ladder || "Sluit je aan bij de ladder"}
+                                            {ladderTexts.join_ladder || "Join the ladder"}
                                         </button>
 
                                         <button
                                             onClick={() => navigate("/login")}
                                             className={styles.secondaryAction}
                                         >
-                                            {clubHomeTexts.log_in || "Inloggen"}
+                                            {clubHomeTexts.log_in || "Log in"}
                                         </button>
-                                    </div>
+                                    </>
                                 ) : null}
-                            </>
+                            </div>
+                        </>
+                    )}
+                </section>
+
+                <aside className={`${styles.panel} ${styles.performersPanel}`}>
+                    <div className={styles.panelHeader}>
+                        <h2 className={styles.panelTitle}>
+                            {clubHomeTexts.performers_title || "Top performers"}
+                        </h2>
+                    </div>
+
+                    <div className={styles.panelBody}>
+                        {loading && <p className={styles.muted}>{clubHomeTexts.loading_summary || "Loading overview..."}</p>}
+
+                        {!loading && !error && performers.length === 0 && (
+                            <p className={styles.muted}>{clubHomeTexts.no_performers || "No performers available yet."}</p>
                         )}
-                    </section>
-                </main>
 
-                <aside className={styles.scoreboardAside}>
-                    <section className={styles.scoreboardContainer}>
-                        <h2 className={styles.scoreboardContainerText}>{scoreTexts.top_players || "Topspelers"}</h2>
-
-                        <div className={styles.scoreboardCard}>
-                            {topLoading && <p>Laden...</p>}
-
-                            {!topLoading &&
-                                topPlayers.map((player, index) => (
-                                    <div key={index} className={styles.scoreboardCardTeam}>
-                                        <span>
-                                            {medals[index]} {player.name}
-                                        </span>
-                                        <span>{player.rating}</span>
-                                    </div>
+                        {!loading && performers.length > 0 && (
+                            <div className={styles.performerList}>
+                                {performers.map((performer, index) => (
+                                    <article key={performer.id ?? `${performer.name}-${index}`} className={styles.performerCard}>
+                                        <div className={styles.rankBadge}>{index + 1}</div>
+                                        <div className={styles.performerMeta}>
+                                            <p className={styles.performerName}>{performer.name}</p>
+                                            <p className={styles.performerLadder}>{performer.ladderName || clubHomeTexts.performer_label || "Club performer"}</p>
+                                        </div>
+                                        <div className={styles.performerRating}>
+                                            <span>{performer.rating}</span>
+                                            <small>{clubHomeTexts.rating_label || "Rating"}</small>
+                                        </div>
+                                    </article>
                                 ))}
-                        </div>
-                    </section>
+                            </div>
+                        )}
+                    </div>
                 </aside>
+
+                <section className={`${styles.panel} ${styles.matchesPanel} ${styles.upcomingPanel}`}>
+                    <div className={styles.panelHeader}>
+                        <h2 className={styles.panelTitle}>
+                            {clubHomeTexts.upcoming_title || "Upcoming matches"}
+                        </h2>
+                    </div>
+
+                    <div className={styles.panelBody}>
+                        {!loading && !error && upcomingMatches.length === 0 && (
+                            <p className={styles.muted}>{clubHomeTexts.no_upcoming_matches || "No upcoming matches scheduled."}</p>
+                        )}
+
+                        {!loading && upcomingMatches.length > 0 && (
+                            <div className={styles.matchList}>
+                                {upcomingMatches.slice(0, upcomingVisible).map((match) => (
+                                    <article key={match.id} className={styles.matchCard}>
+                                        <div className={styles.matchTeams}>
+                                            <div className={styles.matchTeam}>{match.team1Name}</div>
+                                            <div className={styles.matchTeam}>{match.team2Name}</div>
+                                        </div>
+
+                                        <div className={styles.matchSeparator}>
+                                            <span className={styles.matchSeparatorLine} aria-hidden="true" />
+                                            <span className={styles.matchVs}>vs</span>
+                                            <span className={styles.matchSeparatorLine} aria-hidden="true" />
+                                        </div>
+
+                                        <div className={styles.matchMetaCenter}>
+                                            <span className={styles.matchLadderPill}>{match.ladderName || clubHomeTexts.ladder_label || "Ladder"}</span>
+                                        </div>
+                                    </article>
+                                ))}
+
+                                {/* Load in batches so the club page can show more fixtures without becoming too tall. */}
+                                {upcomingVisible < upcomingMatches.length && (
+                                    <button
+                                        type="button"
+                                        className={styles.loadMoreButton}
+                                        onClick={() => setUpcomingVisible((count) => Math.min(count + 3, upcomingMatches.length))}
+                                    >
+                                        {clubHomeTexts.load_more || "Load more"}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                <section className={`${styles.panel} ${styles.matchesPanel} ${styles.resultsPanel}`}>
+                    <div className={styles.panelHeader}>
+                        <h2 className={styles.panelTitle}>
+                            {clubHomeTexts.latest_results_title || "Latest results"}
+                        </h2>
+                    </div>
+
+                    <div className={styles.panelBody}>
+                        {!loading && !error && latestResults.length === 0 && (
+                            <p className={styles.muted}>{clubHomeTexts.no_latest_results || "No latest results available."}</p>
+                        )}
+
+                        {!loading && latestResults.length > 0 && (
+                            <div className={styles.matchList}>
+                                {latestResults.slice(0, resultsVisible).map((match) => (
+                                    <article key={match.id} className={styles.resultCard}>
+                                        <div className={styles.resultTeams}>
+                                            <div className={styles.matchTeam}>{match.team1Name}</div>
+                                            <div className={styles.resultScore}>
+                                                <span>{match.scoreTeam1 ?? "-"}</span>
+                                                <span className={styles.resultDash}>-</span>
+                                                <span>{match.scoreTeam2 ?? "-"}</span>
+                                            </div>
+                                            <div className={styles.matchTeam}>{match.team2Name}</div>
+                                        </div>
+
+                                        <div className={styles.matchMetaCenter}>
+                                            <span className={styles.matchLadderPill}>{match.ladderName || clubHomeTexts.ladder_label || "Ladder"}</span>
+                                        </div>
+                                    </article>
+                                ))}
+
+                                {/* Results use the same incremental reveal pattern as upcoming matches. */}
+                                {resultsVisible < latestResults.length && (
+                                    <button
+                                        type="button"
+                                        className={styles.loadMoreButton}
+                                        onClick={() => setResultsVisible((count) => Math.min(count + 3, latestResults.length))}
+                                    >
+                                        {clubHomeTexts.load_more || "Load more"}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </section>
             </div>
         </div>
     );

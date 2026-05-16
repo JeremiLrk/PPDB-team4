@@ -1304,9 +1304,44 @@ def seed_teams_and_users(verbose: bool = True) -> None:
                 accepted_by_user_id=team_managers[accepted_team2.id].id,
                 response_text="Accepted by the opposing team manager for status demo.",
             )
-        total_matches += future_created
+
+        # Add more future fixtures for NetRank Club so the homepage has enough rows to exercise "load more".
+        extra_future_matches = [
+            # Keep the extra fixtures inside the seed window so weekly-proposal tests
+            # still see the latest proposal week within the allowed range.
+            (club_teams[0][1], club_teams[0][2], 0),
+            (club_teams[0][2], club_teams[0][3], 0),
+            (club_teams[0][0], club_teams[0][3], 1),
+        ]
+        extra_created = 0
+        for team1, team2, week_offset in extra_future_matches:
+            extra_week_start = future_week_start + datetime.timedelta(weeks=week_offset)
+            extra_start = datetime.datetime.combine(
+                extra_week_start + datetime.timedelta(days=2),
+                datetime.time(hour=18, minute=0),
+            )
+            extra_end = extra_start + datetime.timedelta(hours=1)
+            if ensure_pending_proposal(
+                week_start_date=extra_week_start,
+                team1_id=team1.id,
+                team2_id=team2.id,
+                proposed_by_user_id=jeremi_acc.id,
+                sport_type_id=jeremi_sport.id,
+                proposed_start_at=extra_start,
+                proposed_end_at=extra_end,
+                location=f"{jeremi_club.name} showcase court",
+            ):
+                extra_created += 1
+                set_match_proposal_accepted(
+                    week_start_date=extra_week_start,
+                    team1_id=team1.id,
+                    team2_id=team2.id,
+                    accepted_by_user_id=team_managers[team2.id].id,
+                    response_text="Accepted for club homepage demo.",
+                )
+        total_matches += future_created + extra_created
         log(
-            f"{TAG}   future NetRank proposals: created={future_created}, "
+            f"{TAG}   future NetRank proposals: created={future_created + extra_created}, "
             f"week_start={future_week_start.isoformat()}",
             verbose,
         )
