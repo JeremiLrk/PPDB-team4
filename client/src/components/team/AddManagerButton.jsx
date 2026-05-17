@@ -1,3 +1,5 @@
+// Team management UI component for AddManagerButton.
+
 import commonStyles from "@/style/common/Common.module.css";
 import formStyles   from "@/style/common/Forms.module.css";
 import panelStyles  from "@/style/common/Panel.module.css";
@@ -36,6 +38,9 @@ const PERMISSION_FALLBACKS = {
  * If your /api/me doesn't yet return managerPermissions — fallback via managedTeamIds.
  */
 function canEditManagers(account, team) {
+    /*
+     Checks whether the current account may manage manager permissions.
+    */
     if (!account || !team) return false;
     const roles = account.roles ?? [];
 
@@ -87,6 +92,9 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
     if (!canEditManagers(currentUser, team)) return null;
 
     const t = (key, fallback) => texts[key] ?? fallback;
+    /*
+     Renders the manager add wizard only for users with permission.
+    */
 
     return (
         <FormPanel
@@ -206,6 +214,9 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
 function SearchResultCard({ account, selectLabel, onSelect }) {
     const fullName = [account.firstName, account.lastName]
         .filter(Boolean).join(" ") || "-";
+    /*
+     Renders one selectable account result.
+    */
 
     return (
         <ItemCard>
@@ -241,6 +252,9 @@ function SearchResultCard({ account, selectLabel, onSelect }) {
 function SelectedAccountBadge({ account, label }) {
     const fullName = [account.firstName, account.lastName]
         .filter(Boolean).join(" ") || "-";
+    /*
+     Renders the chosen account before permissions are confirmed.
+    */
 
     return (
         <div style={{

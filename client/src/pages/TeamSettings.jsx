@@ -1,3 +1,5 @@
+// Page container for TeamSettings.
+
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -27,6 +29,9 @@ import panelStyles  from "@/style/common/Panel.module.css";
  * TeamManager — via managerPermissions or managedTeamIds as a fallback.
  */
 function userCanEditManagers(account, team) {
+    /*
+     Checks whether the current user may edit managers for this team.
+    */
     if (!account || !team) return false;
     const roles = account.roles ?? [];
     if (roles.includes("administrator")) return true;
@@ -55,11 +60,12 @@ export default function TeamSettings() {
         total:   playersTotal, reload: reloadPlayers }           = useTeamPlayers(teamId);
     const { managers, loading: managersLoading, error: managersError,
         total:   managersTotal, reload: reloadManagers }         = useTeamManagers(teamId);
-
+    /*
+     Owns the derived team name shown in the hero and breadcrumb.
+    */
     const [displayName, setDisplayName] = useState(null);
     const teamName = displayName ?? team?.name ?? "";
 
-    /*  loading  */
     if (teamLoading) {
         return (
             <div className={styles.state}>
@@ -69,7 +75,6 @@ export default function TeamSettings() {
         );
     }
 
-    /*  fetch error  */
     if (teamError) {
         return (
             <div className={styles.state}>
@@ -83,7 +88,6 @@ export default function TeamSettings() {
 
     if (!team) return null;
 
-    /*  access check  */
     if (!currentUser) {
         return (
             <div className={styles.state}>
@@ -108,7 +112,6 @@ export default function TeamSettings() {
 
     const canDeleteManagers = userCanEditManagers(currentUser, team);
 
-    /*  main page  */
     return (
         <section className={styles.page}>
 
@@ -247,6 +250,9 @@ export default function TeamSettings() {
 /*  Local sub-components  */
 
 function Tag({ label, muted, accent }) {
+    /*
+     Renders one small metadata tag in the hero header.
+    */
     const cls = [
         styles.tag,
         muted  ? styles.tagMuted  : "",

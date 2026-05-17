@@ -1,6 +1,7 @@
 import server.app as app_module
 
 
+# Verifies startup seed is skipped without reloader child.
 def test_startup_seed_is_skipped_without_reloader_child(monkeypatch):
     seed_calls = []
 
@@ -17,6 +18,7 @@ def test_startup_seed_is_skipped_without_reloader_child(monkeypatch):
     assert seed_calls == []
 
 
+# Verifies startup seed runs in reloader child.
 def test_startup_seed_runs_in_reloader_child(monkeypatch):
     seed_calls = []
 

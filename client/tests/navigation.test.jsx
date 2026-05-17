@@ -1,3 +1,5 @@
+// Regression tests for navigation.test.
+
 import "@testing-library/jest-dom/vitest";
 import { test, beforeEach, afterEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
@@ -33,6 +35,7 @@ test("header Inloggen button navigates to /login", async () => {
 });
 
 // Verifies header Register button navigates to the register page.
+// Verifies the header register button opens the registration page.
 test("header Registreren button navigates to /register", async () => {
     mockApi();
     const account = userEvent.setup();
@@ -50,6 +53,7 @@ test("header Registreren button navigates to /register", async () => {
 });
 
 // Verifies landing Explore clubs button opens the clubs overview page.
+// Verifies the landing page clubs button opens the clubs list.
 test("landing Explore clubs button navigates to /clubs", async () => {
     mockApi();
     const account = userEvent.setup();
@@ -66,6 +70,7 @@ test("landing Explore clubs button navigates to /clubs", async () => {
 });
 
 // Verifies dashboard button redirects anonymous users to login.
+// Verifies anonymous users get redirected to login from the dashboard entry point.
 test("landing Open dashboard sends anonymous account to /login", async () => {
     mockApi({ me: null });
     const account = userEvent.setup();
@@ -81,6 +86,7 @@ test("landing Open dashboard sends anonymous account to /login", async () => {
 });
 
 // Verifies register page guest link returns to landing page.
+// Verifies the guest link on register returns to the landing page.
 test("register Continue as guest navigates back to landing", async () => {
     mockApi();
     const account = userEvent.setup();
@@ -96,6 +102,7 @@ test("register Continue as guest navigates back to landing", async () => {
 });
 
 // Verifies login page guest link returns to landing page.
+// Verifies the guest link on login returns to the landing page.
 test("login Continue as guest navigates back to landing", async () => {
     mockApi();
     const account = userEvent.setup();
@@ -111,6 +118,7 @@ test("login Continue as guest navigates back to landing", async () => {
 });
 
 // Verifies header Teams button opens the teams list page.
+// Verifies the header teams button opens the teams list.
 test("header Teams button navigates to /teams", async () => {
     mockApi();
     const user = userEvent.setup();
@@ -128,6 +136,7 @@ test("header Teams button navigates to /teams", async () => {
 });
 
 // Verifies selecting a team from the teams list opens team detail.
+// Verifies clicking a team row opens that team's detail page.
 test("teams list card click navigates to /teams/:teamId", async () => {
     mockApi({
         teams: [{ id: 201, name: "NetRank Aces", clubId: 1, sportTypeId: 4 }],
@@ -145,6 +154,7 @@ test("teams list card click navigates to /teams/:teamId", async () => {
 });
 
 // Verifies managed team detail page can navigate to team settings via gear button.
+// Verifies the team detail gear opens the team settings page.
 test("team detail settings gear navigates to /teams/:teamId/settings", async () => {
     mockApi({
         me: {
@@ -169,6 +179,7 @@ test("team detail settings gear navigates to /teams/:teamId/settings", async () 
 });
 
 // Verifies dashboard Teams tab "Open" action navigates to team detail.
+// Verifies the dashboard teams tab open button navigates to the team detail page.
 test("dashboard teams tab open button navigates to /teams/:teamId", async () => {
     mockApi({
         me: {

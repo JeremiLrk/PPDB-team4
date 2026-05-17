@@ -29,6 +29,7 @@ def _signup_body(email: str, **overrides):
     return body
 
 
+# Verifies signup success.
 def test_signup_success(client: FlaskClient, app: Flask):
     email = _unique_email()
     payload = _signup_body(
@@ -55,6 +56,7 @@ def test_signup_success(client: FlaskClient, app: Flask):
         assert account.phone == "+32 470 12 34 56"
 
 
+# Verifies signup invalid gender.
 def test_signup_invalid_gender(client: FlaskClient):
     email = _unique_email()
     response = client.post(
@@ -65,6 +67,7 @@ def test_signup_invalid_gender(client: FlaskClient):
     assert response.get_json()["message"] == "gender must be male, female, or other."
 
 
+# Verifies signup missing credentials.
 def test_signup_missing_credentials(client: FlaskClient):
     email = _unique_email()
     payload = {"email": email}
@@ -74,6 +77,7 @@ def test_signup_missing_credentials(client: FlaskClient):
     assert response.get_json()["message"] == "Missing credentials."
 
 
+# Verifies signup short password.
 def test_signup_short_password(client: FlaskClient):
     email = _unique_email()
     payload = _signup_body(email, password="pass")
@@ -83,6 +87,7 @@ def test_signup_short_password(client: FlaskClient):
     assert response.get_json()["message"] == "Password is too short."
 
 
+# Verifies signup existing user.
 def test_signup_existing_user(client: FlaskClient, app: Flask):
     email = _unique_email()
 
@@ -105,6 +110,7 @@ def test_signup_existing_user(client: FlaskClient, app: Flask):
     assert response.get_json()["message"] == "Account already exists."
 
 
+# Verifies login success.
 def test_login_success(client: FlaskClient):
     email = _unique_email()
     client.post("/api/signup", json=_signup_body(email))
@@ -115,6 +121,7 @@ def test_login_success(client: FlaskClient):
     assert response.get_json()["message"] == "Login successful."
 
 
+# Verifies login unverified user.
 def test_login_unverified_user(client: FlaskClient):
     # New signup flow auto-verifies users, so login should succeed directly.
     email = _unique_email()
@@ -123,6 +130,7 @@ def test_login_unverified_user(client: FlaskClient):
     assert response.status_code == 200
 
 
+# Verifies login invalid credentials.
 def test_login_invalid_credentials(client: FlaskClient):
     email = _unique_email()
     client.post("/api/signup", json=_signup_body(email))
@@ -134,6 +142,7 @@ def test_login_invalid_credentials(client: FlaskClient):
     assert response.get_json()["message"] == "Invalid credentials."
 
 
+# Verifies login missing credentials.
 def test_login_missing_credentials(client: FlaskClient):
     email = _unique_email()
     client.post("/api/signup", json=_signup_body(email))
@@ -145,6 +154,7 @@ def test_login_missing_credentials(client: FlaskClient):
     assert response.get_json()["message"] == "Email and password are required."
 
 
+# Verifies login jwt cookie.
 def test_login_jwt_cookie(client: FlaskClient):
     email = _unique_email()
     client.post("/api/signup", json=_signup_body(email))
@@ -159,6 +169,7 @@ def test_login_jwt_cookie(client: FlaskClient):
     assert cookie.secure is True
     assert cookie.same_site == "Lax"
 
+# Verifies logout jwt cookie.
 def test_logout_jwt_cookie(client: FlaskClient):
     email = _unique_email()
 
@@ -176,6 +187,7 @@ def test_logout_jwt_cookie(client: FlaskClient):
     assert cookie is None or cookie.value == ""
 
 
+# Verifies me success.
 def test_me_success(client: FlaskClient):
     email = _unique_email()
     client.post("/api/signup", json=_signup_body(email))
@@ -196,6 +208,7 @@ def test_me_success(client: FlaskClient):
     assert data["account"]["playerTeamIds"] == []
 
 
+# Verifies patch me profile fields.
 def test_patch_me_profile_fields(client: FlaskClient):
     email = _unique_email()
     client.post(
@@ -232,6 +245,7 @@ def test_patch_me_profile_fields(client: FlaskClient):
     assert acc["phoneNumber"] == "+32 2 123 45 67"
 
 
+# Verifies me unauthorized.
 def test_me_unauthorized(client: FlaskClient):
     response = client.get("/api/me")
 
@@ -270,6 +284,7 @@ def test_is_manager_true(client: FlaskClient, app: Flask):
     assert response.get_json()["is_manager"] is True
 
 
+# Verifies is manager false.
 def test_is_manager_false(client: FlaskClient, app: Flask):
     # 1. Create and log in a account
     email = _unique_email()
@@ -294,6 +309,7 @@ def test_is_manager_false(client: FlaskClient, app: Flask):
     assert response.status_code == 401
 
 
+# Verifies is manager unauthorized.
 def test_is_manager_unauthorized(client: FlaskClient, app: Flask):
     # 1. Create a club (no account logged in)
     with app.app_context():
@@ -310,6 +326,7 @@ def test_is_manager_unauthorized(client: FlaskClient, app: Flask):
     assert response.get_json()["is_manager"] is False
 
 
+# Verifies verify email invalid token.
 def test_verify_email_invalid_token(client: FlaskClient):
     response = client.get("/api/verify-email/invalid-token")
 

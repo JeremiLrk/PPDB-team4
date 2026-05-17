@@ -98,10 +98,12 @@ from server.tests.team.factories import (
 class TestGetTeamMembers:
     """Public endpoint — returns first/last name only."""
 
+    # Verifies the endpoint returns 404 when the team is missing.
     def test_missing_team_returns_404(self, client):
         resp = client.get("/api/teams/999999/members")
         assert resp.status_code == 404
 
+    # Verifies the endpoint returns 200 with member name fields.
     def test_returns_200_with_member_name_fields(self, client, app):
         with app.app_context():
             team = _make_team(name="Members Team")
@@ -119,6 +121,7 @@ class TestGetTeamMembers:
         assert "firstName" in member
         assert "lastName" in member
 
+    # Verifies response does not expose email.
     def test_response_does_not_expose_email(self, client, app):
         with app.app_context():
             team = _make_team(name="Members No Email Team")
@@ -131,6 +134,7 @@ class TestGetTeamMembers:
         for member in resp.get_json()["members"]:
             assert "email" not in member
 
+    # Verifies the endpoint returns an empty list for an empty team.
     def test_empty_team_returns_empty_list(self, client, app):
         with app.app_context():
             team = _make_team(name="Members Empty Team")
@@ -148,6 +152,7 @@ class TestGetTeamMembers:
 
 class TestSearchManagersNotInTeam:
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client, app):
         with app.app_context():
             team = _make_team(name="MgrSrch Auth")
@@ -156,6 +161,7 @@ class TestSearchManagersNotInTeam:
         resp = client.get(f"/api/teams/{team_id}/managers/search?q=test")
         assert resp.status_code == 401
 
+    # Verifies the endpoint returns 400 when q is missing.
     def test_missing_q_returns_400(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="mgr_srch_400@t.com")
@@ -170,6 +176,7 @@ class TestSearchManagersNotInTeam:
 
         assert client.get(f"/api/teams/{team_id}/managers/search").status_code == 400
 
+    # Verifies the endpoint returns 403 without permission.
     def test_no_permission_returns_403(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="mgr_srch_403@t.com")
@@ -185,6 +192,7 @@ class TestSearchManagersNotInTeam:
         resp = client.get(f"/api/teams/{team_id}/managers/search?q=test")
         assert resp.status_code == 403
 
+    # Verifies the endpoint returns 200 with results.
     def test_returns_200_with_results(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="mgr_srch_ok@t.com")
@@ -203,6 +211,7 @@ class TestSearchManagersNotInTeam:
         assert "results" in body
         assert body["teamId"] == team_id
 
+    # Verifies existing managers are excluded from results.
     def test_existing_managers_are_excluded_from_results(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="mgr_srch_excl@t.com")
@@ -246,6 +255,7 @@ class TestAddPlayerWarning:
         db.session.flush()
         return team.id, acc.id, target.id, ladder.id
 
+    # Verifies the endpoint returns 202 with a warning payload.
     def test_returns_202_with_warning_payload(self, client, app, monkeypatch):
         with app.app_context():
             team_id, acc_id, target_id, ladder_id = self._setup_at_cap(
@@ -271,6 +281,7 @@ class TestAddPlayerWarning:
         assert isinstance(body["ladders"], list)
         assert len(body["ladders"]) >= 1
 
+    # Verifies confirm exceed true bypasses warning.
     def test_confirm_exceed_true_bypasses_warning(self, client, app, monkeypatch):
         with app.app_context():
             team_id, acc_id, target_id, _ = self._setup_at_cap(
@@ -320,6 +331,7 @@ class TestRemovePlayerWarning:
         db.session.flush()
         return team.id, acc.id, target.id
 
+    # Verifies the endpoint returns 202 with a warning payload.
     def test_returns_202_with_warning_payload(self, client, app, monkeypatch):
         with app.app_context():
             team_id, acc_id, target_id = self._setup_at_min(
@@ -340,6 +352,7 @@ class TestRemovePlayerWarning:
         assert body["warning"] == "violates_min_players"
         assert body["requireConfirm"] is True
 
+    # Verifies confirm violate true bypasses warning.
     def test_confirm_violate_true_bypasses_warning(self, client, app, monkeypatch):
         with app.app_context():
             team_id, acc_id, target_id = self._setup_at_min(
@@ -367,9 +380,11 @@ class TestRemovePlayerWarning:
 
 class TestGetMyJoinRequests:
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client):
         assert client.get("/api/teams/my-join-requests").status_code == 401
 
+    # Verifies the endpoint returns pending requests for the current user.
     def test_returns_pending_requests_for_current_user(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="myjr_ok@t.com")
@@ -393,6 +408,7 @@ class TestGetMyJoinRequests:
         assert body["total"] >= 1
         assert all(r["status"] == "pending" for r in body["joinRequests"])
 
+    # Verifies rejected requests are filtered out.
     def test_rejected_requests_are_not_returned(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="myjr_rej@t.com")
@@ -413,6 +429,7 @@ class TestGetMyJoinRequests:
         assert resp.status_code == 200
         assert resp.get_json()["total"] == 0
 
+    # Verifies the endpoint returns an empty list when there are no requests.
     def test_user_with_no_requests_gets_empty_list(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="myjr_empty@t.com")
@@ -433,6 +450,7 @@ class TestGetMyJoinRequests:
 
 class TestGetMyTeamsAsAdmin:
 
+    # Verifies an admin can see all teams.
     def test_admin_sees_all_teams(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_admin("admin_my_teams@t.com")
@@ -447,6 +465,7 @@ class TestGetMyTeamsAsAdmin:
         assert resp.status_code == 200
         assert resp.get_json()["total"] >= 1
 
+    # Verifies the admin response shape.
     def test_admin_response_shape(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_admin("admin_my_shape@t.com")
@@ -468,6 +487,7 @@ class TestGetMyTeamsAsAdmin:
 
 class TestGetMyAllTeamsAsAdmin:
 
+    # Verifies an admin can see all teams.
     def test_admin_sees_all_teams(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_admin("admin_myall@t.com")
@@ -489,6 +509,7 @@ class TestGetMyAllTeamsAsAdmin:
 
 class TestGetLadderPeers:
 
+    # Verifies the endpoint returns 400 when ladder_id is missing.
     def test_missing_ladder_id_param_returns_400(self, client, app):
         with app.app_context():
             team = _make_team(name="Peers No Param")
@@ -496,6 +517,7 @@ class TestGetLadderPeers:
             team_id = team.id
         assert client.get(f"/api/teams/{team_id}/ladder-peers").status_code == 400
 
+    # Verifies the endpoint returns 400 when ladder_id is not an integer.
     def test_non_integer_ladder_id_returns_400(self, client, app):
         with app.app_context():
             team = _make_team(name="Peers Bad Param")
@@ -504,10 +526,12 @@ class TestGetLadderPeers:
         resp = client.get(f"/api/teams/{team_id}/ladder-peers?ladder_id=abc")
         assert resp.status_code == 400
 
+    # Verifies the endpoint returns 404 when the team is missing.
     def test_missing_team_returns_404(self, client):
         resp = client.get("/api/teams/9999999/ladder-peers?ladder_id=1")
         assert resp.status_code == 404
 
+    # Verifies the endpoint returns 404 when the ladder is missing.
     def test_missing_ladder_returns_404(self, client, app):
         with app.app_context():
             team = _make_team(name="Peers No Ladder")
@@ -516,6 +540,7 @@ class TestGetLadderPeers:
         resp = client.get(f"/api/teams/{team_id}/ladder-peers?ladder_id=9999999")
         assert resp.status_code == 404
 
+    # Verifies the endpoint returns 404 when the team is not enrolled in the ladder.
     def test_team_not_enrolled_in_ladder_returns_404(self, client, app):
         with app.app_context():
             team = _make_team(name="Peers Not Enrolled")
@@ -527,6 +552,7 @@ class TestGetLadderPeers:
         )
         assert resp.status_code == 404
 
+    # Verifies the ladder peers list excludes the focal team.
     def test_returns_peers_excluding_focal_team(self, client, app):
         with app.app_context():
             team1 = _make_team(name="Peers Self Team")
@@ -548,6 +574,7 @@ class TestGetLadderPeers:
         assert team2_id in peer_ids
         assert team1_id not in peer_ids
 
+    # Verifies a single-team ladder returns no peers.
     def test_single_team_in_ladder_returns_empty_peers(self, client, app):
         with app.app_context():
             team = _make_team(name="Peers Alone Team")
@@ -562,6 +589,7 @@ class TestGetLadderPeers:
         assert resp.status_code == 200
         assert resp.get_json()["peers"] == []
 
+    # Verifies the peer payload contains the expected fields.
     def test_response_contains_expected_peer_fields(self, client, app):
         with app.app_context():
             team1 = _make_team(name="Peers Fields Team1")
@@ -634,6 +662,7 @@ class TestAddPlayerDropsLadderOnConfirm:
             "proposal_id": proposal.id,
         }
 
+    # Verifies the team is removed from the ladder after confirm.
     def test_team_removed_from_ladder_after_confirm(self, client, app, monkeypatch):
         with app.app_context():
             ids = self._setup(app, "_rm_ladder")
@@ -659,6 +688,7 @@ class TestAddPlayerDropsLadderOnConfirm:
             ).first()
             assert enrollment is None
 
+    # Verifies unplayed matches are cancelled after confirm.
     def test_unplayed_matches_cancelled_after_confirm(self, client, app, monkeypatch):
         with app.app_context():
             ids = self._setup(app, "_cancel_match")
@@ -735,6 +765,7 @@ class TestRemovePlayerDropsLadderOnConfirm:
             "proposal_id": proposal.id,
         }
 
+    # Verifies the team is removed from the ladder after confirm.
     def test_team_removed_from_ladder_after_confirm(self, client, app, monkeypatch):
         with app.app_context():
             ids = self._setup(app, "_rm_ladder")
@@ -760,6 +791,7 @@ class TestRemovePlayerDropsLadderOnConfirm:
             ).first()
             assert enrollment is None
 
+    # Verifies unplayed matches are cancelled after confirm.
     def test_unplayed_matches_cancelled_after_confirm(self, client, app, monkeypatch):
         with app.app_context():
             ids = self._setup(app, "_cancel_match")
@@ -788,6 +820,7 @@ class TestRemovePlayerDropsLadderOnConfirm:
 class TestCheckMaxExceeded:
     """POST /api/teams/<id>/players/check-max-exceeded"""
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client, app):
         with app.app_context():
             team = _make_team(name="CheckMax Auth Team")
@@ -796,6 +829,7 @@ class TestCheckMaxExceeded:
         resp = client.post(f"/api/teams/{team_id}/players/check-max-exceeded", json={})
         assert resp.status_code == 401
 
+    # Verifies the endpoint returns 403 without permission.
     def test_no_permission_returns_403(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="checkmax_403@t.com")
@@ -811,6 +845,7 @@ class TestCheckMaxExceeded:
         resp = client.post(f"/api/teams/{team_id}/players/check-max-exceeded", json={})
         assert resp.status_code == 403
 
+    # Verifies the endpoint returns 200 when no ladder would exceed the max.
     def test_returns_200_when_no_ladder_would_exceed_max(self, client, app, monkeypatch):
         with app.app_context():
             st = _make_sport_type(max_players=10, name="CheckMaxOKSport")
@@ -830,6 +865,7 @@ class TestCheckMaxExceeded:
         resp = client.post(f"/api/teams/{team_id}/players/check-max-exceeded", json={})
         assert resp.status_code == 200
 
+    # Verifies the endpoint returns 409 with ladder names when the max would be exceeded.
     def test_returns_409_with_ladder_names_when_max_would_be_exceeded(
         self, client, app, monkeypatch
     ):
@@ -864,6 +900,7 @@ class TestCheckMaxExceeded:
 class TestCheckMinViolated:
     """DELETE /api/teams/<id>/players/<account_id>/check-min-violated"""
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client, app):
         with app.app_context():
             acc = _make_account(email="checkmin_auth_acc@t.com")
@@ -875,6 +912,7 @@ class TestCheckMinViolated:
         )
         assert resp.status_code == 401
 
+    # Verifies the endpoint returns 404 when the player is not in the team.
     def test_player_not_in_team_returns_404(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="checkmin_404_mgr@t.com")
@@ -893,6 +931,7 @@ class TestCheckMinViolated:
         )
         assert resp.status_code == 404
 
+    # Verifies the endpoint returns 200 when no ladder would violate the min.
     def test_returns_200_when_no_ladder_would_violate_min(self, client, app, monkeypatch):
         with app.app_context():
             # min=1, team has 2 players — removing one still leaves min satisfied
@@ -922,6 +961,7 @@ class TestCheckMinViolated:
         )
         assert resp.status_code == 200
 
+    # Verifies the endpoint returns 409 with ladder names when the min would be violated.
     def test_returns_409_with_ladder_names_when_min_would_be_violated(
         self, client, app, monkeypatch
     ):

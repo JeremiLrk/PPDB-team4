@@ -1,3 +1,5 @@
+// Reusable component for Header.
+
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { notify } from "@/hooks/useNotify.js";
@@ -17,6 +19,9 @@ const SUPPORTED_LANGS = [
 
 export default function Header({ status }) {
     const navigate = useNavigate();
+    /*
+     Owns the public header state for menus, auth, language, and theme.
+    */
     const [menuOpen, setMenuOpen] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const dropdownRef = useRef(null);
@@ -36,6 +41,9 @@ export default function Header({ status }) {
     //  dropdown close on outside click 
     useEffect(() => {
         function handleClickOutside(event) {
+            /*
+             Closes the user menu when the click happens outside the dropdown.
+            */
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setMenuOpen(false);
             }
@@ -46,6 +54,9 @@ export default function Header({ status }) {
 
     //  logout 
     async function handleLogout() {
+        /*
+         Clears the current session locally and then on the server.
+        */
         setMenuOpen(false);
         setCurrentUser(null);
         localStorage.removeItem("currentUser");

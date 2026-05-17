@@ -1,3 +1,5 @@
+// Regression tests for matches.flow.test.
+
 import "@testing-library/jest-dom/vitest";
 import React from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -166,6 +168,7 @@ beforeEach(() => {
 
     global.fetch = vi.fn();
 });
+// Shared test helper for arranging the scenario under test.
 
 function renderWithContexts(ui, { lang = "en", currentUser = null, route = "/" } = {}) {
     return render(
@@ -184,6 +187,7 @@ function renderWithContexts(ui, { lang = "en", currentUser = null, route = "/" }
         </MemoryRouter>,
     );
 }
+// End-to-end or flow coverage for the main user journey in this file.
 
 describe("Match frontend flows", () => {
     test("player matches render above managed matches", async () => {

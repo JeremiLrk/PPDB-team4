@@ -1,10 +1,13 @@
+// Shared hook for useMatchProposals.
+
 import { useCallback, useEffect, useState } from "react";
 
 const MATCH_PROPOSALS_ENDPOINT = "/api/matches/proposals";
 
 function readField(source, ...keys) {
-    // The API has a few naming variants from older and newer payloads.
-    // This helper keeps the hook tolerant without forcing a rewrite of the backend.
+    /*
+     Reads the first available field from mixed API payload shapes.
+    */
     for (const key of keys) {
         if (source?.[key] !== undefined && source?.[key] !== null) {
             return source[key];
@@ -14,8 +17,9 @@ function readField(source, ...keys) {
 }
 
 function normalizeMatchProposal(raw = {}) {
-    // Flatten the API payload into one UI-friendly object shape.
-    // The card/list components can then stay dumb and only render fields.
+    /*
+     Normalizes one proposal row into the UI shape used by the cards.
+    */
     const team1Id = readField(raw, "team1_id", "team1Id");
     const team2Id = readField(raw, "team2_id", "team2Id");
     const rawStatus = readField(raw, "status", "status_name", "statusName");
@@ -57,8 +61,9 @@ function normalizeMatchProposal(raw = {}) {
 }
 
 function normalizeProposalList(payload) {
-    // Different endpoints return proposals under different keys, so accept
-    // the common wrappers and fall back to an empty list.
+    /*
+     Normalizes whatever proposal list wrapper the backend returns.
+    */
     const rows = Array.isArray(payload)
         ? payload
         : payload?.proposals ?? payload?.matches ?? payload?.items ?? [];
@@ -67,6 +72,9 @@ function normalizeProposalList(payload) {
 }
 
 async function readJson(response) {
+    /*
+     Reads a JSON body and falls back to an empty object on parse errors.
+    */
     try {
         return await response.json();
     } catch {
@@ -77,7 +85,9 @@ async function readJson(response) {
 async function fetchMatchProposals(filters = {}) {
     const params = new URLSearchParams();
 
-    // These query params map directly to the list endpoint filters.
+    /*
+     Builds the proposal list query string from the active filters.
+    */
     if (filters.teamId) {
         params.set("team_id", String(filters.teamId));
     }
@@ -104,8 +114,9 @@ async function fetchMatchProposals(filters = {}) {
 }
 
 async function updateMatchProposalStatus(proposalId, status, extra = {}) {
-    // The merged backend now exposes one canonical status endpoint for all
-    // proposal transitions, so the UI always goes through the same code path.
+    /*
+     Sends one proposal status change through the canonical backend endpoint.
+    */
     const response = await fetch(`${MATCH_PROPOSALS_ENDPOINT}/${proposalId}/status`, {
         method: "PATCH",
         credentials: "include",
@@ -123,14 +134,18 @@ async function updateMatchProposalStatus(proposalId, status, extra = {}) {
 
 export function useMatchProposals(filters = {}) {
     const { teamId, weekStartDate, archived } = filters;
+    /*
+     Loads and updates the match proposal list for the current filters.
+    */
     const [proposals, setProposals] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
     const load = useCallback(async () => {
-        // Reloading always replaces the current list with the latest backend
-        // result so the UI stays consistent after status changes.
+        /*
+         Reloads proposals from the backend and replaces the current list.
+        */
         setLoading(true);
         setError("");
 
@@ -145,8 +160,9 @@ export function useMatchProposals(filters = {}) {
     }, [teamId, weekStartDate, archived]);
 
     const setProposalStatus = useCallback(async (proposalId, status, extra = {}) => {
-        // Keep the local list in sync with the backend response instead of
-        // forcing a full page refresh after every action.
+        /*
+         Updates one proposal and patches the local list with the response.
+        */
         setSubmitting(true);
         setError("");
 
@@ -166,7 +182,6 @@ export function useMatchProposals(filters = {}) {
             setSubmitting(false);
         }
     }, []);
-
     useEffect(() => {
         void load();
     }, [load]);

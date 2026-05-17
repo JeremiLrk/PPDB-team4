@@ -1,3 +1,5 @@
+// Team management UI component for DeletePlayerButton.
+
 import commonStyles from "@/style/common/Common.module.css";
 import formStyles   from "@/style/common/Forms.module.css";
 import panelStyles  from "@/style/common/Panel.module.css";
@@ -37,6 +39,9 @@ export default function DeletePlayerButton({ teamId, playerId, onDeleted }) {
     };
 
     const handleConfirmViolate = () => {
+        /*
+         Confirms the delete after the minimum-roster warning appears.
+        */
         if (violateWarning) {
             confirmDelete(true);
             setViolateWarning(null);

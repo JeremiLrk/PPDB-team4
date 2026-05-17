@@ -1,7 +1,12 @@
+// Reusable component for Badge.
+
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 export default function Badge({ status }) {
+    /*
+     Renders the small backend status badge in the header.
+    */
     const { lang } = useLangContext();
     const baseTexts = usePageTexts("base", lang);
 

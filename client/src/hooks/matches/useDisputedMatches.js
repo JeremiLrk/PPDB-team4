@@ -1,3 +1,5 @@
+// Match workflow hook for useDisputedMatches.
+
 import { useState, useEffect, useCallback } from "react";
 
 /**
@@ -10,6 +12,9 @@ import { useState, useEffect, useCallback } from "react";
  * @returns {{ matches: object[], total: number, loading: boolean, error: string|null, forbidden: boolean, reload: function }}
  */
 export function useDisputedMatches(clubId) {
+    /*
+     Loads the disputed-match list for the current club scope.
+    */
     const [matches, setMatches]   = useState([]);
     const [total, setTotal]       = useState(0);
     const [loading, setLoading]   = useState(true);
@@ -17,6 +22,9 @@ export function useDisputedMatches(clubId) {
     const [forbidden, setForbidden] = useState(false);
 
     const load = useCallback(async () => {
+        /*
+         Fetches disputed matches and updates the local table state.
+        */
         setLoading(true);
         setError(null);
         setForbidden(false);
@@ -54,7 +62,6 @@ export function useDisputedMatches(clubId) {
             setLoading(false);
         }
     }, [clubId]);
-
     useEffect(() => {
         load();
     }, [load]);

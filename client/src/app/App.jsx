@@ -1,3 +1,5 @@
+// Top-level app shell and route composition.
+
 import { useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
 import { Toaster } from "react-hot-toast"
@@ -12,15 +14,20 @@ import { ThemeContext } from "@/context/useThemeContext.jsx"
 const THEME_KEY = "netrank_theme"
 
 function App() {
-
     const location = useLocation()
     const isDashboardRoute = location.pathname.startsWith("/dashboard")
+    /*
+     Owns the top-level shell state for theme, language, auth, and status.
+    */
     const [status, setStatus] = useState({ state: "loading", msg: "" })
     const [lang, setLang] = useLang("en")
     const [currentUser, setCurrentUser] = useState(null)
     const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || "dark")
 
     function toggleTheme() {
+        /*
+         Flips the global theme used by the entire app.
+        */
         setTheme(t => t === "dark" ? "light" : "dark")
     }
 
@@ -40,6 +47,9 @@ function App() {
         let alive = true
 
         async function loadCurrentUser() {
+            /*
+             Loads the current session user once on startup.
+            */
             try {
                 const response = await fetch("/api/me", {
                     method: "GET",
@@ -73,6 +83,9 @@ function App() {
         let alive = true
 
         async function checkHealth() {
+            /*
+             Verifies that the backend and database are reachable.
+            */
             try {
                 const response = await fetch("/api/health")
                 const data = await response.json()

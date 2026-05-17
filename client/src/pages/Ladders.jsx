@@ -1,3 +1,5 @@
+// Page container for Ladders.
+
 import { useNavigate, useParams } from "react-router-dom"
 import { useLadders } from "../hooks/useLadders"
 import { useLangContext } from "@/context/useLangContext.jsx";
@@ -12,6 +14,9 @@ const Ladders = () => {
     const { ladders, loading } = useLadders(clubId)
     const { theme } = useThemeContext()
     const isLight = theme === "light"
+    /*
+     Renders the ladder overview for one club.
+    */
 
     return (
         <div className="mx-auto max-w-6xl">

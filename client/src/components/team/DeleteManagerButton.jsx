@@ -1,3 +1,5 @@
+// Team management UI component for DeleteManagerButton.
+
 import { useDeleteManager } from "@/hooks/teams/useDeleteManager.js";
 import { Spinner }          from "@/components/forms/Spinner.jsx";
 import { FormPanel }        from "@/components/forms/FormPanel.jsx";
@@ -22,6 +24,9 @@ export default function DeleteManagerButton({ teamId, managerId, onDeleted }) {
         isOpen, openDialog, closeDialog,
         confirmDelete, loading, error,
     } = useDeleteManager({ teamId, managerId, onDeleted });
+    /*
+     Renders the manager-delete confirmation flow.
+    */
 
     return (
         <FormPanel

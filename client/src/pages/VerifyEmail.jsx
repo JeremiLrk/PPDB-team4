@@ -1,3 +1,5 @@
+// Page container for VerifyEmail.
+
 import { useEffect, useMemo, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import styles from "@/style/VerifyEmail.module.css"
@@ -6,14 +8,19 @@ import { usePageTexts } from "@/hooks/common/usePageTexts.js"
 
 const VerifyEmail = () => {
     const { token } = useParams()
+    /*
+     Owns the verification status for the current email token.
+    */
     const [status, setStatus] = useState("loading")
     const { lang } = useLangContext()
     const au_texts = usePageTexts("authorization", lang)
-
     useEffect(() => {
         let cancelled = false
 
         async function verifyToken() {
+            /*
+             Verifies the email token and stores the resulting status.
+            */
             try {
                 const response = await fetch(`/api/verify-email/${token}`, {
                     method: "GET",
@@ -30,7 +37,6 @@ const VerifyEmail = () => {
         }
 
         verifyToken()
-
         return () => {
             cancelled = true
         }

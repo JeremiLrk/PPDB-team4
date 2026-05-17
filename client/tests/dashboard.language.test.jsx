@@ -1,3 +1,5 @@
+// Regression tests for dashboard.language.test.
+
 import "@testing-library/jest-dom/vitest";
 import { test } from "vitest";
 import { render, screen } from "@testing-library/react";

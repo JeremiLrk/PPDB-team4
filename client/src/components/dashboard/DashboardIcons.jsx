@@ -1,4 +1,9 @@
+// Dashboard UI component for DashboardIcons.
+
 export function ThemeIcon({ isDarkMode }) {
+    /*
+     Renders the theme-toggle icon for the current mode.
+    */
     if (isDarkMode) {
         return (
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -21,6 +26,9 @@ export function ThemeIcon({ isDarkMode }) {
 }
 
 export function HomeIcon() {
+    /*
+     Renders the home icon used in the dashboard shell.
+    */
     return (
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -32,6 +40,9 @@ export function HomeIcon() {
 }
 
 export function SignOutIcon() {
+    /*
+     Renders the sign-out icon used in the dashboard shell.
+    */
     return (
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path

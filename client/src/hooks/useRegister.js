@@ -1,9 +1,14 @@
+// Shared hook for useRegister.
+
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { notify } from "@/hooks/useNotify.js"
 import { GENDER_VALUES } from "@/constants/genderOptions.js"
 
 export function useRegister(setUser) {
+    /*
+     Owns the registration form state and submit flow.
+    */
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [firstName, setFirstName] = useState("")
@@ -12,8 +17,10 @@ export function useRegister(setUser) {
     const [gender, setGender] = useState("")
     const [phoneNumber, setPhoneNumber] = useState("")
     const navigate = useNavigate()
-
     const handleSubmit = async (e) => {
+        /*
+         Validates and submits the signup form.
+        */
         e.preventDefault()
 
         if (!GENDER_VALUES.includes(gender)) {

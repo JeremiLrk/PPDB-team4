@@ -1,3 +1,5 @@
+// Team management UI component for ManagerCard.
+
 import commonStyles      from "@/style/common/Common.module.css";
 import ItemCard           from "@/components/common/ItemCard.jsx";
 import DeleteManagerButton from "@/components/team/DeleteManagerButton.jsx";
@@ -18,6 +20,9 @@ export default function ManagerCard({ manager, teamId, canDelete, onDeleted }) {
     const texts = usePageTexts("team_settings", lang);
     const fullName = [manager.firstName, manager.lastName]
         .filter(Boolean).join(" ") || "-";
+    /*
+     Renders one manager row with permission badges and delete action.
+    */
 
     return (
         <ItemCard>
@@ -62,6 +67,9 @@ const PERM_ICONS = [
 ];
 
 function PermissionsBadge({ permissions, texts = {} }) {
+    /*
+     Renders the manager permission badge row.
+    */
     if (!permissions) return null;
 
     return (

@@ -1,3 +1,5 @@
+// Team management hook for useAddManager.
+
 import { useState, useCallback, useRef, useEffect } from "react";
 
 /**
@@ -9,6 +11,9 @@ import { useState, useCallback, useRef, useEffect } from "react";
  * @param {{ teamId: number|string, onAdded?: (manager: object) => void }} options
  */
 export function useAddManager({ teamId, onAdded } = {}) {
+    /*
+     Owns the manager-search wizard and permission selection flow.
+    */
     const [isOpen,    setIsOpen]    = useState(false);
     const [step,      setStep]      = useState(0);
     const [query,     setQuery]     = useState("");
@@ -34,11 +39,17 @@ export function useAddManager({ teamId, onAdded } = {}) {
     const inputRef    = useRef(null);
 
     const openPanel = useCallback(() => {
+        /*
+         Opens the manager picker at the first step.
+        */
         setIsOpen(true);
         setStep(0);
     }, []);
 
     const closePanel = useCallback(() => {
+        /*
+         Closes the picker and resets every draft field.
+        */
         setIsOpen(false);
         setStep(0);
         setQuery("");
@@ -55,16 +66,20 @@ export function useAddManager({ teamId, onAdded } = {}) {
         });
     }, []);
 
-    // Auto-focus when opening the first page
     useEffect(() => {
+        /*
+         Focuses the search field when the first step opens.
+        */
         if (isOpen && step === 0) {
             const t = setTimeout(() => inputRef.current?.focus(), 60);
             return () => clearTimeout(t);
         }
     }, [isOpen, step]);
 
-    // Debounced search — only at step 0
     useEffect(() => {
+        /*
+         Debounces manager search requests only on the search step.
+        */
         if (!isOpen || step !== 0) return;
 
         if (!query.trim()) {
@@ -98,6 +113,9 @@ export function useAddManager({ teamId, onAdded } = {}) {
 
     // Select an account and go to step 1
     const selectAccount = useCallback((account) => {
+        /*
+         Locks in the chosen account and advances to the permissions step.
+        */
         setSelected(account);
         setAddErr(null);
         setStep(1);
@@ -105,17 +123,26 @@ export function useAddManager({ teamId, onAdded } = {}) {
 
     // Return to step 0
     const goBack = useCallback(() => {
+        /*
+         Returns from the permissions step to search.
+        */
         setStep(0);
         setSelected(null);
         setAddErr(null);
     }, []);
 
     const togglePermission = useCallback((key) => {
+        /*
+         Flips one manager permission checkbox.
+        */
         setPermissions(prev => ({ ...prev, [key]: !prev[key] }));
     }, []);
 
     // Send request to server
     const submit = useCallback(async () => {
+        /*
+         Sends the selected manager and chosen permissions to the backend.
+        */
         if (!selected) return;
         setAddingId(selected.id);
         setAddErr(null);

@@ -1,3 +1,5 @@
+// Club settings UI component for ClubMatchRules.
+
 import { useCallback, useEffect, useState } from "react";
 import styles from "@/style/ClubSettings.module.css";
 
@@ -35,6 +37,9 @@ const EMPTY_FORM = {
 };
 
 function formatRuleSetSummary(rs) {
+    /*
+     Collapses one full ruleset into a compact summary string.
+    */
     const parts = [];
 
     const formatLabel = MATCH_FORMAT_OPTIONS.find(o => o.value === rs.matchFormat)?.label ?? rs.matchFormat;
@@ -57,6 +62,9 @@ function formatRuleSetSummary(rs) {
 }
 
 export default function ClubMatchRules({ clubId, texts = {} }) {
+    /*
+     Owns the club-level ruleset editor state and actions.
+    */
     const [ruleSets, setRuleSets] = useState([]);
     const [loading, setLoading]   = useState(true);
     const [error, setError]       = useState("");
@@ -64,6 +72,9 @@ export default function ClubMatchRules({ clubId, texts = {} }) {
     const [form, setForm] = useState(EMPTY_FORM);
 
     const fetchData = useCallback(async () => {
+        /*
+         Loads the current club ruleset list.
+        */
         setLoading(true);
         setError("");
         try {
@@ -77,14 +88,19 @@ export default function ClubMatchRules({ clubId, texts = {} }) {
             setLoading(false);
         }
     }, []);
-
     useEffect(() => { void fetchData(); }, [fetchData]);
 
     function updateForm(field, value) {
+        /*
+         Updates one field in the ruleset form.
+        */
         setForm(prev => ({ ...prev, [field]: value }));
     }
 
     async function handleCreate() {
+        /*
+         Creates a new club ruleset from the form values.
+        */
         const name = form.name.trim();
         if (!name) return;
 
@@ -123,6 +139,9 @@ export default function ClubMatchRules({ clubId, texts = {} }) {
 
     async function handleDelete(id) {
         if (!window.confirm("Regelset verwijderen?")) return;
+        /*
+         Deletes one ruleset after confirmation.
+        */
         setError("");
         try {
             const res = await fetch(`/api/match-rule-sets/${id}`, {
@@ -140,6 +159,7 @@ export default function ClubMatchRules({ clubId, texts = {} }) {
     }
 
     if (loading) {
+        // Render a lightweight loading shell while the ruleset list is fetched.
         return (
             <div className={`${styles.contentGrid} ${styles.contentFade}`}>
                 <article className={styles.panel}>
@@ -158,6 +178,7 @@ export default function ClubMatchRules({ clubId, texts = {} }) {
                 <h3 className={styles.panelTitle}>{texts.create_rule_set_title || "Nieuwe regelset"}</h3>
 
                 <div className={styles.form}>
+                    {/* The name is the label users will later see in club and ladder settings. */}
                     <input
                         className={styles.formInput}
                         placeholder={texts.rule_set_name_placeholder || "Naam van de regelset"}
@@ -187,6 +208,7 @@ export default function ClubMatchRules({ clubId, texts = {} }) {
                     </select>
 
                     {form.matchFormat === "timed" && (
+                        // Timed rulesets need a duration so the backend can validate match length.
                         <input
                             className={styles.formInput}
                             type="number"
@@ -199,6 +221,7 @@ export default function ClubMatchRules({ clubId, texts = {} }) {
                     )}
 
                     {form.matchFormat === "pro_set" && (
+                        // Pro-set rulesets need a target game count to know when the set ends.
                         <input
                             className={styles.formInput}
                             type="number"
@@ -285,6 +308,7 @@ export default function ClubMatchRules({ clubId, texts = {} }) {
                 {ruleSets.length === 0 ? (
                     <p className={styles.muted}>{texts.no_rule_sets || "Nog geen regelsets."}</p>
                 ) : (
+                    // The summary list lets staff compare rulesets without opening a separate detail page.
                     <ul className={styles.list} style={{ marginTop: "10px" }}>
                         {ruleSets.map(rs => (
                             <li

@@ -66,6 +66,7 @@ def _player_stats_from_history(team_ids: list[int], *, ladder_id: int | None = N
     }
 
 
+# Verifies dashboard achievements match seeded player history.
 def test_dashboard_achievements_match_seeded_player_history(seeded_client, seeded_app):
     response = seeded_client.post(
         "/api/login",
@@ -89,6 +90,7 @@ def test_dashboard_achievements_match_seeded_player_history(seeded_client, seede
     assert isclose(expected["win_rate"], 1.0)
 
 
+# Verifies ladder players expose seeded win and streak stats.
 def test_ladder_players_expose_seeded_win_and_streak_stats(seeded_client, seeded_app):
     with seeded_app.app_context():
         club = Club.query.filter_by(name="NetRank Club").first()

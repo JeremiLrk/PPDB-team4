@@ -1,3 +1,5 @@
+// Regression tests for testApiMock.
+
 import { vi } from "vitest";
 
 const PAGE_TEXTS = {
@@ -611,6 +613,7 @@ PAGE_TEXTS.team_settings = {
         settings_aria: "Instellingen voor",
     },
 };
+// Shared test helper for arranging the scenario under test.
 
 function jsonResponse(data, status = 200) {
     return {

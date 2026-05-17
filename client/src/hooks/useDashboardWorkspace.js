@@ -1,3 +1,5 @@
+// Shared hook for useDashboardWorkspace.
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDashboard } from "@/hooks/useDashboard.js";
@@ -43,17 +45,27 @@ const WEEKDAY_OPTIONS_NL = [
 ]
 
 function normalizeRequests(dashboardData) {
+    /*
+     Flattens the nested join-request list from the dashboard payload.
+    */
     return Array.isArray(dashboardData?.pending_requests?.my_requests)
         ? dashboardData.pending_requests.my_requests
         : []
 }
 
 function normalizeClubs(dashboardData) {
-    // Empty dashboard responses should still behave like a list.
+    /*
+     Normalizes the dashboard club list into a safe array.
+    */
     return Array.isArray(dashboardData?.clubs) ? dashboardData.clubs : []
 }
 
 function normalizeClubIds(clubs) {
+    /*
+     Builds a numeric set of club identifiers from the dashboard club list.
+     This is used for fast membership checks when the workspace needs to know
+     whether the current user already belongs to a given club.
+    */
     return new Set(
         clubs
             .map((club) => Number(club?.id ?? club?.club_id))
@@ -62,12 +74,18 @@ function normalizeClubIds(clubs) {
 }
 
 function normalizeUpcomingMatches(dashboardData) {
+    /*
+     Normalizes the upcoming match list into a safe array.
+    */
     return Array.isArray(dashboardData?.upcoming_matches)
         ? dashboardData.upcoming_matches
         : []
 }
 
 function normalizePendingJoinRequestClubIds(myRequests) {
+    /*
+     Collects club IDs that already have a pending join request.
+    */
     return new Set(
         myRequests
             .filter(
@@ -80,6 +98,9 @@ function normalizePendingJoinRequestClubIds(myRequests) {
 }
 
 export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
+    /*
+     Owns dashboard state and the handlers the pages reuse.
+    */
     const navigate = useNavigate();
     const { dashboardData, loading, error } = useDashboard();
     const { setCurrentUser } = useCurrentUserContext();
@@ -89,6 +110,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         loading: discoverLoading,
         error: discoverError,
     } = useClubs()
+    /*
+     Owns the dashboard workspace state for tabs, forms, and filters.
+    */
 
     const [activeTab, setActiveTab] = useState("overview")
     const [searchTerm, setSearchTerm] = useState("")
@@ -105,6 +129,7 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         type: "",
         text: "",
     })
+    // Availability blocks drive the weekly calendar shown in the dashboard tab.
     const [availabilityBlocks, setAvailabilityBlocks] = useState([])
     const [availabilityForm, setAvailabilityForm] = useState(
         EMPTY_AVAILABILITY_FORM,
@@ -157,27 +182,43 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         loadMore: loadMoreMyTeams,
     } = useTeams({ pageSize: 12, sort: "name", endpoint: "/api/teams/my-all" });
 
-    // Persist dashboard-specific theme preference between sessions.
     useEffect(() => {
         localStorage.setItem(THEME_STORAGE_KEY, theme)
     }, [theme])
 
     function onThemeToggle() {
-        // Only the theme flag changes here; the workspace data stays intact.
+        /*
+         Toggles the dashboard theme without touching loaded data.
+        */
         setTheme((previousTheme) =>
             previousTheme === "dark" ? "light" : "dark",
         )
     }
 
     function onGoHome() {
+        /*
+         Navigates back to the public landing page.
+         The handler does not clear dashboard state because the app can keep the
+         session data warm if the user comes back immediately.
+        */
         navigate("/")
     }
 
     function onGoSettings(ClubId) {
+        /*
+         Opens the settings page for one club.
+         The caller already knows which club should be configured, so this only
+         needs to translate that id into the expected route.
+        */
         navigate(`/clubs/${ClubId}/settings`)
     }
-
     async function onSignOut() {
+        /*
+         Clears local session state and then signs out through the API.
+        */
+        /*
+         Clears local session state and then closes the server session.
+        */
         localStorage.removeItem("currentUser");
         setUser?.(null);
         navigate("/");
@@ -203,6 +244,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     }
 
     function onClubRequestFieldChange(event) {
+        /*
+         Updates one club-request field and resets the city pick when needed.
+        */
         const { name, value } = event.target
         setClubRequestForm((previous) => ({ ...previous, [name]: value }))
         if (name === "city") {
@@ -212,16 +256,25 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     }
 
     function onClubRequestCitySelect(city) {
+        /*
+         Copies the selected city suggestion into the form state.
+        */
         setClubRequestForm((previous) => ({ ...previous, city: city.label }))
         setClubRequestCitySelection(city)
     }
 
     function onAvailabilityFieldChange(event) {
+        /*
+         Mirrors the availability inputs into local state.
+        */
         const { name, value } = event.target
         setAvailabilityForm((previous) => ({ ...previous, [name]: value }))
     }
 
     const fetchAvailability = useCallback(async () => {
+        /*
+         Loads the current availability blocks from the backend.
+        */
         setAvailabilityLoading(true)
         try {
             const response = await fetch("/api/me/availability", {
@@ -263,11 +316,16 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     }, [texts.could_not_load_availability])
 
     useEffect(() => {
-        // Load the current availability list once the workspace hook starts.
+        /*
+         Loads availability once when the dashboard workspace mounts.
+        */
         fetchAvailability()
     }, [fetchAvailability])
 
     async function onAvailabilitySubmit(event) {
+        /*
+         Validates and submits one new availability block.
+        */
         event.preventDefault()
         setAvailabilityMessage({ type: "", text: "" })
 
@@ -354,6 +412,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     }
 
     async function onAvailabilityDelete(blockId) {
+        /*
+         Deletes one availability block and updates the local list.
+        */
         setAvailabilityMessage({ type: "", text: "" })
         try {
             const response = await fetch(`/api/me/availability/${blockId}`, {
@@ -396,7 +457,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         }
     }
     async function clubJoinrequest(clubId) {
-        // This endpoint creates the user's own join request.
+        /*
+         Creates a join request for the selected club.
+        */
         const res = await fetch("/api/club/join-request", {
             method: "POST",
             credentials: "include",
@@ -411,7 +474,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         }
     }
     async function decideJoinrequest(clubId, userId, status) {
-        // Owners use the same endpoint to approve or reject incoming requests.
+        /*
+         Approves or rejects one incoming club join request.
+        */
         const res = await fetch("/api/club/join-request/decide", {
             method: "POST",
             credentials: "include",
@@ -430,7 +495,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         }
     }
     async function fetchJoinRequests() {
-        // A successful response doubles as the "you are an owner here" signal.
+        /*
+         Loads incoming join requests and checks owner access.
+        */
         const res = await fetch("/api/club/join-request", {
             method: "GET",
             credentials: "include",
@@ -453,7 +520,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     const [incomingJoinRequests, setIncomingJoinRequests] = useState([]);
 
     useEffect(() => {
-        // Load the owner-only join requests once on mount.
+        /*
+         Loads the owner-only join requests on mount.
+        */
         fetchJoinRequests()
             .then(data => {
                 setIncomingJoinRequests(data.requests || []);
@@ -462,6 +531,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     }, []);
 
     async function onClubRequestSubmit(event) {
+        /*
+         Submits the club-request form after basic validation.
+        */
         event.preventDefault()
 
         const trimmedName = clubRequestForm.name.trim()
@@ -493,6 +565,7 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         }
 
         try {
+            // The club-request payload is already normalized above, so the POST can stay simple here.
             const response = await fetch("/api/clubs", {
                 method: "POST",
                 credentials: "include",

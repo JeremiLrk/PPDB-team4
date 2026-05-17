@@ -1,10 +1,14 @@
+// Shared hook for useWeather.
+
 import { useEffect, useState } from "react";
 
 export function useWeather(club_id, targetDate = "") {
+    /*
+     Loads weather data for one club/date combination.
+    */
     const [weather, setWeather] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
     useEffect(() => {
         if (!club_id) {
             setWeather(null);
@@ -15,7 +19,7 @@ export function useWeather(club_id, targetDate = "") {
 
         setLoading(true);
         setError(null);
-        
+
         const controller = new AbortController();
         const params = new URLSearchParams();
         if (targetDate) {
@@ -26,6 +30,9 @@ export function useWeather(club_id, targetDate = "") {
             signal: controller.signal,
         })
             .then((res) => {
+                /*
+                 Treats a 404 as "no weather available" instead of a hard error.
+                */
                 if (res.status === 404) {
                     return null;
                 }

@@ -55,6 +55,7 @@ def expectedScore(player_rating: int, opponent_rating: int) -> float:
     return 1 / (1 + 10 ** (diff / 400))
 
 
+# Verifies seeded player demo teams share one ladder.
 def test_seeded_player_demo_teams_share_one_ladder(seeded_app: Flask):
     with seeded_app.app_context():
         ladder = Ladder.query.filter_by(name="Player Demo Singles").first()
@@ -70,6 +71,7 @@ def test_seeded_player_demo_teams_share_one_ladder(seeded_app: Flask):
         assert team_names == ["Player Demo A", "Player Demo B"]
 
 
+# Verifies seeded match proposals span past and future.
 def test_seeded_match_proposals_span_past_and_future(seeded_app: Flask):
     with seeded_app.app_context():
         today = date.today()
@@ -89,6 +91,7 @@ def test_seeded_match_proposals_span_past_and_future(seeded_app: Flask):
         assert latest_week.week_start_date <= latest_allowed_proposal_week_start()
 
 
+# Verifies seeded non demo proposals use player contacts.
 def test_seeded_non_demo_proposals_use_player_contacts(seeded_client: FlaskClient):
     loginDemoPlayer(seeded_client)
 
@@ -110,6 +113,7 @@ def test_seeded_non_demo_proposals_use_player_contacts(seeded_client: FlaskClien
     assert "alice.moore@example.com" in emails or "bob.taylor@example.com" in emails
 
 
+# Verifies match proposals hide archived history until requested.
 def test_match_proposals_hide_archived_history_until_requested(seeded_client: FlaskClient, seeded_app: Flask):
     loginDemoPlayer(seeded_client)
 
@@ -153,6 +157,7 @@ def test_match_proposals_hide_archived_history_until_requested(seeded_client: Fl
     assert archived_id in archived_ids
 
 
+# Verifies demo account is player on non managed ladder team.
 def test_demo_account_is_player_on_non_managed_ladder_team(seeded_app: Flask):
     with seeded_app.app_context():
         account = Account.query.filter_by(email="jeremilorek@outlook.com").first()
@@ -167,6 +172,7 @@ def test_demo_account_is_player_on_non_managed_ladder_team(seeded_app: Flask):
         assert "Player Demo A" not in managed_team_names
 
 
+# Verifies player can see and accept weekly proposal.
 def test_player_can_see_and_accept_weekly_proposal(seeded_client: FlaskClient):
     loginDemoPlayer(seeded_client)
 
@@ -194,6 +200,7 @@ def test_player_can_see_and_accept_weekly_proposal(seeded_client: FlaskClient):
     assert accept_response.get_json()["proposal"]["status"] == "accepted"
 
 
+# Verifies accepted proposal can be reset to pending.
 def test_accepted_proposal_can_be_reset_to_pending(seeded_client: FlaskClient):
     loginDemoPlayer(seeded_client)
     player_demo_proposal = findPlayerDemoProposal(seeded_client)
@@ -212,6 +219,7 @@ def test_accepted_proposal_can_be_reset_to_pending(seeded_client: FlaskClient):
     assert pending_response.get_json()["proposal"]["status"] == "pending"
 
 
+# Verifies played result updates elo rating matches played and rank.
 def test_played_result_updates_elo_rating_matches_played_and_rank(seeded_client: FlaskClient, seeded_app: Flask):
     loginDemoPlayer(seeded_client)
     player_demo_proposal = findPlayerDemoProposal(seeded_client)
@@ -266,6 +274,7 @@ def test_played_result_updates_elo_rating_matches_played_and_rank(seeded_client:
         assert after_b.rank == 2
 
 
+# Verifies played result cannot be recorded twice.
 def test_played_result_cannot_be_recorded_twice(seeded_client: FlaskClient):
     loginDemoPlayer(seeded_client)
     player_demo_proposal = findPlayerDemoProposal(seeded_client)
@@ -290,6 +299,7 @@ def test_played_result_cannot_be_recorded_twice(seeded_client: FlaskClient):
     assert "already exists" in second_played.get_json()["message"].lower()
 
 
+# Verifies played result same payload is idempotent retry.
 def test_played_result_same_payload_is_idempotent_retry(seeded_client: FlaskClient):
     loginDemoPlayer(seeded_client)
     player_demo_proposal = findPlayerDemoProposal(seeded_client)
@@ -314,6 +324,7 @@ def test_played_result_same_payload_is_idempotent_retry(seeded_client: FlaskClie
     assert "idempotent" in (second_played.get_json().get("message") or "").lower()
 
 
+# Verifies played result cannot be reset to pending.
 def test_played_result_cannot_be_reset_to_pending(seeded_client: FlaskClient):
     loginDemoPlayer(seeded_client)
     player_demo_proposal = findPlayerDemoProposal(seeded_client)
@@ -338,6 +349,7 @@ def test_played_result_cannot_be_reset_to_pending(seeded_client: FlaskClient):
     assert "immutable" in pending_response.get_json()["message"].lower()
 
 
+# Verifies weekly generation is idempotent for existing week.
 def test_weekly_generation_is_idempotent_for_existing_week(seeded_app: Flask):
     with seeded_app.app_context():
         account = Account.query.filter_by(email="jeremilorek@outlook.com").first()
@@ -366,11 +378,13 @@ def test_weekly_generation_is_idempotent_for_existing_week(seeded_app: Flask):
         assert after_count == before_count
 
 
+# Verifies auto generation has one week precaution floor.
 def test_auto_generation_has_one_week_precaution_floor():
     generated_at = datetime(2026, 4, 26, 3, 0, 0)  # Sunday 03:00
     assert auto_generation_not_before(generated_at) == datetime(2026, 5, 3, 8, 0, 0)
 
 
+# Verifies weekly generation skips pair when rematch cooldown active.
 def test_weekly_generation_skips_pair_when_rematch_cooldown_active(seeded_app: Flask, monkeypatch):
     with seeded_app.app_context():
         account = Account.query.filter_by(email="jeremilorek@outlook.com").first()
@@ -402,6 +416,7 @@ def test_weekly_generation_skips_pair_when_rematch_cooldown_active(seeded_app: F
         assert any(row["reason"] == "rematch_cooldown" for row in result["skipped"])
 
 
+# Verifies weekly generation rejects weeks too far ahead.
 def test_weekly_generation_rejects_weeks_too_far_ahead(seeded_app: Flask):
     with seeded_app.app_context():
         account = Account.query.filter_by(email="jeremilorek@outlook.com").first()

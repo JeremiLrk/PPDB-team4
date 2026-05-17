@@ -1,3 +1,5 @@
+// Regression tests for app.smoke.test.
+
 import "@testing-library/jest-dom/vitest";
 import { test } from "vitest";
 import { render, screen, within } from "@testing-library/react";

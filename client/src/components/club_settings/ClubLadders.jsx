@@ -1,3 +1,5 @@
+// Club settings UI component for ClubLadders.
+
 import { useState } from "react";
 import { useSportTypes } from "@/hooks/useSportTypes";
 import styles from "@/style/ClubSettings.module.css";
@@ -12,6 +14,9 @@ export function ClubLadders({
     texts = {},
 }) {
     const { sportTypes } = useSportTypes();
+    /*
+     Owns the ladder creation form and ladder-team linking form.
+    */
 
     const [form, setForm] = useState({
         name: "",
@@ -31,6 +36,9 @@ export function ClubLadders({
     const [teamMessage, setTeamMessage] = useState(null);
 
     const handleChange = (event) => {
+        /*
+         Updates one field in the ladder creation form.
+        */
         const { name, value } = event.target;
         setForm((prev) => ({
             ...prev,
@@ -39,14 +47,19 @@ export function ClubLadders({
     };
 
     const handleTeamChange = (event) => {
+        /*
+         Updates one field in the ladder-team linking form.
+        */
         const { name, value } = event.target;
         setTeamForm((prev) => ({
             ...prev,
             [name]: value,
         }));
     };
-
     const handleCreate = async () => {
+        /*
+         Creates a new ladder after validating the required fields.
+        */
         if (!form.name.trim() || !form.sport_type_id || !form.rule_set_id || !form.ladder_rating_function_id) {
             alert(texts.fill_all_required_fields || "Vul alle verplichte velden in.");
             return;
@@ -73,6 +86,9 @@ export function ClubLadders({
     };
 
     const handleAddTeam = async (event) => {
+        /*
+         Links one selected team to one selected ladder.
+        */
         event.preventDefault();
 
         if (!teamForm.ladder_id || !teamForm.team_id) {

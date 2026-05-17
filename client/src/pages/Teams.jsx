@@ -1,3 +1,5 @@
+// Page container for Teams.
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "@/style/Teams.module.css";
@@ -24,14 +26,22 @@ export default function Teams() {
         load, loadMore,
     } = useTeams({ pageSize: 12, sort: "name" });
 
-    // Initial load
+    /*
+     Loads the teams list once on mount.
+    */
     useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     function handleSortChange(e) {
+        /*
+         Reloads the team list using a new sort order.
+        */
         load({ sort: e.target.value });
     }
 
     function handlePageSizeChange(e) {
+        /*
+         Reloads the team list using a new page size.
+        */
         load({ pageSize: Number(e.target.value) });
     }
 
@@ -135,6 +145,9 @@ export default function Teams() {
 }
 
 function TeamCard({ team, onClick }) {
+    /*
+     Renders one team card in the public teams grid.
+    */
     return (
         <button className={styles.card} onClick={onClick}>
             <div className={styles.cardAccent} />

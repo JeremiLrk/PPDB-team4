@@ -1,6 +1,11 @@
+// Dashboard UI component for dashboardUtils.
+
 import styles from "@/style/common/Common.module.css";
 
 export function getDashboardTabs(texts) {
+    /*
+     Builds the ordered dashboard tab list for the current language.
+    */
     return [
         { id: "overview", label: texts.tab_overview || "Overview" },
         { id: "profile", label: texts.tab_profile || "My profile" },
@@ -15,6 +20,9 @@ export function getDashboardTabs(texts) {
 }
 
 export function statusClass(status) {
+    /*
+     Maps a status to the shared dashboard status class.
+    */
     const value = (status || "pending").toLowerCase()
     if (value === "approved" || value === "accepted") return styles.statusApproved
     if (value === "rejected") return styles.statusRejected
@@ -23,6 +31,9 @@ export function statusClass(status) {
 }
 
 export function statusLabel(status, texts = {}) {
+    /*
+     Returns the localized label for a status value.
+    */
     const value = (status || "pending").toLowerCase()
     if (value === "accepted" || value === "approved") {
         return texts.status_accepted || texts.status_approved || "Accepted"

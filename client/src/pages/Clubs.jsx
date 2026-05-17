@@ -1,3 +1,5 @@
+// Page container for Clubs.
+
 import { useNavigate } from "react-router-dom";
 import styles from "@/style/Clubs.module.css";
 import commonStyles from "@/style/common/Common.module.css";
@@ -17,6 +19,9 @@ function Clubs() {
   const error = clubsError;
 
   if (loading) {
+    /*
+     Shows a compact loading state while club data is fetched.
+    */
     return (
       <section className={styles.container}>
         <p className={commonStyles.info}>{texts.loading || "Loading clubs..."}</p>
@@ -32,6 +37,9 @@ function Clubs() {
       {sportsError ? <p className={commonStyles.error}>{sportsError}</p> : null}
 
       {sportTypes.length > 0 ? sportTypes.map((sport) => {
+        /*
+         Groups clubs by sport type when that metadata is available.
+        */
         const filteredClubs = clubs.filter(c => c.sport_type_id === sport.id);
         if (filteredClubs.length === 0) return null;
 

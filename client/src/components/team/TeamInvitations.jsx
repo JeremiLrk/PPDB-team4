@@ -1,3 +1,5 @@
+// Team management UI component for TeamInvitations.
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import commonStyles from "@/style/common/Common.module.css";
@@ -17,15 +19,22 @@ export default function TeamInvitations() {
     const { lang } = useLangContext();
     const texts = usePageTexts("teams", lang);
     const { invitations, loading, error, acceptInvitation, rejectInvitation } = useTeamInvitations();
+    // Local state keeps track of which invitation is currently being processed.
     const [processing, setProcessing] = useState(null);
 
     async function handleAccept(id, teamId) {
+        /*
+         Accepts one invitation and keeps the row busy until completion.
+        */
         setProcessing(id);
         await acceptInvitation(id, teamId);
         setProcessing(null);
     }
 
     async function handleReject(id, teamId) {
+        /*
+         Rejects one invitation using the same processing state.
+        */
         setProcessing(id);
         await rejectInvitation(id, teamId);
         setProcessing(null);
@@ -52,6 +61,7 @@ export default function TeamInvitations() {
                         {invitations.map(inv => (
                             <li key={inv.id} className={panelStyles.listItem}>
                                 <div>
+                                    {/* Team name, club, and sport are stacked so the invite stays readable on small screens. */}
                             <p
                                 className={dashboardStyles.teamCardName}
                                 style={{
@@ -91,6 +101,7 @@ export default function TeamInvitations() {
                                 onClick={() => navigate(`/teams/${inv.team_id}`)}
                                 disabled={processing}
                             >
+                                {/* View opens the team page without changing invite state. */}
                                 View
                             </button>
                             <button
@@ -98,6 +109,7 @@ export default function TeamInvitations() {
                                 onClick={() => handleAccept(inv.id, inv.team_id)}
                                 disabled={processing === inv.id}
                             >
+                                {/* Accept and reject are separate API actions so club owners can respond immediately. */}
                                 {processing === inv.id ? "..." : "Accept"}
                             </button>
                             <button

@@ -1,3 +1,5 @@
+// Match workflow UI component for MatchProposalList.
+
 import buttonStyles from "@/style/common/Buttons.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import styles from "@/style/matches/MatchProposalCard.module.css";
@@ -23,12 +25,18 @@ export default function MatchProposalList({
     statusTexts = {},
     emptyText,
 }) {
+    /*
+     Renders the match proposals in loading, error, or list state.
+    */
     if (loading) {
         // Loading state stays compact so the list can swap in place.
         return <p className={commonStyles.muted}>{texts.loading || "Match proposals loading..."}</p>;
     }
 
     if (error) {
+        /*
+         Shows the backend error and a retry button.
+        */
         return (
             <div style={{ display: "grid", gap: "0.7rem" }}>
                 {/* Surface the backend error and keep the retry action next to it. */}
@@ -41,7 +49,9 @@ export default function MatchProposalList({
     }
 
     if (proposals.length === 0) {
-        // Empty state is still explicit so the user knows the list loaded correctly.
+        /*
+         Shows an explicit empty state when there are no proposals.
+        */
         return <p className={commonStyles.muted}>{emptyText || texts.empty || "No match proposals yet."}</p>;
     }
 

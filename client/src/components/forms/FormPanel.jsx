@@ -1,3 +1,5 @@
+// Reusable component for FormPanel.
+
 import { useRef, useEffect} from "react";
 import { createPortal } from "react-dom";
 import { Spinner } from "@/components/forms/Spinner.jsx";
@@ -73,11 +75,19 @@ export function FormPanel({
 
     children,
 }) {
+    /*
+     Owns the shared dropdown-panel shell for multi-step forms.
+     The caller supplies the content and callbacks; this component handles
+     panel positioning, outside-click/escape dismissal, and footer controls.
+    */
     const panelRef   = useRef(null);
     const triggerRef = useRef(null);
 
     // Close on click outside
     useEffect(() => {
+        /*
+         Closes the panel when the user clicks outside the trigger and dialog.
+        */
         if (!isOpen) return;
         function onOutside(e) {
             if (
@@ -91,6 +101,9 @@ export function FormPanel({
 
     // Close by Escape
     useEffect(() => {
+        /*
+         Closes the panel when the user presses Escape.
+        */
         if (!isOpen) return;
         function onKey(e) { if (e.key === "Escape") closePanel(); }
         document.addEventListener("keydown", onKey);

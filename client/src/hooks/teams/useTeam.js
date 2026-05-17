@@ -1,6 +1,11 @@
+// Team management hook for useTeam.
+
 import {useCallback, useEffect, useState} from "react";
 
 export function useTeam(teamId) {
+    /*
+     Loads one team record and keeps it refreshable.
+    */
 
     const [loading, setLoading] = useState(true);
     const [error,   setError]   = useState(null);
@@ -18,6 +23,9 @@ export function useTeam(teamId) {
         const controller = new AbortController();
 
         async function load() {
+            /*
+             Fetches the team record for the active team id.
+            */
             setLoading(true);
             setError(null);
             try {

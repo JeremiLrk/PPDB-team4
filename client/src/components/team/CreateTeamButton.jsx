@@ -1,3 +1,5 @@
+// Team management UI component for CreateTeamButton.
+
 import { FormPanel } from "@/components/forms/FormPanel.jsx";
 import { FormPage }  from "@/components/forms/FormPage.jsx";
 import { Field }     from "@/components/forms/Field.jsx";
@@ -23,8 +25,10 @@ export default function CreateTeamButton({ clubs = [], onCreated, theme, texts: 
     const { sportTypes, loading: sportTypesLoading } = useSportTypes();
     const texts = { ...fallbackTexts, ...(providedTexts || {}) };
 
-    // Validation: "Next" is only available if the name is filled in
     const canNext = step === 0 ? !!form.name.trim() : true;
+    /*
+     Keeps the forward action disabled until the first-step name is filled in.
+    */
 
     return (
         <FormPanel

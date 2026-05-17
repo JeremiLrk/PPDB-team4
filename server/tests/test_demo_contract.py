@@ -29,11 +29,13 @@ def _get_netrank_club_id(client: FlaskClient) -> int:
     return target["id"]
 
 
+# Verifies demo club exists in clubs endpoint.
 def test_demo_club_exists_in_clubs_endpoint(seeded_client: FlaskClient):
     club_id = _get_netrank_club_id(seeded_client)
     assert club_id > 0
 
 
+# Verifies demo ladders include expected names.
 def test_demo_ladders_include_expected_names(seeded_client: FlaskClient):
     club_id = _get_netrank_club_id(seeded_client)
     response = seeded_client.get(f"/api/clubs/{club_id}/ladders")
@@ -50,6 +52,7 @@ def test_demo_ladders_include_expected_names(seeded_client: FlaskClient):
     assert "U14 Singles" in ladder_names
 
 
+# Verifies manager only demo match is seeded.
 def test_manager_only_demo_match_is_seeded(seeded_app):
     with seeded_app.app_context():
         ladder = Ladder.query.filter_by(name="Manager Demo Singles").first()
@@ -94,6 +97,7 @@ def test_manager_only_demo_match_is_seeded(seeded_app):
             assert lrk.player is None or rows[1].team_id not in {team.id for team in lrk.player.teams}
 
 
+# Verifies manager only demo match score flow.
 def test_manager_only_demo_match_score_flow(seeded_app, seeded_client: FlaskClient):
     with seeded_app.app_context():
         ladder = Ladder.query.filter_by(name="Manager Demo Singles").first()
@@ -134,6 +138,7 @@ def test_manager_only_demo_match_score_flow(seeded_app, seeded_client: FlaskClie
     assert second_body["resolvedScore"] == {"scoreTeam1": 2, "scoreTeam2": 1}
 
 
+# Verifies top players contract and sorting.
 def test_top_players_contract_and_sorting(seeded_client: FlaskClient):
     club_id = _get_netrank_club_id(seeded_client)
     response = seeded_client.get(f"/api/clubs/{club_id}/top-players")
@@ -155,6 +160,7 @@ def test_top_players_contract_and_sorting(seeded_client: FlaskClient):
     assert ratings == sorted(ratings, reverse=True)
 
 
+# Verifies club home summary contract.
 def test_club_home_summary_contract(seeded_client: FlaskClient):
     club_id = _get_netrank_club_id(seeded_client)
     response = seeded_client.get(f"/api/clubs/{club_id}/home-summary")
@@ -188,6 +194,7 @@ def test_club_home_summary_contract(seeded_client: FlaskClient):
     assert all(match.get("status") == "played" for match in results)
 
 
+# Verifies ladder detail contract.
 def test_ladder_detail_contract(seeded_client: FlaskClient):
     club_id = _get_netrank_club_id(seeded_client)
     ladders_response = seeded_client.get(f"/api/clubs/{club_id}/ladders")
@@ -212,6 +219,7 @@ def test_ladder_detail_contract(seeded_client: FlaskClient):
         assert isinstance(row.get("rating"), int)
 
 
+# Verifies dashboard texts exist for en and nl.
 def test_dashboard_texts_exist_for_en_and_nl():
     en_dashboard = (TRANSLATION_ROOT / "en" / "LC_MESSAGES" / "dashboard.po").read_text(encoding="utf-8")
     nl_dashboard = (TRANSLATION_ROOT / "nl" / "LC_MESSAGES" / "dashboard.po").read_text(encoding="utf-8")
@@ -222,6 +230,7 @@ def test_dashboard_texts_exist_for_en_and_nl():
     assert 'msgstr "Overzicht"' in nl_dashboard
 
 
+# Verifies matches texts exist for en and nl.
 def test_matches_texts_exist_for_en_and_nl():
     en_matches = (TRANSLATION_ROOT / "en" / "LC_MESSAGES" / "matches.po").read_text(encoding="utf-8")
     nl_matches = (TRANSLATION_ROOT / "nl" / "LC_MESSAGES" / "matches.po").read_text(encoding="utf-8")

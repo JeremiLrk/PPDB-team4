@@ -1,3 +1,5 @@
+// Dashboard UI component for TeamCard.
+
 import { useNavigate } from "react-router-dom";
 import commonStyles from "@/style/common/Common.module.css";
 import buttonStyles from "@/style/common/Buttons.module.css";
@@ -18,18 +20,23 @@ import TeamSettingsLink from "@/components/team/TeamSettingsLink.jsx";
  * if not passed — navigate to /teams/:id
  */
 export default function TeamCard({ team, texts, currentUser, onClick, theme }) {
+    /*
+     Renders one team row in the dashboard list.
+    */
     const navigate = useNavigate();
     const { theme: contextTheme } = useThemeContext();
     const isLight = (theme || contextTheme) === "light";
 
     function handleOpen() {
+        /*
+         Opens the team detail page or delegates to a custom handler.
+        */
         if (onClick) {
             onClick(team);
         } else {
             navigate(`/teams/${team.id}`);
         }
     }
-
     return (
         <ItemCard>
             <div>

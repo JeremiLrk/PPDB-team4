@@ -1,14 +1,21 @@
+// Shared hook for useMyClubs.
+
 import { useEffect, useState } from "react";
 
 export function useMyClubs() {
+    /*
+     Loads the current user's club memberships.
+    */
     const [clubs, setClubs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
     useEffect(() => {
         let alive = true;
 
         async function load() {
+            /*
+             Fetches the authenticated user's club list.
+            */
             try {
                 const res = await fetch("/api/clubs/my", { credentials: "include" });
                 const data = await res.json();

@@ -1,3 +1,5 @@
+// Regression tests for dashboard.features.test.
+
 import "@testing-library/jest-dom/vitest";
 import React, { useState } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -73,6 +75,7 @@ const dashboardTextsState = vi.hoisted(() => ({
 vi.mock("../src/hooks/common/usePageTexts.js", () => ({
     usePageTexts: (page) => dashboardTextsState[page] || {},
 }));
+// Shared test helper for arranging the scenario under test.
 
 function jsonResponse(data, status = 200) {
     return {
@@ -263,8 +266,10 @@ beforeEach(() => {
     localStorage.clear();
     setupDashboardFetch();
 });
+// End-to-end or flow coverage for the main user journey in this file.
 
 describe("Dashboard frontend flows", () => {
+    // Verifies the availability tab can create and remove a recurring block.
     test("availability tab can add and delete a weekly block", async () => {
         const user = userEvent.setup();
 
@@ -311,6 +316,7 @@ describe("Dashboard frontend flows", () => {
         expect(screen.getByText("Availability block deleted.")).toBeInTheDocument();
     });
 
+    // Verifies the profile form submits the edited personal details.
     test("profile tab submits updated personal information", async () => {
         const user = userEvent.setup();
 
@@ -358,6 +364,7 @@ describe("Dashboard frontend flows", () => {
         expect(screen.getByText("Profile updated successfully.")).toBeInTheDocument();
     });
 
+    // Verifies the password form sends the password change request.
     test("password form submits a password update request", async () => {
         const user = userEvent.setup();
 
@@ -392,6 +399,7 @@ describe("Dashboard frontend flows", () => {
         expect(screen.getByText("Password updated successfully.")).toBeInTheDocument();
     });
 
+    // Verifies the club search tab can submit a join request for a club.
     test("search clubs tab can submit a join request", async () => {
         const user = userEvent.setup();
 

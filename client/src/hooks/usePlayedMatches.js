@@ -1,6 +1,11 @@
+// Shared hook for usePlayedMatches.
+
 import { useEffect, useState } from "react";
 
 function normalizePlayedMatch(raw = {}) {
+    /*
+     Normalizes one played-match row for the club-home summary.
+    */
     return {
         id: raw.id,
         team1Name: raw.team1Name || raw.team1_name || "Team 1",
@@ -10,13 +15,18 @@ function normalizePlayedMatch(raw = {}) {
 }
 
 export function usePlayedMatches(limit = 3) {
+    /*
+     Loads a small list of recently played matches.
+    */
     const [matches, setMatches] = useState([]);
     const [loading, setLoading] = useState(true);
-
     useEffect(() => {
         let alive = true;
 
         async function fetchPlayedMatches() {
+            /*
+             Fetches recently played matches for the current view.
+            */
             try {
                 const response = await fetch(`/api/matches/played?from=0&to=${limit}`);
                 const payload = await response.json().catch(() => ({}));
@@ -41,7 +51,6 @@ export function usePlayedMatches(limit = 3) {
         }
 
         fetchPlayedMatches();
-
         return () => {
             alive = false;
         };

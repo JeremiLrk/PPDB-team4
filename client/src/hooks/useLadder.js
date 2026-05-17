@@ -1,14 +1,21 @@
+// Shared hook for useLadder.
+
 import { useEffect, useState } from "react";
 
 export function useTeamAchievements(teamId) {
+    /*
+     Loads achievement stats for one team.
+    */
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
     useEffect(() => {
         if (!teamId) { setLoading(false); return; }
         let alive = true;
         setLoading(true);
+        /*
+         Fetches the team's achievements payload.
+        */
         fetch(`/api/teams/${teamId}/achievements`)
             .then(res => {
                 if (!res.ok) throw new Error("Failed to fetch achievements");
@@ -23,6 +30,9 @@ export function useTeamAchievements(teamId) {
 }
 
 export function useLadderPlayers(clubId, ladderId) {
+    /*
+     Loads the player list for one ladder.
+    */
     const [players, setPlayers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -34,6 +44,9 @@ export function useLadderPlayers(clubId, ladderId) {
         setLoading(true);
         setPlayers([]); 
 
+        /*
+         Fetches the ladder ranking rows for the active ladder.
+        */
         fetch(`/api/clubs/${clubId}/ladders/${ladderId}/players`)
             .then(res => {
                 if (!res.ok) throw new Error("Failed to fetch players");
@@ -59,6 +72,9 @@ export function useLadderPlayers(clubId, ladderId) {
 }
 
 export function useLadder(clubId, ladderId) {
+    /*
+     Loads the ladder detail payload for one ladder page.
+    */
     const [ladder, setLadder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -72,6 +88,9 @@ export function useLadder(clubId, ladderId) {
         let alive = true;
         setLoading(true);
 
+        /*
+         Fetches the ladder detail record for the active ladder.
+        */
         fetch(`/api/clubs/${clubId}/ladders/${ladderId}/details`)
             .then(res => {
                 if (!res.ok) throw new Error("Failed to fetch ladder details");

@@ -21,6 +21,7 @@ def login_demo_player(client: FlaskClient):
     assert response.status_code == 200
 
 
+# Verifies weekly availability round trip.
 def test_weekly_availability_round_trip(seeded_client: FlaskClient):
     login_demo_player(seeded_client)
 
@@ -42,6 +43,7 @@ def test_weekly_availability_round_trip(seeded_client: FlaskClient):
     assert any(item["weekday"] == 2 and item["start_time"] == "18:00" for item in availability)
 
 
+# Verifies seeded demo availability uses weekly recurrence.
 def test_seeded_demo_availability_uses_weekly_recurrence(seeded_app):
     with seeded_app.app_context():
         account = Account.query.filter_by(email="jeremilorek@outlook.com").first()
@@ -57,6 +59,7 @@ def test_seeded_demo_availability_uses_weekly_recurrence(seeded_app):
         )
 
 
+# Verifies weekly availability still drives match generation.
 def test_weekly_availability_still_drives_match_generation(seeded_app):
     with seeded_app.app_context():
         account = Account.query.filter_by(email="jeremilorek@outlook.com").first()

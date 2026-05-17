@@ -1,3 +1,5 @@
+// Page container for Landing.
+
 import { useNavigate } from "react-router-dom";
 import styles from "@/style/Landing.module.css";
 import { useLangContext } from "@/context/useLangContext.jsx";

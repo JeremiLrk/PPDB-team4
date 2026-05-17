@@ -1,6 +1,11 @@
+// Club settings UI component for ClubMembers.
+
 import styles from "@/style/ClubSettings.module.css";
 
 export function ClubMembers({ members, onRemove, texts = {} }) {
+    /*
+     Renders the club member list and remove actions.
+    */
     return (
         <article className={`${styles.panel} ${styles.contentFade}`}>
             <div className={styles.panelTopRow}>

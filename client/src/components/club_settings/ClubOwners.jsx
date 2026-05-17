@@ -1,16 +1,26 @@
+// Club settings UI component for ClubOwners.
+
 import { useState } from "react";
 import styles from "@/style/ClubSettings.module.css";
 
 function defaultText(lang, english, dutch) {
+    /*
+     Returns a language-aware fallback label.
+    */
     return String(lang || "").toLowerCase().startsWith("nl") ? dutch : english;
 }
 
 export function Clubowners({ owners, onRemove, onAdd, searchAccounts, texts = {}, lang = "en" }) {
+    /*
+     Owns the owner search/add flow and the current owner list.
+    */
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
-
     const handleSearch = async (e) => {
+        /*
+         Searches for users once the typed query is long enough.
+        */
         const value = e.target.value;
         setQuery(value);
 
@@ -27,9 +37,11 @@ export function Clubowners({ owners, onRemove, onAdd, searchAccounts, texts = {}
     };
 
     const handleAdd = (userId) => {
-        // After adding, clear the search so the owner list stays the focus.
+        /*
+         Adds one owner and clears the search results.
+        */
         onAdd(userId);
-        setQuery(""); // Clear search after adding
+        setQuery("");
         setResults([]);
     };
 

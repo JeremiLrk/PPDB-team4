@@ -1,3 +1,5 @@
+// Match workflow UI component for MatchProposalsTab.
+
 import { useMemo, useState } from "react";
 import animationStyles from "@/style/common/Animation.module.css";
 import buttonStyles from "@/style/common/Buttons.module.css";
@@ -12,6 +14,9 @@ import { useTeams } from "@/hooks/teams/useTeams.js";
 import CreateMatchButton from "@/components/matches/CreateMatchButton.jsx";
 
 function toIdSet(values) {
+    /*
+     Normalizes a value list into a numeric Set.
+    */
     return new Set(
         (Array.isArray(values) ? values : [])
             .map((value) => Number(value))
@@ -20,6 +25,9 @@ function toIdSet(values) {
 }
 
 function proposalIsManaged(proposal, currentUser) {
+    /*
+     Checks whether the current user manages either side of the proposal.
+    */
     if ((currentUser?.role || "").toLowerCase() === "administrator") {
         return true;
     }
@@ -37,6 +45,9 @@ function proposalIsManaged(proposal, currentUser) {
 }
 
 function proposalIsPlayer(proposal, currentUser) {
+    /*
+     Checks whether the current user plays on either team.
+    */
     const playerTeamIds = toIdSet(currentUser?.playerTeamIds);
     return (
         playerTeamIds.has(Number(proposal.team1Id))
@@ -45,6 +56,9 @@ function proposalIsPlayer(proposal, currentUser) {
 }
 
 function proposalCanUpdate(proposal, currentUser) {
+    /*
+     Checks whether the current user may edit or score the proposal.
+    */
     if ((currentUser?.role || "").toLowerCase() === "administrator") {
         return true;
     }
@@ -74,6 +88,9 @@ export default function MatchProposalsTab() {
     const texts = usePageTexts("matches", lang);
     const dashboardTexts = usePageTexts("dashboard", lang);
     const { currentUser, loadingUser } = useCurrentUserContext();
+    /*
+     Owns the tab-local controls for archived view and inline scoring.
+    */
     const [showArchived, setShowArchived] = useState(false);
     const [reportingMatchId, setReportingMatchId] = useState(null);
     const [scoreValues, setScoreValues] = useState({ team1: "", team2: "" });
@@ -92,6 +109,7 @@ export default function MatchProposalsTab() {
         loading: managedLoading,
     } = useTeams({ endpoint: "/api/teams/my" });
 
+    // Split the list so player-facing matches and management-facing matches do not get mixed together.
     const managedProposals = useMemo(
         () => proposals.filter((proposal) => proposalIsManaged(proposal, currentUser)),
         [currentUser, proposals],
@@ -105,15 +123,24 @@ export default function MatchProposalsTab() {
     const roleLoading = loadingUser && !currentUser;
 
     function handleMatchCreated() {
+        /*
+         Refreshes the proposal lists after a new match is created.
+        */
         void load();
     }
 
     function openScoring(matchId) {
+        /*
+         Opens the inline score form for one proposal.
+        */
         setReportingMatchId(matchId);
         setScoreValues({ team1: "", team2: "" });
     }
 
     async function submitScore(event, matchId = reportingMatchId) {
+        /*
+         Validates and submits the active proposal score.
+        */
         event.preventDefault();
 
         const scoreTeam1 = Number.parseInt(scoreValues.team1, 10);
@@ -141,6 +168,7 @@ export default function MatchProposalsTab() {
             // Reset the form only after the backend accepts the decisive score.
             setReportingMatchId(null);
             setScoreValues({ team1: "", team2: "" });
+            // Refresh the lists so the finalized status and ladder updates are visible immediately.
             await load();
         } finally {
             setScoreSubmitting(false);
@@ -169,15 +197,16 @@ export default function MatchProposalsTab() {
                     </h3>
                 </div>
 
-                <div className={styles.toolbarActions}>
-                    <button
-                        className={buttonStyles.primaryButton}
-                        type="button"
-                        onClick={load}
-                        disabled={loading}
-                    >
-                        {refreshLabel}
-                    </button>
+            <div className={styles.toolbarActions}>
+                <button
+                    className={buttonStyles.primaryButton}
+                    type="button"
+                    onClick={load}
+                    disabled={loading}
+                >
+                    {/* Reloading proposals is cheap enough to keep as a direct manual action. */}
+                    {refreshLabel}
+                </button>
 
                     <button
                         className={buttonStyles.primaryButton}

@@ -1,3 +1,5 @@
+// Page container for ClubHome.
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styles from "@/style/Home.module.css";
@@ -11,9 +13,14 @@ function ClubHome() {
     const navigate = useNavigate();
     const { lang } = useLangContext();
     const { currentUser, loadingUser } = useCurrentUserContext();
+    /*
+     Owns the club-home summary state and the manager flag.
+    */
 
     const [isManager, setIsManager] = useState(false);
-    // Keep each section independently paginated so the summary stays compact on load.
+    /*
+     Keeps the match lists capped so the page stays compact on load.
+    */
     const [upcomingVisible, setUpcomingVisible] = useState(3);
     const [resultsVisible, setResultsVisible] = useState(3);
 
@@ -26,12 +33,20 @@ function ClubHome() {
     const performers = summary.performers;
     const upcomingMatches = summary.upcomingMatches;
     const latestResults = summary.latestResults;
+    /*
+     Reloads the manager flag when the club route changes.
+    */
 
     useEffect(() => {
         const checkManagerStatus = async () => {
+            /*
+             Checks whether the current user can manage this club.
+            */
             try {
-                // Manager access is fetched separately so the hero can toggle the
-                // settings CTA without waiting on the full club summary payload.
+                /*
+                 Manager access is fetched separately so the hero can show the
+                 settings CTA without waiting for the full club summary payload.
+                */
                 const response = await fetch(`/api/clubs/${clubId}/is_manager`);
                 if (response.ok) {
                     const data = await response.json();
@@ -47,7 +62,6 @@ function ClubHome() {
             checkManagerStatus();
         }
     }, [clubId]);
-
     return (
         <div className={styles.page}>
             <div className={styles.pageBackdrop} aria-hidden="true" />

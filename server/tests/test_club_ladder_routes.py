@@ -28,6 +28,7 @@ def _ladder(club: Club) -> Ladder:
     return ladder
 
 
+# Verifies eligible teams include club and free agents.
 def test_eligible_teams_include_club_and_free_agents(seeded_app, client, monkeypatch):
     with seeded_app.app_context():
         club = _club()
@@ -51,6 +52,7 @@ def test_eligible_teams_include_club_and_free_agents(seeded_app, client, monkeyp
     assert free_agent_id in team_ids
 
 
+# Verifies admin can add team to ladder and free agent joins club.
 def test_admin_can_add_team_to_ladder_and_free_agent_joins_club(seeded_app, client, monkeypatch):
     with seeded_app.app_context():
         club = _club()

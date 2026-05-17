@@ -1,3 +1,5 @@
+// Team management UI component for RenameTeamButton.
+
 import { FormPanel } from "@/components/forms/FormPanel.jsx";
 import { FormPage }  from "@/components/forms/FormPage.jsx";
 import { Field }     from "@/components/forms/Field.jsx";
@@ -26,6 +28,9 @@ export default function RenameTeamButton({ teamId, currentName, onRenamed }) {
     } = useRenameTeam({ teamId, currentName, onRenamed });
 
     const canSubmit = !!newName.trim();
+    /*
+     Renders the rename-team confirmation flow.
+    */
 
     return (
         <FormPanel

@@ -34,9 +34,6 @@ CREATE TABLE IF NOT EXISTS account (
         PRIMARY KEY (id)
 );
 
-ALTER TABLE account ADD COLUMN IF NOT EXISTS gender VARCHAR(32);
-ALTER TABLE account ADD COLUMN IF NOT EXISTS phone VARCHAR(64);
-
 CREATE TABLE IF NOT EXISTS administrator (
     id BIGINT,
     access_level INT NOT NULL,

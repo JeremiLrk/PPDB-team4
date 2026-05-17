@@ -1,3 +1,5 @@
+// Club settings UI component for ClubSidebar.
+
 import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import styles from "@/style/ClubSettings.module.css";
@@ -5,6 +7,9 @@ import styles from "@/style/ClubSettings.module.css";
 function ClubSidebar({ activeTab, onTabChange, texts = {} }) {
     const { clubId } = useParams();
     const navigate = useNavigate();
+    /*
+     Owns the club-settings sidebar state and mobile drawer.
+    */
     const [mobileOpen, setMobileOpen] = useState(false);
     const activeLabel = ({
         general: texts.tab_general || "Algemene info",
@@ -16,19 +21,31 @@ function ClubSidebar({ activeTab, onTabChange, texts = {} }) {
     })[activeTab] || "";
 
     function navClass(tab) {
+        /*
+         Returns the active/inactive class combination for one nav button.
+        */
         return `${styles.navButton} ${activeTab === tab ? styles.navButtonActive : ""}`;
     }
 
     function closeMobileMenu() {
+        /*
+         Closes the mobile drawer after navigation.
+        */
         setMobileOpen(false);
     }
 
     function handleTabChange(tab) {
+        /*
+         Switches the active settings tab and closes the mobile drawer.
+        */
         onTabChange(tab);
         closeMobileMenu();
     }
 
     function goHome() {
+        /*
+         Returns to the club homepage and closes the drawer.
+        */
         navigate(`/clubs/${clubId}`);
         closeMobileMenu();
     }

@@ -1,3 +1,5 @@
+// Page container for ClubDisputedMatchesPage.
+
 import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 
@@ -45,19 +47,23 @@ export default function ClubDisputedMatchesPage() {
         reload,
     } = useDisputedMatches(clubId);
 
-    // Which match is selected for detail view (left panel)
+    /*
+     Tracks which disputed match is open in the detail panel.
+    */
     const [selectedId, setSelectedId] = useState(null);
     const selectedMatch = matches.find(m => m.id === selectedId) ?? null;
 
-    // Score adjudication form state
+    /*
+     Stores the score that will be submitted to resolve a disputed match.
+    */
     const [adjScore, setAdjScore]         = useState({ team1: "", team2: "" });
     const [adjSubmitting, setAdjSubmitting] = useState(false);
     const [adjMessage, setAdjMessage]     = useState(null);
 
-    // -----------------------------------------------------------------------
-    // Loading skeleton while club data arrives
-    // -----------------------------------------------------------------------
     if (!texts.sidebar_title || settings.loading) {
+        /*
+         Shows a minimal loading shell while the shared club data arrives.
+        */
         return (
             <div className={styles.loading}>
                 {texts.loading || "Loading..."}
@@ -65,10 +71,10 @@ export default function ClubDisputedMatchesPage() {
         );
     }
 
-    // -----------------------------------------------------------------------
-    // Adjudication submit handler
-    // -----------------------------------------------------------------------
     async function submitAdjudication(matchId) {
+        /*
+         Sends the decisive score for the selected disputed match.
+        */
         const s1 = parseInt(adjScore.team1, 10);
         const s2 = parseInt(adjScore.team2, 10);
 

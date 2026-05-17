@@ -1,3 +1,5 @@
+// Team management hook for useDeletePlayer.
+
 import { useState, useCallback } from "react";
 
 /**
@@ -7,6 +9,9 @@ import { useState, useCallback } from "react";
  * @param {{ teamId: number|string, playerId: number|string, onDeleted?: () => void }} options
  */
 export function useDeletePlayer({ teamId, playerId, onDeleted } = {}) {
+    /*
+     Owns the remove-player confirmation flow for one team member.
+    */
     const [isOpen,         setIsOpen]         = useState(false);
     const [loading,        setLoading]        = useState(false);
     const [error,          setError]          = useState(null);
@@ -14,12 +19,18 @@ export function useDeletePlayer({ teamId, playerId, onDeleted } = {}) {
 
     const openDialog  = useCallback(() => { setIsOpen(true); setError(null); }, []);
     const closeDialog = useCallback(() => {
+        /*
+         Closes the dialog and clears any warning state.
+        */
         setIsOpen(false);
         setError(null);
         setViolateWarning(null);
     }, []);
 
     const confirmDelete = useCallback(async (confirmDropLadders = false) => {
+        /*
+         Sends the removal request and optionally confirms ladder fallout.
+        */
         setLoading(true);
         setError(null);
         setViolateWarning(null);

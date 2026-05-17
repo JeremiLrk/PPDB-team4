@@ -1,3 +1,5 @@
+// Route map for public and private pages.
+
 import { Navigate, Route, Routes } from "react-router-dom";
 import Landing from "@/pages/Landing.jsx";
 import Clubs from "@/pages/Clubs.jsx";
@@ -21,6 +23,9 @@ import VerifyEmail from "@/pages/VerifyEmail.jsx";
 
 export default function AppRoutes() {
     const { currentUser, setCurrentUser } = useCurrentUserContext()
+    /*
+     Declares the full client-side route map.
+    */
 
     return (
         <Routes>

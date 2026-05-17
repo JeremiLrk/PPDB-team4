@@ -1,3 +1,5 @@
+// Page container for ForgotPassword.
+
 import { Link } from "react-router-dom"
 import au_styles from "@/style/Authorization.module.css"
 import { useState } from "react"
@@ -6,11 +8,16 @@ import { useLangContext } from "@/context/useLangContext.jsx"
 import { usePageTexts } from "@/hooks/common/usePageTexts.js"
 
 const ForgotPassword = () => {
+    /*
+     Owns the email field for the password-reset request form.
+    */
     const [email, setEmail] = useState("")
     const { lang } = useLangContext()
     const au_texts = usePageTexts("authorization", lang)
-
     const handleSubmit = async (e) => {
+        /*
+         Submits the reset-request form and reports success or failure.
+        */
         e.preventDefault()
         try {
             const response = await fetch("/api/forgot-password", {
@@ -31,7 +38,6 @@ const ForgotPassword = () => {
             notify.error(err.message || au_texts.reset_failed)
         }
     }
-
     return (
         <div className={au_styles.container}>
             <div className={au_styles.card}>

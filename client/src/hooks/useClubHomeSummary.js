@@ -1,6 +1,11 @@
+// Shared hook for useClubHomeSummary.
+
 import { useEffect, useState } from "react";
 
 function readField(source, ...keys) {
+    /*
+     Reads the first available field from a payload shape.
+    */
     for (const key of keys) {
         if (source?.[key] !== undefined && source?.[key] !== null) {
             return source[key];
@@ -10,7 +15,9 @@ function readField(source, ...keys) {
 }
 
 function normalizeMatch(raw = {}) {
-    // Accept both snake_case and camelCase so the summary hook works with API responses and test mocks.
+    /*
+     Normalizes a club-home match row from mixed backend shapes.
+    */
     return {
         id: readField(raw, "id"),
         team1Id: readField(raw, "team1Id", "team1_id"),
@@ -34,6 +41,9 @@ function normalizeMatch(raw = {}) {
 }
 
 function normalizePerformer(raw = {}) {
+    /*
+     Normalizes one performer row from the summary payload.
+    */
     return {
         id: readField(raw, "id"),
         name: readField(raw, "name") || "Unknown",
@@ -44,6 +54,9 @@ function normalizePerformer(raw = {}) {
 }
 
 export function useClubHomeSummary(clubId) {
+    /*
+     Loads the club-home summary payload and exposes it in UI-friendly form.
+    */
     const [summary, setSummary] = useState({
         club: null,
         ladders: [],
@@ -53,7 +66,6 @@ export function useClubHomeSummary(clubId) {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
     useEffect(() => {
         if (!clubId) {
             setSummary({
@@ -68,8 +80,10 @@ export function useClubHomeSummary(clubId) {
         }
 
         let alive = true;
-
         async function loadSummary() {
+            /*
+             Fetches the summary payload for the active club.
+            */
             setLoading(true);
             setError("");
             setSummary({
@@ -114,9 +128,7 @@ export function useClubHomeSummary(clubId) {
             }
         }
 
-        // Ignore late responses when the club changes or the component unmounts.
         loadSummary();
-
         return () => {
             alive = false;
         };

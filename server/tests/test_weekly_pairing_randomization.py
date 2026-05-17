@@ -11,6 +11,7 @@ def rows(team_ids):
     ]
 
 
+# Verifies pairing default is adjacent when alternate disabled.
 def test_pairing_default_is_adjacent_when_alternate_disabled(monkeypatch):
     monkeypatch.setattr(
         weekly_service,
@@ -27,6 +28,7 @@ def test_pairing_default_is_adjacent_when_alternate_disabled(monkeypatch):
     assert [(a.team_id, b.team_id) for a, b in pairs] == [(1, 2), (3, 4), (5, 6)]
 
 
+# Verifies pairing alternate stays within nearby ranks.
 def test_pairing_alternate_stays_within_nearby_ranks(monkeypatch):
     monkeypatch.setattr(
         weekly_service,
@@ -43,6 +45,7 @@ def test_pairing_alternate_stays_within_nearby_ranks(monkeypatch):
     assert [(a.team_id, b.team_id) for a, b in pairs] == [(1, 3), (2, 4), (5, 6)]
 
 
+# Verifies rematch cooldown requires three other matches for both.
 def test_rematch_cooldown_requires_three_other_matches_for_both(monkeypatch):
     monkeypatch.setattr(weekly_service, "latest_pair_played_at", lambda team1_id, team2_id: date(2026, 5, 1))
     counts = {(10, 20): 3, (20, 10): 2}

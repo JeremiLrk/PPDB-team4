@@ -1,3 +1,5 @@
+// Dashboard UI component for TeamsDashboardTab.
+
 import commonStyles     from "@/style/common/Common.module.css";
 import animationStyles  from "@/style/common/Animation.module.css";
 import panelStyles      from "@/style/common/Panel.module.css";
@@ -28,6 +30,9 @@ const PAGE_SIZE_OPTIONS = [6, 12, 24];
  * managedTeams (teams from /api/teams/my) are fetched here so that
  */
 export function TeamsTab({ texts, theme }) {
+    /*
+     Owns the dashboard tab that lists the current account's teams.
+    */
     const { currentUser } = useCurrentUserContext();
 
     // All teams the account is involved with (my-all) — shown in the list
@@ -46,9 +51,11 @@ export function TeamsTab({ texts, theme }) {
     const { clubs: myClubs } = useMyClubs();
 
     function handleTeamCreated() {
+        /*
+         Reloads the team list after a team is created.
+        */
         void load({ sort, pageSize });
     }
-
     return (
         <div className={`${animationStyles.contentGrid} ${animationStyles.contentFade}`}>
 
@@ -59,6 +66,7 @@ export function TeamsTab({ texts, theme }) {
                 {/* Header row */}
                 <div className={dashboardStyles.dashboardSectionHeader}>
                     <h3 className={panelStyles.panelTitle} style={{ margin: 0 }}>
+                        {/* The counter helps show how many teams the current user can reach from this tab. */}
                         {texts?.my_teams || "My Teams"}
                         {total !== null && (
                             <span
@@ -71,7 +79,7 @@ export function TeamsTab({ texts, theme }) {
                     </h3>
 
                     <div className={dashboardStyles.dashboardControlGroup}>
-                        {/* Sort selector */}
+                        {/* Sort selector keeps the list order predictable when the dataset gets large. */}
                         <select
                             className={`${formStyles.searchInput} ${dashboardStyles.dashboardSelect}`}
                             value={sort}
@@ -86,7 +94,7 @@ export function TeamsTab({ texts, theme }) {
                             ))}
                         </select>
 
-                        {/* Page size selector */}
+                        {/* Page size selector controls how many rows the tab loads at once. */}
                         <select
                             className={`${formStyles.searchInput} ${dashboardStyles.dashboardSelect}`}
                             value={pageSize}
@@ -100,7 +108,7 @@ export function TeamsTab({ texts, theme }) {
                             ))}
                         </select>
 
-                        {/* Create new team */}
+                        {/* The create-team action stays in the same toolbar as sorting and paging. */}
                         <CreateTeamButton
                             clubs={myClubs}
                             onCreated={handleTeamCreated}
@@ -126,13 +134,14 @@ export function TeamsTab({ texts, theme }) {
                 {teams.length > 0 && (
                     <ul className={panelStyles.list} style={{ margin: 0, padding: 0 }}>
                         {teams.map(team => (
-                        <TeamCard
-                            key={team.id}
-                            team={team}
-                            texts={texts}
-                            currentUser={currentUser}
-                            theme={theme}
-                        />
+                            // Reuse the shared team card so actions and theme styling stay consistent.
+                            <TeamCard
+                                key={team.id}
+                                team={team}
+                                texts={texts}
+                                currentUser={currentUser}
+                                theme={theme}
+                            />
                         ))}
                     </ul>
                 )}

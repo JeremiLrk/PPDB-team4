@@ -1,3 +1,5 @@
+// Regression tests for settings.flow.test.
+
 import "@testing-library/jest-dom/vitest";
 import React from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -129,6 +131,7 @@ vi.mock("../src/hooks/useLadder.js", () => ({
         error: null,
     }),
 }));
+// Shared test helper for arranging the scenario under test.
 
 function jsonResponse(data, status = 200) {
     return {
@@ -249,8 +252,10 @@ beforeEach(() => {
         return jsonResponse({ message: `Unexpected fetch in test: ${path}` }, 404);
     });
 });
+// End-to-end or flow coverage for the main user journey in this file.
 
 describe("Disputed matches and rulesets", () => {
+    // Verifies the confirm flow retries the add-player request with ladder consent.
     test("team settings add-player confirm button retries with ladder confirmation", async () => {
         const user = userEvent.setup();
         const onAdded = vi.fn();
@@ -277,6 +282,7 @@ describe("Disputed matches and rulesets", () => {
         );
     });
 
+    // Verifies disputed score submission updates ratings and clears the queue.
     test("disputed match adjudication updates the ladder ratings", async () => {
         const user = userEvent.setup();
 
@@ -375,6 +381,7 @@ describe("Disputed matches and rulesets", () => {
         expect(screen.getByText("Elo")).toBeInTheDocument();
     });
 
+    // Verifies a timed ruleset can be created from the club settings tab.
     test("rules tab can create a new timed ruleset", async () => {
         const user = userEvent.setup();
 
@@ -414,6 +421,7 @@ describe("Disputed matches and rulesets", () => {
         expect(screen.getByText("Op tijd spelen – 45 min · Klassiek (Voordeel) · Dubbelspel (2v2)")).toBeInTheDocument();
     });
 
+    // Verifies the ladder modal shows the frozen rule snapshot for a ladder.
     test("ladder ruleset modal shows the frozen ruleset details", async () => {
         const user = userEvent.setup();
 

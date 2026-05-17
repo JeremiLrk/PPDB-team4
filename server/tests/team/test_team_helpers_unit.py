@@ -54,6 +54,7 @@ from server.tests.team.factories import (
 
 class TestGetTeamOr404:
 
+    # Verifies existing team is returned.
     def test_existing_team_is_returned(self, app):
         with app.app_context():
             team = _make_team(name="Helper Exists Team")
@@ -62,6 +63,7 @@ class TestGetTeamOr404:
             assert result.id == team_id
             db.session.rollback()
 
+    # Verifies missing team aborts with 404.
     def test_missing_team_aborts_404(self, app):
         with app.app_context():
             with app.test_request_context():
@@ -78,6 +80,7 @@ class TestGetTeamOr404:
 
 class TestResolveTarget:
 
+    # Verifies valid account is returned.
     def test_valid_account_is_returned(self, app):
         with app.app_context():
             acc = _make_account(email="rt_valid@t.com")
@@ -85,6 +88,7 @@ class TestResolveTarget:
             assert result.id == acc.id
             db.session.rollback()
 
+    # Verifies none account id aborts 422.
     def test_none_account_id_aborts_422(self, app):
         with app.app_context():
             with app.test_request_context():
@@ -94,6 +98,7 @@ class TestResolveTarget:
                 except Exception as exc:
                     assert getattr(exc, "code", None) == 422
 
+    # Verifies unknown account id aborts 404.
     def test_unknown_account_id_aborts_404(self, app):
         with app.app_context():
             with app.test_request_context():
@@ -110,16 +115,19 @@ class TestResolveTarget:
 
 class TestSearchAccounts:
 
+    # Verifies an empty query returns an empty list.
     def test_empty_query_returns_empty_list(self, app):
         with app.app_context():
             assert search_accounts("", set()) == []
             db.session.rollback()
 
+    # Verifies a whitespace-only query returns an empty list.
     def test_whitespace_only_returns_empty_list(self, app):
         with app.app_context():
             assert search_accounts("   ", set()) == []
             db.session.rollback()
 
+    # Verifies find by exact integer id.
     def test_find_by_exact_integer_id(self, app):
         with app.app_context():
             acc = _make_account(email="sa_id@t.com")
@@ -127,6 +135,7 @@ class TestSearchAccounts:
             assert any(r.id == acc.id for r in result)
             db.session.rollback()
 
+    # Verifies find by exact email case insensitive.
     def test_find_by_exact_email_case_insensitive(self, app):
         with app.app_context():
             acc = _make_account(email="sa_email_exact@t.com")
@@ -134,6 +143,7 @@ class TestSearchAccounts:
             assert any(r.id == acc.id for r in result)
             db.session.rollback()
 
+    # Verifies excluded ids are not returned.
     def test_excluded_ids_are_not_returned(self, app):
         with app.app_context():
             acc = _make_account(email="sa_excl@t.com")
@@ -141,6 +151,7 @@ class TestSearchAccounts:
             assert not any(r.id == acc.id for r in result)
             db.session.rollback()
 
+    # Verifies integer string that matches no id falls through to name search.
     def test_integer_string_that_matches_no_id_falls_through_to_name_search(self, app):
         with app.app_context():
             # A numeric string that is not an existing ID should not raise
@@ -155,12 +166,14 @@ class TestSearchAccounts:
 
 class TestCountConfirmedPlayers:
 
+    # Verifies no players returns zero.
     def test_no_players_returns_zero(self, app):
         with app.app_context():
             team = _make_team(name="Count0 Team")
             assert count_confirmed_players(team.id) == 0
             db.session.rollback()
 
+    # Verifies counts only confirmed members.
     def test_counts_only_confirmed_members(self, app):
         with app.app_context():
             team = _make_team(name="Count2 Team")
@@ -176,6 +189,7 @@ class TestCountConfirmedPlayers:
 
 class TestCountEffectivePlayers:
 
+    # Verifies counts confirmed plus pending.
     def test_counts_confirmed_plus_pending(self, app):
         with app.app_context():
             team = _make_team(name="EffPl Team")
@@ -191,6 +205,7 @@ class TestCountEffectivePlayers:
             assert count_effective_players(team.id) == 2
             db.session.rollback()
 
+    # Verifies rejected requests are not counted.
     def test_rejected_requests_are_not_counted(self, app):
         with app.app_context():
             team = _make_team(name="EffPl Rejected Team")
@@ -205,6 +220,7 @@ class TestCountEffectivePlayers:
             assert count_effective_players(team.id) == 0
             db.session.rollback()
 
+    # Verifies accepted requests are not double counted.
     def test_accepted_requests_are_not_double_counted(self, app):
         with app.app_context():
             team = _make_team(name="EffPl Accepted Team")
@@ -232,6 +248,7 @@ class TestCountEffectivePlayers:
 
 class TestHandleTeamAfterLastManagerRemoved:
 
+    # Verifies team with club is left unchanged.
     def test_team_with_club_is_left_unchanged(self, app):
         with app.app_context():
             from server.app.models.club import Club
@@ -245,6 +262,7 @@ class TestHandleTeamAfterLastManagerRemoved:
             assert db.session.get(Team, team_id) is not None
             db.session.rollback()
 
+    # Verifies team with remaining managers is left unchanged.
     def test_team_with_remaining_managers_is_left_unchanged(self, app):
         with app.app_context():
             team = _make_team(name="Still Has Manager Team")
@@ -257,6 +275,7 @@ class TestHandleTeamAfterLastManagerRemoved:
             assert db.session.get(Team, team_id) is not None
             db.session.rollback()
 
+    # Verifies teamless player team is deleted.
     def test_teamless_player_team_is_deleted(self, app):
         with app.app_context():
             team = _make_team(name="Delete Empty Team")
@@ -266,6 +285,7 @@ class TestHandleTeamAfterLastManagerRemoved:
             assert db.session.get(Team, team_id) is None
             db.session.rollback()
 
+    # Verifies team with player promotes first player to manager.
     def test_team_with_player_promotes_first_player_to_manager(self, app):
         with app.app_context():
             _role("team_manager")   # ensure role exists
@@ -289,12 +309,14 @@ class TestHandleTeamAfterLastManagerRemoved:
 
 class TestLaddersExceedingMaxAfterAdd:
 
+    # Verifies team with no ladder never exceeds.
     def test_team_with_no_ladder_never_exceeds(self, app):
         with app.app_context():
             team = _make_team(name="LadExcMax No Ladder")
             assert ladders_exceeding_max_after_add(team.id) == []
             db.session.rollback()
 
+    # Verifies sport with no cap never exceeds.
     def test_sport_with_no_cap_never_exceeds(self, app):
         with app.app_context():
             st = _make_sport_type(max_players=None, name="NoMaxSport LadExc")
@@ -305,6 +327,7 @@ class TestLaddersExceedingMaxAfterAdd:
             assert ladders_exceeding_max_after_add(team.id) == []
             db.session.rollback()
 
+    # Verifies the max-capacity check returns affected ladders.
     def test_at_capacity_returns_affected_ladders(self, app):
         with app.app_context():
             st = _make_sport_type(max_players=1, name="MaxOneSport LadExc")
@@ -317,6 +340,7 @@ class TestLaddersExceedingMaxAfterAdd:
             assert any(l.id == ladder.id for l in result)
             db.session.rollback()
 
+    # Verifies the max-capacity check returns an empty list below capacity.
     def test_below_capacity_returns_empty(self, app):
         with app.app_context():
             st = _make_sport_type(max_players=5, name="MaxFiveSport LadExc")
@@ -327,6 +351,7 @@ class TestLaddersExceedingMaxAfterAdd:
             assert ladders_exceeding_max_after_add(team.id) == []
             db.session.rollback()
 
+    # Verifies pending requests count towards capacity.
     def test_pending_requests_count_towards_capacity(self, app):
         with app.app_context():
             st = _make_sport_type(max_players=1, name="MaxOnePendingSport")
@@ -354,12 +379,14 @@ class TestLaddersExceedingMaxAfterAdd:
 
 class TestLaddersViolatingMinAfterRemove:
 
+    # Verifies team with no ladder never violates.
     def test_team_with_no_ladder_never_violates(self, app):
         with app.app_context():
             team = _make_team(name="LadVioMin No Ladder")
             assert ladders_violating_min_after_remove(team.id) == []
             db.session.rollback()
 
+    # Verifies sport with no minimum never violates.
     def test_sport_with_no_minimum_never_violates(self, app):
         with app.app_context():
             st = _make_sport_type(min_players=None, name="NoMinSport LadVio")
@@ -370,6 +397,7 @@ class TestLaddersViolatingMinAfterRemove:
             assert ladders_violating_min_after_remove(team.id) == []
             db.session.rollback()
 
+    # Verifies the min-capacity check returns affected ladders.
     def test_at_minimum_returns_affected_ladders(self, app):
         with app.app_context():
             st = _make_sport_type(min_players=2, name="MinTwoSport LadVio")
@@ -384,6 +412,7 @@ class TestLaddersViolatingMinAfterRemove:
             assert any(l.id == ladder.id for l in result)
             db.session.rollback()
 
+    # Verifies the min-capacity check returns an empty list above minimum.
     def test_above_minimum_returns_empty(self, app):
         with app.app_context():
             st = _make_sport_type(min_players=2, name="MinTwoPlusSport LadVio")

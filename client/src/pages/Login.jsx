@@ -1,3 +1,5 @@
+// Page container for Login.
+
 import { Link } from "react-router-dom"
 import { useLogin } from "@/hooks/useLogin.js"
 import au_styles from "@/style/Authorization.module.css"
@@ -9,6 +11,9 @@ const Login = ({ setUser }) => {
     const au_texts = usePageTexts("authorization", lang)
     const { email, setEmail, password, setPassword, handleSubmit } =
         useLogin(setUser)
+    /*
+     Renders the login form and forwards submission to the auth hook.
+    */
 
     return (
         <div className={au_styles.container}>

@@ -1,3 +1,5 @@
+// Page container for Ladder.
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLadder, useLadderPlayers } from "@/hooks/useLadder";
@@ -18,10 +20,16 @@ const FORMAT_LABELS = {
 };
 
 function label(key) {
+    /*
+     Maps raw ruleset values to readable labels.
+    */
     return FORMAT_LABELS[key] ?? key;
 }
 
 function RulesetModal({ ruleset, onClose, isLight }) {
+    /*
+     Renders the ruleset details overlay for one ladder.
+    */
     const rows = [];
 
     const matchFormatText = ruleset.matchFormat === "timed"
@@ -89,11 +97,17 @@ function RulesetModal({ ruleset, onClose, isLight }) {
 }
 
 function topOf(players, key) {
+    /*
+     Picks the player with the highest value for one stat.
+    */
     if (!players.length) return null;
     return players.reduce((best, p) => ((p[key] ?? 0) > (best[key] ?? 0) ? p : best), players[0]);
 }
 
 function AchievementCard({ icon, label, name, value, unit, isLight }) {
+    /*
+     Renders one ladder achievement card when a stat exists.
+    */
     if (!name || value === 0) return null;
     return (
         <div className={`flex flex-col gap-1 rounded-xl p-4 ${
@@ -119,6 +133,9 @@ function AchievementCard({ icon, label, name, value, unit, isLight }) {
 }
 
 function TopAchievements({ players, isLight }) {
+    /*
+     Renders the ladder achievement summary strip.
+    */
     const mostWins     = topOf(players, "wins");
     const bestStreak   = topOf(players, "best_win_streak");
     const bestRank1    = topOf(players, "best_rank1_streak");
@@ -153,7 +170,9 @@ function Ladder() {
 
     const { players, loading: p_loading } = useLadderPlayers(clubId, ladderId);
     const { ladder, loading: l_loading }  = useLadder(clubId, ladderId);
-
+    /*
+     Tracks whether the ruleset details overlay is open.
+    */
     const [showRuleset, setShowRuleset] = useState(false);
 
     return (

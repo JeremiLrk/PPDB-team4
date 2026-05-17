@@ -1,3 +1,5 @@
+// Page container for ClubSettings.
+
 import styles from "@/style/ClubSettings.module.css";
 import { useParams } from "react-router-dom";
 import { useClubSettings } from "@/hooks/useClubSettings";
@@ -29,6 +31,9 @@ function ClubSettings() {
     if (settings.loading) {
         return <div className={styles.loading}>{texts.loading || "Club laden..."}</div>;
     }
+    /*
+     Renders the active club settings section.
+    */
 
     return (
         <section className={`${styles.shell} ${isLight ? styles.light : ""}`}>

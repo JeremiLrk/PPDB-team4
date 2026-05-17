@@ -53,6 +53,7 @@ def _make_rule_set(creator_id=None, *, name="Set A", public=True, club_id=None) 
 # ===========================================================================
 
 class TestGetRuleSet:
+    # Verifies the endpoint returns 200 for an existing ruleset.
     def test_existing_set_returns_200(self, client, app):
         with app.app_context():
             rs = _make_rule_set(name="Public Set")
@@ -63,10 +64,12 @@ class TestGetRuleSet:
         assert resp.status_code == 200
         assert resp.get_json()["ruleSet"]["id"] == rs_id
 
+    # Verifies the endpoint returns 404 when the ruleset is missing.
     def test_missing_set_returns_404(self, client):
         resp = client.get("/api/match-rule-sets/999999")
         assert resp.status_code == 404
 
+    # Verifies response contains structured fields.
     def test_response_contains_structured_fields(self, client, app):
         with app.app_context():
             rs = _make_rule_set(name="Structured Set")
@@ -91,12 +94,14 @@ class TestGetRuleSets:
         (-1,   10,  422),
         (10,    5,  422),
     ])
+    # Verifies pagination validation.
     def test_pagination_validation(self, client, app, from_val, to_val, expected_status):
         with app.app_context():
             db.session.commit()
         resp = client.get(f"/api/match-rule-sets?from={from_val}&to={to_val}")
         assert resp.status_code == expected_status
 
+    # Verifies only public sets returned.
     def test_only_public_sets_returned(self, client, app):
         with app.app_context():
             acc = _make_account(app, email="sets_pub@t.com")
@@ -116,6 +121,7 @@ class TestGetRuleSets:
 # ===========================================================================
 
 class TestCreateRuleSet:
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client):
         resp = client.post("/api/match-rule-sets", json={"name": "New Set"})
         assert resp.status_code == 401
@@ -124,6 +130,7 @@ class TestCreateRuleSet:
         ({"name": ""},          422),
         ({"name": "Valid Set"}, 201),
     ])
+    # Verifies create validation.
     def test_create_validation(self, client, app, monkeypatch, payload, expected_status):
         with app.app_context():
             acc = _make_account(app, email=f"crs_{expected_status}@t.com")
@@ -137,6 +144,7 @@ class TestCreateRuleSet:
         resp = client.post("/api/match-rule-sets", json=payload)
         assert resp.status_code == expected_status
 
+    # Verifies create persists structured fields.
     def test_create_persists_structured_fields(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(app, email="crs_persist@t.com")
@@ -163,6 +171,7 @@ class TestCreateRuleSet:
         assert body["gameFormat"]     == "doubles"
         assert body["canBeUsedByOthers"] is False
 
+    # Verifies timed format requires duration.
     def test_timed_format_requires_duration(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(app, email="timed_422@t.com")
@@ -176,6 +185,7 @@ class TestCreateRuleSet:
         resp = client.post("/api/match-rule-sets", json={"name": "Timed No Duration", "matchFormat": "timed"})
         assert resp.status_code == 422
 
+    # Verifies timed format with duration succeeds.
     def test_timed_format_with_duration_succeeds(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(app, email="timed_201@t.com")
@@ -191,6 +201,7 @@ class TestCreateRuleSet:
         assert resp.status_code == 201
         assert resp.get_json()["ruleSet"]["timedDurationMinutes"] == 60
 
+    # Verifies the endpoint returns 422 for an invalid match format.
     @pytest.mark.parametrize("invalid_format", ["best_of_5", "shootout", ""])
     def test_invalid_match_format_returns_422(self, client, app, monkeypatch, invalid_format):
         with app.app_context():
@@ -211,6 +222,7 @@ class TestCreateRuleSet:
 # ===========================================================================
 
 class TestUpdateRuleSet:
+    # Verifies owner can update.
     def test_owner_can_update(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(app, email="upd_ok@t.com")
@@ -234,6 +246,7 @@ class TestUpdateRuleSet:
         assert body["name"]      == "New Name"
         assert body["deuceRule"] == "golden_point"
 
+    # Verifies non owner cannot update.
     def test_non_owner_cannot_update(self, client, app, monkeypatch):
         with app.app_context():
             owner = _make_account(app, email="upd_own@t.com")
@@ -260,6 +273,7 @@ class TestDeleteRuleSet:
         (True,  200),
         (False, 403),
     ])
+    # Verifies delete permissions.
     def test_delete_permissions(self, client, app, monkeypatch, is_owner, expected_status):
         with app.app_context():
             owner  = _make_account(app, email=f"rs_del_own_{is_owner}@t.com")
@@ -276,6 +290,7 @@ class TestDeleteRuleSet:
         resp = client.delete(f"/api/match-rule-sets/{rs_id}")
         assert resp.status_code == expected_status
 
+    # Verifies deleting a missing ruleset returns 404.
     def test_delete_missing_set_returns_404(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(app, email="rs_del_404@t.com")

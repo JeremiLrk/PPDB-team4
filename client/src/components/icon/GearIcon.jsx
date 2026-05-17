@@ -10,6 +10,9 @@
  * style — inline styles
  */
 export default function GearIcon({ size = 18, title = "Instellingen", className = "", style }) {
+    /*
+     Renders the gear icon used for settings shortcuts.
+    */
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"

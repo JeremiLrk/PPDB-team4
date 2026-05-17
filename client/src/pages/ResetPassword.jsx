@@ -1,3 +1,5 @@
+// Page container for ResetPassword.
+
 import au_styles from "@/style/Authorization.module.css"
 import { useState } from "react"
 import { notify } from "@/hooks/useNotify.js"
@@ -7,13 +9,18 @@ import { usePageTexts } from "@/hooks/common/usePageTexts.js"
 
 const ResetPassword = () => {
     const { token } = useParams()
+    /*
+     Owns the new-password form for the reset token route.
+    */
     const [newPassword, setNewPassword] = useState("")
     const [repeatPassword, setRepeatPassword] = useState("")
     const navigate = useNavigate()
     const { lang } = useLangContext()
     const au_texts = usePageTexts("authorization", lang)
-
     const handleSubmit = async (e) => {
+        /*
+         Validates and submits the new password for the current token.
+        */
         e.preventDefault()
 
         try {
@@ -41,7 +48,6 @@ const ResetPassword = () => {
             notify.error(err.message || au_texts.reset_failed)
         }
     }
-
     return (
         <div className={au_styles.container}>
             <div className={au_styles.card}>

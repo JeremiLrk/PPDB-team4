@@ -1,3 +1,5 @@
+// Shared hook for useDashboard.
+
 import { useEffect, useState } from "react";
 
 const mockDashboardData = {
@@ -10,14 +12,23 @@ const mockDashboardData = {
 };
 
 export function useDashboard() {
+    /*
+     Loads and stores the dashboard payload for the active session.
+    */
     const [dashboardData, setDashboardData] = useState(mockDashboardData);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
+        /*
+         Fetches the dashboard payload once per hook mount.
+        */
         let alive = true;
 
         async function loadDashboard() {
+            /*
+             Requests the dashboard endpoint and stores the response when mounted.
+            */
             try {
                 // TODO(team): replace this with the real API contract once auth/roles are finalized.
                 const response = await fetch("/api/me/dashboard", {

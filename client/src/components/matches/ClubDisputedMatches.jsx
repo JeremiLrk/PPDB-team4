@@ -1,3 +1,5 @@
+// Match workflow UI component for ClubDisputedMatches.
+
 import styles from "@/style/ClubSettings.module.css";
 import { useDisputedMatches } from "@/hooks/matches/useDisputedMatches.js";
 import DisputedMatchCard from "@/components/club_settings/DisputedMatchCard.jsx";
@@ -23,8 +25,10 @@ import DisputedMatchCard from "@/components/club_settings/DisputedMatchCard.jsx"
 export default function ClubDisputedMatches({ clubId, texts = {} }) {
     const { matches, total, loading, error, forbidden, reload } = useDisputedMatches(clubId);
 
-    // --- Insufficient permissions notice ---
     if (forbidden) {
+        /*
+         Shows the access-denied state instead of the disputed match list.
+        */
         return (
             <div className={`${styles.contentGrid} ${styles.contentFade}`}>
                 <article
