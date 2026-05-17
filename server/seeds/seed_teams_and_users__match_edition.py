@@ -1497,12 +1497,13 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             password="Password123!",
             force_password_update=True,
         )
-        player_demo_partner_acc, _ = make_account(
-            "Robin",
-            "Vermeulen",
-            "robin.vermeulen@example.com",
+        lrk_acc, _ = make_account(
+            "LRK",
+            "Debug",
+            "lrk.j@outlook.com",
             role_player,
-            password="Password123!",
+            password="qwertyuiop",
+            force_password_update=True,
         )
 
         # Manager-only demo fixture:
@@ -1607,7 +1608,7 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             verbose=verbose,
         )
         ensure_player_on_team(jeremi_acc, jeremi_debug_team)
-        ensure_player_on_team(player_demo_partner_acc, lrk_debug_team)
+        ensure_player_on_team(lrk_acc, lrk_debug_team)
         ensure_team_players_in_club(jeremi_debug_team, player_demo_club)
         ensure_team_players_in_club(lrk_debug_team, player_demo_club)
 

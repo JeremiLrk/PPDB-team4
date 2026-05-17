@@ -8,7 +8,10 @@ from server.app.models.ladder_team import LadderTeam
 from server.app.models.match_rule import MatchRuleSet
 from server.app.models.team import Team
 from server.app.models.sport_type import SportType
-from server.app.services.ladder_service import get_all_players_ladder
+from server.app.services.ladder_service import (
+    get_all_players_ladder,
+    get_ladder_player_achievement_stats,
+)
 from server.extensions import db
 
 ladder_bp = Blueprint("ladder", __name__, url_prefix="/api")
@@ -46,11 +49,21 @@ def get_eligible_teams(account, club_id: int):
 @ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>/players")
 def get_players(club_id, ladder_id):
     rows = get_all_players_ladder(ladder_id)
+    achievement_stats = get_ladder_player_achievement_stats(ladder_id)
     return [
         {
             "id": team.id,
             "name": team.name,
             "rating": ladder_team.rating,
+            "wins": achievement_stats.get(team.id, {}).get("wins", 0),
+            "win_streak": achievement_stats.get(team.id, {}).get("win_streak", 0),
+            "best_win_streak": achievement_stats.get(team.id, {}).get("best_win_streak", 0),
+            "win_rate": (
+                achievement_stats.get(team.id, {}).get("wins", 0)
+                / achievement_stats.get(team.id, {}).get("matches_played", 0)
+                if achievement_stats.get(team.id, {}).get("matches_played", 0)
+                else 0.0
+            ),
         }
         for team, ladder_team in rows
     ]

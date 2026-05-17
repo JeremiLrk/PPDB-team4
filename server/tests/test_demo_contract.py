@@ -89,9 +89,9 @@ def test_manager_only_demo_match_is_seeded(seeded_app):
             assert team is not None
             assert PlayerTeam.query.filter_by(team_id=team.id).count() == 1
 
-        assert jeremi.player is not None
-        assert rows[0].team_id not in {team.id for team in jeremi.player.teams}
-        assert lrk.player is None
+            assert jeremi.player is not None
+            assert rows[0].team_id not in {team.id for team in jeremi.player.teams}
+            assert lrk.player is None or rows[1].team_id not in {team.id for team in lrk.player.teams}
 
 
 def test_manager_only_demo_match_score_flow(seeded_app, seeded_client: FlaskClient):
