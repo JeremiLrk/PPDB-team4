@@ -81,7 +81,6 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
         submit,
     } = useCreateMatch({ managedTeams, onCreated });
 
-    // Render nothing when the account cannot propose matches.
     if (!canProposeMath(currentUser)) return null;
     if (managedTeams.length === 0)    return null;
 
@@ -116,7 +115,6 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
             ariaLabel={t("create_match_aria", "Create a new match proposal")}
         >
 
-            {/* ---- Step 0: choose team1 -------------------------------- */}
             <FormPage active={step === 0}>
                 <Field label={t("create_match_your_team", "Your Team *")}>
                     <select
@@ -139,7 +137,6 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
                 </Field>
             </FormPage>
 
-            {/* ---- Step 1: choose ladder ------------------------------- */}
             <FormPage active={step === 1}>
                 {laddersLoading && (
                     <LoadingRow label={t("create_match_loading_ladders", "Loading ladders...")} />
@@ -176,7 +173,6 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
                 )}
             </FormPage>
 
-            {/* ---- Step 2: choose opponent (team2) --------------------- */}
             <FormPage active={step === 2}>
                 {peersLoading && (
                     <LoadingRow label={t("create_match_loading_opponents", "Loading opponents...")} />

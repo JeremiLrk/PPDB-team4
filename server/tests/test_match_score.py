@@ -172,6 +172,20 @@ def _proposal(team1: Team, team2: Team, ladder: Ladder | None = None) -> MatchPr
     return p
 
 
+def _pending_proposal(team1: Team, team2: Team, ladder: Ladder | None = None) -> MatchProposal:
+    p = MatchProposal(
+        sport_type_id=team1.sport_type_id,
+        team1_id=team1.id,
+        team2_id=team2.id,
+        status_id=_status("pending").id,
+        ladder_id=ladder.id if ladder else None,
+    )
+    db.session.add(p)
+    db.session.flush()
+    db.session.refresh(p)
+    return p
+
+
 def _add_submission(proposal: MatchProposal, account: Account, role: SubmissionRole,
                     s1: int = 2, s2: int = 1) -> MatchScoreSubmission:
     sub = MatchScoreSubmission(
@@ -495,6 +509,185 @@ class TestPostScoreRoute:
         assert body["finalized"] is True
         assert body["resolvedScore"] == {"scoreTeam1": 2, "scoreTeam2": 0}
         assert body["scoreStatus"] == "resolved"
+
+    def test_full_acceptance_and_score_flow_updates_elo(self, seeded_app, client, monkeypatch):
+        """Accepted matches finalize on matching scores and update ladder Elo/rank."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            mgr1 = _account("mgr1@test.com")
+            mgr2 = _account("mgr2@test.com")
+            _team_manager(mgr1, t1)
+            _team_manager(mgr2, t2)
+            ladder = _ladder(club)
+            lt1 = LadderTeam(ladder_id=ladder.id, team_id=t1.id, rank=1, rating=1000, matches_played=0)
+            lt2 = LadderTeam(ladder_id=ladder.id, team_id=t2.id, rank=2, rating=1000, matches_played=0)
+            db.session.add_all([lt1, lt2])
+            proposal = _pending_proposal(t1, t2, ladder=ladder)
+            db.session.commit()
+            ladder_id = ladder.id
+            team1_id = t1.id
+            team2_id = t2.id
+            pid = proposal.id
+
+        accepted = _authed_client(client, monkeypatch, mgr2).post(f"/api/matches/{pid}/accept")
+        assert accepted.status_code == 200
+        assert accepted.get_json()["match"]["statusName"] == "accepted"
+
+        first = _authed_client(client, monkeypatch, mgr1).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 2, "score_team2": 1},
+        )
+        assert first.status_code == 201
+        assert first.get_json()["finalized"] is False
+
+        second = _authed_client(client, monkeypatch, mgr2).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 2, "score_team2": 1},
+        )
+        assert second.status_code == 201
+        body = second.get_json()
+        assert body["finalized"] is True
+        assert body["resolvedScore"] == {"scoreTeam1": 2, "scoreTeam2": 1}
+        assert body["scoreStatus"] == "resolved"
+
+        with seeded_app.app_context():
+            db.session.expire_all()
+            after_t1 = db.session.get(LadderTeam, (ladder_id, team1_id))
+            after_t2 = db.session.get(LadderTeam, (ladder_id, team2_id))
+            proposal_after = db.session.get(MatchProposal, pid)
+
+            assert after_t1 is not None
+            assert after_t2 is not None
+            assert proposal_after is not None
+            assert proposal_after.played is not None
+
+            assert after_t1.rating == 1020
+            assert after_t2.rating == 980
+            assert after_t1.matches_played == 1
+            assert after_t2.matches_played == 1
+            assert after_t1.rank == 1
+            assert after_t2.rank == 2
+
+    def test_legacy_result_route_updates_elo_and_played_match(self, seeded_app, client, monkeypatch):
+        """POST /result should finalize an accepted match and update ladder Elo."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            mgr1 = _account("mgr1@test.com")
+            mgr2 = _account("mgr2@test.com")
+            _team_manager(mgr1, t1)
+            _team_manager(mgr2, t2)
+            ladder = _ladder(club)
+            db.session.add_all([
+                LadderTeam(ladder_id=ladder.id, team_id=t1.id, rank=1, rating=1000, matches_played=0),
+                LadderTeam(ladder_id=ladder.id, team_id=t2.id, rank=2, rating=1000, matches_played=0),
+            ])
+            proposal = _pending_proposal(t1, t2, ladder=ladder)
+            db.session.commit()
+            ladder_id = ladder.id
+            team1_id = t1.id
+            team2_id = t2.id
+            pid = proposal.id
+
+        accepted = _authed_client(client, monkeypatch, mgr2).post(f"/api/matches/{pid}/accept")
+        assert accepted.status_code == 200
+
+        result = _authed_client(client, monkeypatch, mgr1).post(
+            f"/api/matches/{pid}/result",
+            json={"scoreTeam1": 3, "scoreTeam2": 1},
+        )
+        assert result.status_code == 200
+        body = result.get_json()
+        assert body["match"]["statusName"] == "played"
+        assert body["match"]["played"]["scoreTeam1"] == 3
+        assert body["match"]["played"]["scoreTeam2"] == 1
+
+        with seeded_app.app_context():
+            db.session.expire_all()
+            after_t1 = db.session.get(LadderTeam, (ladder_id, team1_id))
+            after_t2 = db.session.get(LadderTeam, (ladder_id, team2_id))
+            proposal_after = db.session.get(MatchProposal, pid)
+
+            assert after_t1 is not None
+            assert after_t2 is not None
+            assert proposal_after is not None
+            assert proposal_after.played is not None
+
+            assert after_t1.rating == 1020
+            assert after_t2.rating == 980
+            assert after_t1.matches_played == 1
+            assert after_t2.matches_played == 1
+            assert after_t1.rank == 1
+            assert after_t2.rank == 2
+
+    def test_disputed_score_flow_can_be_resolved_by_ladder_admin(self, seeded_app, client, monkeypatch):
+        """Disputed submissions can be resolved by a ladder admin and update ladder Elo."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            mgr1 = _account("mgr1@test.com")
+            mgr2 = _account("mgr2@test.com")
+            admin_acc = _account("admin@test.com")
+            _team_manager(mgr1, t1)
+            _team_manager(mgr2, t2)
+            _club_owner(admin_acc, club)
+            ladder = _ladder(club)
+            db.session.add_all([
+                LadderTeam(ladder_id=ladder.id, team_id=t1.id, rank=1, rating=1000, matches_played=0),
+                LadderTeam(ladder_id=ladder.id, team_id=t2.id, rank=2, rating=1000, matches_played=0),
+            ])
+            proposal = _pending_proposal(t1, t2, ladder=ladder)
+            db.session.commit()
+            ladder_id = ladder.id
+            team1_id = t1.id
+            team2_id = t2.id
+            pid = proposal.id
+
+        accepted = _authed_client(client, monkeypatch, mgr2).post(f"/api/matches/{pid}/accept")
+        assert accepted.status_code == 200
+
+        first = _authed_client(client, monkeypatch, mgr1).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 2, "score_team2": 1},
+        )
+        assert first.status_code == 201
+        assert first.get_json()["finalized"] is False
+
+        second = _authed_client(client, monkeypatch, mgr2).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 1, "score_team2": 2},
+        )
+        assert second.status_code == 201
+        assert second.get_json()["finalized"] is False
+
+        disputed = _authed_client(client, monkeypatch, admin_acc).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 2, "score_team2": 1},
+        )
+        assert disputed.status_code == 201
+        body = disputed.get_json()
+        assert body["finalized"] is True
+        assert body["resolvedScore"] == {"scoreTeam1": 2, "scoreTeam2": 1}
+        assert body["scoreStatus"] == "resolved"
+
+        with seeded_app.app_context():
+            db.session.expire_all()
+            after_t1 = db.session.get(LadderTeam, (ladder_id, team1_id))
+            after_t2 = db.session.get(LadderTeam, (ladder_id, team2_id))
+            proposal_after = db.session.get(MatchProposal, pid)
+
+            assert after_t1 is not None
+            assert after_t2 is not None
+            assert proposal_after is not None
+            assert proposal_after.played is not None
+
+            assert after_t1.rating == 1020
+            assert after_t2.rating == 980
+            assert after_t1.matches_played == 1
+            assert after_t2.matches_played == 1
+            assert after_t1.rank == 1
+            assert after_t2.rank == 2
 
     def test_duplicate_submission_returns_409(self, seeded_app, client, monkeypatch):
         """Submitting a second score for the same role returns 409."""

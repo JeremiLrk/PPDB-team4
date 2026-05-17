@@ -2,7 +2,8 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-PROJECT_DIR="$HOME/WebstormProjects/PPDB-team4"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BACKEND_DIR="$PROJECT_DIR/server"
 FRONTEND_DIR="$PROJECT_DIR/client"
 VENV_DIR="$PROJECT_DIR/.venv"
