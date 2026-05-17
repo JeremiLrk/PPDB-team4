@@ -174,3 +174,5 @@ celerybeat-schedule
 celerybeat.pid
 *.sage.py
 docker-compose.yml
+
+diagrams

@@ -9,6 +9,7 @@ import { LangContext } from "../src/context/useLangContext.jsx";
 import ClubDisputedMatchesPage from "../src/pages/ClubDisputedMatchesPage.jsx";
 import ClubMatchRules from "../src/components/club_settings/ClubMatchRules.jsx";
 import Ladder from "../src/pages/Ladder.jsx";
+import AddPlayerButton from "../src/components/team/AddPlayerButton.jsx";
 
 const clubSettingsTextState = vi.hoisted(() => ({
     sidebar_title: "Settings",
@@ -86,6 +87,18 @@ const ladderHookState = vi.hoisted(() => ({
 const rulesState = vi.hoisted(() => ({
     ruleSets: [],
     nextRuleId: 3,
+}));
+
+const addPlayerState = vi.hoisted(() => ({
+    searchHits: [
+        {
+            id: 91,
+            firstName: "Alice",
+            lastName: "Runner",
+            email: "alice.runner@example.com",
+        },
+    ],
+    addCalls: 0,
 }));
 
 vi.mock("../src/hooks/common/usePageTexts.js", () => ({
@@ -167,6 +180,15 @@ beforeEach(() => {
         },
     ];
     rulesState.nextRuleId = 3;
+    addPlayerState.searchHits = [
+        {
+            id: 91,
+            firstName: "Alice",
+            lastName: "Runner",
+            email: "alice.runner@example.com",
+        },
+    ];
+    addPlayerState.addCalls = 0;
 
     global.fetch = vi.fn(async (input, init = {}) => {
         const rawUrl = typeof input === "string" ? input : input.url;
@@ -188,6 +210,31 @@ beforeEach(() => {
             return jsonResponse({ ruleSet });
         }
 
+        if (path === "/api/teams/77/players/search" && method === "GET") {
+            return jsonResponse({ results: addPlayerState.searchHits });
+        }
+
+        if (path === "/api/teams/77/players" && method === "POST") {
+            addPlayerState.addCalls += 1;
+            if (addPlayerState.addCalls === 1) {
+                return jsonResponse({
+                    message: "Adding this player would exceed the maximum roster size in one or more ladders.",
+                    warning: "exceeds_max_players",
+                    ladders: [{ id: 12, name: "Demo Ladder" }],
+                    requireConfirm: true,
+                }, 202);
+            }
+            return jsonResponse({
+                message: "Player join request created successfully.",
+                request: {
+                    id: 123,
+                    teamId: 77,
+                    userId: 91,
+                    status: "pending",
+                },
+            }, 201);
+        }
+
         if (path === "/api/matches/55/score" && method === "POST") {
             ladderHookState.players = [
                 { id: 1, name: "Topspin Tigers", rating: 1020 },
@@ -204,6 +251,32 @@ beforeEach(() => {
 });
 
 describe("Disputed matches and rulesets", () => {
+    test("team settings add-player confirm button retries with ladder confirmation", async () => {
+        const user = userEvent.setup();
+        const onAdded = vi.fn();
+
+        renderWithLang(<AddPlayerButton teamId={77} onAdded={onAdded} />, { route: "/clubs/1/settings/members" });
+
+        await user.click(screen.getByRole("button", { name: "Add Player" }));
+        await user.type(screen.getByPlaceholderText("Name, email, or ID..."), "Alice");
+
+        expect(await screen.findByRole("button", { name: "Add Alice Runner" })).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: "Add Alice Runner" }));
+
+        expect(await screen.findByText("Adding this player would exceed the maximum roster size in one or more ladders.")).toBeInTheDocument();
+        await user.click(screen.getByRole("button", { name: "Add Anyway" }));
+
+        await waitFor(() => expect(onAdded).toHaveBeenCalledTimes(1));
+        expect(global.fetch).toHaveBeenCalledWith(
+            "/api/teams/77/players",
+            expect.objectContaining({
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ accountId: 91, confirmDropLadders: true }),
+            }),
+        );
+    });
+
     test("disputed match adjudication updates the ladder ratings", async () => {
         const user = userEvent.setup();
 

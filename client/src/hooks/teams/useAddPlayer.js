@@ -71,22 +71,26 @@ export function useAddPlayer({ teamId, onAdded } = {}) {
     }, [query, teamId, isOpen]);
 
 
-    const addPlayer = useCallback(async (accountId, confirmExceed = false) => {
+    const addPlayer = useCallback(async (accountId, confirmDropLadders = false) => {
         setAddingId(accountId);
         setAddErr(null);
         setConfirmWarning(null);
         try {
+            const foo = {
+                accountId: accountId,
+                confirmDropLadders: confirmDropLadders,
+            };
             const res  = await fetch(`/api/teams/${teamId}/players`, {
                 method:  "POST",
                 headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify({ accountId, confirmExceed }),
+                body:    JSON.stringify(foo),
             });
             const data = await res.json();
 
             // Handle warning response (202) — requires confirmation
             if (res.status === 202 && data.warning === "exceeds_max_players") {
                 setConfirmWarning({
-                    accountId,
+                    accountId: accountId,
                     message: data.message,
                     ladders: data.ladders || []
                 });

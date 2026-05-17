@@ -610,6 +610,64 @@ def get_disputed_matches_resolvable_by(account: Account) -> list[MatchProposal]:
     return [m for m in get_disputed_matches() if m.can_adjudicate_score(account)]
 
 
+def cancel_unplayed_matches_for_team(
+    team_id: int,
+    ladder_ids: list[int],
+    reason: str | None = None,
+) -> list[MatchProposal]:
+    """Cancel all unplayed matches for a team across the given ladders.
+
+    A match is considered unplayed when its status is pending (1) or
+    accepted (2). Played, rejected, and already-cancelled matches are
+    left untouched.
+
+    For each affected proposal a MatchCancelled extension row is inserted
+    and the proposal status is set to CANCELLED. All changes are flushed
+    to the session but NOT committed -- the caller is responsible for
+    calling db.session.commit().
+
+    Parameters
+    ----------
+    team_id:
+        ID of the team whose matches should be cancelled.
+    ladder_ids:
+        IDs of the ladders to search within. Only matches whose ladder_id
+        is in this list are affected. An empty list results in a no-op.
+    reason:
+        Optional human-readable reason stored in the MatchCancelled row.
+
+    Returns
+    -------
+    list[MatchProposal]
+        The proposals that were cancelled by this call.
+    """
+    from sqlalchemy import or_
+
+    if not ladder_ids:
+        return []
+
+    unplayed_statuses = [MatchStatus.PENDING, MatchStatus.ACCEPTED]
+
+    proposals = (
+        MatchProposal.query
+        .filter(
+            or_(
+                MatchProposal.team1_id == team_id,
+                MatchProposal.team2_id == team_id,
+                ),
+            MatchProposal.ladder_id.in_(ladder_ids),
+            MatchProposal.status_id.in_(unplayed_statuses),
+        )
+        .all()
+    )
+
+    for proposal in proposals:
+        proposal.status_id = MatchStatus.CANCELLED
+        db.session.add(MatchCancelled(id=proposal.id, reason=reason))
+
+    return proposals
+
+
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------

@@ -58,7 +58,7 @@ export default function DeletePlayerButton({ teamId, playerId, onDeleted }) {
             totalSteps={1}
             onNext={null}
             onBack={null}
-            onSubmit={violateWarning ? null : confirmDelete}
+            onSubmit={violateWarning ? null : () => confirmDelete(false)}
 
             isLoading={loading}
             isSuccess={false}
