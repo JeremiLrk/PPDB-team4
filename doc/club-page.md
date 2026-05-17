@@ -34,7 +34,3 @@ The page is arranged as a three-part summary view:
 - top performers plus match summaries around it
 
 Upcoming matches and latest results are shown in compact batches so the page stays readable on desktop and mobile.
-
-## Why It Matters
-
-This is the public-facing entry point for the club. It gives a quick snapshot of the club before the user goes deeper into ladders or settings.

@@ -480,12 +480,19 @@ def create_ladder(club_id: int):
         return jsonify({"message": "Forbidden"}), 403
 
     # Create ladder
+    # Rulesets are optional for non-racket ladders.
+    ruleset_id = data.get("ruleset_id")
+    if ruleset_id in ("", None):
+        ruleset_id = None
+    else:
+        ruleset_id = int(ruleset_id)
+
     ladder = Ladder(
         club_id=club_id,
         name=data.get("name"),
         description=data.get("description"),
         sport_type_id=data.get("sport_type_id", 1),
-        ruleset_id=data.get("ruleset_id"),
+        ruleset_id=ruleset_id,
         ladder_rating_function_id=data.get("ladder_rating_function_id", 1),
     )
 

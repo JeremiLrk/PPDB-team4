@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import styles from "@/style/ClubSettings.module.css";
 
-function ClubSidebar({ activeTab, onTabChange, texts = {} }) {
+function ClubSidebar({ activeTab, onTabChange, texts = {}, supportsRuleSets = true }) {
     const { clubId } = useParams();
     const navigate = useNavigate();
     /*
@@ -65,9 +65,11 @@ function ClubSidebar({ activeTab, onTabChange, texts = {} }) {
                     <button className={navClass("members")} onClick={() => onTabChange("members")}>
                         {texts.tab_members || "Leden"}
                     </button>
-                    <button className={navClass("rules")} onClick={() => onTabChange("rules")}>
-                        {texts.tab_rules || "Wedstrijdregels"}
-                    </button>
+                    {supportsRuleSets && (
+                        <button className={navClass("rules")} onClick={() => onTabChange("rules")}>
+                            {texts.tab_rules || "Wedstrijdregels"}
+                        </button>
+                    )}
                     <button className={navClass("owners")} onClick={() => onTabChange("owners")}>
                         {texts.tab_owners || "Eigenaren"}
                     </button>
@@ -124,9 +126,11 @@ function ClubSidebar({ activeTab, onTabChange, texts = {} }) {
                         <button className={navClass("members")} onClick={() => handleTabChange("members")}>
                             {texts.tab_members || "Leden"}
                         </button>
-                        <button className={navClass("rules")} onClick={() => handleTabChange("rules")}>
-                            {texts.tab_rules || "Wedstrijdregels"}
-                        </button>
+                        {supportsRuleSets && (
+                            <button className={navClass("rules")} onClick={() => handleTabChange("rules")}>
+                                {texts.tab_rules || "Wedstrijdregels"}
+                            </button>
+                        )}
                         <button className={navClass("owners")} onClick={() => handleTabChange("owners")}>
                             {texts.tab_owners || "Eigenaren"}
                         </button>

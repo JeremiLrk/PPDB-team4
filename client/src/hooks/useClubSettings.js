@@ -35,6 +35,13 @@ export function useClubSettings(clubId, texts = {}) {
     const [updateMessage, setUpdateMessage] = useState(null);
 
     const [activeTab, setActiveTab] = useState("general");
+    const supportsRuleSets = club?.sport === "Tennis" || club?.sport === "Padel";
+
+    useEffect(() => {
+        if (!supportsRuleSets && activeTab === "rules") {
+            setActiveTab("general");
+        }
+    }, [activeTab, supportsRuleSets]);
 
     useEffect(() => {
         async function fetchClubData() {
@@ -346,6 +353,7 @@ export function useClubSettings(clubId, texts = {}) {
         ratingFunctions,
         ruleSets,
         sportTypes,
+        supportsRuleSets,
 
         goBack: () => navigate("/dashboard"),
     };

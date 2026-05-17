@@ -41,6 +41,7 @@ function ClubSettings() {
                 activeTab={settings.activeTab}
                 onTabChange={settings.setActiveTab}
                 texts={texts}
+                supportsRuleSets={settings.supportsRuleSets}
             />
 
             <div className={styles.workspace}>
@@ -71,6 +72,7 @@ function ClubSettings() {
                         ruleSets={settings.ruleSets}
                         eligibleTeams={settings.eligibleTeams}
                         onAddTeam={settings.addTeamToLadder}
+                        supportsRuleSets={settings.supportsRuleSets}
                         texts={texts}
                     />
                 )}
@@ -84,7 +86,7 @@ function ClubSettings() {
                     />
                 )}
 
-                {settings.activeTab === "rules" && (
+                {settings.activeTab === "rules" && settings.supportsRuleSets && (
                     <ClubMatchRules clubId={clubId} texts={texts} />
                 )}
 

@@ -9,6 +9,8 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import { LangContext } from "../src/context/useLangContext.jsx";
 import ClubDisputedMatchesPage from "../src/pages/ClubDisputedMatchesPage.jsx";
+import ClubSidebar from "../src/components/club_settings/ClubSidebar.jsx";
+import ClubLadders from "../src/components/club_settings/ClubLadders.jsx";
 import ClubMatchRules from "../src/components/club_settings/ClubMatchRules.jsx";
 import Ladder from "../src/pages/Ladder.jsx";
 import AddPlayerButton from "../src/components/team/AddPlayerButton.jsx";
@@ -91,6 +93,10 @@ const rulesState = vi.hoisted(() => ({
     nextRuleId: 3,
 }));
 
+const sportTypesState = vi.hoisted(() => ({
+    sportTypes: [],
+}));
+
 const addPlayerState = vi.hoisted(() => ({
     searchHits: [
         {
@@ -113,6 +119,10 @@ vi.mock("../src/hooks/common/usePageTexts.js", () => ({
 
 vi.mock("../src/hooks/useClubSettings.js", () => ({
     useClubSettings: () => clubSettingsHookState,
+}));
+
+vi.mock("../src/hooks/useSportTypes.js", () => ({
+    useSportTypes: () => sportTypesState,
 }));
 
 vi.mock("../src/hooks/matches/useDisputedMatches.js", () => ({
@@ -183,6 +193,10 @@ beforeEach(() => {
         },
     ];
     rulesState.nextRuleId = 3;
+    sportTypesState.sportTypes = [
+        { id: 1, name: "Tennis" },
+        { id: 2, name: "Basketball" },
+    ];
     addPlayerState.searchHits = [
         {
             id: 91,
@@ -464,5 +478,72 @@ describe("Disputed matches and rulesets", () => {
         expect(screen.getByText("Golden Point (No-Ad)")).toBeInTheDocument();
         expect(screen.getByText("Spelvorm")).toBeInTheDocument();
         expect(screen.getByText("Enkelspel (1v1)")).toBeInTheDocument();
+    });
+
+    // Verifies non-racket clubs do not show a ruleset field in the ladder create form.
+    test("ladder create form hides ruleset selection for basketball", async () => {
+        const user = userEvent.setup();
+
+        renderWithLang(
+            <ClubLadders
+                ladders={[]}
+                onCreate={vi.fn()}
+                ratingFunctions={[{ id: 1, name: "Elo" }]}
+                ruleSets={[{ id: 1, name: "Standard Ladder" }]}
+                eligibleTeams={[]}
+                onAddTeam={vi.fn()}
+                supportsRuleSets={false}
+                texts={{
+                    choose_sport_type: "Choose a sport type",
+                    choose_rule_set: "Choose a ruleset",
+                    choose_rating_function: "Choose rating",
+                    create_ladder: "Create ladder",
+                    ladder_create_title: "Create ladder",
+                }}
+            />,
+        );
+
+        const sportSelect = screen.getAllByRole("combobox")[0];
+        await user.selectOptions(sportSelect, "2");
+
+        expect(screen.queryByText("Choose a ruleset")).not.toBeInTheDocument();
+    });
+
+    // Verifies racket clubs still show a ruleset field in the ladder create form.
+    test("ladder create form shows ruleset selection for tennis", async () => {
+        renderWithLang(
+            <ClubLadders
+                ladders={[]}
+                onCreate={vi.fn()}
+                ratingFunctions={[{ id: 1, name: "Elo" }]}
+                ruleSets={[{ id: 1, name: "Standard Ladder" }]}
+                eligibleTeams={[]}
+                onAddTeam={vi.fn()}
+                supportsRuleSets={true}
+                texts={{
+                    choose_sport_type: "Choose a sport type",
+                    choose_rule_set: "Choose a ruleset",
+                    choose_rating_function: "Choose rating",
+                    create_ladder: "Create ladder",
+                    ladder_create_title: "Create ladder",
+                }}
+            />,
+        );
+
+        expect(screen.getByText("Choose a ruleset")).toBeInTheDocument();
+    });
+
+    // Verifies non-racket clubs do not show the rules tab in settings.
+    test("settings sidebar hides rules tab for basketball", async () => {
+        renderWithLang(
+            <ClubSidebar
+                activeTab="general"
+                onTabChange={vi.fn()}
+                texts={clubSettingsTextState}
+                supportsRuleSets={false}
+            />,
+        );
+
+        expect(screen.queryByRole("button", { name: "Match rules" })).not.toBeInTheDocument();
     });
 });
