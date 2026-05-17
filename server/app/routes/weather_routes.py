@@ -1,3 +1,11 @@
+"""
+Weather lookup for clubs and match proposals.
+
+The frontend uses this route to preview the weather for a club city on the
+date of a proposed match.  The route falls back from OpenWeather's one-call
+forecast to the 3-hour forecast when needed.
+"""
+
 import os
 from datetime import date, datetime, timedelta, timezone
 
@@ -7,7 +15,6 @@ from server.app.models.club import Club
 from pathlib import Path
 from dotenv import load_dotenv
 from server.app.services.city_service import search_cities
-from server.extensions import cache
 
 base_dir = Path(__file__).resolve().parent.parent.parent 
 env_path = base_dir / ".env"
@@ -21,7 +28,8 @@ OPENWEATHER_ONECALL_URL = "https://api.openweathermap.org/data/3.0/onecall"
 OPENWEATHER_FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
 
 
-def _parse_target_date(value: str | None) -> date | None:
+def parse_target_date(value: str | None) -> date | None:
+    """Parse the target date query parameter into a date, if possible."""
     cleaned = (value or "").strip()
     if not cleaned:
         return None
@@ -32,7 +40,8 @@ def _parse_target_date(value: str | None) -> date | None:
         return None
 
 
-def _resolve_coordinates(city: str) -> dict | None:
+def resolve_coordinates(city: str) -> dict | None:
+    """Resolve a club city into weather API coordinates and a display label."""
     suggestions = search_cities(city, limit=1)
     if not suggestions:
         return None
@@ -48,7 +57,8 @@ def _resolve_coordinates(city: str) -> dict | None:
     }
 
 
-def _select_daily_forecast(payload: dict, target_date: date) -> dict | None:
+def select_daily_forecast(payload: dict, target_date: date) -> dict | None:
+    """Select the one-call daily forecast row for the requested date."""
     daily_rows = payload.get("daily") or []
     timezone_offset = payload.get("timezone_offset") or 0
     for row in daily_rows:
@@ -83,7 +93,8 @@ def _select_daily_forecast(payload: dict, target_date: date) -> dict | None:
     return None
 
 
-def _select_three_hour_forecast(payload: dict, target_date: date) -> dict | None:
+def select_three_hour_forecast(payload: dict, target_date: date) -> dict | None:
+    """Select the best 3-hour forecast row for the requested date."""
     forecast_rows = payload.get("list") or []
     timezone_offset = (payload.get("city") or {}).get("timezone") or payload.get("timezone_offset") or 0
     candidates = []
@@ -123,6 +134,7 @@ def _select_three_hour_forecast(payload: dict, target_date: date) -> dict | None
 
 @weather.get("/weather/<int:club_id>")  # Using int: for safety
 def get_weather(club_id):
+    """Return current weather or forecast data for a club city."""
     club = Club.query.get(club_id)
     
     if not club:
@@ -131,19 +143,12 @@ def get_weather(club_id):
     if not club.city:
         return jsonify({"error": "This club has no city assigned"}), 400
 
-    normalized_city = club.city.strip().lower().replace(" ", "_")
-    target_date = _parse_target_date(request.args.get("target_dt"))
-
-    cache_key = f"weather:{normalized_city}:{target_date}"
-    cached_data = cache.get(cache_key)
-    if cached_data is not None:
-        return jsonify(cached_data)
-
     key = os.environ.get("WEATHER_API_KEY")
     if not key:
         return jsonify({"error": "WEATHER_API_KEY is not configured."}), 500
 
-    resolved = _resolve_coordinates(club.city)
+    target_date = parse_target_date(request.args.get("target_dt"))
+    resolved = resolve_coordinates(club.city)
     if not resolved:
         return jsonify({"error": "Could not resolve weather location."}), 404
 
@@ -155,9 +160,8 @@ def get_weather(club_id):
     }
 
     try:
-        payload_to_return = None
-
         if target_date is None:
+            # Current weather uses the simple endpoint and returns immediately.
             response = requests.get(OPENWEATHER_CURRENT_URL, params=params, timeout=10)
 
             if response.status_code == 401:
@@ -170,70 +174,57 @@ def get_weather(club_id):
             payload = response.json()
             if isinstance(payload, dict):
                 payload["name"] = resolved["label"]
-                payload_to_return = payload
-        else:
-            auth_error = None
-            for url, params_override, selector in (
-                (
-                    OPENWEATHER_ONECALL_URL,
-                    {
-                        "lat": resolved["lat"],
-                        "lon": resolved["lon"],
-                        "exclude": "current,minutely,hourly,alerts",
-                        "appid": key,
-                        "units": "metric",
-                    },
-                    _select_daily_forecast,
-                ),
-                (
-                    OPENWEATHER_FORECAST_URL,
-                    {
-                        "lat": resolved["lat"],
-                        "lon": resolved["lon"],
-                        "appid": key,
-                        "units": "metric",
-                    },
-                    _select_three_hour_forecast,
-                ),
-            ):
-                response = requests.get(url, params=params_override, timeout=10)
+            return payload
 
-                if response.status_code in {401, 403}:
-                    auth_error = response
-                    continue
+        auth_error = None
+        for url, params_override, selector in (
+            (
+                OPENWEATHER_ONECALL_URL,
+                {
+                    "lat": resolved["lat"],
+                    "lon": resolved["lon"],
+                    "exclude": "current,minutely,hourly,alerts",
+                    "appid": key,
+                    "units": "metric",
+                },
+                select_daily_forecast,
+            ),
+            (
+                OPENWEATHER_FORECAST_URL,
+                {
+                    "lat": resolved["lat"],
+                    "lon": resolved["lon"],
+                    "appid": key,
+                    "units": "metric",
+                },
+                select_three_hour_forecast,
+            ),
+        ):
+            response = requests.get(url, params=params_override, timeout=10)
 
-                response.raise_for_status()
-                payload = response.json()
-                if not isinstance(payload, dict):
-                    continue
+            if response.status_code in {401, 403}:
+                # Keep trying the next forecast source if the first one rejects the key.
+                auth_error = response
+                continue
 
-                forecast = selector(payload, target_date)
-                if forecast is not None:
-                    forecast["name"] = resolved["label"]
-                    payload_to_return = forecast
-                    break
+            response.raise_for_status()
+            payload = response.json()
+            if not isinstance(payload, dict):
+                continue
 
-            if payload_to_return is None and auth_error is not None:
-                return {
-                    "error": "Activation Error",
-                    "message": "API Key unauthorized. Check .env loading or activation status."
-                }, auth_error.status_code
+            forecast = selector(payload, target_date)
+            if forecast is not None:
+                forecast["name"] = resolved["label"]
+                return forecast
 
-        if not payload_to_return:
-            return jsonify({"error": "Weather forecast unavailable for that proposal date."}), 404
+        if auth_error is not None:
+            # If both forecast sources reject the key, surface the auth error.
+            return {
+                "error": "Activation Error",
+                "message": "API Key unauthorized. Check .env loading or activation status."
+            }, auth_error.status_code
 
-        if target_date is None:
-            timeout = 900  # 15 minutes for live weather
-        else:
-            days_away = (target_date - date.today()).days
-            if days_away <= 1:
-                timeout = 1800  # 30 minutes for today/tomorrow
-            else:
-                timeout = 14400  # 4 hours for future games
-
-        cache.set(cache_key, payload_to_return, timeout=timeout)
-
-        return jsonify(payload_to_return)
+        return jsonify({"error": "Weather forecast unavailable for that proposal date."}), 404
 
     except requests.exceptions.HTTPError as err:
         return {"error": str(err)}, getattr(err.response, "status_code", 502)

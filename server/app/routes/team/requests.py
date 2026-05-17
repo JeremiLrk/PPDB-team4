@@ -5,10 +5,14 @@ from server.app.decorators import login_required
 from server.app.models.player import PlayerTeam, Player
 from server.app.models.team import TeamManagerTeam, TeamManager
 from server.app.models.team_join_request import TeamJoinRequest
-from server.app.routes.matcher._helpers import _get_team_or_404
-from server.app.routes.team._helpers import _search_accounts, _ladders_exceeding_max_after_add, _resolve_target, \
-    _ladders_violating_min_after_remove
-from server.app.routes.team._permissions import _can_edit_players_or_403, _get_permissions, _can_edit_managers_or_403
+from server.app.routes.team._helpers import (
+    get_team_or_404,
+    search_accounts,
+    ladders_exceeding_max_after_add,
+    resolve_target,
+    ladders_violating_min_after_remove,
+)
+from server.app.routes.team._permissions import can_edit_players_or_403, get_permissions, can_edit_managers_or_403
 from server.extensions import cache, db
 
 requests_bp = Blueprint("team_requests", __name__)
@@ -19,8 +23,8 @@ requests_bp = Blueprint("team_requests", __name__)
 @login_required
 def get_my_permissions(account: Account, team_id: int):
     """GET /api/teams/<team_id>/my-permissions — returns current user's permissions for the team."""
-    team = _get_team_or_404(team_id)
-    permissions = _get_permissions(account.resolved_role, team)
+    team = get_team_or_404(team_id)
+    permissions = get_permissions(account.resolved_role, team)
     return jsonify({
         "teamId":      team_id,
         "permissions": permissions,
@@ -33,7 +37,7 @@ def get_team_players(team_id: int):
     """GET /api/teams/<team_id>/players — list of team players."""
 
     # Call to check if this team exists
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
     players = (
         db.session.query(Account)
@@ -55,7 +59,7 @@ def get_team_players(team_id: int):
 @requests_bp.route("/<int:team_id>/members", methods=["GET"])
 def get_team_members(team_id: int):
     """GET /api/teams/<team_id>/members — public list of team members (name only, no personal info)."""
-    _get_team_or_404(team_id)
+    get_team_or_404(team_id)
 
     players = (
         db.session.query(Account)
@@ -81,9 +85,9 @@ def get_team_members(team_id: int):
 @cache.memoize(timeout=90)
 def search_accounts_not_in_team(account: Account, team_id: int):
     """GET /api/teams/<team_id>/players/search?q=<string>."""
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_players_or_403(account.resolved_role, team)
+    can_edit_players_or_403(account.resolved_role, team)
 
     q = request.args.get("q", "").strip()
     if not q:
@@ -104,7 +108,7 @@ def search_accounts_not_in_team(account: Account, team_id: int):
 
     exclude_ids = exclude_ids.union(pending_ids)
 
-    matches = _search_accounts(q, exclude_ids)
+    matches = search_accounts(q, exclude_ids)
     return jsonify({
         "teamId": team_id,
         "q": q,
@@ -121,9 +125,9 @@ def search_accounts_not_manager_of_team(account: Account, team_id: int):
     Returns a list of accounts that are NOT yet managers of this team.
     Only available to those with the can_edit_managers permission for this team.
     """
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_managers_or_403(account.resolved_role, team)
+    can_edit_managers_or_403(account.resolved_role, team)
 
     q = request.args.get("q", "").strip()
     if not q:
@@ -137,7 +141,7 @@ def search_accounts_not_manager_of_team(account: Account, team_id: int):
     ).fetchall()
     exclude_ids = {row.team_manager_id for row in existing}
 
-    matches = _search_accounts(q, exclude_ids)
+    matches = search_accounts(q, exclude_ids)
     return jsonify({
         "teamId":  team_id,
         "q":       q,
@@ -149,7 +153,7 @@ def search_accounts_not_manager_of_team(account: Account, team_id: int):
 @cache.memoize(timeout=300)
 def get_team_managers(team_id: int):
     """GET /api/teams/<team_id>/managers — a list of team managers with their rights."""
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
     # Load manager accounts along with their association (rights)
     rows = (
@@ -189,11 +193,11 @@ def check_player_add_exceeds_ladder_max(account: Account, team_id: int):
     would exceed the sport type's maximum_number_of_players_per_team.
     Returns 200 when no constraint would be violated.
     """
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_players_or_403(account.resolved_role, team)
+    can_edit_players_or_403(account.resolved_role, team)
 
-    violating = _ladders_exceeding_max_after_add(team_id)
+    violating = ladders_exceeding_max_after_add(team_id)
     if violating:
         return jsonify({
             "message": "Adding a player would exceed the maximum roster size for one or more ladders.",
@@ -215,12 +219,12 @@ def check_player_remove_violates_ladder_min(account: Account, team_id: int, acco
     Uses DELETE so that the client can use the same account_id segment
     as the force-remove sibling route.
     """
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_players_or_403(account.resolved_role, team)
+    can_edit_players_or_403(account.resolved_role, team)
 
     # Verify the player is actually in this team before checking constraints.
-    target = _resolve_target(account_id)
+    target = resolve_target(account_id)
     assoc = next(
         (a for a in (target.player.playerteam_associations if target.player else [])
          if a.team_id == team.id),
@@ -229,7 +233,7 @@ def check_player_remove_violates_ladder_min(account: Account, team_id: int, acco
     if not assoc:
         abort(404, description="This account is not a player in this team.")
 
-    violating = _ladders_violating_min_after_remove(team_id)
+    violating = ladders_violating_min_after_remove(team_id)
     if violating:
         return jsonify({
             "message": "Removing this player would drop the team below the minimum roster size for one or more ladders.",

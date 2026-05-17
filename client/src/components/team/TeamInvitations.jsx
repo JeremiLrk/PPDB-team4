@@ -4,12 +4,16 @@ import commonStyles from "@/style/common/Common.module.css";
 import panelStyles from "@/style/common/Panel.module.css";
 import buttonStyles from "@/style/common/Buttons.module.css";
 import formStyles from "@/style/common/Forms.module.css";
+import dashboardStyles from "@/style/dashboard/Dashboard.module.css";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { useTeamInvitations } from "@/hooks/teams/useTeamInvitations.js";
 
 export default function TeamInvitations() {
     const navigate = useNavigate();
+    const { theme } = useThemeContext();
+    const isLight = theme === "light";
     const { lang } = useLangContext();
     const texts = usePageTexts("teams", lang);
     const { invitations, loading, error, acceptInvitation, rejectInvitation } = useTeamInvitations();
@@ -45,15 +49,39 @@ export default function TeamInvitations() {
             {error && <p className={commonStyles.warning}>{error}</p>}
 
             <ul className={panelStyles.list}>
-                {invitations.map(inv => (
-                    <li key={inv.id} className={panelStyles.listItem}>
-                        <div>
-                            <p className={commonStyles.primaryText}>{inv.team_name}</p>
+                        {invitations.map(inv => (
+                            <li key={inv.id} className={panelStyles.listItem}>
+                                <div>
+                            <p
+                                className={dashboardStyles.teamCardName}
+                                style={{
+                                    color: isLight ? "#020617" : "#ffffff",
+                                    WebkitTextFillColor: isLight ? "#020617" : "#ffffff",
+                                }}
+                            >
+                                {inv.team_name}
+                            </p>
                             {inv.club_name && (
-                                <p className={commonStyles.secondaryText}>{inv.club_name}</p>
+                                <p
+                                    className={dashboardStyles.teamCardMeta}
+                                    style={{
+                                        color: isLight ? "#334155" : "#cbd5e1",
+                                        WebkitTextFillColor: isLight ? "#334155" : "#cbd5e1",
+                                    }}
+                                >
+                                    {inv.club_name}
+                                </p>
                             )}
                             {inv.sport_name && (
-                                <p className={commonStyles.secondaryText}>{inv.sport_name}</p>
+                                <p
+                                    className={dashboardStyles.teamCardMeta}
+                                    style={{
+                                        color: isLight ? "#334155" : "#cbd5e1",
+                                        WebkitTextFillColor: isLight ? "#334155" : "#cbd5e1",
+                                    }}
+                                >
+                                    {inv.sport_name}
+                                </p>
                             )}
                         </div>
 

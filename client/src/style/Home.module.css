@@ -1,10 +1,10 @@
 @reference "tailwindcss";
 
-
 .page {
     position: relative;
     min-height: 100vh;
     overflow: hidden;
+    color: #f8fafc;
 }
 
 .pageBackdrop {
@@ -15,147 +15,558 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transform: scale(1.02);
+    transform: scale(1.04);
+    filter: saturate(1.05) contrast(1.03);
 }
 
 .pageOverlay {
     position: fixed;
     inset: 0;
     background:
-        linear-gradient(180deg, rgba(6, 56, 118, 0.9) 0%, rgba(5, 44, 98, 0.88) 24%, rgba(4, 31, 74, 0.84) 52%, rgba(2, 10, 30, 0.84) 76%, rgba(2, 6, 23, 0.98) 100%),
-        linear-gradient(90deg, rgba(4, 54, 104, 0.7), rgba(2, 6, 23, 0.22));
+        radial-gradient(circle at 20% 20%, rgba(45, 212, 191, 0.12), transparent 30%),
+        radial-gradient(circle at 80% 25%, rgba(59, 130, 246, 0.16), transparent 32%),
+        radial-gradient(circle at 50% 78%, rgba(14, 165, 233, 0.10), transparent 28%),
+        linear-gradient(180deg, rgba(8, 15, 35, 0.78) 0%, rgba(6, 17, 40, 0.88) 34%, rgba(4, 13, 31, 0.95) 100%);
 }
 
-.container{
+.container {
     position: relative;
     z-index: 1;
+    max-width: 120rem;
+    margin: 0 auto;
     min-height: 100vh;
     display: grid;
     gap: 1rem;
-    padding: 1rem clamp(0.9rem, 1.7vw, 1.8rem) 1.25rem;
-    grid-template-columns: minmax(15rem, 0.95fr) minmax(0, 2.45fr) minmax(15rem, 0.95fr);
-    align-items: start;
+    padding: 1rem clamp(0.9rem, 1.8vw, 1.6rem) 1.25rem;
+    grid-template-columns: minmax(17rem, 0.92fr) minmax(0, 1.8fr) minmax(17rem, 0.92fr);
+    grid-template-areas:
+        "ladders hero performers"
+        "upcoming upcoming results";
+    align-items: stretch;
 }
 
-.ladderAside{
-    @apply flex flex-col gap-4;
-}
-.ladderContainer{
-    @apply rounded-3xl border border-white/10 bg-white/12 p-5 backdrop-blur h-fit;
-}
-.ladderContainerText{
-    @apply text-xl font-semibold mb-3;
-}
-.ladderCard {
-    display: flex;
-    flex-direction: column;
-    gap: 0.7rem;
-}
-.ladderButton{
-    @apply text-left rounded-xl border border-white/10 px-4 py-3 hover:bg-white/10 transition;
-}
-
-
-
-/* RIGHT — SCOREBOARDS */
-.scoreboardAside{
-    @apply flex flex-col gap-4;
-}
-
-.scoreboardContainer{
-    @apply rounded-3xl border border-white/10 bg-white/12 p-5 backdrop-blur h-fit;
-}
-
-.scoreboardContainerText{
-    @apply text-xl font-semibold mb-3;
-}
-
-.scoreboardCard{
-    @apply space-y-2.5 text-sm;
-}
-.scoreboardCardTeam{
-    @apply flex justify-between gap-3 rounded-xl bg-white/6 px-3 py-2;
-}
-.scoreboardCardMatch{
-    @apply flex justify-between;
-}
-
-.clubMain {
-    @apply flex flex-col gap-5 items-center justify-start;
-    min-height: 100vh;
-    padding-top: 0.55rem;
-    padding-bottom: 0.75rem;
-}
-
+.panel,
 .heroPanel {
-    max-width: 60rem;
-    width: 100%;
-    min-height: 28rem;
-    border-radius: 2rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(2, 6, 23, 0.12);
-    backdrop-filter: blur(6px);
-    box-shadow: 0 24px 56px rgba(2, 6, 23, 0.32);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    padding: 2.2rem 2rem;
-    text-align: center;
+    border-radius: 1.8rem;
+    background: linear-gradient(180deg, rgba(8, 18, 44, 0.56), rgba(9, 18, 37, 0.36));
+    backdrop-filter: blur(12px);
+    box-shadow: 0 24px 56px rgba(2, 6, 23, 0.28);
 }
 
-.clubTitle {
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem;
+    min-height: 22rem;
+}
+
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.panelTitle {
     margin: 0;
-    font-size: clamp(2rem, 4vw, 4rem);
+    font-size: 1.35rem;
     font-weight: 800;
     letter-spacing: -0.03em;
+}
+
+.panelBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.65rem;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.16);
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.panelBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.muted {
+    margin: 0;
+    color: rgba(226, 232, 240, 0.7);
+    line-height: 1.5;
+}
+
+.laddersPanel {
+    grid-area: ladders;
+}
+
+.performersPanel {
+    grid-area: performers;
+}
+
+.upcomingPanel {
+    grid-area: upcoming;
+    min-height: 20rem;
+}
+
+.resultsPanel {
+    grid-area: results;
+    min-height: 20rem;
+}
+
+.linkList,
+.performerList,
+.matchList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.linkCard,
+.performerCard,
+.matchCard,
+.resultCard {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(8, 18, 40, 0.42);
+    border-radius: 1.2rem;
+}
+
+.linkCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 1rem 1.05rem;
+    text-align: left;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.linkCard:hover,
+.primaryAction:hover,
+.secondaryAction:hover,
+.manageButton:hover {
+    transform: translateY(-1px);
+}
+
+.linkCard:hover {
+    border-color: rgba(125, 211, 252, 0.35);
+    background: rgba(14, 24, 51, 0.58);
+}
+
+.linkLabel {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.linkArrow {
+    color: rgba(125, 211, 252, 0.8);
+    font-size: 1.25rem;
     line-height: 1;
 }
 
-.clubDescription {
+.heroGridCard {
+    grid-area: hero;
+}
+
+.heroPanel {
+    min-height: 34rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem clamp(1.25rem, 2.8vw, 2.5rem);
+    gap: 1rem;
+    background:
+        linear-gradient(180deg, rgba(7, 18, 42, 0.58), rgba(8, 16, 33, 0.32)),
+        radial-gradient(circle at 50% 18%, rgba(45, 212, 191, 0.14), transparent 36%);
+}
+
+.heroEyebrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    color: #67e8f9;
+    background: rgba(6, 182, 212, 0.08);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.heroTitle {
     margin: 0;
-    max-width: 56ch;
+    font-size: clamp(2.4rem, 4.8vw, 4.5rem);
+    line-height: 0.96;
+    letter-spacing: -0.05em;
+    font-weight: 900;
+}
+
+.heroSubtitle {
+    margin: 0;
+    max-width: 44rem;
+    color: rgba(226, 232, 240, 0.86);
     font-size: 1.05rem;
-    color: rgba(226, 232, 240, 0.9);
+    line-height: 1.55;
 }
 
 .heroActions {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 0.8rem;
-    margin-top: 0.5rem;
+    gap: 0.75rem;
+    margin-top: 0.6rem;
 }
 
 .primaryAction,
 .secondaryAction,
 .manageButton {
-    border-radius: 9999px;
-    padding: 0.85rem 1.25rem;
-    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.9rem 1.35rem;
+    font-weight: 800;
     transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
 }
 
 .primaryAction {
-    background: linear-gradient(120deg, rgba(59, 130, 246, 0.95), rgba(34, 197, 94, 0.86));
-    color: #eff6ff;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.98), rgba(45, 212, 191, 0.92));
+    color: #04111f;
+    box-shadow: 0 14px 30px rgba(34, 211, 238, 0.18);
 }
 
 .secondaryAction {
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    background: rgba(15, 23, 42, 0.34);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(9, 16, 33, 0.4);
     color: #f8fafc;
 }
 
 .manageButton {
-    border: 1px solid rgba(251, 191, 36, 0.3);
-    background: rgba(251, 191, 36, 0.14);
+    border: 1px solid rgba(251, 191, 36, 0.28);
+    background: rgba(251, 191, 36, 0.12);
     color: #fbbf24;
 }
 
-.primaryAction:hover,
-.secondaryAction:hover,
-.manageButton:hover {
+.performerCard {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.8rem;
+    align-items: center;
+    padding: 0.9rem;
+}
+
+.rankBadge {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.95), rgba(59, 130, 246, 0.72));
+    color: #eff6ff;
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.performerMeta {
+    min-width: 0;
+}
+
+.performerName {
+    margin: 0;
+    font-weight: 700;
+    color: #f8fafc;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.performerLadder {
+    margin: 0.2rem 0 0;
+    color: rgba(226, 232, 240, 0.66);
+    font-size: 0.84rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.performerRating {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.1rem;
+    font-weight: 800;
+}
+
+.performerRating small {
+    font-weight: 600;
+    color: rgba(226, 232, 240, 0.62);
+}
+
+.matchCard,
+.resultCard {
+    /* Use a tall horizontal card so the two teams and the ladder pill read like one grouped fixture row. */
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding: 1.3rem 1.35rem 1.15rem;
+    min-height: 9rem;
+    background:
+        linear-gradient(180deg, rgba(12, 23, 48, 0.82), rgba(8, 18, 40, 0.58)),
+        rgba(8, 18, 40, 0.42);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 12px 26px rgba(2, 6, 23, 0.12);
+}
+
+.matchTeams {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.resultTeams {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.matchTeams .matchTeam:last-child {
+    text-align: right;
+}
+
+.matchTeam {
+    min-width: 0;
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: #f8fafc;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.matchVs {
+    color: rgba(226, 232, 240, 0.66);
+    font-size: 0.96rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+}
+
+.resultScore {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 5.5rem;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #4ade80;
+}
+
+.resultDash {
+    color: rgba(226, 232, 240, 0.74);
+}
+
+.matchSeparator {
+    /* The separator is its own row so the VS line stays centered and never overlaps the team names. */
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.matchSeparatorLine {
+    height: 1px;
+    flex: 1;
+    background: linear-gradient(90deg, rgba(96, 165, 250, 0), rgba(96, 165, 250, 0.9), rgba(96, 165, 250, 0));
+}
+
+.matchMetaCenter {
+    /* Center the ladder pill under the fixture row to mirror the reference layout. */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.matchLadderPill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.42rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #7dd3fc;
+    border: 1px solid rgba(125, 211, 252, 0.18);
+    background: rgba(8, 18, 40, 0.72);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.loadMoreButton {
+    align-self: center;
+    border: 1px solid rgba(125, 211, 252, 0.22);
+    border-radius: 999px;
+    padding: 0.75rem 1.1rem;
+    background: rgba(8, 18, 40, 0.7);
+    color: #7dd3fc;
+    font-weight: 800;
+    margin-top: 0.35rem;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.loadMoreButton:hover {
     transform: translateY(-1px);
+    border-color: rgba(125, 211, 252, 0.45);
+    background: rgba(14, 24, 51, 0.84);
+}
+
+@media (max-width: 1180px) {
+    .container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "hero hero"
+            "ladders performers"
+            "upcoming upcoming"
+            "results results";
+    }
+}
+
+@media (max-width: 760px) {
+    .container {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "hero"
+            "ladders"
+            "performers"
+            "upcoming"
+            "results";
+        padding: 0.9rem 0.8rem 1rem;
+    }
+
+    .heroPanel {
+        min-height: 28rem;
+    }
+
+    .panel {
+        min-height: auto;
+    }
+
+    .performerCard,
+    .matchTeams,
+    .resultTeams {
+        grid-template-columns: 1fr;
+    }
+
+    .matchSeparator {
+        display: none;
+    }
+
+    .performerRating {
+        align-items: flex-start;
+    }
+}
+
+/*  Light mode overrides  */
+
+:global(html.light) .pageBackdrop {
+    background-color: #f8fafc;
+    filter: saturate(1) contrast(1);
+}
+
+:global(html.light) .pageOverlay {
+    background:
+        radial-gradient(circle at 20% 20%, rgba(186, 230, 253, 0.22), transparent 28%),
+        radial-gradient(circle at 80% 25%, rgba(125, 211, 252, 0.12), transparent 30%),
+        radial-gradient(circle at 50% 78%, rgba(103, 232, 249, 0.08), transparent 26%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.9) 52%, rgba(226, 232, 240, 0.96) 100%);
+}
+
+:global(html.light) .panel,
+:global(html.light) .heroPanel {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(71, 85, 105, 0.18);
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.08);
+}
+
+:global(html.light) .panelTitle,
+:global(html.light) .heroTitle,
+:global(html.light) .linkLabel,
+:global(html.light) .performerName,
+:global(html.light) .matchTeam {
+    color: #0f172a;
+}
+
+:global(html.light) .muted,
+:global(html.light) .performerLadder,
+:global(html.light) .performerRating small,
+:global(html.light) .heroSubtitle,
+:global(html.light) .matchVs,
+:global(html.light) .resultDash {
+    color: rgba(15, 23, 42, 0.72);
+}
+
+:global(html.light) .heroEyebrow {
+    background: rgba(186, 230, 253, 0.6);
+    border-color: rgba(14, 165, 233, 0.28);
+    color: #0369a1;
+}
+
+:global(html.light) .linkCard,
+:global(html.light) .performerCard,
+:global(html.light) .matchCard,
+:global(html.light) .resultCard {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(71, 85, 105, 0.18);
+}
+
+:global(html.light) .linkCard:hover {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(14, 165, 233, 0.24);
+}
+
+:global(html.light) .rankBadge {
+    color: #0f172a;
+}
+
+:global(html.light) .matchLadderPill {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(14, 165, 233, 0.16);
+    color: #0369a1;
+}
+
+:global(html.light) .loadMoreButton {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(14, 165, 233, 0.18);
+    color: #0369a1;
+}
+
+:global(html.light) .loadMoreButton:hover {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(14, 165, 233, 0.3);
+}
+
+:global(html.light) .primaryAction {
+    box-shadow: 0 14px 30px rgba(14, 165, 233, 0.14);
+}
+
+:global(html.light) .secondaryAction {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(71, 85, 105, 0.24);
+    color: #0f172a;
+}
+
+:global(html.light) .manageButton {
+    background: rgba(254, 240, 138, 0.35);
+    border-color: rgba(245, 158, 11, 0.22);
+    color: #b45309;
 }

@@ -26,6 +26,8 @@ function normalizeMatchProposal(raw = {}) {
     return {
         id: readField(raw, "id", "proposal_id", "proposalId"),
         proposedByUserId: readField(raw, "proposed_by_user_id", "proposedByUserId"),
+        acceptedByUserId: readField(raw, "accepted_by_user_id", "acceptedByUserId"),
+        acceptanceStatus: readField(raw, "acceptance_status", "acceptanceStatus"),
         team1Id,
         team2Id,
         team1Name:
@@ -40,6 +42,8 @@ function normalizeMatchProposal(raw = {}) {
         weekStartDate: readField(raw, "week_start_date", "weekStartDate"),
         team1ClubId: readField(raw, "team1_club_id", "team1ClubId"),
         team2ClubId: readField(raw, "team2_club_id", "team2ClubId"),
+        team1ClubName: readField(raw, "team1_club_name", "team1ClubName") || "",
+        team2ClubName: readField(raw, "team2_club_name", "team2ClubName") || "",
         team1ClubCity: readField(raw, "team1_club_city", "team1ClubCity") || "",
         team2ClubCity: readField(raw, "team2_club_city", "team2ClubCity") || "",
         team1Contacts,
@@ -81,6 +85,7 @@ async function fetchMatchProposals(filters = {}) {
         params.set("week_start_date", filters.weekStartDate);
     }
     if (filters.archived) {
+        // Archived mode is an explicit opt-in so the default list stays short.
         params.set("archived", "1");
     }
 
@@ -147,6 +152,7 @@ export function useMatchProposals(filters = {}) {
 
         try {
             const updatedProposal = await updateMatchProposalStatus(proposalId, status, extra);
+            // Replace only the changed proposal so list position and filters stay stable.
             setProposals((previous) =>
                 previous.map((proposal) =>
                     proposal.id === proposalId ? updatedProposal : proposal,

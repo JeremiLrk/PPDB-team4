@@ -43,6 +43,9 @@ msgstr "Matches"
 msgid "dashboard.tab_manage_club"
 msgstr "Manage your clubs"
 
+msgid "dashboard.status_finished"
+msgstr "Finished"
+
 msgid "dashboard.my_teams"
 msgstr "My Teams"
 

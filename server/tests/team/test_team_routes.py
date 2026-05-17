@@ -23,15 +23,15 @@ from server.app.models.team_join_request import TeamJoinRequest
 from server.app.models.club_owner import ClubOwner
 
 from server.app.routes.team._permissions import (
-    _can_rename,
-    _can_delete,
-    _can_edit_players,
-    _can_edit_managers,
-    _is_admin,
-    _is_owner_of_team_club,
-    _get_permissions,
+    can_rename,
+    can_delete,
+    can_edit_players,
+    can_edit_managers,
+    is_admin,
+    is_owner_of_team_club,
+    get_permissions,
 )
-from server.app.routes.team._helpers import _parse_pagination, _search_accounts
+from server.app.routes.team._helpers import parse_pagination, search_accounts
 from server.tests._authed_client import _authed_client
 from server.tests.team.factories import _make_team, _make_account, _make_team_manager, _make_assoc
 
@@ -41,27 +41,27 @@ from server.tests.team.factories import _make_team, _make_account, _make_team_ma
 # ===========================================================================
 
 class TestIsAdmin:
-    """_is_admin(resolved)"""
+    """is_admin(resolved)"""
 
     def test_administrator_returns_true(self, app):
         with app.app_context():
             admin = MagicMock(spec=Administrator)
             admin.__class__ = Administrator
-            assert _is_admin(admin) is True
+            assert is_admin(admin) is True
 
     def test_non_admin_returns_false(self, app):
         with app.app_context():
             owner = MagicMock(spec=ClubOwner)
             owner.__class__ = ClubOwner
-            assert _is_admin(owner) is False
+            assert is_admin(owner) is False
 
             tm = MagicMock(spec=TeamManager)
             tm.__class__ = TeamManager
-            assert _is_admin(tm) is False
+            assert is_admin(tm) is False
 
 
 class TestIsOwnerOfTeamClub:
-    """_is_owner_of_team_club(resolved, team)"""
+    """is_owner_of_team_club(resolved, team)"""
 
     def test_club_owner_with_matching_club_is_true(self, app):
         with app.app_context():
@@ -75,7 +75,7 @@ class TestIsOwnerOfTeamClub:
             owner = MagicMock(spec=ClubOwner)
             owner.__class__ = ClubOwner
             owner.clubs = [club]
-            assert _is_owner_of_team_club(owner, team) is True
+            assert is_owner_of_team_club(owner, team) is True
             db.session.rollback()
 
     def test_club_owner_of_different_club_is_false(self, app):
@@ -91,7 +91,7 @@ class TestIsOwnerOfTeamClub:
             owner = MagicMock(spec=ClubOwner)
             owner.__class__ = ClubOwner
             owner.clubs = [club1]
-            assert _is_owner_of_team_club(owner, team) is False
+            assert is_owner_of_team_club(owner, team) is False
             db.session.rollback()
 
     def test_team_without_club_is_false(self, app):
@@ -102,16 +102,16 @@ class TestIsOwnerOfTeamClub:
             owner = MagicMock(spec=ClubOwner)
             owner.__class__ = ClubOwner
             owner.clubs = []
-            assert _is_owner_of_team_club(owner, team) is False
+            assert is_owner_of_team_club(owner, team) is False
             db.session.rollback()
 
     def test_administrator_is_false(self, app):
-        """_is_owner_of_team_club is strictly about ClubOwner — admins are handled separately."""
+        """is_owner_of_team_club is strictly about ClubOwner — admins are handled separately."""
         with app.app_context():
             team = _make_team(name="Admin Club Check")
             admin = MagicMock(spec=Administrator)
             admin.__class__ = Administrator
-            assert _is_owner_of_team_club(admin, team) is False
+            assert is_owner_of_team_club(admin, team) is False
             db.session.rollback()
 
     def test_club_owner_of_other_club_falls_through_to_manager_perms(self, app):
@@ -161,24 +161,24 @@ class TestIsOwnerOfTeamClub:
             team = db.session.get(Team, team.id)
 
             # Sanity: co is a ClubOwner that owns club1 but NOT club2
-            assert _is_owner_of_team_club(co, team) is False
+            assert is_owner_of_team_club(co, team) is False
 
             # Falls through to TeamManager association rights
-            assert _can_rename(co, team)        is True
-            assert _can_delete(co, team)        is False
-            assert _can_edit_players(co, team)  is True
-            assert _can_edit_managers(co, team) is False
+            assert can_rename(co, team)        is True
+            assert can_delete(co, team)        is False
+            assert can_edit_players(co, team)  is True
+            assert can_edit_managers(co, team) is False
             db.session.rollback()
 
 
 class TestCanPermissions:
-    """_can_rename / _can_delete / _can_edit_players / _can_edit_managers"""
+    """can_rename / can_delete / can_edit_players / can_edit_managers"""
 
     @pytest.mark.parametrize("perm_fn,assoc_kwarg,other_kw", [
-        (_can_rename,        "can_rename",        {"can_delete": False, "can_edit_players": False, "can_edit_managers": False}),
-        (_can_delete,        "can_delete",        {"can_rename": False, "can_edit_players": False, "can_edit_managers": False}),
-        (_can_edit_players,  "can_edit_players",  {"can_rename": False, "can_delete": False, "can_edit_managers": False}),
-        (_can_edit_managers, "can_edit_managers", {"can_rename": False, "can_delete": False, "can_edit_players": False}),
+        (can_rename,        "can_rename",        {"can_delete": False, "can_edit_players": False, "can_edit_managers": False}),
+        (can_delete,        "can_delete",        {"can_rename": False, "can_edit_players": False, "can_edit_managers": False}),
+        (can_edit_players,  "can_edit_players",  {"can_rename": False, "can_delete": False, "can_edit_managers": False}),
+        (can_edit_managers, "can_edit_managers", {"can_rename": False, "can_delete": False, "can_edit_players": False}),
     ])
     def test_team_manager_flag_respected(self, app, perm_fn, assoc_kwarg, other_kw):
         with app.app_context():
@@ -203,10 +203,10 @@ class TestCanPermissions:
             team = _make_team(name="Admin Perm Team")
             admin = MagicMock(spec=Administrator)
             admin.__class__ = Administrator
-            assert _can_rename(admin, team) is True
-            assert _can_delete(admin, team) is True
-            assert _can_edit_players(admin, team) is True
-            assert _can_edit_managers(admin, team) is True
+            assert can_rename(admin, team) is True
+            assert can_delete(admin, team) is True
+            assert can_edit_players(admin, team) is True
+            assert can_edit_managers(admin, team) is True
             db.session.rollback()
 
     def test_unknown_role_cannot(self, app):
@@ -214,20 +214,20 @@ class TestCanPermissions:
             team = _make_team(name="Unknown Role Team")
             unknown = MagicMock()
             unknown.__class__ = object
-            assert _can_rename(unknown, team) is False
-            assert _can_delete(unknown, team) is False
+            assert can_rename(unknown, team) is False
+            assert can_delete(unknown, team) is False
             db.session.rollback()
 
 
 class TestGetPermissions:
-    """_get_permissions(resolved, team) -> dict"""
+    """get_permissions(resolved, team) -> dict"""
 
     def test_admin_gets_all_true(self, app):
         with app.app_context():
             team  = _make_team(name="Perms Dict Team")
             admin = MagicMock(spec=Administrator)
             admin.__class__ = Administrator
-            perms = _get_permissions(admin, team)
+            perms = get_permissions(admin, team)
             assert all(perms.values())
             db.session.rollback()
 
@@ -237,7 +237,7 @@ class TestGetPermissions:
             tm   = _make_team_manager(acc)
             team = _make_team(name="No Assoc Team")
             db.session.refresh(tm)
-            perms = _get_permissions(tm, team)
+            perms = get_permissions(tm, team)
             assert not any(perms.values())
             db.session.rollback()
 
@@ -250,7 +250,7 @@ class TestGetPermissions:
                         can_rename=True, can_delete=False,
                         can_edit_players=True, can_edit_managers=False)
             db.session.refresh(tm)
-            perms = _get_permissions(tm, team)
+            perms = get_permissions(tm, team)
             assert perms["canRename"] is True
             assert perms["canDelete"] is False
             assert perms["canEditPlayers"] is True
@@ -263,7 +263,7 @@ class TestGetPermissions:
 # ===========================================================================
 
 class TestParseHelpers:
-    """_parse_pagination — direct validation without HTTP."""
+    """parse_pagination — direct validation without HTTP."""
 
     @pytest.mark.parametrize("from_v,to_v,sort_v,ok", [
         ("0",  "20", "id",   True),

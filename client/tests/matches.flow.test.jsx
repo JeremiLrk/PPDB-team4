@@ -48,8 +48,10 @@ const pageTextsState = vi.hoisted(() => ({
         report_score: "Add Score",
         adjudicate_title: "Submit decisive score",
         confirm: "Submit",
-        score_finalized: "Score finalized.",
+        score_finalized: "Result confirmed. Elo ratings updated.",
+        score_disputed: "Scores do not match. A club manager will decide the decisive score.",
         score_waiting: "Score submitted. Waiting for the other team.",
+        waiting_for_other_player: "Waiting for other player",
         managed_matches: "Managed matches",
         managed_matches_subtitle: "Matches for teams and clubs you manage.",
         player_matches: "Player matches",
@@ -70,8 +72,10 @@ const pageTextsState = vi.hoisted(() => ({
         status_rejected: "Rejected",
         status_cancelled: "Cancelled",
         status_played: "Played",
+        status_finished: "Finished",
         status_pending: "Pending",
-        score_finalized: "Score finalized.",
+        score_finalized: "Result confirmed. Elo ratings updated.",
+        score_disputed: "Scores do not match. A club manager will decide the decisive score.",
         score_waiting: "Score submitted. Waiting for the other team.",
     },
     club_settings: {
@@ -182,6 +186,69 @@ function renderWithContexts(ui, { lang = "en", currentUser = null, route = "/" }
 }
 
 describe("Match frontend flows", () => {
+    test("player matches render above managed matches", async () => {
+        matchProposalsState.proposals = [
+            {
+                id: 1,
+                proposedByUserId: 9,
+                team1Id: 12,
+                team2Id: 13,
+                team1Name: "Player Team",
+                team2Name: "Other Team",
+                team1ClubId: 1,
+                team2ClubId: 1,
+                team1ClubName: "NetRank Club",
+                team2ClubName: "NetRank Club",
+                team1ClubCity: "Antwerp",
+                team2ClubCity: "Antwerp",
+                team1Contacts: [],
+                team2Contacts: [],
+                status: "pending",
+                scoreStatus: "not_submitted",
+                scoreSubmissions: [],
+                proposedStartAt: "2026-05-14T18:00:00Z",
+                proposedEndAt: "2026-05-14T19:00:00Z",
+            },
+            {
+                id: 2,
+                proposedByUserId: 9,
+                team1Id: 11,
+                team2Id: 14,
+                team1Name: "Managed Team",
+                team2Name: "Other Team",
+                team1ClubId: 1,
+                team2ClubId: 1,
+                team1ClubName: "NetRank Club",
+                team2ClubName: "NetRank Club",
+                team1ClubCity: "Antwerp",
+                team2ClubCity: "Antwerp",
+                team1Contacts: [],
+                team2Contacts: [],
+                status: "pending",
+                scoreStatus: "not_submitted",
+                scoreSubmissions: [],
+                proposedStartAt: "2026-05-15T18:00:00Z",
+                proposedEndAt: "2026-05-15T19:00:00Z",
+            },
+        ];
+
+        renderWithContexts(<MatchProposalsTab />, {
+            currentUser: {
+                id: 7,
+                role: "team_manager",
+                managedTeamIds: [11],
+                clubIds: [1],
+                playerTeamIds: [12],
+            },
+        });
+
+        expect(await screen.findByText("Player matches")).toBeInTheDocument();
+        expect(screen.getByText("Managed matches")).toBeInTheDocument();
+        expect(
+            screen.getByText("Player matches").compareDocumentPosition(screen.getByText("Managed matches")) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+    });
+
     test("weekly proposals tab can accept a proposal and submit a score", async () => {
         const user = userEvent.setup();
 
@@ -195,6 +262,8 @@ describe("Match frontend flows", () => {
                 team2Name: "NetRank Juniors",
                 team1ClubId: 1,
                 team2ClubId: 1,
+                team1ClubName: "NetRank Club",
+                team2ClubName: "NetRank Club",
                 team1ClubCity: "Antwerp",
                 team2ClubCity: "Antwerp",
                 team1Contacts: [],
@@ -214,15 +283,87 @@ describe("Match frontend flows", () => {
                 team2Name: "NetRank Challengers",
                 team1ClubId: 1,
                 team2ClubId: 1,
+                team1ClubName: "NetRank Club",
+                team2ClubName: "NetRank Club",
                 team1ClubCity: "Antwerp",
                 team2ClubCity: "Antwerp",
                 team1Contacts: [],
                 team2Contacts: [],
                 status: "accepted",
                 scoreStatus: "not_submitted",
-                scoreSubmissions: [],
+                scoreSubmissions: [
+                    { id: 5, submittedBy: 8, submittedByRole: "team2_side", scoreTeam1: 2, scoreTeam2: 1 },
+                ],
                 proposedStartAt: "2026-05-16T18:00:00Z",
                 proposedEndAt: "2026-05-16T19:00:00Z",
+            },
+            {
+                id: 3,
+                proposedByUserId: 9,
+                acceptedByUserId: 7,
+                acceptanceStatus: "waiting_for_other",
+                team1Id: 11,
+                team2Id: 14,
+                team1Name: "NetRank Aces",
+                team2Name: "NetRank Masters",
+                team1ClubId: 1,
+                team2ClubId: 1,
+                team1ClubName: "NetRank Club",
+                team2ClubName: "NetRank Club",
+                team1ClubCity: "Antwerp",
+                team2ClubCity: "Antwerp",
+                team1Contacts: [],
+                team2Contacts: [],
+                status: "pending",
+                scoreStatus: "not_submitted",
+                scoreSubmissions: [],
+                proposedStartAt: "2026-05-17T18:00:00Z",
+                proposedEndAt: "2026-05-17T19:00:00Z",
+            },
+            {
+                id: 4,
+                proposedByUserId: 9,
+                team1Id: 11,
+                team2Id: 15,
+                team1Name: "NetRank Aces",
+                team2Name: "NetRank Resolved",
+                team1ClubId: 1,
+                team2ClubId: 1,
+                team1ClubName: "NetRank Club",
+                team2ClubName: "NetRank Club",
+                team1ClubCity: "Antwerp",
+                team2ClubCity: "Antwerp",
+                team1Contacts: [],
+                team2Contacts: [],
+                status: "played",
+                scoreStatus: "resolved",
+                scoreSubmissions: [],
+                proposedStartAt: "2026-05-18T18:00:00Z",
+                proposedEndAt: "2026-05-18T19:00:00Z",
+            },
+            {
+                id: 5,
+                proposedByUserId: 9,
+                team1Id: 11,
+                team2Id: 16,
+                team1Name: "NetRank Aces",
+                team2Name: "NetRank Disputed",
+                team1ClubId: 1,
+                team2ClubId: 1,
+                team1ClubName: "NetRank Club",
+                team2ClubName: "NetRank Club",
+                team1ClubCity: "Antwerp",
+                team2ClubCity: "Antwerp",
+                team1Contacts: [],
+                team2Contacts: [],
+                status: "accepted",
+                scoreStatus: "disputed",
+                scoreSubmissions: [
+                    { id: 6, submittedBy: 7, submittedByRole: "team1_side", scoreTeam1: 2, scoreTeam2: 1 },
+                    { id: 7, submittedBy: 8, submittedByRole: "team2_side", scoreTeam1: 1, scoreTeam2: 2 },
+                ],
+                proposedStartAt: "2026-05-19T18:00:00Z",
+                proposedEndAt: "2026-05-19T19:00:00Z",
             },
         ];
         matchProposalsState.load.mockResolvedValue(undefined);
@@ -240,6 +381,11 @@ describe("Match frontend flows", () => {
         expect(await screen.findByRole("button", { name: "Accept" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: "Add Score" })).toBeInTheDocument();
+        expect(screen.getAllByText(/club:\s*NetRank Club/i).length).toBeGreaterThan(0);
+        expect(screen.getByText("Waiting for other player")).toBeInTheDocument();
+        expect(screen.getByText("Finished")).toBeInTheDocument();
+        expect(screen.getByText("Result confirmed. Elo ratings updated.")).toBeInTheDocument();
+        expect(screen.getByText("Scores do not match. A club manager will decide the decisive score.")).toBeInTheDocument();
 
         await user.click(screen.getByRole("button", { name: "Add Score" }));
         const scoreForm = screen.getByText("Submit decisive score").closest("form");

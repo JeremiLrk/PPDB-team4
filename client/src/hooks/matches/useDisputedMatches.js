@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from "react";
  *
  * @returns {{ matches: object[], total: number, loading: boolean, error: string|null, forbidden: boolean, reload: function }}
  */
-export function useDisputedMatches() {
+export function useDisputedMatches(clubId) {
     const [matches, setMatches]   = useState([]);
     const [total, setTotal]       = useState(0);
     const [loading, setLoading]   = useState(true);
@@ -22,7 +22,11 @@ export function useDisputedMatches() {
         setForbidden(false);
 
         try {
-            const res = await fetch("/api/matches/disputed", {
+            const params = new URLSearchParams();
+            if (clubId) {
+                params.set("club_id", String(clubId));
+            }
+            const res = await fetch(`/api/matches/disputed${params.toString() ? `?${params.toString()}` : ""}`, {
                 credentials: "include",
             });
 
@@ -49,7 +53,7 @@ export function useDisputedMatches() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [clubId]);
 
     useEffect(() => {
         load();

@@ -27,6 +27,14 @@ def loginDemoPlayer(client: FlaskClient):
     assert response.status_code == 200
 
 
+def loginDemoOpponent(client: FlaskClient):
+    response = client.post(
+        "/api/login",
+        json={"email": "robin.vermeulen@example.com", "password": "Password123!"},
+    )
+    assert response.status_code == 200
+
+
 def findPlayerDemoProposal(client: FlaskClient):
     list_response = client.get("/api/matches/proposals")
     assert list_response.status_code == 200
@@ -168,6 +176,16 @@ def test_player_can_see_and_accept_weekly_proposal(seeded_client: FlaskClient):
     assert any(contact["email"] == "jeremilorek@outlook.com" for contact in player_demo_proposal["team1_contacts"])
     assert any(contact["email"] == "robin.vermeulen@example.com" for contact in player_demo_proposal["team2_contacts"])
 
+    accept_response = seeded_client.patch(
+        f"/api/matches/proposals/{player_demo_proposal['id']}/status",
+        json={"status": "accepted"},
+    )
+    assert accept_response.status_code == 200
+    first_accept_payload = accept_response.get_json()["proposal"]
+    assert first_accept_payload["status"] == "pending"
+    assert first_accept_payload["acceptance_status"] == "waiting_for_other"
+
+    loginDemoOpponent(seeded_client)
     accept_response = seeded_client.patch(
         f"/api/matches/proposals/{player_demo_proposal['id']}/status",
         json={"status": "accepted"},

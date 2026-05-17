@@ -106,7 +106,7 @@ def test_create_club_normalizes_city(client, app, monkeypatch):
 
 def test_update_club_requires_real_city(client, app, monkeypatch):
     account_id = _make_account(app, "city-update@test.com")
-    monkeypatch.setattr("server.app.routes.clubs_routes._get_current_user_id_from_cookie", lambda: account_id)
+    monkeypatch.setattr("server.app.routes.clubs_routes.get_current_user_id_from_cookie", lambda: account_id)
 
     with app.app_context():
         club = Club(name="Editable Club", description="test", city="Antwerp", sport_type_id=None)

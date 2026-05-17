@@ -1304,9 +1304,44 @@ def seed_teams_and_users(verbose: bool = True) -> None:
                 accepted_by_user_id=team_managers[accepted_team2.id].id,
                 response_text="Accepted by the opposing team manager for status demo.",
             )
-        total_matches += future_created
+
+        # Add more future fixtures for NetRank Club so the homepage has enough rows to exercise "load more".
+        extra_future_matches = [
+            # Keep the extra fixtures inside the seed window so weekly-proposal tests
+            # still see the latest proposal week within the allowed range.
+            (club_teams[0][1], club_teams[0][2], 0),
+            (club_teams[0][2], club_teams[0][3], 0),
+            (club_teams[0][0], club_teams[0][3], 1),
+        ]
+        extra_created = 0
+        for team1, team2, week_offset in extra_future_matches:
+            extra_week_start = future_week_start + datetime.timedelta(weeks=week_offset)
+            extra_start = datetime.datetime.combine(
+                extra_week_start + datetime.timedelta(days=2),
+                datetime.time(hour=18, minute=0),
+            )
+            extra_end = extra_start + datetime.timedelta(hours=1)
+            if ensure_pending_proposal(
+                week_start_date=extra_week_start,
+                team1_id=team1.id,
+                team2_id=team2.id,
+                proposed_by_user_id=jeremi_acc.id,
+                sport_type_id=jeremi_sport.id,
+                proposed_start_at=extra_start,
+                proposed_end_at=extra_end,
+                location=f"{jeremi_club.name} showcase court",
+            ):
+                extra_created += 1
+                set_match_proposal_accepted(
+                    week_start_date=extra_week_start,
+                    team1_id=team1.id,
+                    team2_id=team2.id,
+                    accepted_by_user_id=team_managers[team2.id].id,
+                    response_text="Accepted for club homepage demo.",
+                )
+        total_matches += future_created + extra_created
         log(
-            f"{TAG}   future NetRank proposals: created={future_created}, "
+            f"{TAG}   future NetRank proposals: created={future_created + extra_created}, "
             f"week_start={future_week_start.isoformat()}",
             verbose,
         )
@@ -1437,6 +1472,184 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             future_match.proposed_end_at = future_match_start + datetime.timedelta(hours=1)
             future_match.location = "NetRank Club Court 1"
             future_match.sport_type_id = tennis.id
+
+        lrk_manager_acc, _ = make_account(
+            "LRK",
+            "Manager",
+            "lrk.j@outlook.com",
+            role_manager,
+            password="qwertyuiop",
+            force_password_update=True,
+        )
+        fake_player_a, _ = make_account(
+            "Manager",
+            "DemoA",
+            "manager.demo.a@example.com",
+            role_player,
+            password="Password123!",
+            force_password_update=True,
+        )
+        fake_player_b, _ = make_account(
+            "Manager",
+            "DemoB",
+            "manager.demo.b@example.com",
+            role_player,
+            password="Password123!",
+            force_password_update=True,
+        )
+        lrk_acc, _ = make_account(
+            "LRK",
+            "Debug",
+            "lrk.j@outlook.com",
+            role_player,
+            password="qwertyuiop",
+            force_password_update=True,
+        )
+
+        # Manager-only demo fixture:
+        # Jeremi is a club owner elsewhere in the seed, but this match should
+        # still resolve through his team-manager relation for Player Demo Club.
+        manager_demo_team_a, _ = make_team(
+            "Manager Demo A",
+            tennis,
+            club_id=player_demo_club.id,
+            verbose=verbose,
+        )
+        manager_demo_team_b, _ = make_team(
+            "Manager Demo B",
+            tennis,
+            club_id=player_demo_club.id,
+            verbose=verbose,
+        )
+        jeremi_manager = owners[0][1]
+        lrk_manager, _ = make_manager(lrk_manager_acc)
+        if not TeamManagerTeam.query.filter_by(team_manager_id=jeremi_manager.id, team_id=manager_demo_team_a.id).first():
+            db.session.add(TeamManagerTeam(
+                team_manager_id=jeremi_manager.id,
+                team_id=manager_demo_team_a.id,
+                can_rename=True,
+                can_delete=True,
+                can_edit_players=True,
+                can_edit_managers=True,
+                can_manage_match=True,
+            ))
+        if not TeamManagerTeam.query.filter_by(team_manager_id=lrk_manager.id, team_id=manager_demo_team_b.id).first():
+            db.session.add(TeamManagerTeam(
+                team_manager_id=lrk_manager.id,
+                team_id=manager_demo_team_b.id,
+                can_rename=True,
+                can_delete=True,
+                can_edit_players=True,
+                can_edit_managers=True,
+                can_manage_match=True,
+            ))
+        db.session.flush()
+
+        manager_demo_ladder, _ = get_or_create_ladder(
+            club_id=player_demo_club.id,
+            name="Manager Demo Singles",
+            description="Demo ladder where Jeremi and LRK are team managers but not club owners.",
+            sport_type_id=tennis.id,
+            ladder_rating_function_id=rating_fn_id,
+            ruleset_id=ruleset_id,
+        )
+        get_or_create_ladder_team(manager_demo_ladder.id, manager_demo_team_a.id, rank=1, rating=1125, matches_played=0)
+        get_or_create_ladder_team(manager_demo_ladder.id, manager_demo_team_b.id, rank=2, rating=1105, matches_played=0)
+        ensure_player_on_team(fake_player_a, manager_demo_team_a)
+        ensure_player_on_team(fake_player_b, manager_demo_team_b)
+        ensure_team_players_in_club(manager_demo_team_a, player_demo_club)
+        ensure_team_players_in_club(manager_demo_team_b, player_demo_club)
+
+        manager_demo_week_start = demo_week_start + datetime.timedelta(days=14)
+        manager_demo_start = datetime.datetime.combine(
+            manager_demo_week_start + datetime.timedelta(days=2),
+            datetime.time(hour=20, minute=0),
+        )
+        manager_demo_proposal = find_match_proposal(
+            manager_demo_week_start,
+            manager_demo_team_a.id,
+            manager_demo_team_b.id,
+        )
+        if manager_demo_proposal is None:
+            _make_proposal(
+                team1_id=manager_demo_team_a.id,
+                team2_id=manager_demo_team_b.id,
+                sport_type_id=tennis.id,
+                ladder_id=manager_demo_ladder.id,
+                proposed_by_user_id=jeremi_acc.id,
+                week_start_date=manager_demo_week_start,
+                proposed_start_at=manager_demo_start,
+                proposed_end_at=manager_demo_start + datetime.timedelta(hours=1),
+                location="Manager Demo Court",
+            )
+            manager_demo_proposal = find_match_proposal(
+                manager_demo_week_start,
+                manager_demo_team_a.id,
+                manager_demo_team_b.id,
+            )
+        if manager_demo_proposal:
+            manager_demo_proposal.proposed_by_user_id = jeremi_acc.id
+            manager_demo_proposal.ladder_id = manager_demo_ladder.id
+            manager_demo_proposal.sport_type_id = tennis.id
+            manager_demo_proposal.proposed_start_at = manager_demo_start
+            manager_demo_proposal.proposed_end_at = manager_demo_start + datetime.timedelta(hours=1)
+            manager_demo_proposal.location = "Manager Demo Court"
+            _make_accepted(manager_demo_proposal, by_user_id=lrk_manager_acc.id)
+        lrk_debug_team, _ = make_team(
+            "LRK Debug Opponent",
+            tennis,
+            club_id=player_demo_club.id,
+            verbose=verbose,
+        )
+        jeremi_debug_team, _ = make_team(
+            "Jeremi Debug Player",
+            tennis,
+            club_id=player_demo_club.id,
+            verbose=verbose,
+        )
+        ensure_player_on_team(jeremi_acc, jeremi_debug_team)
+        ensure_player_on_team(lrk_acc, lrk_debug_team)
+        ensure_team_players_in_club(jeremi_debug_team, player_demo_club)
+        ensure_team_players_in_club(lrk_debug_team, player_demo_club)
+
+        lrk_debug_ladder, _ = get_or_create_ladder(
+            club_id=player_demo_club.id,
+            name="LRK Debug Singles",
+            description="Debug ladder for reproducing match proposal flows between Jeremi and LRK.",
+            sport_type_id=tennis.id,
+            ladder_rating_function_id=rating_fn_id,
+            ruleset_id=ruleset_id,
+        )
+        get_or_create_ladder_team(lrk_debug_ladder.id, jeremi_debug_team.id, rank=1, rating=1100, matches_played=0)
+        get_or_create_ladder_team(lrk_debug_ladder.id, lrk_debug_team.id, rank=2, rating=1100, matches_played=0)
+
+        debug_week_start = demo_week_start
+        debug_start = datetime.datetime.combine(
+            debug_week_start + datetime.timedelta(days=2),
+            datetime.time(hour=19, minute=0),
+        )
+        debug_end = debug_start + datetime.timedelta(hours=1)
+        debug_proposal = _make_proposal(
+            team1_id=jeremi_debug_team.id,
+            team2_id=lrk_debug_team.id,
+            sport_type_id=tennis.id,
+            ladder_id=lrk_debug_ladder.id,
+            proposed_by_user_id=jeremi_acc.id,
+            week_start_date=debug_week_start,
+            proposed_start_at=debug_start,
+            proposed_end_at=debug_end,
+            location="LRK Debug Court",
+        )
+        if not debug_proposal:
+            debug_proposal = find_match_proposal(debug_week_start, jeremi_debug_team.id, lrk_debug_team.id)
+        if debug_proposal:
+            debug_proposal.proposed_by_user_id = jeremi_acc.id
+            debug_proposal.ladder_id = lrk_debug_ladder.id
+            debug_proposal.sport_type_id = tennis.id
+            debug_proposal.proposed_start_at = debug_start
+            debug_proposal.proposed_end_at = debug_end
+            debug_proposal.location = "LRK Debug Court"
+            _make_pending(debug_proposal)
 
         # Join requests for demo
         upsert_club_join_request(owners[0][3].id, opponent_acc.id, days_ago=2)

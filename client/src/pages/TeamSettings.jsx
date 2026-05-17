@@ -31,6 +31,7 @@ function userCanEditManagers(account, team) {
     const roles = account.roles ?? [];
     if (roles.includes("administrator")) return true;
     if (roles.includes("club_owner")) {
+        // Club owners can edit managers for teams in their own club.
         return (team.clubId && account.clubIds?.includes(team.clubId))
             || account.managedTeamIds?.includes(team.id);
     }
@@ -134,12 +135,12 @@ export default function TeamSettings() {
                                     onRenamed={t => setDisplayName(t.name)}
                                 />
                             </div>
-                            <div className={styles.tags}>
-                                <Tag label={texts.settings_title || "Team settings"} accent />
-                                <Tag label={team.clubName ? team.clubName : (texts.independent_team || "Independent")} muted={!team.clubId} />
-                                <Tag label={team.sportName ? team.sportName  : "No sport"}    muted={!team.sportTypeId} />
+                        <div className={styles.tags}>
+                            <Tag label={texts.settings_title || "Team settings"} accent />
+                            <Tag label={team.clubName ? team.clubName : (texts.independent_team || "Independent")} muted={!team.clubId} />
+                            <Tag label={team.sportName ? team.sportName  : "No sport"}    muted={!team.sportTypeId} />
 
-                            </div>
+                        </div>
                         </div>
                         <GearIcon size={32} title={texts.settings_title || "Team settings"} className={styles.settingsIcon} />
                     </div>

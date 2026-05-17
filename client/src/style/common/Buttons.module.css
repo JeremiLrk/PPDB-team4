@@ -171,6 +171,29 @@
     color: #0f172a;
 }
 
+/* Light mode overrides for createTeamPanel */
+:global(html.light) .createTeamPanel {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+    border-color: rgba(71, 85, 105, 0.24);
+    box-shadow: 0 24px 58px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(14, 165, 233, 0.08);
+}
+:global(html.light) .createTeamPanel :global(.formLabel) {
+    color: #0f172a;
+}
+:global(html.light) .createTeamPanel :global(.formInput),
+:global(html.light) .createTeamPanel :global(.formSelect) {
+    background: rgba(255, 255, 255, 0.98);
+    color: #0f172a;
+    border-color: rgba(71, 85, 105, 0.34);
+}
+:global(html.light) .createTeamPanel :global(.formInput::placeholder) {
+    color: #94a3b8;
+}
+:global(html.light) .createTeamPanel :global(.formSelect) {
+    color: #0f172a;
+}
+
+
 /* Close button */
 
 .closeBtn {

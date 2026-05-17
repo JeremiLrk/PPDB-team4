@@ -2,15 +2,18 @@ from flask import Blueprint, jsonify, request
 
 from server.app.decorators import login_required
 from server.app.models.club import Club
+from server.app.models.ladder_team import LadderTeam
+from server.app.models.match import MatchPlayed, MatchProposal, MatchStatus
 from server.app.services.auth_service import verify_user
 from server.app.models.ladder import Ladder
+from server.app.models.team import Team
 from server.extensions import cache, db
 from server.app.models.account import Account, Administrator
 from server.app.models.club_owner import ClubOwner
 from server.app.models.club_owner_club import ClubOwnerClub
 from server.app.models.club_player import ClubPlayer
 from server.app.models.team import TeamManager
-from server.app.routes.dashboard_routes import _get_current_user_id_from_cookie
+from server.app.routes.dashboard_routes import get_current_user_id_from_cookie
 from server.app.services.city_service import resolve_city_label
 from sqlalchemy import or_
 
@@ -164,11 +167,161 @@ def get_club_ladders(club_id: int):
         for l in ladders
     ]), 200
 
+@clubs_bp.get("/clubs/<int:club_id>/home-summary")
+def get_club_home_summary(club_id: int):
+    # One summary payload keeps the club homepage from having to stitch together several separate requests.
+    club = Club.query.filter_by(id=club_id).first()
+    if not club:
+        return jsonify({"message": "Club not found"}), 404
+
+    ladders = Ladder.query.filter_by(club_id=club_id).order_by(Ladder.name.asc()).all()
+    ladder_by_id = {ladder.id: ladder for ladder in ladders}
+
+    # Resolve ladder membership once so we can infer match ladders later even when the proposal itself is sparse.
+    membership_rows = (
+        db.session.query(LadderTeam, Team, Ladder)
+        .join(Team, Team.id == LadderTeam.team_id)
+        .join(Ladder, Ladder.id == LadderTeam.ladder_id)
+        .filter(Ladder.club_id == club_id)
+        .all()
+    )
+
+    team_to_ladders: dict[int, set[int]] = {}
+    team_payloads: dict[int, dict] = {}
+    for ladder_team, team, ladder in membership_rows:
+        team_to_ladders.setdefault(team.id, set()).add(ladder.id)
+        current = team_payloads.get(team.id)
+        if current is None or ladder_team.rating > current["rating"]:
+            team_payloads[team.id] = {
+                "id": team.id,
+                "name": team.name,
+                "rating": ladder_team.rating,
+                "ladder_id": ladder.id,
+                "ladder_name": ladder.name,
+                "ladder_rank": ladder_team.rank,
+            }
+
+    club_team_ids = sorted(team_payloads.keys())
+
+    def resolve_status(status_name: str):
+        return MatchStatus.query.filter(db.func.lower(MatchStatus.name) == status_name.lower()).first()
+
+    accepted_status = resolve_status("accepted")
+    played_status = resolve_status("played")
+    if not accepted_status or not played_status or not club_team_ids:
+        return jsonify({
+            "club": club.serialize(),
+            "ladders": [
+                {"id": ladder.id, "name": ladder.name, "description": ladder.description}
+                for ladder in ladders
+            ],
+            "performers": [],
+            "upcoming_matches": [],
+            "latest_results": [],
+        }), 200
+
+    def infer_ladder(team1_id: int, team2_id: int, proposal_ladder_id: int | None):
+        # Use the explicit ladder first, then fall back to the ladder both teams share.
+        if proposal_ladder_id in ladder_by_id:
+            return ladder_by_id[proposal_ladder_id]
+
+        common_ladders = sorted(team_to_ladders.get(team1_id, set()) & team_to_ladders.get(team2_id, set()))
+        if not common_ladders:
+            return None
+        return ladder_by_id.get(common_ladders[0])
+
+    def serialize_match(match: MatchProposal, *, played: MatchPlayed | None = None):
+        # Flatten the ORM objects into the exact shape the React card layout needs.
+        ladder = infer_ladder(match.team1_id, match.team2_id, match.ladder_id)
+        payload = {
+            "id": match.id,
+            "team1Id": match.team1_id,
+            "team2Id": match.team2_id,
+            "team1Name": match.team1.name if match.team1 else None,
+            "team2Name": match.team2.name if match.team2 else None,
+            "team1ClubName": match.team1.club.name if match.team1 and match.team1.club else None,
+            "team2ClubName": match.team2.club.name if match.team2 and match.team2.club else None,
+            "ladderId": ladder.id if ladder else match.ladder_id,
+            "ladderName": ladder.name if ladder else None,
+            "weekStartDate": match.week_start_date.isoformat() if match.week_start_date else None,
+            "proposedStartAt": match.proposed_start_at.isoformat() + "Z" if match.proposed_start_at else None,
+            "proposedEndAt": match.proposed_end_at.isoformat() + "Z" if match.proposed_end_at else None,
+            "status": match.status.name if match.status else None,
+            "scoreStatus": match.score_status,
+        }
+
+        if played is not None:
+            payload.update({
+                "scoreTeam1": played.score_team1,
+                "scoreTeam2": played.score_team2,
+                "playedAt": played.played_at.isoformat() + "Z" if played.played_at else None,
+                "rating": played.rating,
+            })
+
+        return payload
+
+    # Rank performers server-side so the frontend can just render the already-ordered list.
+    performer_rows = sorted(
+        team_payloads.values(),
+        key=lambda item: (-item["rating"], item["name"].lower(), item["id"]),
+    )
+
+    # Accepted proposals are treated as upcoming even if the score is still disputed later.
+    upcoming_matches = (
+        db.session.query(MatchProposal)
+        .filter(MatchProposal.status_id == accepted_status.id)
+        .filter(
+            or_(
+                MatchProposal.team1_id.in_(club_team_ids),
+                MatchProposal.team2_id.in_(club_team_ids),
+            )
+        )
+        .order_by(
+            MatchProposal.proposed_start_at.asc().nullslast(),
+            MatchProposal.week_start_date.asc().nullslast(),
+            MatchProposal.id.asc(),
+        )
+        .all()
+    )
+
+    # Only resolved played matches are surfaced in the latest-results panel.
+    latest_results = (
+        db.session.query(MatchProposal, MatchPlayed)
+        .join(MatchPlayed, MatchPlayed.id == MatchProposal.id)
+        .filter(MatchProposal.status_id == played_status.id)
+        .filter(
+            or_(
+                MatchProposal.team1_id.in_(club_team_ids),
+                MatchProposal.team2_id.in_(club_team_ids),
+            )
+        )
+        .order_by(
+            MatchPlayed.played_at.desc().nullslast(),
+            MatchProposal.id.desc(),
+        )
+        .limit(3)
+        .all()
+    )
+
+    return jsonify({
+        "club": club.serialize(),
+        "ladders": [
+            {"id": ladder.id, "name": ladder.name, "description": ladder.description}
+            for ladder in ladders
+        ],
+        "performers": performer_rows,
+        "upcoming_matches": [serialize_match(match) for match in upcoming_matches],
+        "latest_results": [
+            serialize_match(match, played=played)
+            for match, played in latest_results
+        ],
+    }), 200
+
 @clubs_bp.put("/clubs/<int:club_id>")
 def update_club(club_id: int):
     data = request.get_json() or {}
 
-    user_id = _get_current_user_id_from_cookie()
+    user_id = get_current_user_id_from_cookie()
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
     
@@ -213,7 +366,7 @@ def update_club(club_id: int):
 
 @clubs_bp.get("/clubs/<int:club_id>/members")
 def get_club_members(club_id: int):
-    user_id = _get_current_user_id_from_cookie()
+    user_id = get_current_user_id_from_cookie()
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
 
@@ -250,7 +403,7 @@ def get_club_members(club_id: int):
 
 @clubs_bp.delete("/clubs/<int:club_id>/members/<int:user_id>")
 def remove_member(club_id: int, user_id: int):
-    current_user_id = _get_current_user_id_from_cookie()
+    current_user_id = get_current_user_id_from_cookie()
     if not current_user_id:
         return jsonify({"message": "Unauthorized"}), 401
 
@@ -301,7 +454,7 @@ def remove_member(club_id: int, user_id: int):
 def create_ladder(club_id: int):
     data = request.get_json() or {}
 
-    user_id = _get_current_user_id_from_cookie()
+    user_id = get_current_user_id_from_cookie()
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
 
@@ -356,7 +509,7 @@ def create_ladder(club_id: int):
 @clubs_bp.get("/clubs/<int:club_id>/owners")
 def get_club_owners(club_id: int):
     """List all owners/managers of a club."""
-    current_user_id = _get_current_user_id_from_cookie()
+    current_user_id = get_current_user_id_from_cookie()
     if not current_user_id:
         return jsonify({"message": "Unauthorized"}), 401
 
@@ -387,7 +540,7 @@ def get_club_owners(club_id: int):
 @clubs_bp.post("/clubs/<int:club_id>/owners")
 def add_club_owner(club_id: int):
     """Add a new owner to the club by their Account ID."""
-    current_user_id = _get_current_user_id_from_cookie()
+    current_user_id = get_current_user_id_from_cookie()
     data = request.get_json() or {}
     target_owner_id = data.get("owner_id")
 
@@ -442,7 +595,7 @@ def add_club_owner(club_id: int):
 @clubs_bp.delete("/clubs/<int:club_id>/owners/<int:owner_id>")
 def remove_club_owner(club_id: int, owner_id: int):
     """Remove an owner from the club."""
-    current_user_id = _get_current_user_id_from_cookie()
+    current_user_id = get_current_user_id_from_cookie()
     if not current_user_id:
         return jsonify({"message": "Unauthorized"}), 401
 
@@ -530,7 +683,7 @@ def delete_club(club_id: int):
     """
     Deletes the club and cleans up owner associations.
     """
-    current_user_id = _get_current_user_id_from_cookie()
+    current_user_id = get_current_user_id_from_cookie()
     if not current_user_id:
         return jsonify({"message": "Unauthorized"}), 401
 

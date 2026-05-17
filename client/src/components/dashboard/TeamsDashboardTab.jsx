@@ -3,6 +3,7 @@ import animationStyles  from "@/style/common/Animation.module.css";
 import panelStyles      from "@/style/common/Panel.module.css";
 import formStyles       from "@/style/common/Forms.module.css";
 import buttonStyles     from "@/style/common/Buttons.module.css";
+import dashboardStyles  from "@/style/dashboard/Dashboard.module.css";
 
 import TeamCard             from "@/components/dashboard/TeamCard.jsx";
 import CreateTeamButton     from "@/components/team/CreateTeamButton.jsx";
@@ -56,13 +57,7 @@ export function TeamsTab({ texts, theme }) {
             <article className={`${panelStyles.panel}`} style={{ gridColumn: "1 / -1" }}>
 
                 {/* Header row */}
-                <div style={{
-                    display:        "flex",
-                    alignItems:     "center",
-                    justifyContent: "space-between",
-                    flexWrap:       "wrap",
-                    gap:            "0.75rem",
-                }}>
+                <div className={dashboardStyles.dashboardSectionHeader}>
                     <h3 className={panelStyles.panelTitle} style={{ margin: 0 }}>
                         {texts?.my_teams || "My Teams"}
                         {total !== null && (
@@ -75,16 +70,10 @@ export function TeamsTab({ texts, theme }) {
                         )}
                     </h3>
 
-                    <div style={{
-                        display:    "flex",
-                        alignItems: "center",
-                        gap:        "0.6rem",
-                        flexWrap:   "wrap",
-                    }}>
+                    <div className={dashboardStyles.dashboardControlGroup}>
                         {/* Sort selector */}
                         <select
-                            className={formStyles.searchInput}
-                            style={{ width: "auto", marginBottom: 0 }}
+                            className={`${formStyles.searchInput} ${dashboardStyles.dashboardSelect}`}
                             value={sort}
                             onChange={e => void load({ sort: e.target.value, pageSize })}
                             disabled={loading}
@@ -99,8 +88,7 @@ export function TeamsTab({ texts, theme }) {
 
                         {/* Page size selector */}
                         <select
-                            className={formStyles.searchInput}
-                            style={{ width: "auto", marginBottom: 0 }}
+                            className={`${formStyles.searchInput} ${dashboardStyles.dashboardSelect}`}
                             value={pageSize}
                             onChange={e => void load({ sort, pageSize: Number(e.target.value) })}
                             disabled={loading}
@@ -138,12 +126,13 @@ export function TeamsTab({ texts, theme }) {
                 {teams.length > 0 && (
                     <ul className={panelStyles.list} style={{ margin: 0, padding: 0 }}>
                         {teams.map(team => (
-                            <TeamCard
-                                key={team.id}
-                                team={team}
-                                texts={texts}
-                                currentUser={currentUser}
-                            />
+                        <TeamCard
+                            key={team.id}
+                            team={team}
+                            texts={texts}
+                            currentUser={currentUser}
+                            theme={theme}
+                        />
                         ))}
                     </ul>
                 )}
@@ -157,7 +146,7 @@ export function TeamsTab({ texts, theme }) {
 
                 {/* Load more */}
                 {!loading && hasMore && teams.length > 0 && (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div className={dashboardStyles.dashboardFooterRow}>
                         <span className={commonStyles.muted} style={{ fontSize: "0.82rem" }}>
                             {texts?.showing || "Weergegeven"} {teams.length}
                             {total !== null ? ` / ${total}` : ""}

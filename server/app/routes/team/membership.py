@@ -10,19 +10,19 @@ from server.app.utils.promote import promote_to_team_manager, promote_to_player
 from server.app.models.match import MatchProposal, MatchStatus, cancel_unplayed_matches_for_team
 from server.app.models.ladder_team import LadderTeam
 from ._helpers import (
-    _get_team_or_404,
-    _resolve_target,
-    _search_accounts,
-    _handle_team_after_last_manager_removed,
-    _ladders_exceeding_max_after_add,
-    _ladders_violating_min_after_remove,
+    get_team_or_404,
+    resolve_target,
+    search_accounts,
+    handle_team_after_last_manager_removed,
+    ladders_exceeding_max_after_add,
+    ladders_violating_min_after_remove,
 )
 from ._permissions import (
-    _can_edit_players_or_403,
-    _can_edit_managers_or_403,
-    _get_permissions,
-    _is_admin,
-    _is_owner_of_team_club,
+    can_edit_players_or_403,
+    can_edit_managers_or_403,
+    get_permissions,
+    is_admin,
+    is_owner_of_team_club,
 )
 from .requests import get_team_players, get_team_managers
 
@@ -33,15 +33,15 @@ membership_bp = Blueprint("team_membership", __name__)
 @login_required
 def add_manager_to_team(account: Account, team_id: int) -> tuple[Response, int]:
     """POST /api/teams/<team_id>/managers — Add a manager."""
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_managers_or_403(account.resolved_role, team)
+    can_edit_managers_or_403(account.resolved_role, team)
 
     data = request.get_json(silent=True)
     if data is None:
         abort(400, description="No JSON body provided.")
 
-    target = _resolve_target(data.get("accountId"))
+    target = resolve_target(data.get("accountId"))
 
     if target.team_manager:
         already = any(a.team_id == team.id for a in target.team_manager.team_associations)
@@ -60,8 +60,8 @@ def add_manager_to_team(account: Account, team_id: int) -> tuple[Response, int]:
     # Admins and club owners always have all permissions, so these checks only
     # apply to regular team managers.
     resolved = account.resolved_role
-    if not (_is_admin(resolved) or _is_owner_of_team_club(resolved, team)):
-        caller_perms = _get_permissions(resolved, team)
+    if not (is_admin(resolved) or is_owner_of_team_club(resolved, team)):
+        caller_perms = get_permissions(resolved, team)
         if can_rename and not caller_perms["canRename"]:
             abort(403, description="Forbidden: you cannot grant canRename - you do not have this permission yourself.")
         if can_delete and not caller_perms["canDelete"]:
@@ -97,11 +97,11 @@ def remove_manager_from_team(account: Account, team_id: int, account_id: int):
 
     resolved = account.resolved_role
 
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_managers_or_403(resolved, team)
+    can_edit_managers_or_403(resolved, team)
 
-    target = _resolve_target(account_id)
+    target = resolve_target(account_id)
 
     assoc = next(
         (a for a in (target.team_manager.team_associations if target.team_manager else [])
@@ -114,7 +114,7 @@ def remove_manager_from_team(account: Account, team_id: int, account_id: int):
     db.session.delete(assoc)
     db.session.flush()
 
-    _handle_team_after_last_manager_removed(team)
+    handle_team_after_last_manager_removed(team)
     db.session.commit()
 
     cache.delete_memoized(get_team_managers, team_id)
@@ -136,16 +136,16 @@ def add_player_to_team(account: Account, team_id: int):
     affected ladder and cancels all of its unplayed matches there before
     creating the join request.
     """
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
-    _can_edit_players_or_403(resolved, team)
+    can_edit_players_or_403(resolved, team)
 
     data = request.get_json(silent=True)
     if data is None:
         abort(400, description="No JSON body provided.")
 
-    target = _resolve_target(data.get("accountId"))
+    target = resolve_target(data.get("accountId"))
 
     if target.player:
         already = any(a.team_id == team.id for a in target.player.playerteam_associations)
@@ -166,7 +166,7 @@ def add_player_to_team(account: Account, team_id: int):
         abort(409, description="Join request for this player to this team already exists.")
 
     # Determine which ladders would exceed max roster size after the addition.
-    exceeding_ladders = _ladders_exceeding_max_after_add(team_id)
+    exceeding_ladders = ladders_exceeding_max_after_add(team_id)
 
     if exceeding_ladders:
         confirm = data.get("confirmDropLadders", False) is True
@@ -230,12 +230,12 @@ def remove_player_from_team(account: Account, team_id: int, account_id: int):
     from every affected ladder and cancels all of its unplayed matches there
     before removing the player.
     """
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
-    _can_edit_players_or_403(resolved, team)
+    can_edit_players_or_403(resolved, team)
 
-    target = _resolve_target(account_id)
+    target = resolve_target(account_id)
 
     assoc = next(
         (a for a in (target.player.playerteam_associations if target.player else [])
@@ -246,7 +246,7 @@ def remove_player_from_team(account: Account, team_id: int, account_id: int):
         abort(404, description="This account is not a player in this team.")
 
     # Determine which ladders would violate minimum roster size after the removal.
-    violating_ladders = _ladders_violating_min_after_remove(team_id)
+    violating_ladders = ladders_violating_min_after_remove(team_id)
 
     if violating_ladders:
         data_del = request.get_json(silent=True) or {}

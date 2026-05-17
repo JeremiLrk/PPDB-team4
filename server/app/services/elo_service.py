@@ -1,3 +1,11 @@
+"""
+Elo-style rating updates for ladder matches.
+
+The service keeps ladder ratings stable by capping very large rating gaps,
+using a different K-factor for new, normal, and elite teams, and then
+recomputing ladder ranks after each result is applied.
+"""
+
 import math
 
 from sqlalchemy.orm import aliased
@@ -13,18 +21,22 @@ DEFAULT_RATING = 1000
 
 
 def roundHalfAwayFromZero(value: float) -> int:
+    """Round a float to the nearest integer using half-away-from-zero."""
     if value >= 0:
         return int(math.floor(value + 0.5))
     return int(math.ceil(value - 0.5))
 
 
 def expectedScore(player_rating: int, opponent_rating: int) -> float:
+    """Return the expected score for the rating gap between two teams."""
     # Cap the rating gap so extreme mismatches do not produce huge swings.
     diff = max(-ELO_DIFFERENCE_CAP, min(ELO_DIFFERENCE_CAP, opponent_rating - player_rating))
+    # A larger negative diff means the player is expected to win more often.
     return 1 / (1 + (ELO_BASE ** (diff / ELO_SCALE)))
 
 
 def kFactor(rating: int, matches_played: int) -> int:
+    """Return the Elo K-factor based on experience and rating strength."""
     # Newer teams move faster; very strong established teams move slower.
     if matches_played < 30:
         return 40
@@ -34,6 +46,7 @@ def kFactor(rating: int, matches_played: int) -> int:
 
 
 def actualScore(score_for: int, score_against: int) -> float:
+    """Convert a final score into the Elo win/draw/loss scale."""
     # Convert the final result into the Elo win/loss/draw scale.
     if score_for > score_against:
         return 1.0
@@ -43,6 +56,7 @@ def actualScore(score_for: int, score_against: int) -> float:
 
 
 def recomputeLadderRanks(ladder_id: int) -> None:
+    """Refresh the ladder ordering after rating changes."""
     # Rank is derived from rating, so any rating change requires a resort.
     rows = (
         LadderTeam.query
@@ -78,6 +92,7 @@ def apply_elo_for_match_result(team1_id: int, team2_id: int, score_team1: int, s
     if not ladder_pairs:
         return []
 
+    # Compute the actual result once and reuse it for every ladder update.
     score1 = actualScore(score_team1, score_team2)
     score2 = actualScore(score_team2, score_team1)
     updates = []
@@ -98,6 +113,7 @@ def apply_elo_for_match_result(team1_id: int, team2_id: int, score_team1: int, s
         delta1 = roundHalfAwayFromZero(k1 * (score1 - expected1))
         delta2 = roundHalfAwayFromZero(k2 * (score2 - expected2))
 
+        # Update both ladder rows before recomputing the rank order.
         row1.rating = rating1 + delta1
         row2.rating = rating2 + delta2
         row1.matches_played = played1 + 1

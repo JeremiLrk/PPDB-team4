@@ -10,10 +10,10 @@ Submission lifecycle
 3a. Both scores agree → finalize_match() is called automatically,
     MatchPlayed is written, status becomes PLAYED.
 3b. Scores disagree  -> match enters 'disputed' state.
-4. A ladder admin (ClubOwner of the ladder's club, or Administrator)
-   submits the decisive score -> role 'ladder_admin'
-5. finalize_match() is called with the admin's score,
-   MatchPlayed is written, status becomes PLAYED.
+4. An authoritative submitter (club manager/admin, or one account that
+   can manage both teams) submits a score -> role 'ladder_admin'
+5. finalize_match() is called immediately with that score, making it the
+   authoritative result.
 
 MatchPlayed semantics
 ---------------------
@@ -93,12 +93,6 @@ def submit_score(
             status_code=409,
         )
 
-    if role == SubmissionRole.LADDER_ADMIN and not _submissions_disagree(proposal):
-        raise ScoreSubmissionError(
-            "Ladder-admin adjudication is only allowed when team sides disagree.",
-            status_code=409,
-        )
-
     submission = MatchScoreSubmission(
         match_id=proposal.id,
         submitted_by=account.id,
@@ -172,14 +166,13 @@ def _resolve_role(proposal: MatchProposal, account: Account) -> SubmissionRole:
     Priority: ladder_admin > team1_side > team2_side.
     Raises ScoreSubmissionError if account has no valid role.
     """
-    from server.app.routes.matcher._permissions import _can_manage_match
+    from server.app.routes.matcher._permissions import can_manage_match
 
     resolved = account.resolved_role
 
-    # ladder_admin takes priority over team-side roles (see docstring).
-    # The submit_score guard enforces that ladder_admin submissions are only
-    # accepted when scores are actually disputed.
-    if proposal.can_adjudicate_score(account):
+    # ladder_admin covers club managers/admins as well as the rare case where
+    # one account can legitimately speak for both sides of the fixture.
+    if proposal.can_adjudicate_score(account) or _can_score_for_both_teams(account, proposal, resolved=resolved):
         return SubmissionRole.LADDER_ADMIN
 
     # team1_side / team2_side
@@ -200,15 +193,30 @@ def _can_score_for_team(account: Account, team, *, resolved=None) -> bool:
     Team scores can be submitted by the usual managers/owners as well as by
     players who are actually on the team.
     """
-    from server.app.routes.matcher._permissions import _can_manage_match
+    from server.app.routes.matcher._permissions import can_manage_match
 
     if resolved is None:
         resolved = account.resolved_role
 
-    if _can_manage_match(resolved, team):
+    if can_manage_match(resolved, team):
+        return True
+
+    if account.team_manager is not None and account.team_manager.can_manage_match_in(team):
         return True
 
     return account.player is not None and team in account.player.teams
+
+
+def _can_score_for_both_teams(account: Account, proposal: MatchProposal, *, resolved=None) -> bool:
+    """True when the account may act for both sides of the fixture.
+
+    This is the "team leader of both teams" path from the club manager rule:
+    one submission is authoritative and can finalize immediately.
+    """
+    return (
+        _can_score_for_team(account, proposal.team1, resolved=resolved)
+        and _can_score_for_team(account, proposal.team2, resolved=resolved)
+    )
 
 
 def _try_finalize(proposal: MatchProposal) -> bool:

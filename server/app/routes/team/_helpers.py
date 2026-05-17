@@ -3,7 +3,6 @@ from typing import Any
 from flask import abort
 from sqlalchemy import func
 
-from server.app.routes.team._permissions import _is_admin
 from server.extensions import db, cache
 from server.app.models.account import Account, AccountRole
 from server.app.models.team import Team, TeamManagerTeam, TeamManager
@@ -13,14 +12,14 @@ from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
 
 
-def _get_team_or_404(team_id: int) -> Team:
+def get_team_or_404(team_id: int) -> Team:
     team = Team.query.get(team_id)
     if not team:
         abort(404, description="Team not found.")
     return team
 
 
-def _resolve_target(account_id: int) -> Account:
+def resolve_target(account_id: int) -> Account:
     """Finds an account by ID or returns an error."""
     if not account_id:
         abort(422, description="Field 'accountId' is required.")
@@ -30,7 +29,7 @@ def _resolve_target(account_id: int) -> Account:
     return target
 
 
-def _parse_pagination(args) -> tuple[int, int, Any]:
+def parse_pagination(args) -> tuple[int, int, Any]:
     """
     Retrieves pagination parameters from the query string.
     ?from=0&to=20&sort=name|id
@@ -58,7 +57,7 @@ def _parse_pagination(args) -> tuple[int, int, Any]:
     return offset, limit, sort_col
 
 
-def _handle_team_after_last_manager_removed(team: Team) -> None:
+def handle_team_after_last_manager_removed(team: Team) -> None:
     """
     Called after the last manager is removed from a team WITHOUT a club.
     Promotes a random player to manager, or removes the team.
@@ -98,7 +97,7 @@ def _handle_team_after_last_manager_removed(team: Team) -> None:
         db.session.delete(team)
 
 
-def _search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
+def search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
     """
     Search for accounts containing the string “q”, excluding players who have already been added.
 
@@ -170,7 +169,7 @@ def _search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
 # count confirmed (accepted) players in a team
 # ---------------------------------------------------------------------------
 
-def _count_confirmed_players(team_id: int) -> int:
+def count_confirmed_players(team_id: int) -> int:
     """Returns the number of players who are already members of the team."""
     return (
         db.session.query(func.count())
@@ -184,13 +183,13 @@ def _count_confirmed_players(team_id: int) -> int:
 # count effective players (confirmed + pending join requests)
 # ---------------------------------------------------------------------------
 
-def _count_effective_players(team_id: int) -> int:
+def count_effective_players(team_id: int) -> int:
     """Returns confirmed players + players with a pending join request.
 
     This reflects the realistic future roster size once all pending
     requests are accepted.
     """
-    confirmed = _count_confirmed_players(team_id)
+    confirmed = count_confirmed_players(team_id)
 
     pending = (
         db.session.query(func.count())
@@ -209,14 +208,14 @@ def _count_effective_players(team_id: int) -> int:
 # ladders that would exceed max players after adding one more
 # ---------------------------------------------------------------------------
 
-def _ladders_exceeding_max_after_add(team_id: int) -> list[Ladder]:
+def ladders_exceeding_max_after_add(team_id: int) -> list[Ladder]:
     """Returns every Ladder the team participates in where adding one more
     player would exceed the sport type's maximum_number_of_players_per_team.
 
-    Uses _count_effective_players(team_id) + 1 as the projected roster size,
+    Uses count_effective_players(team_id) + 1 as the projected roster size,
     so pending join requests are already accounted for.
     """
-    projected = _count_effective_players(team_id) + 1
+    projected = count_effective_players(team_id) + 1
 
     team = db.session.get(Team, team_id)
     if team is None or team.sport_type is None:
@@ -244,14 +243,14 @@ def _ladders_exceeding_max_after_add(team_id: int) -> list[Ladder]:
 # Helper : ladders that would violate min players after removing one
 # ---------------------------------------------------------------------------
 
-def _ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
+def ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
     """Returns every Ladder the team participates in where removing one player
     would drop below the sport type's minimum_number_of_players_on_a_team.
 
-    Uses _count_effective_players(team_id) - 1 as the projected roster size,
+    Uses count_effective_players(team_id) - 1 as the projected roster size,
     so pending join requests are already accounted for.
     """
-    projected = _count_effective_players(team_id) - 1
+    projected = count_effective_players(team_id) - 1
 
     team = db.session.get(Team, team_id)
     if team is None or team.sport_type is None:
@@ -275,7 +274,7 @@ def _ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
 
     return ladders
 
-def _delete_teams_cache_keys():
+def delete_teams_cache_keys():
     """Gets raw redis client and deletes all cache keys for the team listing page"""
     redis_client = getattr(cache.cache, "_write_client", None) or getattr(cache.cache, "_client", None)
     if redis_client is None:
