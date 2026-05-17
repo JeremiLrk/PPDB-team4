@@ -4,7 +4,7 @@ from flask import abort
 from sqlalchemy import func
 
 from server.app.routes.team._permissions import _is_admin
-from server.extensions import db
+from server.extensions import db, cache
 from server.app.models.account import Account, AccountRole
 from server.app.models.team import Team, TeamManagerTeam, TeamManager
 from server.app.models.player import PlayerTeam
@@ -274,3 +274,10 @@ def _ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
     )
 
     return ladders
+
+def _delete_teams_cache_keys():
+    """Gets raw redis client and deletes all cache keys for the team listing page"""
+    redis_client = getattr(cache.cache, "_write_client", getattr(cache.cache, "_client", None))
+    keys_to_delete = redis_client.keys("ppdb:/api/teams*")
+    if keys_to_delete:
+        redis_client.delete(*keys_to_delete)

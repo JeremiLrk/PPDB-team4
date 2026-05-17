@@ -7,6 +7,7 @@ from server.app.models.club import Club
 from pathlib import Path
 from dotenv import load_dotenv
 from server.app.services.city_service import search_cities
+from server.extensions import cache
 
 base_dir = Path(__file__).resolve().parent.parent.parent 
 env_path = base_dir / ".env"
@@ -130,11 +131,18 @@ def get_weather(club_id):
     if not club.city:
         return jsonify({"error": "This club has no city assigned"}), 400
 
+    normalized_city = club.city.strip().lower().replace(" ", "_")
+    target_date = _parse_target_date(request.args.get("target_dt"))
+
+    cache_key = f"weather:{normalized_city}:{target_date}"
+    cached_data = cache.get(cache_key)
+    if cached_data is not None:
+        return jsonify(cached_data)
+
     key = os.environ.get("WEATHER_API_KEY")
     if not key:
         return jsonify({"error": "WEATHER_API_KEY is not configured."}), 500
 
-    target_date = _parse_target_date(request.args.get("target_dt"))
     resolved = _resolve_coordinates(club.city)
     if not resolved:
         return jsonify({"error": "Could not resolve weather location."}), 404
@@ -147,6 +155,8 @@ def get_weather(club_id):
     }
 
     try:
+        payload_to_return = None
+
         if target_date is None:
             response = requests.get(OPENWEATHER_CURRENT_URL, params=params, timeout=10)
 
@@ -160,55 +170,70 @@ def get_weather(club_id):
             payload = response.json()
             if isinstance(payload, dict):
                 payload["name"] = resolved["label"]
-            return payload
+                payload_to_return = payload
+        else:
+            auth_error = None
+            for url, params_override, selector in (
+                (
+                    OPENWEATHER_ONECALL_URL,
+                    {
+                        "lat": resolved["lat"],
+                        "lon": resolved["lon"],
+                        "exclude": "current,minutely,hourly,alerts",
+                        "appid": key,
+                        "units": "metric",
+                    },
+                    _select_daily_forecast,
+                ),
+                (
+                    OPENWEATHER_FORECAST_URL,
+                    {
+                        "lat": resolved["lat"],
+                        "lon": resolved["lon"],
+                        "appid": key,
+                        "units": "metric",
+                    },
+                    _select_three_hour_forecast,
+                ),
+            ):
+                response = requests.get(url, params=params_override, timeout=10)
 
-        auth_error = None
-        for url, params_override, selector in (
-            (
-                OPENWEATHER_ONECALL_URL,
-                {
-                    "lat": resolved["lat"],
-                    "lon": resolved["lon"],
-                    "exclude": "current,minutely,hourly,alerts",
-                    "appid": key,
-                    "units": "metric",
-                },
-                _select_daily_forecast,
-            ),
-            (
-                OPENWEATHER_FORECAST_URL,
-                {
-                    "lat": resolved["lat"],
-                    "lon": resolved["lon"],
-                    "appid": key,
-                    "units": "metric",
-                },
-                _select_three_hour_forecast,
-            ),
-        ):
-            response = requests.get(url, params=params_override, timeout=10)
+                if response.status_code in {401, 403}:
+                    auth_error = response
+                    continue
 
-            if response.status_code in {401, 403}:
-                auth_error = response
-                continue
+                response.raise_for_status()
+                payload = response.json()
+                if not isinstance(payload, dict):
+                    continue
 
-            response.raise_for_status()
-            payload = response.json()
-            if not isinstance(payload, dict):
-                continue
+                forecast = selector(payload, target_date)
+                if forecast is not None:
+                    forecast["name"] = resolved["label"]
+                    payload_to_return = forecast
+                    break
 
-            forecast = selector(payload, target_date)
-            if forecast is not None:
-                forecast["name"] = resolved["label"]
-                return forecast
+            if payload_to_return is None and auth_error is not None:
+                return {
+                    "error": "Activation Error",
+                    "message": "API Key unauthorized. Check .env loading or activation status."
+                }, auth_error.status_code
 
-        if auth_error is not None:
-            return {
-                "error": "Activation Error",
-                "message": "API Key unauthorized. Check .env loading or activation status."
-            }, auth_error.status_code
+        if not payload_to_return:
+            return jsonify({"error": "Weather forecast unavailable for that proposal date."}), 404
 
-        return jsonify({"error": "Weather forecast unavailable for that proposal date."}), 404
+        if target_date is None:
+            timeout = 900  # 15 minutes for live weather
+        else:
+            days_away = (target_date - date.today()).days
+            if days_away <= 1:
+                timeout = 1800  # 30 minutes for today/tomorrow
+            else:
+                timeout = 14400  # 4 hours for future games
+
+        cache.set(cache_key, payload_to_return, timeout=timeout)
+
+        return jsonify(payload_to_return)
 
     except requests.exceptions.HTTPError as err:
         return {"error": str(err)}, getattr(err.response, "status_code", 502)

@@ -4,7 +4,7 @@ from server.app.models.account import Account, Administrator
 from server.app.models.team import Team, TeamManagerTeam, TeamManager
 from server.app.decorators.login_required import login_required
 from server.app.utils.promote import promote_to_team_manager
-from ._helpers import _get_team_or_404, _parse_pagination
+from ._helpers import _get_team_or_404, _parse_pagination, _delete_teams_cache_keys
 from ._permissions import require_can_delete_team, require_can_rename_team
 from ...models.club_owner import ClubOwner
 
@@ -114,7 +114,7 @@ def create_team(account: Account):
         )
         db.session.add(assoc)
 
-    cache.delete("teams_list")
+    _delete_teams_cache_keys()
 
     db.session.commit()
     return jsonify({
@@ -134,7 +134,7 @@ def delete_team(account: Account, team_id: int):
     db.session.commit()
 
     cache.delete_memoized(get_team, team_id)
-    cache.delete("teams_list")
+    _delete_teams_cache_keys()
 
     return jsonify({
         "message": "Team deleted successfully."
@@ -170,7 +170,7 @@ def rename_team(account: Account, team_id: int):
     db.session.commit()
 
     cache.delete_memoized(get_team, team_id)
-    cache.delete("teams_list")
+    _delete_teams_cache_keys()
 
     return jsonify({
         "message": "Team renamed successfully.",
