@@ -1,3 +1,5 @@
+// Club settings UI component for ClubGeneral.
+
 import { useState } from "react";
 import styles from "@/style/ClubSettings.module.css";
 import CityAutocompleteField from "@/components/common/CityAutocompleteField.jsx";
@@ -13,21 +15,29 @@ export function ClubGeneral({
     handleDeleteClub,
     texts = {},
 }) {
+    /*
+     Owns the general club settings form and delete modal.
+    */
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [confirmName, setConfirmName] = useState("");
 
     const canDelete = typeof handleDeleteClub === "function";
 
     function closeDeleteModal() {
+        /*
+         Closes the delete confirmation modal and clears the draft name.
+        */
         setShowDeleteModal(false);
         setConfirmName("");
     }
 
     function confirmDelete() {
+        /*
+         Deletes the club only when the typed confirmation matches.
+        */
         if (!canDelete || confirmName !== (formData.name || "")) {
             return;
         }
-
         handleDeleteClub();
         closeDeleteModal();
     }

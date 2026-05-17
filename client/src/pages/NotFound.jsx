@@ -1,3 +1,5 @@
+// Page container for NotFound.
+
 import React from "react"
 import { Link } from "react-router-dom"
 import {useLangContext} from "@/context/useLangContext.jsx";

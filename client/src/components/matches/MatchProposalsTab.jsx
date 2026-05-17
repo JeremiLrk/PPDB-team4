@@ -1,3 +1,5 @@
+// Match workflow UI component for MatchProposalsTab.
+
 import { useMemo, useState } from "react";
 import animationStyles from "@/style/common/Animation.module.css";
 import buttonStyles from "@/style/common/Buttons.module.css";
@@ -12,6 +14,9 @@ import { useTeams } from "@/hooks/teams/useTeams.js";
 import CreateMatchButton from "@/components/matches/CreateMatchButton.jsx";
 
 function toIdSet(values) {
+    /*
+     Normalizes a value list into a numeric Set.
+    */
     return new Set(
         (Array.isArray(values) ? values : [])
             .map((value) => Number(value))
@@ -20,10 +25,14 @@ function toIdSet(values) {
 }
 
 function proposalIsManaged(proposal, currentUser) {
+    /*
+     Checks whether the current user manages either side of the proposal.
+    */
     if ((currentUser?.role || "").toLowerCase() === "administrator") {
         return true;
     }
 
+    // Managed proposals are visible when the user controls either team or club.
     const managedTeamIds = toIdSet(currentUser?.managedTeamIds);
     const managedClubIds = toIdSet(currentUser?.clubIds);
 
@@ -36,6 +45,9 @@ function proposalIsManaged(proposal, currentUser) {
 }
 
 function proposalIsPlayer(proposal, currentUser) {
+    /*
+     Checks whether the current user plays on either team.
+    */
     const playerTeamIds = toIdSet(currentUser?.playerTeamIds);
     return (
         playerTeamIds.has(Number(proposal.team1Id))
@@ -44,11 +56,15 @@ function proposalIsPlayer(proposal, currentUser) {
 }
 
 function proposalCanUpdate(proposal, currentUser) {
+    /*
+     Checks whether the current user may edit or score the proposal.
+    */
     if ((currentUser?.role || "").toLowerCase() === "administrator") {
         return true;
     }
 
     if (Number(currentUser?.id) === Number(proposal.proposedByUserId)) {
+        // The creator can always manage their own proposal.
         return true;
     }
 
@@ -72,6 +88,9 @@ export default function MatchProposalsTab() {
     const texts = usePageTexts("matches", lang);
     const dashboardTexts = usePageTexts("dashboard", lang);
     const { currentUser, loadingUser } = useCurrentUserContext();
+    /*
+     Owns the tab-local controls for archived view and inline scoring.
+    */
     const [showArchived, setShowArchived] = useState(false);
     const [reportingMatchId, setReportingMatchId] = useState(null);
     const [scoreValues, setScoreValues] = useState({ team1: "", team2: "" });
@@ -90,6 +109,7 @@ export default function MatchProposalsTab() {
         loading: managedLoading,
     } = useTeams({ endpoint: "/api/teams/my" });
 
+    // Split the list so player-facing matches and management-facing matches do not get mixed together.
     const managedProposals = useMemo(
         () => proposals.filter((proposal) => proposalIsManaged(proposal, currentUser)),
         [currentUser, proposals],
@@ -98,24 +118,35 @@ export default function MatchProposalsTab() {
         () => proposals.filter((proposal) => proposalIsPlayer(proposal, currentUser)),
         [currentUser, proposals],
     );
+    // Split the list so players see their own matches before the broader management set.
     const canUpdateProposal = (proposal) => proposalCanUpdate(proposal, currentUser);
     const roleLoading = loadingUser && !currentUser;
 
     function handleMatchCreated() {
+        /*
+         Refreshes the proposal lists after a new match is created.
+        */
         void load();
     }
 
     function openScoring(matchId) {
+        /*
+         Opens the inline score form for one proposal.
+        */
         setReportingMatchId(matchId);
         setScoreValues({ team1: "", team2: "" });
     }
 
     async function submitScore(event, matchId = reportingMatchId) {
+        /*
+         Validates and submits the active proposal score.
+        */
         event.preventDefault();
 
         const scoreTeam1 = Number.parseInt(scoreValues.team1, 10);
         const scoreTeam2 = Number.parseInt(scoreValues.team2, 10);
         if (!Number.isInteger(scoreTeam1) || !Number.isInteger(scoreTeam2) || scoreTeam1 < 0 || scoreTeam2 < 0) {
+            // Invalid input is ignored so the form can keep its current values.
             return;
         }
 
@@ -134,8 +165,10 @@ export default function MatchProposalsTab() {
             if (!response.ok) {
                 throw new Error(payload?.message || "Could not submit score.");
             }
+            // Reset the form only after the backend accepts the decisive score.
             setReportingMatchId(null);
             setScoreValues({ team1: "", team2: "" });
+            // Refresh the lists so the finalized status and ladder updates are visible immediately.
             await load();
         } finally {
             setScoreSubmitting(false);
@@ -164,15 +197,16 @@ export default function MatchProposalsTab() {
                     </h3>
                 </div>
 
-                <div className={styles.toolbarActions}>
-                    <button
-                        className={buttonStyles.primaryButton}
-                        type="button"
-                        onClick={load}
-                        disabled={loading}
-                    >
-                        {refreshLabel}
-                    </button>
+            <div className={styles.toolbarActions}>
+                <button
+                    className={buttonStyles.primaryButton}
+                    type="button"
+                    onClick={load}
+                    disabled={loading}
+                >
+                    {/* Reloading proposals is cheap enough to keep as a direct manual action. */}
+                    {refreshLabel}
+                </button>
 
                     <button
                         className={buttonStyles.primaryButton}
@@ -180,10 +214,12 @@ export default function MatchProposalsTab() {
                         onClick={() => setShowArchived((current) => !current)}
                         disabled={loading}
                     >
+                        {/* Toggle just switches the server filter between active and archived views. */}
                         {showArchived ? showActiveLabel : showArchivedLabel}
                     </button>
 
                     {!managedLoading ? (
+                        // The create button only appears once the managed team list is ready.
                         <CreateMatchButton
                             managedTeams={managedTeams}
                             onCreated={handleMatchCreated}
@@ -211,34 +247,7 @@ export default function MatchProposalsTab() {
 
             {!loading && !roleLoading && !error ? (
                 <div className={styles.sections}>
-                    <section className={styles.section}>
-                        <SectionHeader
-                            title={managedTitle}
-                            subtitle={managedSubtitle}
-                            count={managedProposals.length}
-                        />
-                        <MatchProposalList
-                            proposals={managedProposals}
-                            loading={false}
-                            submitting={submitting}
-                            onReload={load}
-                            onStatusChange={setProposalStatus}
-                            onReportScore={openScoring}
-                            reportingMatchId={reportingMatchId}
-                            scoreValues={scoreValues}
-                            onScoreChange={(field, value) =>
-                                setScoreValues((current) => ({ ...current, [field]: value }))
-                            }
-                            onScoreSubmit={submitScore}
-                            onCancelScore={() => setReportingMatchId(null)}
-                            scoreSubmitting={scoreSubmitting}
-                            canUpdateProposal={canUpdateProposal}
-                            texts={texts}
-                            statusTexts={dashboardTexts}
-                            emptyText={managedEmptyLabel}
-                        />
-                    </section>
-
+                    {/* Player-owned matches stay above managed matches so the tab reflects what the user is directly involved in first. */}
                     <section className={styles.section}>
                         <SectionHeader
                             title={playerTitle}
@@ -261,9 +270,39 @@ export default function MatchProposalsTab() {
                             onCancelScore={() => setReportingMatchId(null)}
                             scoreSubmitting={scoreSubmitting}
                             canUpdateProposal={canUpdateProposal}
+                            currentUserId={currentUser?.id}
                             texts={texts}
                             statusTexts={dashboardTexts}
                             emptyText={playerEmptyLabel}
+                        />
+                    </section>
+
+                    <section className={styles.section}>
+                        <SectionHeader
+                            title={managedTitle}
+                            subtitle={managedSubtitle}
+                            count={managedProposals.length}
+                        />
+                        <MatchProposalList
+                            proposals={managedProposals}
+                            loading={false}
+                            submitting={submitting}
+                            onReload={load}
+                            onStatusChange={setProposalStatus}
+                            onReportScore={openScoring}
+                            reportingMatchId={reportingMatchId}
+                            scoreValues={scoreValues}
+                            onScoreChange={(field, value) =>
+                                setScoreValues((current) => ({ ...current, [field]: value }))
+                            }
+                            onScoreSubmit={submitScore}
+                            onCancelScore={() => setReportingMatchId(null)}
+                            scoreSubmitting={scoreSubmitting}
+                            canUpdateProposal={canUpdateProposal}
+                            currentUserId={currentUser?.id}
+                            texts={texts}
+                            statusTexts={dashboardTexts}
+                            emptyText={managedEmptyLabel}
                         />
                     </section>
                 </div>

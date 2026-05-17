@@ -121,6 +121,12 @@
     cursor: pointer;
 }
 
+@media (max-width: 900px) {
+    .formRow {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 
 
@@ -155,6 +161,5 @@
     animation: spin 0.7s linear infinite;
     color: var(--action-text);
 }
-
 
 

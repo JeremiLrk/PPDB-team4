@@ -1,32 +1,47 @@
+// Club settings UI component for ClubOwners.
+
 import { useState } from "react";
 import styles from "@/style/ClubSettings.module.css";
 
 function defaultText(lang, english, dutch) {
+    /*
+     Returns a language-aware fallback label.
+    */
     return String(lang || "").toLowerCase().startsWith("nl") ? dutch : english;
 }
 
 export function Clubowners({ owners, onRemove, onAdd, searchAccounts, texts = {}, lang = "en" }) {
+    /*
+     Owns the owner search/add flow and the current owner list.
+    */
     const [query, setQuery] = useState("");
     const [results, setResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
-
     const handleSearch = async (e) => {
+        /*
+         Searches for users once the typed query is long enough.
+        */
         const value = e.target.value;
         setQuery(value);
 
         if (value.length > 2) {
+            // Wait for a short query before hitting the search endpoint.
             setIsSearching(true);
             const accounts = await searchAccounts(value);
             setResults(accounts);
             setIsSearching(false);
         } else {
+            // Short queries are cleared so we do not spam the backend.
             setResults([]);
         }
     };
 
     const handleAdd = (userId) => {
+        /*
+         Adds one owner and clears the search results.
+        */
         onAdd(userId);
-        setQuery(""); // Clear search after adding
+        setQuery("");
         setResults([]);
     };
 
@@ -64,6 +79,7 @@ export function Clubowners({ owners, onRemove, onAdd, searchAccounts, texts = {}
                                         onClick={() => handleAdd(user.id)}
                                         style={{ color: '#4ade80', marginLeft: 'auto' }}
                                     >
+                                        {/* Adding an owner is just selecting one of the searched accounts. */}
                                         {texts.add || defaultText(lang, "Add", "Toevoegen")} +
                                     </button>
                                 </li>

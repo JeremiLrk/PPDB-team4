@@ -1,3 +1,5 @@
+// Team management hook for useTeamManagers.
+
 import { useEffect, useState, useCallback } from "react";
 
 /**
@@ -9,6 +11,9 @@ import { useEffect, useState, useCallback } from "react";
  * @param {number|string} teamId
  */
 export function useTeamManagers(teamId) {
+    /*
+     Loads the manager list for one team.
+    */
     const [managers, setManagers] = useState([]);
     const [total,    setTotal]    = useState(null);
     const [loading,  setLoading]  = useState(false);
@@ -16,6 +21,9 @@ export function useTeamManagers(teamId) {
 
     const load = useCallback(async () => {
         if (!teamId) return;
+        /*
+         Fetches the current manager list for the active team.
+        */
         setLoading(true);
         setError(null);
         try {
@@ -32,7 +40,6 @@ export function useTeamManagers(teamId) {
             setLoading(false);
         }
     }, [teamId]);
-
     useEffect(() => { void load(); }, [load]);
 
     return {

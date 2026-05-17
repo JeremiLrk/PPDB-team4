@@ -1,9 +1,16 @@
+"""
+Listing endpoints for match proposals.
+
+This module exposes the public match lists used by the dashboard and club
+workflows, with role-aware filtering for pending and awaiting-result views.
+"""
+
 from flask import Blueprint, Response, request, jsonify
 
 from server.app.decorators import login_required
 from server.app.models.account import Account, Administrator
 from server.app.models.match import MatchProposal, MatchStatus
-from server.app.routes.matcher._helpers import _parse_pagination, _team_ids_managed_by
+from server.app.routes.matcher._helpers import parse_pagination, team_ids_managed_by
 from server.extensions import db
 
 matches_list_bp = Blueprint("matches_list", __name__)
@@ -15,10 +22,12 @@ matches_list_bp = Blueprint("matches_list", __name__)
 @matches_list_bp.route("/active", methods=["GET"])
 def get_active_matches() -> tuple[Response, int]:
     """
-    GET /api/matches/active?from=0&to=20
-    Returns all proposals with status=accepted (public).
+    Return accepted match proposals that are still active
+
+    Returns:
+        a JSON response containing a paginated list of active match proposals, along with the total count and pagination metadata.
     """
-    offset, limit = _parse_pagination(request.args)
+    offset, limit = parse_pagination(request.args)
 
     base  = MatchProposal.query.filter_by(status_id=MatchStatus.ACCEPTED)
     total = base.count()
@@ -39,10 +48,12 @@ def get_active_matches() -> tuple[Response, int]:
 @matches_list_bp.route("/played", methods=["GET"])
 def get_played_matches() -> tuple[Response, int]:
     """
-    GET /api/matches/played?from=0&to=20
-    Returns all proposals with status=played (public).
+    Return finished matches with a score
+
+    Returns:
+        a JSON response containing a paginated list of finished matches, along with the total count and pagination metadata.
     """
-    offset, limit = _parse_pagination(request.args)
+    offset, limit = parse_pagination(request.args)
 
     base  = MatchProposal.query.filter_by(status_id=MatchStatus.PLAYED)
     total = base.count()
@@ -64,17 +75,18 @@ def get_played_matches() -> tuple[Response, int]:
 @login_required
 def get_pending_matches(account: Account) -> tuple[Response, int]:
     """
-    GET /api/matches/pending?from=0&to=20
-    Returns proposals with status=pending where the current user manages team2.
-    Administrator sees all pending proposals.
+    Return pending match proposals the current user can answer.
+
+    Returns:
+        a JSON response containing a paginated list of pending match proposals, along with the total count and pagination metadata.
     """
     resolved      = account.resolved_role
-    offset, limit = _parse_pagination(request.args)
+    offset, limit = parse_pagination(request.args)
 
     base = MatchProposal.query.filter_by(status_id=MatchStatus.PENDING)
 
     if not isinstance(resolved, Administrator):
-        managed_ids = _team_ids_managed_by(resolved)
+        managed_ids = team_ids_managed_by(resolved)
         if not managed_ids:
             return jsonify({"total": 0, "from": offset, "to": offset, "matches": []}), 200
         base = base.filter(MatchProposal.team2_id.in_(managed_ids))
@@ -98,17 +110,18 @@ def get_pending_matches(account: Account) -> tuple[Response, int]:
 @login_required
 def get_awaiting_result_matches(account: Account) -> tuple[Response, int]:
     """
-    GET /api/matches/awaiting-result?from=0&to=20
-    Returns accepted matches where current user manages team1 or team2.
-    Administrator sees all.
+    Return accepted match proposals that still need a score result
+
+    Returns:
+        a JSON response containing a paginated list of accepted match proposals, along with the total count and pagination metadata.
     """
     resolved      = account.resolved_role
-    offset, limit = _parse_pagination(request.args)
+    offset, limit = parse_pagination(request.args)
 
     base = MatchProposal.query.filter_by(status_id=MatchStatus.ACCEPTED)
 
     if not isinstance(resolved, Administrator):
-        managed_ids = _team_ids_managed_by(resolved)
+        managed_ids = team_ids_managed_by(resolved)
         if not managed_ids:
             return jsonify({"total": 0, "from": offset, "to": offset, "matches": []}), 200
         base = base.filter(

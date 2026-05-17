@@ -1,3 +1,5 @@
+// Regression tests for header.behavior.test.
+
 import "@testing-library/jest-dom/vitest";
 import { test, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -23,6 +25,7 @@ vi.mock("@/hooks/common/usePageTexts.js", () => ({
     return { log_out: "Uitloggen", user: "User" };
   },
 }));
+// Shared test helper for arranging the scenario under test.
 
 function PathnameProbe() {
   const location = useLocation();
@@ -50,6 +53,7 @@ beforeEach(() => {
   global.fetch = vi.fn();
 });
 
+// Verifies the authenticated header menu can navigate to the dashboard page.
 test("authenticated user can open menu and navigate to dashboard", async () => {
   const user = userEvent.setup();
 
@@ -63,6 +67,7 @@ test("authenticated user can open menu and navigate to dashboard", async () => {
   expect(screen.getByTestId("pathname")).toHaveTextContent("/dashboard");
 });
 
+// Verifies logout clears client state and triggers the API sign-out request.
 test("logout clears local auth state and returns to landing page", async () => {
   const user = userEvent.setup();
   const setCurrentUser = vi.fn();

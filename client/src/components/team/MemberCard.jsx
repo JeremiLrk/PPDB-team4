@@ -1,3 +1,5 @@
+// Team management UI component for MemberCard.
+
 import commonStyles from "@/style/common/Common.module.css";
 import ItemCard from "@/components/common/ItemCard.jsx";
 
@@ -11,6 +13,9 @@ import ItemCard from "@/components/common/ItemCard.jsx";
  */
 export default function MemberCard({ member }) {
     const fullName = [member.firstName, member.lastName].filter(Boolean).join(" ") || "-";
+    /*
+     Renders one public team member row.
+    */
 
     return (
         <ItemCard>

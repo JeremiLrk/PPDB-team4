@@ -1,3 +1,5 @@
+// Shared UI building block for CityAutocompleteField.
+
 import { useEffect, useRef, useState } from "react";
 import formStyles from "@/style/common/Forms.module.css";
 import styles from "@/style/common/CityAutocomplete.module.css";
@@ -12,13 +14,24 @@ export default function CityAutocompleteField({
     disabled = false,
     required = false,
 }) {
+    /*
+     Owns the city search input and its suggestion dropdown.
+     The parent controls the raw input value; this component handles remote
+     lookup, list visibility, and selecting one suggestion.
+    */
     const wrapperRef = useRef(null);
+    /*
+     Owns the suggestion dropdown state for the city search field.
+    */
     const [suggestions, setSuggestions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
+        /*
+         Fetches suggestions after the user pauses typing.
+        */
         const rawQuery = (value || "").trim();
 
         if (!open || rawQuery.length < minLength || disabled) {
@@ -63,6 +76,9 @@ export default function CityAutocompleteField({
     }, [value, minLength, open, disabled]);
 
     useEffect(() => {
+        /*
+         Closes the suggestion list when the user clicks outside the field.
+        */
         function onPointerDown(event) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
                 setOpen(false);
@@ -74,6 +90,9 @@ export default function CityAutocompleteField({
     }, []);
 
     function handleSelect(city) {
+        /*
+         Copies the chosen city into the parent form and closes the list.
+        */
         onSelect?.(city);
         setSuggestions([]);
         setOpen(false);

@@ -1,6 +1,11 @@
+// Team management hook for useTeamMembers.
+
 import { useEffect, useState, useCallback } from "react";
 
 export function useTeamMembers(teamId) {
+    /*
+     Loads the current member list for one team.
+    */
     const [members, setMembers] = useState([]);
     const [total,   setTotal]   = useState(null);
     const [loading, setLoading] = useState(false);
@@ -8,6 +13,9 @@ export function useTeamMembers(teamId) {
 
     const load = useCallback(async () => {
         if (!teamId) return;
+        /*
+         Fetches team members and the total count.
+        */
         setLoading(true);
         setError(null);
         try {
@@ -22,7 +30,6 @@ export function useTeamMembers(teamId) {
             setLoading(false);
         }
     }, [teamId]);
-
     useEffect(() => { void load(); }, [load]);
 
     return {

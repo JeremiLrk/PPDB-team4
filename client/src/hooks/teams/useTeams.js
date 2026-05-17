@@ -1,3 +1,5 @@
+// Team management hook for useTeams.
+
 import {useState, useCallback, useEffect} from "react";
 
 const DEFAULT_PAGE_SIZE = 12;
@@ -14,6 +16,9 @@ export function useTeams({
                              sort: initialSort = "id",
                              endpoint = "/api/teams",
                          } = {}) {
+    /*
+     Loads a paginated team list with sort and load-more support.
+    */
     const [teams,    setTeams]    = useState([]);
     const [total,    setTotal]    = useState(null);
     const [loading,  setLoading]  = useState(false);
@@ -28,6 +33,9 @@ export function useTeams({
                                               currentPageSize = pageSize,
                                               append = false,
                                           } = {}) => {
+        /*
+         Fetches one page of teams from the configured endpoint.
+        */
         setLoading(true);
         setError(null);
 
@@ -50,6 +58,9 @@ export function useTeams({
     }, [sort, pageSize, endpoint]);
 
     const load = useCallback(async (overrides = {}) => {
+        /*
+         Reloads the list with optional sort or page-size changes.
+        */
         const newSort     = overrides.sort     ?? sort;
         const newPageSize = overrides.pageSize ?? pageSize;
 
@@ -63,6 +74,9 @@ export function useTeams({
     }, [sort, pageSize, fetchTeams]);
 
     const loadMore = useCallback(async () => {
+        /*
+         Fetches the next page and appends it to the current list.
+        */
         await fetchTeams({ fromOffset: offset, append: true });
     }, [offset, fetchTeams]);
 
@@ -70,6 +84,9 @@ export function useTeams({
 
     // Initial load on mount
     useEffect(() => {
+        /*
+         Loads the first page on mount.
+        */
         void fetchTeams({ fromOffset: 0, currentSort: sort, currentPageSize: pageSize, append: false });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

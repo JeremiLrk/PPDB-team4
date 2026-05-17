@@ -1,3 +1,5 @@
+// Team management hook for useAddPlayer.
+
 import { useState, useCallback, useRef, useEffect } from "react";
 
 /**
@@ -6,6 +8,9 @@ import { useState, useCallback, useRef, useEffect } from "react";
  * @param {{ teamId: number|string, onAdded?: (player: object) => void }} options
  */
 export function useAddPlayer({ teamId, onAdded } = {}) {
+    /*
+     Owns the player-search and add-player flow for one team.
+    */
     const [isOpen,    setIsOpen]    = useState(false);
     const [query,     setQuery]     = useState("");
     const [results,   setResults]   = useState([]);
@@ -20,10 +25,16 @@ export function useAddPlayer({ teamId, onAdded } = {}) {
     const inputRef    = useRef(null); // controlled by hook, passed to component
 
     const openPanel = useCallback(() => {
+        /*
+         Opens the player picker without changing the draft query.
+        */
         setIsOpen(true);
     }, []);
 
     const closePanel = useCallback(() => {
+        /*
+         Closes the picker and clears the current search state.
+        */
         setIsOpen(false);
         setQuery("");
         setResults([]);
@@ -32,16 +43,20 @@ export function useAddPlayer({ teamId, onAdded } = {}) {
         setConfirmWarning(null);
     }, []);
 
-    // Auto-focus when opening
     useEffect(() => {
+        /*
+         Focuses the search input shortly after the panel opens.
+        */
         if (isOpen) {
             const t = setTimeout(() => inputRef.current?.focus(), 60);
             return () => clearTimeout(t);
         }
     }, [isOpen]);
 
-    // Debounced search
     useEffect(() => {
+        /*
+         Debounces player search requests while the panel is open.
+        */
         if (!isOpen) return;
 
         if (!query.trim()) {
@@ -71,22 +86,31 @@ export function useAddPlayer({ teamId, onAdded } = {}) {
     }, [query, teamId, isOpen]);
 
 
-    const addPlayer = useCallback(async (accountId, confirmExceed = false) => {
+    const addPlayer = useCallback(async (accountId, confirmDropLadders = false) => {
+        /*
+         Adds one searched account to the team.
+         The confirmation flag is only set after the ladder warning has been
+         accepted by the user.
+        */
         setAddingId(accountId);
         setAddErr(null);
         setConfirmWarning(null);
         try {
+            const foo = {
+                accountId: accountId,
+                confirmDropLadders: confirmDropLadders,
+            };
             const res  = await fetch(`/api/teams/${teamId}/players`, {
                 method:  "POST",
                 headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify({ accountId, confirmExceed }),
+                body:    JSON.stringify(foo),
             });
             const data = await res.json();
 
             // Handle warning response (202) — requires confirmation
             if (res.status === 202 && data.warning === "exceeds_max_players") {
                 setConfirmWarning({
-                    accountId,
+                    accountId: accountId,
                     message: data.message,
                     ladders: data.ladders || []
                 });

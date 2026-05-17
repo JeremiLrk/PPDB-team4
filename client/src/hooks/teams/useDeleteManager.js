@@ -1,3 +1,5 @@
+// Team management hook for useDeleteManager.
+
 import { useState, useCallback } from "react";
 
 /**
@@ -6,6 +8,9 @@ import { useState, useCallback } from "react";
  * @param {{ teamId: number|string, managerId: number|string, onDeleted?: () => void }} options
  */
 export function useDeleteManager({ teamId, managerId, onDeleted } = {}) {
+    /*
+     Owns the manager removal confirmation state and request.
+    */
     const [isOpen,  setIsOpen]  = useState(false);
     const [loading, setLoading] = useState(false);
     const [error,   setError]   = useState(null);
@@ -14,6 +19,9 @@ export function useDeleteManager({ teamId, managerId, onDeleted } = {}) {
     const closeDialog = useCallback(() => { setIsOpen(false); setError(null); }, []);
 
     const confirmDelete = useCallback(async () => {
+        /*
+         Sends the delete request for one manager.
+        */
         setLoading(true);
         setError(null);
         try {

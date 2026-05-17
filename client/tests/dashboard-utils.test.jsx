@@ -1,10 +1,14 @@
+// Regression tests for dashboard-utils.test.
+
 import "@testing-library/jest-dom/vitest";
 import { describe, test, expect } from "vitest";
 
 import styles from "../src/style/common/Common.module.css";
 import { getDashboardTabs, statusClass, statusLabel } from "../src/components/dashboard/dashboardUtils.js";
+// End-to-end or flow coverage for the main user journey in this file.
 
 describe("dashboardUtils", () => {
+  // Verifies dashboard tabs keep stable ids while using translated labels.
   test("getDashboardTabs returns translated labels with stable ids", () => {
     const tabs = getDashboardTabs({
       tab_overview: "Overzicht",
@@ -30,6 +34,7 @@ describe("dashboardUtils", () => {
     ]);
   });
 
+  // Verifies status values map to the shared CSS classes used by the UI.
   test("statusClass maps each status to Common.module.css class", () => {
     expect(statusClass("accepted")).toBe(styles.statusApproved);
     expect(statusClass("approved")).toBe(styles.statusApproved);
@@ -39,6 +44,7 @@ describe("dashboardUtils", () => {
     expect(statusClass("unknown")).toBe(styles.statusPending);
   });
 
+  // Verifies translated status labels fall back to English when needed.
   test("statusLabel uses localized labels with fallback to English", () => {
     const texts = {
       status_accepted: "Geaccepteerd",

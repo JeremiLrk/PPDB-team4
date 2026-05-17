@@ -59,4 +59,7 @@ msgid "matches.score_waiting"
 msgstr "Score ingediend. Wachten op het andere team."
 
 msgid "matches.score_finalized"
-msgstr "Score vastgelegd."
+msgstr "Resultaat bevestigd. Elo-ratings bijgewerkt."
+
+msgid "matches.score_disputed"
+msgstr "Scores komen niet overeen. Een clubbeheerder bepaalt de beslissende score."

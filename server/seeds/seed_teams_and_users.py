@@ -484,6 +484,8 @@ def ensure_pending_proposal(
     sport_type_id: int,
     proposed_start_at: datetime.datetime,
     proposed_end_at: datetime.datetime,
+    ladder_id: int | None = None,
+    ruleset_id: int | None = None,
     location: str | None = None,
 ) -> bool:
   ordered_team1_id, ordered_team2_id = sorted((team1_id, team2_id))
@@ -503,7 +505,8 @@ def ensure_pending_proposal(
     MatchProposal(
       proposed_by_user_id=proposed_by_user_id,
       sport_type_id=sport_type_id,
-      ruleset_id=None,
+      ruleset_id=ruleset_id,
+      ladder_id=ladder_id,
       team1_id=ordered_team1_id,
       team2_id=ordered_team2_id,
       status_id=MatchStatus.PENDING,
@@ -1019,6 +1022,51 @@ def seed_teams_and_users(verbose: bool = True):
         accepted_by_user_id=opponent_acc.id,
         response_text="Accepted by opponent for dashboard upcoming matches demo",
       )
+
+    lrk_acc, _ = make_account(
+      "LRK",
+      "Debug",
+      "lrk.j@outlook.com",
+      role=role_player,
+      password="qwertyuiop",
+      force_password_update=True,
+    )
+    lrk_debug_team, _ = make_team("LRK Debug Opponent", tennis, club_id=player_demo_club.id, verbose=verbose)
+    jeremi_debug_team, _ = make_team("Jeremi Debug Player", tennis, club_id=player_demo_club.id, verbose=verbose)
+    ensure_player_on_team(demo_acc, jeremi_debug_team)
+    ensure_player_on_team(lrk_acc, lrk_debug_team)
+    ensure_team_players_in_club(jeremi_debug_team, player_demo_club)
+    ensure_team_players_in_club(lrk_debug_team, player_demo_club)
+
+    lrk_debug_ladder, _ = get_or_create_ladder(
+      club_id=player_demo_club.id,
+      name="LRK Debug Singles",
+      description="Debug ladder for reproducing match proposal flows between Jeremi and LRK.",
+      sport_type_id=tennis.id,
+      ladder_rating_function_id=rating_fn_id,
+      ruleset_id=ruleset_id,
+    )
+    get_or_create_ladder_team(lrk_debug_ladder.id, jeremi_debug_team.id, rank=1, rating=1100, matches_played=0)
+    get_or_create_ladder_team(lrk_debug_ladder.id, lrk_debug_team.id, rank=2, rating=1100, matches_played=0)
+
+    debug_week_start = demo_week_start
+    debug_start = datetime.datetime.combine(
+      debug_week_start + datetime.timedelta(days=2),
+      datetime.time(hour=19, minute=0),
+    )
+    debug_end = debug_start + datetime.timedelta(hours=1)
+    ensure_pending_proposal(
+      week_start_date=debug_week_start,
+      team1_id=jeremi_debug_team.id,
+      team2_id=lrk_debug_team.id,
+      proposed_by_user_id=demo_acc.id,
+      sport_type_id=tennis.id,
+      ladder_id=lrk_debug_ladder.id,
+      ruleset_id=ruleset_id,
+      proposed_start_at=debug_start,
+      proposed_end_at=debug_end,
+      location="LRK Debug Court",
+    )
 
     owner_requester_one, _ = make_account("Victor", "Reynders", "victor.reynders@example.com", role_player)
     owner_requester_two, _ = make_account("Noemie", "Aerts", "noemie.aerts@example.com", role_player)

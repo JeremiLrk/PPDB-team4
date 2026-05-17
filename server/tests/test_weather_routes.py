@@ -17,6 +17,7 @@ class FakeResponse:
             raise RuntimeError(f"HTTP {self.status_code}")
 
 
+# Verifies weather route uses proposal day forecast.
 def test_weather_route_uses_proposal_day_forecast(client, app, monkeypatch):
     with app.app_context():
         club = Club(name="Weather Club", city="Antwerpen, Belgium")
@@ -66,6 +67,7 @@ def test_weather_route_uses_proposal_day_forecast(client, app, monkeypatch):
     assert payload["forecastFor"].startswith(target_dt.date().isoformat())
 
 
+# Verifies weather route returns 404 for out of range forecast.
 def test_weather_route_returns_404_for_out_of_range_forecast(client, app, monkeypatch):
     with app.app_context():
         club = Club(name="Weather Club 2", city="Antwerpen, Belgium")
@@ -116,6 +118,7 @@ def test_weather_route_returns_404_for_out_of_range_forecast(client, app, monkey
     assert response.get_json()["error"] == "Weather forecast unavailable for that proposal date."
 
 
+# Verifies weather route uses timezone adjusted forecast day.
 def test_weather_route_uses_timezone_adjusted_forecast_day(client, app, monkeypatch):
     with app.app_context():
         club = Club(name="Weather Club 3", city="Antwerpen, Belgium")
@@ -156,6 +159,7 @@ def test_weather_route_uses_timezone_adjusted_forecast_day(client, app, monkeypa
     assert payload["weather"][0]["description"] == "scattered clouds"
 
 
+# Verifies weather route falls back to five day forecast when onecall is unauthorized.
 def test_weather_route_falls_back_to_five_day_forecast_when_onecall_is_unauthorized(client, app, monkeypatch):
     with app.app_context():
         club = Club(name="Weather Club 4", city="Antwerpen, Belgium")

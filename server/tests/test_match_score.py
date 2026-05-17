@@ -8,13 +8,13 @@ Unit (service layer — no HTTP):
   - submit_score resolves team2_side role for team2 manager
   - match is auto-finalized when both sides submit identical scores
   - match enters 'disputed' state when sides submit different scores
-  - ladder_admin submission finalizes a disputed match
+  - ladder_admin submission finalizes a disputed match or an authoritative first submission
   - duplicate submission for the same role raises ScoreSubmissionError (409)
   - submission on already-finalized match raises ScoreSubmissionError (409)
   - submission on cancelled match raises ScoreSubmissionError (409)
   - negative scores raise ScoreSubmissionError (422)
   - account with no team relation raises ScoreSubmissionError (403)
-  - ladder_admin submission rejected when match is not yet disputed
+  - club managers and "both teams" managers finalize immediately on submit
 
 Integration (HTTP routes):
   - POST /api/matches/<id>/score returns 201 and submission data
@@ -172,6 +172,20 @@ def _proposal(team1: Team, team2: Team, ladder: Ladder | None = None) -> MatchPr
     return p
 
 
+def _pending_proposal(team1: Team, team2: Team, ladder: Ladder | None = None) -> MatchProposal:
+    p = MatchProposal(
+        sport_type_id=team1.sport_type_id,
+        team1_id=team1.id,
+        team2_id=team2.id,
+        status_id=_status("pending").id,
+        ladder_id=ladder.id if ladder else None,
+    )
+    db.session.add(p)
+    db.session.flush()
+    db.session.refresh(p)
+    return p
+
+
 def _add_submission(proposal: MatchProposal, account: Account, role: SubmissionRole,
                     s1: int = 2, s2: int = 1) -> MatchScoreSubmission:
     sub = MatchScoreSubmission(
@@ -194,6 +208,7 @@ def _add_submission(proposal: MatchProposal, account: Account, role: SubmissionR
 class TestSubmitScoreRoleResolution:
     """submit_score assigns the correct SubmissionRole based on account permissions."""
 
+    # Verifies team1 manager gets team1 side role.
     def test_team1_manager_gets_team1_side_role(self, seeded_app):
         """Manager of team1 receives role 'team1_side'."""
         with seeded_app.app_context():
@@ -208,6 +223,7 @@ class TestSubmitScoreRoleResolution:
 
             assert submission.submitted_by_role == SubmissionRole.TEAM1_SIDE.value
 
+    # Verifies team2 manager gets team2 side role.
     def test_team2_manager_gets_team2_side_role(self, seeded_app):
         """Manager of team2 receives role 'team2_side'."""
         with seeded_app.app_context():
@@ -222,6 +238,7 @@ class TestSubmitScoreRoleResolution:
 
             assert submission.submitted_by_role == SubmissionRole.TEAM2_SIDE.value
 
+    # Verifies unrelated account raises forbidden.
     def test_unrelated_account_raises_forbidden(self, seeded_app):
         """Account with no relation to either team raises ScoreSubmissionError 403."""
         with seeded_app.app_context():
@@ -235,6 +252,7 @@ class TestSubmitScoreRoleResolution:
 
             assert exc.value.status_code == 403
 
+    # Verifies player on team gets team side role.
     def test_player_on_team_gets_team_side_role(self, seeded_app):
         """A player who is actually on team1 receives role 'team1_side'."""
         with seeded_app.app_context():
@@ -253,6 +271,7 @@ class TestSubmitScoreRoleResolution:
 class TestAutoFinalization:
     """Match is finalized automatically when the result becomes unambiguous."""
 
+    # Verifies matching submissions finalize match.
     def test_matching_submissions_finalize_match(self, seeded_app):
         """When both sides submit the same score, MatchPlayed is created immediately."""
         with seeded_app.app_context():
@@ -279,6 +298,7 @@ class TestAutoFinalization:
             assert proposal.played.score_team2 == 1
             assert proposal.score_status == "resolved"
 
+    # Verifies disagreeing submissions produce disputed status.
     def test_disagreeing_submissions_produce_disputed_status(self, seeded_app):
         """When sides submit different scores, match enters 'disputed' state."""
         with seeded_app.app_context():
@@ -303,6 +323,7 @@ class TestAutoFinalization:
 class TestLadderAdminAdjudication:
     """Ladder admin can submit the decisive score for a disputed match."""
 
+    # Verifies ladder admin finalizes disputed match.
     def test_ladder_admin_finalizes_disputed_match(self, seeded_app):
         """ClubOwner of the ladder's club resolves a dispute with their submission."""
         with seeded_app.app_context():
@@ -333,8 +354,9 @@ class TestLadderAdminAdjudication:
             assert proposal.score_status == "resolved"
             assert proposal.played.score_team1 == 2
 
-    def test_ladder_admin_submission_rejected_when_not_disputed(self, seeded_app):
-        """Admin adjudication is refused when no dispute exists yet."""
+    # Verifies club owner submits final score without waiting for dispute.
+    def test_club_owner_submits_final_score_without_waiting_for_dispute(self, seeded_app):
+        """ClubOwner submissions are authoritative even before a dispute exists."""
         with seeded_app.app_context():
             club = _club()
             t1, t2 = _team(club, "T1"), _team(club, "T2")
@@ -343,16 +365,45 @@ class TestLadderAdminAdjudication:
             ladder = _ladder(club)
             proposal = _proposal(t1, t2, ladder=ladder)
 
-            with pytest.raises(ScoreSubmissionError) as exc:
-                submit_score(proposal, admin_acc, 2, 0)
+            submission, finalized = submit_score(proposal, admin_acc, 2, 0)
+            db.session.commit()
+            db.session.refresh(proposal)
 
-            assert exc.value.status_code == 409
-            assert "not yet disputed" in str(exc.value).lower() or "only allowed" in str(exc.value).lower()
+            assert submission.submitted_by_role == SubmissionRole.LADDER_ADMIN.value
+            assert finalized is True
+            assert proposal.score_status == "resolved"
+            assert proposal.played is not None
+            assert proposal.played.score_team1 == 2
+            assert proposal.played.score_team2 == 0
+
+    # Verifies manager of both teams finalizes immediately.
+    def test_manager_of_both_teams_finalizes_immediately(self, seeded_app):
+        """A single team manager who controls both teams can finalize immediately."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            dual_mgr = _account("dual@test.com")
+            _team_manager(dual_mgr, t1)
+            db.session.add(TeamManagerTeam(team_manager_id=dual_mgr.id, team_id=t2.id, can_manage_match=True))
+            db.session.flush()
+            proposal = _proposal(t1, t2)
+
+            submission, finalized = submit_score(proposal, dual_mgr, 3, 1)
+            db.session.commit()
+            db.session.refresh(proposal)
+
+            assert submission.submitted_by_role == SubmissionRole.LADDER_ADMIN.value
+            assert finalized is True
+            assert proposal.score_status == "resolved"
+            assert proposal.played is not None
+            assert proposal.played.score_team1 == 3
+            assert proposal.played.score_team2 == 1
 
 
 class TestSubmissionGuards:
     """Edge-case guards on submit_score."""
 
+    # Verifies a duplicate role raises 409.
     def test_duplicate_role_raises_409(self, seeded_app):
         """Second submission from same role raises ScoreSubmissionError 409."""
         with seeded_app.app_context():
@@ -371,6 +422,7 @@ class TestSubmissionGuards:
 
             assert exc.value.status_code == 409
 
+    # Verifies submission on finalized match raises 409.
     def test_submission_on_finalized_match_raises_409(self, seeded_app):
         """Submitting a score after match is already finalized raises 409."""
         with seeded_app.app_context():
@@ -390,6 +442,7 @@ class TestSubmissionGuards:
 
             assert exc.value.status_code == 409
 
+    # Verifies submission on cancelled match raises 409.
     def test_submission_on_cancelled_match_raises_409(self, seeded_app):
         """Submitting a score for a cancelled match raises 409."""
         with seeded_app.app_context():
@@ -409,6 +462,7 @@ class TestSubmissionGuards:
 
             assert exc.value.status_code == 409
 
+    # Verifies negative scores raise 422.
     def test_negative_scores_raise_422(self, seeded_app):
         """Negative score values raise ScoreSubmissionError 422."""
         with seeded_app.app_context():
@@ -431,6 +485,7 @@ class TestSubmissionGuards:
 class TestPostScoreRoute:
     """POST /api/matches/<id>/score"""
 
+    # Verifies the route returns 201 with submission data.
     def test_returns_201_with_submission_data(self, seeded_app, client, monkeypatch):
         """Valid submission returns 201 with submission dict and scoreStatus."""
         with seeded_app.app_context():
@@ -451,6 +506,7 @@ class TestPostScoreRoute:
         assert body["submission"]["scoreTeam1"] == 3
         assert body["finalized"] is False
 
+    # Verifies player can submit for team one.
     def test_player_can_submit_for_team_one(self, seeded_app, client, monkeypatch):
         """A player on team1 may submit a score for that team."""
         with seeded_app.app_context():
@@ -470,6 +526,31 @@ class TestPostScoreRoute:
         assert body["submission"]["submittedByRole"] == SubmissionRole.TEAM1_SIDE.value
         assert body["scoreStatus"] == "not_submitted"
 
+    # Verifies club owner submission finalizes immediately.
+    def test_club_owner_submission_finalizes_immediately(self, seeded_app, client, monkeypatch):
+        """A club owner's score submission is final right away."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            admin_acc = _account("owner@test.com")
+            _club_owner(admin_acc, club)
+            proposal = _proposal(t1, t2)
+            db.session.commit()
+            pid = proposal.id
+
+        resp = _authed_client(client, monkeypatch, admin_acc).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 4, "score_team2": 2},
+        )
+
+        assert resp.status_code == 201
+        body = resp.get_json()
+        assert body["submission"]["submittedByRole"] == SubmissionRole.LADDER_ADMIN.value
+        assert body["finalized"] is True
+        assert body["resolvedScore"] == {"scoreTeam1": 4, "scoreTeam2": 2}
+        assert body["scoreStatus"] == "resolved"
+
+    # Verifies matching submissions finalize immediately.
     def test_both_sides_agree_returns_finalized_true(self, seeded_app, client, monkeypatch):
         """When both sides submit matching scores, response contains finalized=true."""
         with seeded_app.app_context():
@@ -496,6 +577,189 @@ class TestPostScoreRoute:
         assert body["resolvedScore"] == {"scoreTeam1": 2, "scoreTeam2": 0}
         assert body["scoreStatus"] == "resolved"
 
+    # Verifies full acceptance and score flow updates elo.
+    def test_full_acceptance_and_score_flow_updates_elo(self, seeded_app, client, monkeypatch):
+        """Accepted matches finalize on matching scores and update ladder Elo/rank."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            mgr1 = _account("mgr1@test.com")
+            mgr2 = _account("mgr2@test.com")
+            _team_manager(mgr1, t1)
+            _team_manager(mgr2, t2)
+            ladder = _ladder(club)
+            lt1 = LadderTeam(ladder_id=ladder.id, team_id=t1.id, rank=1, rating=1000, matches_played=0)
+            lt2 = LadderTeam(ladder_id=ladder.id, team_id=t2.id, rank=2, rating=1000, matches_played=0)
+            db.session.add_all([lt1, lt2])
+            proposal = _pending_proposal(t1, t2, ladder=ladder)
+            db.session.commit()
+            ladder_id = ladder.id
+            team1_id = t1.id
+            team2_id = t2.id
+            pid = proposal.id
+
+        accepted = _authed_client(client, monkeypatch, mgr2).post(f"/api/matches/{pid}/accept")
+        assert accepted.status_code == 200
+        assert accepted.get_json()["match"]["statusName"] == "accepted"
+
+        first = _authed_client(client, monkeypatch, mgr1).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 2, "score_team2": 1},
+        )
+        assert first.status_code == 201
+        assert first.get_json()["finalized"] is False
+
+        second = _authed_client(client, monkeypatch, mgr2).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 2, "score_team2": 1},
+        )
+        assert second.status_code == 201
+        body = second.get_json()
+        assert body["finalized"] is True
+        assert body["resolvedScore"] == {"scoreTeam1": 2, "scoreTeam2": 1}
+        assert body["scoreStatus"] == "resolved"
+
+        with seeded_app.app_context():
+            db.session.expire_all()
+            after_t1 = db.session.get(LadderTeam, (ladder_id, team1_id))
+            after_t2 = db.session.get(LadderTeam, (ladder_id, team2_id))
+            proposal_after = db.session.get(MatchProposal, pid)
+
+            assert after_t1 is not None
+            assert after_t2 is not None
+            assert proposal_after is not None
+            assert proposal_after.played is not None
+
+            assert after_t1.rating == 1020
+            assert after_t2.rating == 980
+            assert after_t1.matches_played == 1
+            assert after_t2.matches_played == 1
+            assert after_t1.rank == 1
+            assert after_t2.rank == 2
+
+    # Verifies legacy result route updates elo and played match.
+    def test_legacy_result_route_updates_elo_and_played_match(self, seeded_app, client, monkeypatch):
+        """POST /result should finalize an accepted match and update ladder Elo."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            mgr1 = _account("mgr1@test.com")
+            mgr2 = _account("mgr2@test.com")
+            _team_manager(mgr1, t1)
+            _team_manager(mgr2, t2)
+            ladder = _ladder(club)
+            db.session.add_all([
+                LadderTeam(ladder_id=ladder.id, team_id=t1.id, rank=1, rating=1000, matches_played=0),
+                LadderTeam(ladder_id=ladder.id, team_id=t2.id, rank=2, rating=1000, matches_played=0),
+            ])
+            proposal = _pending_proposal(t1, t2, ladder=ladder)
+            db.session.commit()
+            ladder_id = ladder.id
+            team1_id = t1.id
+            team2_id = t2.id
+            pid = proposal.id
+
+        accepted = _authed_client(client, monkeypatch, mgr2).post(f"/api/matches/{pid}/accept")
+        assert accepted.status_code == 200
+
+        result = _authed_client(client, monkeypatch, mgr1).post(
+            f"/api/matches/{pid}/result",
+            json={"scoreTeam1": 3, "scoreTeam2": 1},
+        )
+        assert result.status_code == 200
+        body = result.get_json()
+        assert body["match"]["statusName"] == "played"
+        assert body["match"]["played"]["scoreTeam1"] == 3
+        assert body["match"]["played"]["scoreTeam2"] == 1
+
+        with seeded_app.app_context():
+            db.session.expire_all()
+            after_t1 = db.session.get(LadderTeam, (ladder_id, team1_id))
+            after_t2 = db.session.get(LadderTeam, (ladder_id, team2_id))
+            proposal_after = db.session.get(MatchProposal, pid)
+
+            assert after_t1 is not None
+            assert after_t2 is not None
+            assert proposal_after is not None
+            assert proposal_after.played is not None
+
+            assert after_t1.rating == 1020
+            assert after_t2.rating == 980
+            assert after_t1.matches_played == 1
+            assert after_t2.matches_played == 1
+            assert after_t1.rank == 1
+            assert after_t2.rank == 2
+
+    # Verifies disputed score flow can be resolved by ladder admin.
+    def test_disputed_score_flow_can_be_resolved_by_ladder_admin(self, seeded_app, client, monkeypatch):
+        """Disputed submissions can be resolved by a ladder admin and update ladder Elo."""
+        with seeded_app.app_context():
+            club = _club()
+            t1, t2 = _team(club, "T1"), _team(club, "T2")
+            mgr1 = _account("mgr1@test.com")
+            mgr2 = _account("mgr2@test.com")
+            admin_acc = _account("admin@test.com")
+            _team_manager(mgr1, t1)
+            _team_manager(mgr2, t2)
+            _club_owner(admin_acc, club)
+            ladder = _ladder(club)
+            db.session.add_all([
+                LadderTeam(ladder_id=ladder.id, team_id=t1.id, rank=1, rating=1000, matches_played=0),
+                LadderTeam(ladder_id=ladder.id, team_id=t2.id, rank=2, rating=1000, matches_played=0),
+            ])
+            proposal = _pending_proposal(t1, t2, ladder=ladder)
+            db.session.commit()
+            ladder_id = ladder.id
+            team1_id = t1.id
+            team2_id = t2.id
+            pid = proposal.id
+
+        accepted = _authed_client(client, monkeypatch, mgr2).post(f"/api/matches/{pid}/accept")
+        assert accepted.status_code == 200
+
+        first = _authed_client(client, monkeypatch, mgr1).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 2, "score_team2": 1},
+        )
+        assert first.status_code == 201
+        assert first.get_json()["finalized"] is False
+
+        second = _authed_client(client, monkeypatch, mgr2).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 1, "score_team2": 2},
+        )
+        assert second.status_code == 201
+        assert second.get_json()["finalized"] is False
+
+        disputed = _authed_client(client, monkeypatch, admin_acc).post(
+            f"/api/matches/{pid}/score",
+            json={"score_team1": 2, "score_team2": 1},
+        )
+        assert disputed.status_code == 201
+        body = disputed.get_json()
+        assert body["finalized"] is True
+        assert body["resolvedScore"] == {"scoreTeam1": 2, "scoreTeam2": 1}
+        assert body["scoreStatus"] == "resolved"
+
+        with seeded_app.app_context():
+            db.session.expire_all()
+            after_t1 = db.session.get(LadderTeam, (ladder_id, team1_id))
+            after_t2 = db.session.get(LadderTeam, (ladder_id, team2_id))
+            proposal_after = db.session.get(MatchProposal, pid)
+
+            assert after_t1 is not None
+            assert after_t2 is not None
+            assert proposal_after is not None
+            assert proposal_after.played is not None
+
+            assert after_t1.rating == 1020
+            assert after_t2.rating == 980
+            assert after_t1.matches_played == 1
+            assert after_t2.matches_played == 1
+            assert after_t1.rank == 1
+            assert after_t2.rank == 2
+
+    # Verifies a duplicate score submission returns 409.
     def test_duplicate_submission_returns_409(self, seeded_app, client, monkeypatch):
         """Submitting a second score for the same role returns 409."""
         with seeded_app.app_context():
@@ -513,6 +777,7 @@ class TestPostScoreRoute:
 
         assert resp.status_code == 409
 
+    # Verifies an unrelated account returns 403.
     def test_unrelated_account_returns_403(self, seeded_app, client, monkeypatch):
         """Account with no team relation receives 403."""
         with seeded_app.app_context():
@@ -528,6 +793,7 @@ class TestPostScoreRoute:
 
         assert resp.status_code == 403
 
+    # Verifies the route returns 422 when scores are missing.
     def test_missing_scores_returns_422(self, seeded_app, client, monkeypatch):
         """Request body missing score fields returns 422."""
         with seeded_app.app_context():
@@ -548,6 +814,7 @@ class TestPostScoreRoute:
 class TestGetScoreRoute:
     """GET /api/matches/<id>/score"""
 
+    # Verifies the route returns submissions and status.
     def test_returns_submissions_and_status(self, seeded_app, client, monkeypatch):
         """Authorised caller receives submissions list and scoreStatus."""
         with seeded_app.app_context():
@@ -570,6 +837,7 @@ class TestGetScoreRoute:
         assert body["submissions"][0]["submittedByRole"] == "team1_side"
         assert body["resolvedScore"] is None
 
+    # Verifies forbidden for unrelated account.
     def test_forbidden_for_unrelated_account(self, seeded_app, client, monkeypatch):
         """Account with no team relation receives 403 on GET."""
         with seeded_app.app_context():
@@ -589,6 +857,59 @@ class TestGetScoreRoute:
 class TestDisputedRoute:
     """GET /api/matches/disputed"""
 
+    # Verifies seeded disputed matches have clubs and admin can filter.
+    def test_seeded_disputed_matches_have_clubs_and_admin_can_filter(self, seeded_app, client, monkeypatch):
+        """Every seeded disputed match is tied to a club and administrator can filter by club."""
+        with seeded_app.app_context():
+            admin_acc = Account.query.filter_by(email="admin@netrank.test").first()
+            assert admin_acc is not None
+            disputed = [
+                proposal
+                for proposal in MatchProposal.query.all()
+                if proposal.score_status == "disputed"
+            ]
+            assert disputed
+            for proposal in disputed:
+                club_ids = {
+                    club_id
+                    for club_id in (
+                        proposal.ladder.club_id if proposal.ladder is not None else None,
+                        proposal.team1.club_id if proposal.team1 is not None else None,
+                        proposal.team2.club_id if proposal.team2 is not None else None,
+                    )
+                    if club_id is not None
+                }
+                assert club_ids, f"Disputed proposal {proposal.id} has no club context"
+
+            target_club_id = next(iter({
+                proposal.team1.club_id
+                for proposal in disputed
+                if proposal.team1 is not None and proposal.team1.club_id is not None
+            }))
+            expected_ids = {
+                proposal.id
+                for proposal in disputed
+                if target_club_id in {
+                    club_id
+                    for club_id in (
+                        proposal.ladder.club_id if proposal.ladder is not None else None,
+                        proposal.team1.club_id if proposal.team1 is not None else None,
+                        proposal.team2.club_id if proposal.team2 is not None else None,
+                    )
+                    if club_id is not None
+                }
+            }
+
+        authed = _authed_client(client, monkeypatch, admin_acc)
+        all_resp = authed.get("/api/matches/disputed")
+        assert all_resp.status_code == 200
+        assert all_resp.get_json()["total"] >= len(expected_ids)
+
+        club_resp = authed.get(f"/api/matches/disputed?club_id={target_club_id}")
+        assert club_resp.status_code == 200
+        assert {match["id"] for match in club_resp.get_json()["matches"]} == expected_ids
+
+    # Verifies ladder admin sees disputed match.
     def test_ladder_admin_sees_disputed_match(self, seeded_app, client, monkeypatch):
         """ClubOwner of the ladder's club receives disputed matches they can resolve."""
         with seeded_app.app_context():
@@ -616,6 +937,48 @@ class TestDisputedRoute:
         assert body["total"] == 1
         assert body["matches"][0]["id"] == pid
 
+    # Verifies club owner can filter disputes by club.
+    def test_club_owner_can_filter_disputes_by_club(self, seeded_app, client, monkeypatch):
+        """ClubOwner can request disputed matches for one specific managed club."""
+        with seeded_app.app_context():
+            club_a = _club("Club A")
+            club_b = _club("Club B")
+            club_c = _club("Club C")
+            club_b_id = club_b.id
+            club_c_id = club_c.id
+            admin_acc = _account("admin@test.com")
+            _club_owner(admin_acc, club_a)
+            db.session.add(ClubOwnerClub(club_owner_id=admin_acc.id, club_id=club_b.id, can_manage_match=True))
+
+            disputed_ids = []
+            for club, suffix in ((club_a, "a"), (club_b, "b"), (club_c, "c")):
+                t1, t2 = _team(club, f"T1 {suffix}"), _team(club, f"T2 {suffix}")
+                mgr1 = _account(f"m1-{suffix}@test.com")
+                mgr2 = _account(f"m2-{suffix}@test.com")
+                _team_manager(mgr1, t1)
+                _team_manager(mgr2, t2)
+                proposal = _proposal(t1, t2)
+                _add_submission(proposal, mgr1, SubmissionRole.TEAM1_SIDE, 2, 1)
+                _add_submission(proposal, mgr2, SubmissionRole.TEAM2_SIDE, 1, 2)
+                disputed_ids.append(proposal.id)
+            db.session.commit()
+
+        authed = _authed_client(client, monkeypatch, admin_acc)
+        resp = authed.get("/api/matches/disputed")
+
+        assert resp.status_code == 200
+        visible_ids = {match["id"] for match in resp.get_json()["matches"]}
+        assert visible_ids == set(disputed_ids[:2])
+
+        club_b_resp = authed.get(f"/api/matches/disputed?club_id={club_b_id}")
+        assert club_b_resp.status_code == 200
+        assert {match["id"] for match in club_b_resp.get_json()["matches"]} == {disputed_ids[1]}
+
+        club_c_resp = authed.get(f"/api/matches/disputed?club_id={club_c_id}")
+        assert club_c_resp.status_code == 200
+        assert club_c_resp.get_json()["matches"] == []
+
+    # Verifies team manager sees empty disputed list.
     def test_team_manager_sees_empty_disputed_list(self, seeded_app, client, monkeypatch):
         """Ordinary team manager without ladder admin rights sees no disputed matches."""
         with seeded_app.app_context():
@@ -638,6 +1001,7 @@ class TestDisputedRoute:
         assert resp.status_code == 200
         assert resp.get_json()["total"] == 0
 
+    # Verifies resolved match not in disputed list.
     def test_resolved_match_not_in_disputed_list(self, seeded_app, client, monkeypatch):
         """A match that has been finalized does not appear in disputed list."""
         with seeded_app.app_context():

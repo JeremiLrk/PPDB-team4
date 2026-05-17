@@ -1,3 +1,5 @@
+// Team management UI component for TeamSettingsLink.
+
 import { useNavigate } from "react-router-dom";
 import styles from "@/style/TeamSettingsLink.module.css";
 import GearIcon from "@/components/icon/GearIcon.jsx";
@@ -14,6 +16,9 @@ import { usePageTexts } from "@/hooks/common/usePageTexts.js";
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export function canManageTeam(account, team) {
+    /*
+     Checks whether the current account may open team settings.
+    */
     if (!account || !team) return false;
     const roles = Array.isArray(account.roles)
         ? account.roles
@@ -51,6 +56,9 @@ export default function TeamSettingsLink({ currentUser, team, size = 18 }) {
     const texts = usePageTexts("team_settings", lang);
 
     if (!canManageTeam(currentUser, team)) return null;
+    /*
+     Renders the settings shortcut only when the user has permission.
+    */
 
     return (
         <button

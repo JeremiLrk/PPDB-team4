@@ -1,3 +1,5 @@
+// Team management hook for useLadderPeers.
+
 import { useState, useCallback } from "react";
 
 /**
@@ -19,6 +21,9 @@ import { useState, useCallback } from "react";
  * }}
  */
 export function useLadderPeers() {
+    /*
+     Loads the list of peer teams that share one ladder.
+    */
     const [peers,   setPeers]   = useState([]);
     const [loading, setLoading] = useState(false);
     const [error,   setError]   = useState(null);
@@ -26,6 +31,9 @@ export function useLadderPeers() {
     const load = useCallback(async (teamId, ladderId) => {
         if (!teamId || !ladderId) return;
 
+        /*
+         Fetches the teams in one ladder, excluding the active team.
+        */
         setLoading(true);
         setError(null);
         setPeers([]);
@@ -52,6 +60,9 @@ export function useLadderPeers() {
     }, []);
 
     const reset = useCallback(() => {
+        /*
+         Clears the peer list and its loading/error state.
+        */
         setPeers([]);
         setError(null);
         setLoading(false);

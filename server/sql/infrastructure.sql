@@ -44,24 +44,3 @@ CREATE TABLE IF NOT EXISTS ladder_rating_function (
     CONSTRAINT pk_ladder_rating_function
     PRIMARY KEY (id)
 );
-
-CREATE TABLE IF NOT EXISTS account_role (
-    id BIGINT GENERATED ALWAYS AS IDENTITY,
-    name VARCHAR(255) NOT NULL,
-
-    CONSTRAINT pk_account_role
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS page_text (
-    id BIGINT GENERATED ALWAYS AS IDENTITY,
-    page VARCHAR(50),       -- 'home', 'about', 'contact'
-    key VARCHAR(100),       -- 'hero_title', 'hero_subtitle', 'btn_signup'
-    language VARCHAR(5),    -- 'uk', 'en', 'de'
-    value TEXT,             -- the text itself
-    CONSTRAINT unique_page_key_lang
-     UNIQUE (page, key, language),
-
-    CONSTRAINT pk_page_text
-        PRIMARY KEY (id)
-);

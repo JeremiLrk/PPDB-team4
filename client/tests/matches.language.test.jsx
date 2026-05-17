@@ -1,6 +1,9 @@
+// Regression tests for matches.language.test.
+
 import { test, expect } from "vitest";
 import { getTexts } from "virtual:i18n";
 
+// Verifies the match copy exists in both supported languages.
 test("matches page texts exist in English and Dutch", () => {
     const enMatches = getTexts("matches", "en");
     const nlMatches = getTexts("matches", "nl");

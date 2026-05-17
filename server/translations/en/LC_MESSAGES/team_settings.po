@@ -184,3 +184,15 @@ msgstr "Affected ladders:"
 msgid "team_settings.remove_player_confirm_violate"
 msgstr "Remove Anyway"
 
+
+msgid "team_settings.error_grant_can_rename"
+msgstr "You can't give Rename access — you don't have it yourself."
+
+msgid "team_settings.error_grant_can_delete"
+msgstr "You can't give Delete access — you don't have it yourself."
+
+msgid "team_settings.error_grant_can_edit_players"
+msgstr "You can't give Edit Players access — you don't have it yourself."
+
+msgid "team_settings.error_grant_can_edit_managers"
+msgstr "You can't give Edit Managers access — you don't have it yourself."

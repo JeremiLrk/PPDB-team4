@@ -1,7 +1,10 @@
+// Team management UI component for AddPlayerButton.
+
 import commonStyles from "@/style/common/Common.module.css";
 import formStyles   from "@/style/common/Forms.module.css";
 import panelStyles  from "@/style/common/Panel.module.css";
 import teamStyles   from "@/style/TeamSettings.module.css";
+import btnStyles  from "@/style/common/Buttons.module.css";
 
 import { useAddPlayer } from "@/hooks/teams/useAddPlayer.js";
 import { PlusIcon }     from "@/components/icon/PlusIcon.jsx";
@@ -20,6 +23,9 @@ import { usePageTexts } from "@/hooks/common/usePageTexts.js";
  *   onAdded   {() => void}     - called after a player is successfully added
  */
 export default function AddPlayerButton({ teamId, onAdded }) {
+    /*
+     Owns the search-and-add flow for team members.
+    */
     const { lang } = useLangContext();
     const texts = usePageTexts("team_settings", lang);
     const {
@@ -32,6 +38,9 @@ export default function AddPlayerButton({ teamId, onAdded }) {
     } = useAddPlayer({ teamId, onAdded });
 
     const getErrorMessage = (err) => {
+        /*
+         Converts backend error keys into localized copy.
+        */
         if (typeof err === "string") {
             const key = "team_settings.error_" + err.replace(/\s+/g, "_").toLowerCase();
             return texts[key] || err;
@@ -39,9 +48,12 @@ export default function AddPlayerButton({ teamId, onAdded }) {
         return err;
     };
 
-    const handleConfirmExceed = () => {
+    const handleConfirmExceed = async () => {
+        /*
+         Confirms the add after the ladder warning appears.
+        */
         if (confirmWarning) {
-            addPlayer(confirmWarning.accountId, true);
+            await addPlayer(confirmWarning.accountId, true);
             setConfirmWarning(null);
         }
     };
@@ -60,13 +72,15 @@ export default function AddPlayerButton({ teamId, onAdded }) {
             totalSteps={1}
             onNext={null}
             onBack={null}
-            onSubmit={null}
+            onSubmit={closePanel}
 
             // No loading/success state at the panel level —
             // each result card has its own state
             isLoading={false}
             isSuccess={false}
 
+            // The footer button simply dismisses the panel; the plus button in each row performs the add action.
+            submitLabel={texts.confirm || "Confirm"}
             error={confirmWarning ? null : (addErr || searchErr || null)}
             errorMessage={confirmWarning ? null : getErrorMessage(addErr || searchErr)}
 
@@ -83,27 +97,30 @@ export default function AddPlayerButton({ teamId, onAdded }) {
                         </p>
                         {confirmWarning.ladders && confirmWarning.ladders.length > 0 && (
                             <div className={teamStyles.laddersList}>
-                                <p className={commonStyles.secondaryText}>
+                                <p className={commonStyles.warningText}>
                                     {texts.add_player_warn_ladders || "Affected ladders:"}
                                 </p>
                                 <ul className={panelStyles.list}>
                                     {confirmWarning.ladders.map(ladder => (
-                                        <li key={ladder.id} className={teamStyles.ladderItem}>
+                                        <li key={ladder.id} className={`${teamStyles.ladderItem} ${commonStyles.warningText}`}>
                                             {ladder.name}
                                         </li>
                                     ))}
                                 </ul>
                             </div>
                         )}
-                        <div className={teamStyles.confirmButtons}>
+                        <div >
                             <button
-                                className={`${formStyles.btn} ${formStyles.btnSecondary}`}
+                                type="button"
+                                className={`${btnStyles.submitButton} ${formStyles.btnSecondary}`}
                                 onClick={() => setConfirmWarning(null)}
                             >
+                                {/* Cancel keeps the warning state but returns the user to the search results. */}
                                 {texts.cancel_btn || "Cancel"}
                             </button>
                             <button
-                                className={`${formStyles.btn} ${formStyles.btnPrimary}`}
+                                type="button"
+                                className={`${btnStyles.nextBtn} ${formStyles.btnSecondary}`}
                                 onClick={handleConfirmExceed}
                                 disabled={addingId}
                             >
@@ -120,6 +137,7 @@ export default function AddPlayerButton({ teamId, onAdded }) {
 
                     {/* Search input */}
                     <div className={teamStyles.searchRow}>
+                        {/* The search field drives the player lookup hook and keeps the results live while typing. */}
                         <input
                             ref={inputRef}
                             className={formStyles.formInput}
@@ -179,6 +197,7 @@ function SearchResultCard({ account, isAdding, isAdded, onAdd, texts = {} }) {
     return (
         <ItemCard>
             <div className={teamStyles.resultInfo}>
+                {/* Name and email are shown together so staff can confirm they picked the right person. */}
                 <p className={commonStyles.primaryText}>{fullName}</p>
                 <p className={commonStyles.secondaryText}>{account.email}</p>
             </div>
@@ -188,6 +207,8 @@ function SearchResultCard({ account, isAdding, isAdded, onAdd, texts = {} }) {
                 disabled={isAdding || isAdded}
                 aria-label={isAdded ? (texts.added_label || "Added") : `${texts.add_player_btn || "Add"} ${fullName}`}
             >
+                {/* This button is the direct add action for one search result.
+                    It is disabled while the request is in flight or already done. */}
                 {isAdding ? <Spinner /> : isAdded ? "+" : <PlusIcon />}
             </button>
         </ItemCard>

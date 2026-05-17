@@ -8,6 +8,7 @@ OPENWEATHER_GEOCODING_URL = "https://api.openweathermap.org/geo/1.0/direct"
 
 
 def _country_name(country_code: str | None) -> str | None:
+    """Convert a country code to its full country name using Babel."""
     if not country_code:
         return None
 
@@ -19,6 +20,7 @@ def _country_name(country_code: str | None) -> str | None:
 
 
 def _format_city_label(city: str | None, country_code: str | None) -> str | None:
+    """Format a city label as 'City, Country' if possible."""
     if not city:
         return None
 
@@ -31,6 +33,7 @@ def _format_city_label(city: str | None, country_code: str | None) -> str | None
 
 
 def _normalize_suggestion(item: dict[str, Any]) -> dict[str, Any] | None:
+    """Normalize a single city suggestion from the OpenWeather Geocoding API response."""
     city = item.get("name")
     label = _format_city_label(city, item.get("country"))
     if not city or not label:
@@ -48,6 +51,16 @@ def _normalize_suggestion(item: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def search_cities(query: str, limit: int = 5) -> list[dict[str, Any]]:
+    """
+    Search for cities based on a query string.
+
+    Args:
+        query (str): The search query for cities.
+        limit (int): The maximum number of results to return.
+
+    Returns:
+        list[dict[str, Any]]: A list of normalized city suggestions.
+    """
     cleaned_query = (query or "").strip()
     if len(cleaned_query) < 2:
         return []
@@ -91,6 +104,7 @@ def search_cities(query: str, limit: int = 5) -> list[dict[str, Any]]:
 
 
 def resolve_city_label(city_input: str) -> str | None:
+    """Resolve a city input string to a standardized city label using the OpenWeather Geocoding API."""
     cleaned_input = (city_input or "").strip()
     if not cleaned_input:
         return None

@@ -4,6 +4,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Language: nl\n"
 
+#. Club home labels for the redesigned summary page.
 msgid "club_home.loading_ladders"
 msgstr "Ladders laden..."
 
@@ -25,3 +26,56 @@ msgstr "Inloggen"
 msgid "club_home.manage_club"
 msgstr "Club beheren"
 
+msgid "club_home.performers_title"
+msgstr "Uitblinkers"
+
+msgid "club_home.upcoming_title"
+msgstr "Aankomende wedstrijden"
+
+msgid "club_home.latest_results_title"
+msgstr "Recentste resultaten"
+
+msgid "club_home.loading_summary"
+msgstr "Overzicht laden..."
+
+msgid "club_home.no_ladders"
+msgstr "Nog geen ladders beschikbaar."
+
+msgid "club_home.no_performers"
+msgstr "Nog geen uitblinkers beschikbaar."
+
+msgid "club_home.no_upcoming_matches"
+msgstr "Er staan nog geen aankomende wedstrijden gepland."
+
+msgid "club_home.no_latest_results"
+msgstr "Nog geen recente resultaten beschikbaar."
+
+msgid "club_home.load_more"
+msgstr "Meer laden"
+
+msgid "club_home.accepted"
+msgstr "Geaccepteerd"
+
+msgid "club_home.disputed"
+msgstr "In dispuut"
+
+msgid "club_home.final"
+msgstr "Definitief"
+
+msgid "club_home.rating_label"
+msgstr "Rating"
+
+msgid "club_home.ladders_count"
+msgstr "Ladders"
+
+msgid "club_home.performers_count"
+msgstr "Uitblinkers"
+
+msgid "club_home.upcoming_count"
+msgstr "Aankomend"
+
+msgid "club_home.ladder_label"
+msgstr "Ladder"
+
+msgid "club_home.performer_label"
+msgstr "Clubuitblinker"

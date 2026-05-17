@@ -8,6 +8,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _resolve_seed_path(seeds_file: str) -> Path:
+    """Resolve a seed file path, allowing for both absolute and project-relative paths."""
     candidate = Path(seeds_file)
     if candidate.is_absolute():
         return candidate

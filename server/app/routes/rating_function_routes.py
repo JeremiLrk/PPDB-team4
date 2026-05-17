@@ -7,6 +7,7 @@ rating_function_bp = Blueprint("rating_function", __name__, url_prefix="/api")
 @rating_function_bp.get("/rating-functions")
 @cache.cached(timeout=600, key_prefix="rating_functions")
 def get_rating_functions():
+    """Endpoint to retrieve all available ladder rating functions."""
     functions = LadderRatingFunction.query.order_by(LadderRatingFunction.name).all()
     return jsonify({
         "ratingFunctions": [

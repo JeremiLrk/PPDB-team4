@@ -1,9 +1,14 @@
+// Shared hook for useClubSettings.
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSportTypes } from "@/hooks/useSportTypes.js"
 
 export function useClubSettings(clubId, texts = {}) {
     const navigate = useNavigate();
+    /*
+     Loads and edits the club settings workspace state.
+    */
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -29,11 +34,20 @@ export function useClubSettings(clubId, texts = {}) {
     const [updating, setUpdating] = useState(false);
     const [updateMessage, setUpdateMessage] = useState(null);
 
-    // --- ADDED: Tab State Logic ---
     const [activeTab, setActiveTab] = useState("general");
+    const supportsRuleSets = club?.sport === "Tennis" || club?.sport === "Padel";
+
+    useEffect(() => {
+        if (!supportsRuleSets && activeTab === "rules") {
+            setActiveTab("general");
+        }
+    }, [activeTab, supportsRuleSets]);
 
     useEffect(() => {
         async function fetchClubData() {
+            /*
+             Loads the club settings payload and the related lists.
+            */
             try {
                 const [clubRes, membersRes, ownersRes, laddersRes, ratingsRes, rulesRes, teamsRes] = await Promise.all([
                     fetch(`/api/clubs/${clubId}`, { credentials: "include" }),
@@ -83,6 +97,9 @@ export function useClubSettings(clubId, texts = {}) {
     }, [clubId]);
 
     const handleChange = (e) => {
+        /*
+         Updates one general-settings form field.
+        */
         setFormData(prev => ({
             ...prev,
             [e.target.name]: e.target.value,
@@ -93,14 +110,19 @@ export function useClubSettings(clubId, texts = {}) {
     };
 
     const handleCitySelect = (city) => {
+        /*
+         Copies the selected city suggestion into the settings form.
+        */
         setFormData((prev) => ({
             ...prev,
             city: city.label,
         }));
         setCitySelection(city);
     };
-
     const updateClub = async (e) => {
+        /*
+         Submits the general club settings form.
+        */
         e.preventDefault();
         setUpdating(true);
         setUpdateMessage(null);
@@ -141,6 +163,9 @@ export function useClubSettings(clubId, texts = {}) {
     };
 
     const createLadder = async (ladderData) => {
+        /*
+         Creates one ladder inside the current club.
+        */
         try {
             const res = await fetch(`/api/clubs/${clubId}/ladders`, {
                 method: "POST",
@@ -162,6 +187,9 @@ export function useClubSettings(clubId, texts = {}) {
     };
 
     const addTeamToLadder = async (ladderId, teamId) => {
+        /*
+         Adds one team to one ladder.
+        */
         try {
             const res = await fetch(`/api/clubs/${clubId}/ladders/${ladderId}/teams/${teamId}`, {
                 method: "POST",
@@ -179,6 +207,9 @@ export function useClubSettings(clubId, texts = {}) {
     };
 
     const addMember = async (email) => {
+        /*
+         Adds one club member by email.
+        */
         try {
             const res = await fetch(`/api/clubs/${clubId}/members`, {
                 method: "POST",
@@ -200,6 +231,9 @@ export function useClubSettings(clubId, texts = {}) {
     };
 
     const removeMember = async (MemberId) => {
+        /*
+         Removes one club member from the club.
+        */
         try {
             const res = await fetch(`/api/clubs/${clubId}/members/${MemberId}`, {
                 method: "DELETE",
@@ -215,6 +249,9 @@ export function useClubSettings(clubId, texts = {}) {
     };
 
     const addOwner = async (ownerId) => {
+        /*
+         Adds one club owner.
+        */
         try {
             const res = await fetch(`/api/clubs/${clubId}/owners`, {
                 method: "POST",
@@ -316,6 +353,7 @@ export function useClubSettings(clubId, texts = {}) {
         ratingFunctions,
         ruleSets,
         sportTypes,
+        supportsRuleSets,
 
         goBack: () => navigate("/dashboard"),
     };

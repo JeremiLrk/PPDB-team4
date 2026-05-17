@@ -1,3 +1,5 @@
+// Match workflow UI component for DisputedMatchCard.
+
 import { useState } from "react";
 import styles from "@/style/ClubSettings.module.css";
 
@@ -10,6 +12,9 @@ import styles from "@/style/ClubSettings.module.css";
  * @param {{ match: object, texts: object }} props
  */
 function SubmissionRow({ role, submission, team1Name, team2Name, texts }) {
+    /*
+     Renders one submitted score row with its source role and timestamp.
+    */
     const labelMap = {
         team1_side:   team1Name || texts.team1 || "Team 1",
         team2_side:   team2Name || texts.team2 || "Team 2",
@@ -45,6 +50,9 @@ function SubmissionRow({ role, submission, team1Name, team2Name, texts }) {
 }
 
 function RulesList({ rules, texts }) {
+    /*
+     Renders the frozen rule snapshot attached to the disputed match.
+    */
     if (!rules || rules.length === 0) {
         return (
             <p className={styles.muted} style={{ fontSize: "0.82rem", marginTop: "0.4rem" }}>
@@ -77,20 +85,30 @@ function RulesList({ rules, texts }) {
 }
 
 export default function DisputedMatchCard({ match, texts = {} }) {
+    /*
+     Renders one disputed match with expandable detail content.
+    */
     const [expanded, setExpanded] = useState(false);
 
-    // Resolve score submissions by role for quick comparison
+    /*
+     Keeps this card's detail panel local to the row it belongs to.
+    */
+
+    /*
+     Groups score submissions by role so the summary can compare them.
+    */
     const subs = match.scoreSubmissions || [];
     const byRole = Object.fromEntries(subs.map(s => [s.submittedByRole, s]));
     const sub1   = byRole["team1_side"];
     const sub2   = byRole["team2_side"];
 
-    // Derive the difference string when both sides have submitted
     const diffLabel = (sub1 && sub2)
         ? `${sub1.scoreTeam1}-${sub1.scoreTeam2} vs ${sub2.scoreTeam1}-${sub2.scoreTeam2}`
         : null;
 
-    // Ruleset: prefer the frozen snapshot attached to the match
+    /*
+     Prefers the frozen rules snapshot stored on the match.
+    */
     const snapshotRules = Array.isArray(match.ruleSnapshot)
         ? match.ruleSnapshot
         : (match.ruleSnapshot?.rules ?? null);

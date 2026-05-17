@@ -1,3 +1,5 @@
+// Page container for TeamSettings.
+
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -27,10 +29,14 @@ import panelStyles  from "@/style/common/Panel.module.css";
  * TeamManager — via managerPermissions or managedTeamIds as a fallback.
  */
 function userCanEditManagers(account, team) {
+    /*
+     Checks whether the current user may edit managers for this team.
+    */
     if (!account || !team) return false;
     const roles = account.roles ?? [];
     if (roles.includes("administrator")) return true;
     if (roles.includes("club_owner")) {
+        // Club owners can edit managers for teams in their own club.
         return (team.clubId && account.clubIds?.includes(team.clubId))
             || account.managedTeamIds?.includes(team.id);
     }
@@ -54,11 +60,12 @@ export default function TeamSettings() {
         total:   playersTotal, reload: reloadPlayers }           = useTeamPlayers(teamId);
     const { managers, loading: managersLoading, error: managersError,
         total:   managersTotal, reload: reloadManagers }         = useTeamManagers(teamId);
-
+    /*
+     Owns the derived team name shown in the hero and breadcrumb.
+    */
     const [displayName, setDisplayName] = useState(null);
     const teamName = displayName ?? team?.name ?? "";
 
-    /*  loading  */
     if (teamLoading) {
         return (
             <div className={styles.state}>
@@ -68,7 +75,6 @@ export default function TeamSettings() {
         );
     }
 
-    /*  fetch error  */
     if (teamError) {
         return (
             <div className={styles.state}>
@@ -82,7 +88,6 @@ export default function TeamSettings() {
 
     if (!team) return null;
 
-    /*  access check  */
     if (!currentUser) {
         return (
             <div className={styles.state}>
@@ -107,7 +112,6 @@ export default function TeamSettings() {
 
     const canDeleteManagers = userCanEditManagers(currentUser, team);
 
-    /*  main page  */
     return (
         <section className={styles.page}>
 
@@ -134,12 +138,12 @@ export default function TeamSettings() {
                                     onRenamed={t => setDisplayName(t.name)}
                                 />
                             </div>
-                            <div className={styles.tags}>
-                                <Tag label={texts.settings_title || "Team settings"} accent />
-                                <Tag label={team.clubName ? team.clubName : (texts.independent_team || "Independent")} muted={!team.clubId} />
-                                <Tag label={team.sportName ? team.sportName  : "No sport"}    muted={!team.sportTypeId} />
+                        <div className={styles.tags}>
+                            <Tag label={texts.settings_title || "Team settings"} accent />
+                            <Tag label={team.clubName ? team.clubName : (texts.independent_team || "Independent")} muted={!team.clubId} />
+                            <Tag label={team.sportName ? team.sportName  : "No sport"}    muted={!team.sportTypeId} />
 
-                            </div>
+                        </div>
                         </div>
                         <GearIcon size={32} title={texts.settings_title || "Team settings"} className={styles.settingsIcon} />
                     </div>
@@ -246,6 +250,9 @@ export default function TeamSettings() {
 /*  Local sub-components  */
 
 function Tag({ label, muted, accent }) {
+    /*
+     Renders one small metadata tag in the hero header.
+    */
     const cls = [
         styles.tag,
         muted  ? styles.tagMuted  : "",

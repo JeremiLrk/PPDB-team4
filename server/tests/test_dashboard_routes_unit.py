@@ -65,6 +65,7 @@ class _JoinRequestStub:
     query = _ClubPlayerQueryStub()
 
 
+# Verifies get my dashboard returns 401 when cookie user missing.
 def test_get_my_dashboard_returns_401_when_cookie_user_missing():
     app = Flask(__name__)
     with app.test_request_context("/api/me/dashboard"):
@@ -74,9 +75,10 @@ def test_get_my_dashboard_returns_401_when_cookie_user_missing():
     assert response.get_json()["message"] == "Unauthorized"
 
 
+# Verifies get my dashboard returns 404 when account missing.
 def test_get_my_dashboard_returns_404_when_account_missing(monkeypatch):
     app = Flask(__name__)
-    monkeypatch.setattr(dashboard_routes, "_get_current_user_id_from_cookie", lambda: 101)
+    monkeypatch.setattr(dashboard_routes, "get_current_user_id_from_cookie", lambda: 101)
     monkeypatch.setattr(
         dashboard_routes,
         "Account",
@@ -90,12 +92,13 @@ def test_get_my_dashboard_returns_404_when_account_missing(monkeypatch):
     assert response.get_json()["message"] == "Account not found"
 
 
+# Verifies get my dashboard returns payload when account exists.
 def test_get_my_dashboard_returns_payload_when_account_exists(monkeypatch):
     app = Flask(__name__)
     fake_user = SimpleNamespace(id=7, email="demo@netrank.test", role="user")
 
-    monkeypatch.setattr(dashboard_routes, "_get_current_user_id_from_cookie", lambda: 7)
-    monkeypatch.setattr(dashboard_routes, "_is_admin", lambda account_id: False)
+    monkeypatch.setattr(dashboard_routes, "get_current_user_id_from_cookie", lambda: 7)
+    monkeypatch.setattr(dashboard_routes, "is_admin", lambda account_id: False)
     monkeypatch.setattr(
         dashboard_routes,
         "Account",
@@ -121,6 +124,7 @@ def test_get_my_dashboard_returns_payload_when_account_exists(monkeypatch):
     }
 
 
+# Verifies get my dashboard admin sees all clubs.
 def test_get_my_dashboard_admin_sees_all_clubs(monkeypatch):
     app = Flask(__name__)
     fake_user = SimpleNamespace(id=1, email="admin@netrank.test", role="administrator")
@@ -150,8 +154,8 @@ def test_get_my_dashboard_admin_sees_all_clubs(monkeypatch):
         query = _AdminClubQueryStub()
         name = _ClubNameStub()
 
-    monkeypatch.setattr(dashboard_routes, "_get_current_user_id_from_cookie", lambda: 1)
-    monkeypatch.setattr(dashboard_routes, "_is_admin", lambda account_id: True)
+    monkeypatch.setattr(dashboard_routes, "get_current_user_id_from_cookie", lambda: 1)
+    monkeypatch.setattr(dashboard_routes, "is_admin", lambda account_id: True)
     monkeypatch.setattr(
         dashboard_routes,
         "Account",

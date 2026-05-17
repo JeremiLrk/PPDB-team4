@@ -1,3 +1,5 @@
+// Page container for Home.
+
 import { useNavigate } from "react-router-dom"
 import tennisBackground from "@/assets/tennis.jpg"
 import styles from "@/style/Home.module.css"
@@ -5,6 +7,9 @@ import styles from "@/style/Home.module.css"
 
 function Home() {
     const navigate = useNavigate()
+    /*
+     Renders the public landing page and its navigation shortcuts.
+    */
 
     return (
         <div className={styles.container}>

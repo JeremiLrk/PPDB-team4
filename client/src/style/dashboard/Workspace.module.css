@@ -1,3 +1,5 @@
+/* Dashboard styling for Workspace.module. */
+
 .workspace {
     background: var(--workspace-bg);
     padding: 1.1rem 1.25rem;
@@ -5,6 +7,7 @@
     align-content: start;
     gap: 1rem;
     min-height: 0;
+    min-width: 0;
     overflow: auto;
 }
 

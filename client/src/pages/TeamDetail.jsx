@@ -1,3 +1,5 @@
+// Page container for TeamDetail.
+
 import { useNavigate, useParams } from "react-router-dom";
 import { useTeam } from "@/hooks/teams/useTeam.js";
 import styles from "@/style/TeamDetail.module.css";
@@ -20,6 +22,9 @@ export default function TeamDetail() {
     const { members, loading: membersLoading, error: membersError, total, reload} = useTeamMembers(teamId);
 
     if (loading) {
+        /*
+         Shows a compact loading state while the team data is fetched.
+        */
         return (
             <div className={styles.state}>
                 <div className={styles.spinner} />
@@ -115,6 +120,9 @@ export default function TeamDetail() {
 /*  Local sub-components  */
 
 function Tag({ label, muted }) {
+    /*
+     Renders one hero tag for the public team page.
+    */
     return (
         <span className={`${styles.tag} ${muted ? styles.tagMuted : ""}`}>
             {label}
@@ -123,6 +131,9 @@ function Tag({ label, muted }) {
 }
 
 function InfoCard({ label, value }) {
+    /*
+     Renders one detail card in the team info grid.
+    */
     return (
         <div className={styles.infoCard}>
             <p className={styles.infoLabel}>{label}</p>

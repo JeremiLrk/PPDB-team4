@@ -1,4 +1,9 @@
+// Icon component for PencilIcon.
+
 export function PencilIcon() {
+    /*
+     Renders the pencil icon used by rename actions.
+    */
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"

@@ -1,12 +1,19 @@
+"""
+Match proposal lifecycle routes.
+
+This blueprint owns the main proposal workflow: create, accept, reject,
+check, submit, and cancel match proposals.
+"""
+
 from flask import Blueprint, request, jsonify, abort, Response
 
 from server.app.routes.matcher._helpers import (
-    _get_team_or_404,
-    _get_proposal_or_404,
+    get_team_or_404,
+    get_proposal_or_404,
 )
 from server.app.routes.matcher._permissions import (
-    _can_manage_match,
-    _can_manage_either_team,
+    can_manage_match,
+    can_manage_either_team,
 )
 from server.extensions import db
 from server.app.decorators.login_required import login_required
@@ -37,10 +44,19 @@ matches_core_bp = Blueprint("matches_core", __name__)
 @login_required
 def create_match_proposal(account: Account) -> tuple[Response, int]:
     """
-    POST /api/matches
-    Body: { team1Id, team2Id, ladderId?, sportTypeId?, rulesetId?, location?, venueTypeId? }
+    Create a new match proposal with the provided details.
 
-    Allowed for: Administrator, ClubOwner (with can_create_match), TeamManager of either team.
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account creating the match proposal.
+
+    Returns:
+        a JSON response containing a success message and the created match proposal, along with a 201 status code.
+
+    Postconditions:
+        - The match proposal is created in the database with the specified attributes and is in a pending state.
     """
     resolved = account.resolved_role
 
@@ -58,8 +74,8 @@ def create_match_proposal(account: Account) -> tuple[Response, int]:
     if team1_id == team2_id:
         abort(422, description="A team cannot play against itself.")
 
-    team1 = _get_team_or_404(team1_id)
-    team2 = _get_team_or_404(team2_id)
+    team1 = get_team_or_404(team1_id)
+    team2 = get_team_or_404(team2_id)
 
     ladder = None
     if ladder_id is not None:
@@ -97,7 +113,7 @@ def create_match_proposal(account: Account) -> tuple[Response, int]:
     if team2.sport_type_id and sport_type_id != int(team2.sport_type_id):
         abort(422, description="Field 'sportTypeId' must match team2 sport type.")
 
-    if not _can_manage_either_team(resolved, team1, team2):
+    if not can_manage_either_team(resolved, team1, team2):
         abort(403, description="Forbidden: you do not have permission to create a match for these teams.")
     if teams_share_players(team1, team2):
         abort(422, description="A match proposal cannot include the same player on both teams.")
@@ -135,20 +151,29 @@ def create_match_proposal(account: Account) -> tuple[Response, int]:
 @login_required
 def accept_match(account: Account, match_id: int) -> tuple[Response, int]:
     """
-    POST /api/matches/<id>/accept
-    Body (optional): { responseText? }
+    Accept a pending match proposal.
 
-    Only managers of team2 (or Administrator) may accept.
-    Match must be in 'pending' status.
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account accepting the match proposal.
+        match_id (int): The ID of the match proposal to accept.
+
+    Returns:
+        a JSON response containing a success message and the accepted match proposal, along with a 200 status code.
+
+    Postconditions:
+        - The match proposal is updated in the database to reflect its accepted status, and the acceptance details are recorded.
     """
     resolved = account.resolved_role
-    proposal = _get_proposal_or_404(match_id)
+    proposal = get_proposal_or_404(match_id)
 
     if proposal.status_id != MatchStatus.PENDING:
         abort(409, description=f"Match is not pending (current status: {proposal.status.name}).")
 
-    team2 = _get_team_or_404(proposal.team2_id)
-    if not _can_manage_match(resolved, team2):
+    team2 = get_team_or_404(proposal.team2_id)
+    if not can_manage_match(resolved, team2):
         abort(403, description="Forbidden: only managers of the challenged team may accept.")
 
     data          = request.get_json(silent=True) or {}
@@ -177,20 +202,29 @@ def accept_match(account: Account, match_id: int) -> tuple[Response, int]:
 @login_required
 def reject_match(account: Account, match_id: int) -> tuple[Response, int]:
     """
-    POST /api/matches/<id>/reject
-    Body (optional): { responseText? }
+    Reject a pending match proposal.
 
-    Only managers of team2 (or Administrator) may reject.
-    Match must be in 'pending' status.
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account rejecting the match proposal.
+        match_id (int): The ID of the match proposal to reject.
+
+    Returns:
+        a JSON response containing a success message and the rejected match proposal, along with a 200 status code.
+
+    Postconditions:
+        - The match proposal is updated in the database to reflect its rejected status, and the rejection details are recorded.
     """
     resolved = account.resolved_role
-    proposal = _get_proposal_or_404(match_id)
+    proposal = get_proposal_or_404(match_id)
 
     if proposal.status_id != MatchStatus.PENDING:
         abort(409, description=f"Match is not pending (current status: {proposal.status.name}).")
 
-    team2 = _get_team_or_404(proposal.team2_id)
-    if not _can_manage_match(resolved, team2):
+    team2 = get_team_or_404(proposal.team2_id)
+    if not can_manage_match(resolved, team2):
         abort(403, description="Forbidden: only managers of the challenged team may reject.")
 
     data          = request.get_json(silent=True) or {}
@@ -219,24 +253,28 @@ def reject_match(account: Account, match_id: int) -> tuple[Response, int]:
 @login_required
 def check_match_result(account: Account, match_id: int) -> tuple[Response, int]:
     """
-    POST /api/matches/<id>/result/check
-    Body: { scoreTeam1, scoreTeam2, rating? }
+    Validate a proposed match result without saving it.
 
-    Validates the payload and warns (HTTP 200 with warning flag) if a result
-    already exists. Does NOT write to the database.
+    Preconditions:
+        - `account` must exist and be active in the database.
 
-    Allowed for: managers of team1 or team2, Administrator.
+    Args:
+        account (Account): The account validating the match result.
+        match_id (int): The ID of the match proposal for which to validate the result.
+
+    Returns:
+        a JSON response containing a success message and the validated match proposal, along with a 200 status code.
     """
     resolved = account.resolved_role
-    proposal = _get_proposal_or_404(match_id)
+    proposal = get_proposal_or_404(match_id)
 
     if proposal.status_id != MatchStatus.ACCEPTED:
         abort(409, description=f"Match is not in 'accepted' state (current: {proposal.status.name}).")
 
-    team1 = _get_team_or_404(proposal.team1_id)
-    team2 = _get_team_or_404(proposal.team2_id)
+    team1 = get_team_or_404(proposal.team1_id)
+    team2 = get_team_or_404(proposal.team2_id)
 
-    if not (_can_manage_either_team(resolved, team1, team2)):
+    if not (can_manage_either_team(resolved, team1, team2)):
         abort(403, description="Forbidden: you must manage one of the teams to submit a result.")
 
     data = request.get_json(silent=True)
@@ -270,22 +308,29 @@ def check_match_result(account: Account, match_id: int) -> tuple[Response, int]:
 @login_required
 def submit_match_result(account: Account, match_id: int) -> tuple[Response, int]:
     """
-    POST /api/matches/<id>/result
-    Body: { scoreTeam1, scoreTeam2, rating? }
+    Save the result and update the elo of a match proposal.
 
-    Saves the result unconditionally (overwrites any previous entry).
-    Sets status to 'played'.
+    Preconditions:
+        - `account` must exist and be active in the database.
 
-    Allowed for: managers of team1 or team2, Administrator.
+    Args:
+        account (Account): The account submitting the match result.
+        match_id (int): The ID of the match for which to submit a result.
+
+    Returns:
+        a JSON response containing a success message and the completed match proposal, along with a 200 status code.
+
+    Postconditions:
+        - The match proposal is updated in the database to reflect its completed status.
     """
     resolved = account.resolved_role
     proposal = MatchProposal.query.filter_by(id=match_id).with_for_update().first()
     if not proposal:
         abort(404, description="Match proposal not found.")
 
-    team1 = _get_team_or_404(proposal.team1_id)
-    team2 = _get_team_or_404(proposal.team2_id)
-    if not (_can_manage_either_team(resolved, team1, team2)):
+    team1 = get_team_or_404(proposal.team1_id)
+    team2 = get_team_or_404(proposal.team2_id)
+    if not (can_manage_either_team(resolved, team1, team2)):
         abort(403, description="Forbidden: you must manage one of the teams to submit a result.")
 
     data = request.get_json(silent=True)
@@ -357,21 +402,29 @@ def submit_match_result(account: Account, match_id: int) -> tuple[Response, int]
 @login_required
 def cancel_match(account: Account, match_id: int) -> tuple[Response, int]:
     """
-    POST /api/matches/<id>/cancel
-    Body (optional): { reason? }
+    Cancel an accepted match proposal.
 
-    Cancels an already-accepted match.
-    Only the proposing side (team1 managers) or Administrator may cancel.
-    This is distinct from rejection (which is done by team2 on a pending proposal).
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account cancelling the match proposal.
+        match_id (int): The ID of the match proposal to cancel.
+
+    Returns:
+        a JSON response containing a success message and the cancelled match proposal, along with a 200 status code.
+
+    Postconditions:
+        - The match proposal is updated in the database to reflect its cancelled status, and the cancellation details are recorded.
     """
     resolved = account.resolved_role
-    proposal = _get_proposal_or_404(match_id)
+    proposal = get_proposal_or_404(match_id)
 
     if proposal.status_id != MatchStatus.ACCEPTED:
         abort(409, description=f"Only accepted matches can be cancelled (current: {proposal.status.name}).")
 
-    team1 = _get_team_or_404(proposal.team1_id)
-    if not _can_manage_match(resolved, team1):
+    team1 = get_team_or_404(proposal.team1_id)
+    if not can_manage_match(resolved, team1):
         abort(403, description="Forbidden: only managers of the proposing team (team1) may cancel.")
 
     data   = request.get_json(silent=True) or {}

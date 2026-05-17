@@ -1,3 +1,5 @@
+// Shared hook for usePageTexts.
+
 import { useMemo } from "react";
 import { getTexts } from "virtual:i18n";
 

@@ -1,3 +1,5 @@
+// Shared constants for genderOptions.
+
 export const GENDER_VALUES = ["male", "female", "other"]
 
 export const GENDER_SELECT_OPTIONS = [

@@ -23,15 +23,15 @@ from server.app.models.team_join_request import TeamJoinRequest
 from server.app.models.club_owner import ClubOwner
 
 from server.app.routes.team._permissions import (
-    _can_rename,
-    _can_delete,
-    _can_edit_players,
-    _can_edit_managers,
-    _is_admin,
-    _is_owner_of_team_club,
-    _get_permissions,
+    can_rename,
+    can_delete,
+    can_edit_players,
+    can_edit_managers,
+    is_admin,
+    is_owner_of_team_club,
+    get_permissions,
 )
-from server.app.routes.team._helpers import _parse_pagination, _search_accounts
+from server.app.routes.team._helpers import parse_pagination, search_accounts
 from server.tests._authed_client import _authed_client
 from server.tests.team.factories import _make_team, _make_account, _make_team_manager, _make_assoc
 
@@ -41,28 +41,31 @@ from server.tests.team.factories import _make_team, _make_account, _make_team_ma
 # ===========================================================================
 
 class TestIsAdmin:
-    """_is_admin(resolved)"""
+    """is_admin(resolved)"""
 
+    # Verifies the administrator check returns true.
     def test_administrator_returns_true(self, app):
         with app.app_context():
             admin = MagicMock(spec=Administrator)
             admin.__class__ = Administrator
-            assert _is_admin(admin) is True
+            assert is_admin(admin) is True
 
+    # Verifies the non-admin check returns false.
     def test_non_admin_returns_false(self, app):
         with app.app_context():
             owner = MagicMock(spec=ClubOwner)
             owner.__class__ = ClubOwner
-            assert _is_admin(owner) is False
+            assert is_admin(owner) is False
 
             tm = MagicMock(spec=TeamManager)
             tm.__class__ = TeamManager
-            assert _is_admin(tm) is False
+            assert is_admin(tm) is False
 
 
 class TestIsOwnerOfTeamClub:
-    """_is_owner_of_team_club(resolved, team)"""
+    """is_owner_of_team_club(resolved, team)"""
 
+    # Verifies club owner with matching club is true.
     def test_club_owner_with_matching_club_is_true(self, app):
         with app.app_context():
             from server.app.models.club import Club
@@ -75,9 +78,10 @@ class TestIsOwnerOfTeamClub:
             owner = MagicMock(spec=ClubOwner)
             owner.__class__ = ClubOwner
             owner.clubs = [club]
-            assert _is_owner_of_team_club(owner, team) is True
+            assert is_owner_of_team_club(owner, team) is True
             db.session.rollback()
 
+    # Verifies club owner of different club is false.
     def test_club_owner_of_different_club_is_false(self, app):
         with app.app_context():
             from server.app.models.club import Club
@@ -91,9 +95,10 @@ class TestIsOwnerOfTeamClub:
             owner = MagicMock(spec=ClubOwner)
             owner.__class__ = ClubOwner
             owner.clubs = [club1]
-            assert _is_owner_of_team_club(owner, team) is False
+            assert is_owner_of_team_club(owner, team) is False
             db.session.rollback()
 
+    # Verifies team without club is false.
     def test_team_without_club_is_false(self, app):
         with app.app_context():
             team = _make_team(name="No Club Team")
@@ -102,18 +107,20 @@ class TestIsOwnerOfTeamClub:
             owner = MagicMock(spec=ClubOwner)
             owner.__class__ = ClubOwner
             owner.clubs = []
-            assert _is_owner_of_team_club(owner, team) is False
+            assert is_owner_of_team_club(owner, team) is False
             db.session.rollback()
 
+    # Verifies administrator is false.
     def test_administrator_is_false(self, app):
-        """_is_owner_of_team_club is strictly about ClubOwner — admins are handled separately."""
+        """is_owner_of_team_club is strictly about ClubOwner — admins are handled separately."""
         with app.app_context():
             team = _make_team(name="Admin Club Check")
             admin = MagicMock(spec=Administrator)
             admin.__class__ = Administrator
-            assert _is_owner_of_team_club(admin, team) is False
+            assert is_owner_of_team_club(admin, team) is False
             db.session.rollback()
 
+    # Verifies club owner of other club falls through to manager perms.
     def test_club_owner_of_other_club_falls_through_to_manager_perms(self, app):
         """
         ClubOwner who does NOT own this team's club should fall through
@@ -161,25 +168,26 @@ class TestIsOwnerOfTeamClub:
             team = db.session.get(Team, team.id)
 
             # Sanity: co is a ClubOwner that owns club1 but NOT club2
-            assert _is_owner_of_team_club(co, team) is False
+            assert is_owner_of_team_club(co, team) is False
 
             # Falls through to TeamManager association rights
-            assert _can_rename(co, team)        is True
-            assert _can_delete(co, team)        is False
-            assert _can_edit_players(co, team)  is True
-            assert _can_edit_managers(co, team) is False
+            assert can_rename(co, team)        is True
+            assert can_delete(co, team)        is False
+            assert can_edit_players(co, team)  is True
+            assert can_edit_managers(co, team) is False
             db.session.rollback()
 
 
 class TestCanPermissions:
-    """_can_rename / _can_delete / _can_edit_players / _can_edit_managers"""
+    """can_rename / can_delete / can_edit_players / can_edit_managers"""
 
     @pytest.mark.parametrize("perm_fn,assoc_kwarg,other_kw", [
-        (_can_rename,        "can_rename",        {"can_delete": False, "can_edit_players": False, "can_edit_managers": False}),
-        (_can_delete,        "can_delete",        {"can_rename": False, "can_edit_players": False, "can_edit_managers": False}),
-        (_can_edit_players,  "can_edit_players",  {"can_rename": False, "can_delete": False, "can_edit_managers": False}),
-        (_can_edit_managers, "can_edit_managers", {"can_rename": False, "can_delete": False, "can_edit_players": False}),
+        (can_rename,        "can_rename",        {"can_delete": False, "can_edit_players": False, "can_edit_managers": False}),
+        (can_delete,        "can_delete",        {"can_rename": False, "can_edit_players": False, "can_edit_managers": False}),
+        (can_edit_players,  "can_edit_players",  {"can_rename": False, "can_delete": False, "can_edit_managers": False}),
+        (can_edit_managers, "can_edit_managers", {"can_rename": False, "can_delete": False, "can_edit_players": False}),
     ])
+    # Verifies team manager flag respected.
     def test_team_manager_flag_respected(self, app, perm_fn, assoc_kwarg, other_kw):
         with app.app_context():
             acc  = _make_account(email=f"perm_{assoc_kwarg}@t.com")
@@ -198,49 +206,54 @@ class TestCanPermissions:
             assert perm_fn(tm, team) is False
             db.session.rollback()
 
+    # Verifies admin always can.
     def test_admin_always_can(self, app):
         with app.app_context():
             team = _make_team(name="Admin Perm Team")
             admin = MagicMock(spec=Administrator)
             admin.__class__ = Administrator
-            assert _can_rename(admin, team) is True
-            assert _can_delete(admin, team) is True
-            assert _can_edit_players(admin, team) is True
-            assert _can_edit_managers(admin, team) is True
+            assert can_rename(admin, team) is True
+            assert can_delete(admin, team) is True
+            assert can_edit_players(admin, team) is True
+            assert can_edit_managers(admin, team) is True
             db.session.rollback()
 
+    # Verifies unknown role cannot.
     def test_unknown_role_cannot(self, app):
         with app.app_context():
             team = _make_team(name="Unknown Role Team")
             unknown = MagicMock()
             unknown.__class__ = object
-            assert _can_rename(unknown, team) is False
-            assert _can_delete(unknown, team) is False
+            assert can_rename(unknown, team) is False
+            assert can_delete(unknown, team) is False
             db.session.rollback()
 
 
 class TestGetPermissions:
-    """_get_permissions(resolved, team) -> dict"""
+    """get_permissions(resolved, team) -> dict"""
 
+    # Verifies admin gets all true.
     def test_admin_gets_all_true(self, app):
         with app.app_context():
             team  = _make_team(name="Perms Dict Team")
             admin = MagicMock(spec=Administrator)
             admin.__class__ = Administrator
-            perms = _get_permissions(admin, team)
+            perms = get_permissions(admin, team)
             assert all(perms.values())
             db.session.rollback()
 
+    # Verifies no assoc gets all false.
     def test_no_assoc_gets_all_false(self, app):
         with app.app_context():
             acc  = _make_account(email="noassoc@t.com")
             tm   = _make_team_manager(acc)
             team = _make_team(name="No Assoc Team")
             db.session.refresh(tm)
-            perms = _get_permissions(tm, team)
+            perms = get_permissions(tm, team)
             assert not any(perms.values())
             db.session.rollback()
 
+    # Verifies partial permissions.
     def test_partial_permissions(self, app):
         with app.app_context():
             acc  = _make_account(email="partial_perm@t.com")
@@ -250,7 +263,7 @@ class TestGetPermissions:
                         can_rename=True, can_delete=False,
                         can_edit_players=True, can_edit_managers=False)
             db.session.refresh(tm)
-            perms = _get_permissions(tm, team)
+            perms = get_permissions(tm, team)
             assert perms["canRename"] is True
             assert perms["canDelete"] is False
             assert perms["canEditPlayers"] is True
@@ -263,7 +276,7 @@ class TestGetPermissions:
 # ===========================================================================
 
 class TestParseHelpers:
-    """_parse_pagination — direct validation without HTTP."""
+    """parse_pagination — direct validation without HTTP."""
 
     @pytest.mark.parametrize("from_v,to_v,sort_v,ok", [
         ("0",  "20", "id",   True),
@@ -274,6 +287,7 @@ class TestParseHelpers:
         ("10", "5",  "id",   False),
         ("0",  "10", "rating", False),
     ])
+    # Verifies pagination via get.
     def test_pagination_via_get(self, client, app, from_v, to_v, sort_v, ok):
         resp = client.get(f"/api/teams?from={from_v}&to={to_v}&sort={sort_v}")
         if ok:
@@ -289,6 +303,7 @@ class TestParseHelpers:
 class TestGetTeam:
     """GET /api/teams/<team_id>"""
 
+    # Verifies the endpoint returns 200 for an existing team.
     def test_existing_team_returns_200(self, client, app):
         with app.app_context():
             team = _make_team(name="Visible Team")
@@ -299,6 +314,7 @@ class TestGetTeam:
         assert resp.status_code == 200
         assert resp.get_json()["team"]["id"] == team_id
 
+    # Verifies the endpoint returns 404 when the team is missing.
     def test_missing_team_returns_404(self, client):
         resp = client.get("/api/teams/999999")
         assert resp.status_code == 404
@@ -316,12 +332,14 @@ class TestGetTeams:
         ("from=10&to=5",          422),
         ("from=0&to=10&sort=bad", 422),
     ])
+    # Verifies pagination and sort.
     def test_pagination_and_sort(self, client, app, params, expected_status):
         with app.app_context():
             db.session.commit()
         resp = client.get(f"/api/teams?{params}")
         assert resp.status_code == expected_status
 
+    # Verifies response shape.
     def test_response_shape(self, client, app):
         with app.app_context():
             db.session.commit()
@@ -334,10 +352,12 @@ class TestGetTeams:
 class TestGetTeamsByClub:
     """GET /api/teams/by-club/<club_id>"""
 
+    # Verifies the endpoint returns 404 when the club is missing.
     def test_missing_club_returns_404(self, client):
         resp = client.get("/api/teams/by-club/999999")
         assert resp.status_code == 404
 
+    # Verifies the endpoint returns 200 for an existing club.
     def test_existing_club_returns_200(self, client, app):
         with app.app_context():
             from server.app.models.club import Club
@@ -359,6 +379,7 @@ class TestGetTeamsByClub:
 class TestCreateTeam:
     """POST /api/teams"""
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client):
         resp = client.post("/api/teams", json={"name": "Team X"})
         assert resp.status_code == 401
@@ -369,6 +390,7 @@ class TestCreateTeam:
         ({"name": "  "}, 422),
         ({"name": "OK"},  201),
     ])
+    # Verifies create validation.
     def test_create_validation(self, client, app, monkeypatch, payload, expected_status):
         with app.app_context():
             acc = _make_account(email=f"ct_{expected_status}_{str(payload)[:5]}@t.com")
@@ -385,6 +407,7 @@ class TestCreateTeam:
             resp = client.post("/api/teams", json=payload)
         assert resp.status_code == expected_status
 
+    # Verifies the created team persists the name.
     def test_create_persists_name(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="ct_persist@t.com")
@@ -403,6 +426,7 @@ class TestCreateTeam:
 class TestDeleteTeam:
     """DELETE /api/teams/<team_id>"""
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client, app):
         with app.app_context():
             team = _make_team(name="Del Team Auth")
@@ -411,6 +435,7 @@ class TestDeleteTeam:
         resp = client.delete(f"/api/teams/{team_id}")
         assert resp.status_code == 401
 
+    # Verifies the endpoint returns 403 without permission.
     def test_no_permission_returns_403(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(email="del_403@t.com")
@@ -428,6 +453,7 @@ class TestDeleteTeam:
         resp = client.delete(f"/api/teams/{team_id}")
         assert resp.status_code == 403
 
+    # Verifies the owner can delete the team.
     def test_owner_can_delete(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(email="del_200@t.com")
@@ -445,6 +471,7 @@ class TestDeleteTeam:
         resp = client.delete(f"/api/teams/{team_id}")
         assert resp.status_code == 200
 
+    # Verifies the endpoint returns 404 when the team is missing.
     def test_missing_team_returns_404(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="del_404_team@t.com")
@@ -467,6 +494,7 @@ class TestRenameTeam:
         ("Old Name",     422),
         ("New Name",     200),
     ])
+    # Verifies rename validation.
     def test_rename_validation(self, client, app, monkeypatch, new_name, expected_status):
         with app.app_context():
             acc  = _make_account(email=f"rnt_{expected_status}_{new_name[:3]}@t.com")
@@ -484,6 +512,7 @@ class TestRenameTeam:
         resp = client.patch(f"/api/teams/{team_id}", json={"name": new_name})
         assert resp.status_code == expected_status
 
+    # Verifies the endpoint returns 403 without rename permission.
     def test_no_rename_permission_returns_403(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(email="rnt_403@t.com")
@@ -509,10 +538,12 @@ class TestRenameTeam:
 class TestGetTeamPlayers:
     """GET /api/teams/<team_id>/players"""
 
+    # Verifies the endpoint returns 404 when the team is missing.
     def test_missing_team_returns_404(self, client):
         resp = client.get("/api/teams/999999/players")
         assert resp.status_code == 404
 
+    # Verifies the endpoint returns the players list.
     def test_returns_players_list(self, client, app):
         with app.app_context():
             team = _make_team(name="Players Team")
@@ -529,6 +560,7 @@ class TestGetTeamPlayers:
 class TestAddPlayerToTeam:
     """POST /api/teams/<team_id>/players"""
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client, app):
         with app.app_context():
             team = _make_team(name="Add Player Auth")
@@ -537,6 +569,7 @@ class TestAddPlayerToTeam:
         resp = client.post(f"/api/teams/{team_id}/players", json={"accountId": 1})
         assert resp.status_code == 401
 
+    # Verifies the endpoint returns 403 without permission.
     def test_no_permission_returns_403(self, client, app, monkeypatch):
         with app.app_context():
             acc    = _make_account(email="add_pl_403@t.com")
@@ -556,6 +589,7 @@ class TestAddPlayerToTeam:
         resp = client.post(f"/api/teams/{team_id}/players", json={"accountId": target_id})
         assert resp.status_code == 403
 
+    # Verifies the endpoint returns 422 when account id is missing.
     def test_missing_account_id_returns_422(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(email="add_pl_422@t.com")
@@ -574,6 +608,7 @@ class TestAddPlayerToTeam:
         assert resp.status_code == 422
 
 
+    # Verifies adding a player succeeds.
     def test_add_player_success(self, client, app, monkeypatch):
         # POST /players creates a pending join request, not a direct membership.
         with app.app_context():
@@ -605,6 +640,7 @@ class TestAddPlayerToTeam:
             assert req is not None
             assert req.status == "pending"
 
+    # Verifies a rejected add-player request can be resubmitted.
     def test_add_player_rejected_request_can_be_resubmitted(self, client, app, monkeypatch):
         # A previously rejected join request must not block a new one.
         # The search route shows rejected players as available, so adding must also work.
@@ -636,6 +672,7 @@ class TestAddPlayerToTeam:
         data = resp.get_json()
         assert data["request"]["status"] == "pending"
 
+    # Verifies adding a duplicate player returns 409.
     def test_add_duplicate_player_returns_409(self, client, app, monkeypatch):
         with app.app_context():
             acc    = _make_account(email="add_pl_409@t.com")
@@ -664,6 +701,7 @@ class TestAddPlayerToTeam:
 class TestRemovePlayerFromTeam:
     """DELETE /api/teams/<team_id>/players/<account_id>"""
 
+    # Verifies the endpoint returns 404 when the player is not in the team.
     def test_player_not_in_team_returns_404(self, client, app, monkeypatch):
         with app.app_context():
             acc    = _make_account(email="rm_pl_404@t.com")
@@ -683,6 +721,7 @@ class TestRemovePlayerFromTeam:
         resp = client.delete(f"/api/teams/{team_id}/players/{target_id}")
         assert resp.status_code == 404
 
+    # Verifies removing a player succeeds.
     def test_remove_player_success(self, client, app, monkeypatch):
         with app.app_context():
             acc    = _make_account(email="rm_pl_ok@t.com")
@@ -711,10 +750,12 @@ class TestRemovePlayerFromTeam:
 class TestGetTeamManagers:
     """GET /api/teams/<team_id>/managers"""
 
+    # Verifies the endpoint returns 404 when the team is missing.
     def test_missing_team_returns_404(self, client):
         resp = client.get("/api/teams/999999/managers")
         assert resp.status_code == 404
 
+    # Verifies the endpoint returns the managers list.
     def test_returns_managers_list(self, client, app):
         with app.app_context():
             team = _make_team(name="Managers List Team")
@@ -731,6 +772,7 @@ class TestGetTeamManagers:
 class TestAddManagerToTeam:
     """POST /api/teams/<team_id>/managers"""
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client, app):
         with app.app_context():
             team = _make_team(name="Add Mgr Auth")
@@ -739,6 +781,7 @@ class TestAddManagerToTeam:
         resp = client.post(f"/api/teams/{team_id}/managers", json={"accountId": 1})
         assert resp.status_code == 401
 
+    # Verifies the endpoint returns 403 without permission.
     def test_no_permission_returns_403(self, client, app, monkeypatch):
         with app.app_context():
             acc    = _make_account(email="add_mgr_403@t.com")
@@ -758,6 +801,7 @@ class TestAddManagerToTeam:
         resp = client.post(f"/api/teams/{team_id}/managers", json={"accountId": target_id})
         assert resp.status_code == 403
 
+    # Verifies adding a manager succeeds.
     def test_add_manager_success(self, client, app, monkeypatch):
         with app.app_context():
             acc    = _make_account(email="add_mgr_ok@t.com")
@@ -777,6 +821,7 @@ class TestAddManagerToTeam:
         resp = client.post(f"/api/teams/{team_id}/managers", json={"accountId": target_id})
         assert resp.status_code == 201
 
+    # Verifies adding a duplicate manager returns 409.
     def test_duplicate_manager_returns_409(self, client, app, monkeypatch):
         with app.app_context():
             acc    = _make_account(email="add_mgr_409@t.com")
@@ -806,6 +851,7 @@ class TestRemoveManagerFromTeam:
         (False, 404),
         (True,  200),
     ])
+    # Verifies removing a manager succeeds.
     def test_remove_manager(self, client, app, monkeypatch, is_manager, expected_status):
         with app.app_context():
             acc    = _make_account(email=f"rm_mgr_{is_manager}@t.com")
@@ -832,6 +878,7 @@ class TestRemoveManagerFromTeam:
 class TestSearchPlayersNotInTeam:
     """GET /api/teams/<team_id>/players/search?q="""
 
+    # Verifies the endpoint returns 400 when q is missing.
     def test_missing_q_returns_400(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(email="srch_pl_400@t.com")
@@ -849,6 +896,7 @@ class TestSearchPlayersNotInTeam:
         resp = client.get(f"/api/teams/{team_id}/players/search")
         assert resp.status_code == 400
 
+    # Verifies the search endpoint returns results.
     def test_search_returns_results(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(email="srch_pl_ok@t.com")
@@ -872,6 +920,7 @@ class TestSearchPlayersNotInTeam:
 class TestGetMyPermissions:
     """GET /api/teams/<team_id>/my-permissions"""
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client, app):
         with app.app_context():
             team = _make_team(name="Perms Unauth")
@@ -880,6 +929,7 @@ class TestGetMyPermissions:
         resp = client.get(f"/api/teams/{team_id}/my-permissions")
         assert resp.status_code == 401
 
+    # Verifies the endpoint returns the permissions dictionary.
     def test_returns_permissions_dict(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(email="my_perms_ok@t.com")
@@ -911,10 +961,12 @@ class TestGetMyPermissions:
 class TestGetMyTeams:
     """GET /api/teams/my"""
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client):
         resp = client.get("/api/teams/my")
         assert resp.status_code == 401
 
+    # Verifies a team manager sees their own teams.
     def test_team_manager_sees_own_teams(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(email="my_teams_tm@t.com")
@@ -943,6 +995,7 @@ class TestGetMyTeams:
         ("from=10&to=5",         422),
         ("from=0&to=10&sort=bad",422),
     ])
+    # Verifies pagination validation.
     def test_pagination_validation(self, client, app, monkeypatch, params, expected_status):
         with app.app_context():
             acc = _make_account(email=f"my_teams_pag_{params[:5]}@t.com")
@@ -961,10 +1014,12 @@ class TestGetMyTeams:
 class TestGetMyAllTeams:
     """GET /api/teams/my-all"""
 
+    # Verifies the endpoint returns 401 when the caller is not authenticated.
     def test_unauthenticated_returns_401(self, client):
         resp = client.get("/api/teams/my-all")
         assert resp.status_code == 401
 
+    # Verifies a player sees their own teams.
     def test_player_sees_own_teams(self, client, app, monkeypatch):
         with app.app_context():
             acc  = _make_account(email="my_all_player@t.com")
@@ -987,6 +1042,7 @@ class TestGetMyAllTeams:
         names = [t["name"] for t in body["teams"]]
         assert "Player All Team" in names
 
+    # Verifies a plain user gets an empty list.
     def test_plain_user_gets_empty(self, client, app, monkeypatch):
         with app.app_context():
             acc = _make_account(email="my_all_plain@t.com")

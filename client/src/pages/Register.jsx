@@ -1,3 +1,5 @@
+// Page container for Register.
+
 import { Link } from "react-router-dom"
 import { useRegister } from "@/hooks/useRegister.js"
 import au_styles from "@/style/Authorization.module.css"
@@ -28,6 +30,9 @@ const Register = () => {
         setPhoneNumber,
         handleSubmit,
     } = useRegister(setCurrentUser)
+    /*
+     Renders the registration form and forwards submission to the auth hook.
+    */
 
     return (
         <div className={au_styles.container}>

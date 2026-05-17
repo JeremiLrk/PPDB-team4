@@ -1,3 +1,5 @@
+// Dashboard UI component for DashboardTabs.
+
 import { useEffect, useState } from "react";
 import { Link} from "react-router-dom";
 import formStyles from "@/style/common/Forms.module.css";
@@ -9,11 +11,17 @@ import { GENDER_SELECT_OPTIONS, GENDER_VALUES } from "@/constants/genderOptions.
 import CityAutocompleteField from "@/components/common/CityAutocompleteField.jsx";
 
 function profileGenderFromUser(user) {
+    /*
+     Converts the stored gender value into the select-friendly form value.
+    */
     const g = user?.gender
     return GENDER_VALUES.includes(g) ? g : ""
 }
 
 function parseUtcTimestamp(value) {
+    /*
+     Parses an API timestamp into a Date or null.
+    */
     if (typeof value !== "string") {
         return null
     }
@@ -28,6 +36,9 @@ function parseUtcTimestamp(value) {
 }
 
 function formatLocalTimestamp(value, locale = "en-US") {
+    /*
+     Formats an API timestamp in the current locale.
+    */
     const parsed = parseUtcTimestamp(value)
     if (!parsed) {
         return value || "-"
@@ -57,14 +68,23 @@ const NL_WEEKDAY_LABELS = [
 ]
 
 function isDutchLang(lang) {
+    /*
+     Checks whether the active language should use Dutch labels.
+    */
     return (lang || "").toLowerCase().startsWith("nl")
 }
 
 function defaultText(lang, english, dutch) {
+    /*
+     Returns the language-specific fallback text.
+    */
     return isDutchLang(lang) ? dutch : english
 }
 
 function formatWeeklyAvailability(block, lang) {
+    /*
+     Formats one weekly availability block for display.
+    */
     const weekdayIndex = Number(block?.weekday)
     const weekdayLabels = isDutchLang(lang) ? NL_WEEKDAY_LABELS : EN_WEEKDAY_LABELS
     const weekdayLabel = weekdayLabels[weekdayIndex] || block?.weekday_label || defaultText(lang, "Day", "Dag")
@@ -84,12 +104,18 @@ function formatWeeklyAvailability(block, lang) {
 }
 
 function formatMatchTitle(match) {
+    /*
+     Builds the public title for one upcoming match.
+    */
     const team1 = match?.team1Name || (match?.team1Id ? `Team #${match.team1Id}` : "Team 1")
     const team2 = match?.team2Name || (match?.team2Id ? `Team #${match.team2Id}` : "Team 2")
     return `${team1} vs ${team2}`
 }
 
 function formatUpcomingMatchDate(match, texts, lang) {
+    /*
+     Formats the date label for one upcoming match card.
+    */
     const locale = isDutchLang(lang) ? "nl-BE" : "en-US"
     const start = formatLocalTimestamp(match?.proposedStartAt, locale)
     const end = formatLocalTimestamp(match?.proposedEndAt, locale)
@@ -111,7 +137,35 @@ function formatUpcomingMatchDate(match, texts, lang) {
 
 const styles = { ...formStyles, ...commonStyles, ...dashStyles };
 
+const SHORT_EN = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const SHORT_NL = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+
+function WeeklyStrip({ blocks, lang }) {
+    /*
+     Renders the compact weekly availability strip.
+    */
+    const labels = isDutchLang(lang) ? SHORT_NL : SHORT_EN;
+    const activeDays = new Set(blocks.map((block) => Number(block.weekday)));
+
+    return (
+        <div className={styles.weeklyStrip}>
+            {labels.map((label, index) => {
+                const active = activeDays.has(index);
+                return (
+                    <div key={label} className={`${styles.weeklyDay} ${active ? styles.weeklyDayActive : ""}`}>
+                        <span className={styles.weeklyDayLabel}>{label}</span>
+                        {active ? <div className={styles.weeklyDayDot} /> : null}
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 export function ProfileTab({ currentUser, setCurrentUser, texts }) {
+    /*
+     Owns the profile editor and password form state.
+    */
     const [form, setForm] = useState({
         firstName: currentUser?.firstName || "",
         lastName: currentUser?.lastName || "",
@@ -131,8 +185,14 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
         type: "",
         text: "",
     });
+    /*
+     Resets the profile form whenever the active account changes.
+    */
 
     useEffect(() => {
+        /*
+         Resets the form whenever the active user changes.
+        */
         setForm({
             firstName: currentUser?.firstName || "",
             lastName: currentUser?.lastName || "",
@@ -149,16 +209,27 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
     ]);
 
     function onFieldChange(event) {
+        /*
+         Mirrors one profile field into local state.
+        */
         const { name, value } = event.target;
         setForm((previous) => ({ ...previous, [name]: value }));
     }
 
     function onPasswordFieldChange(event) {
+        /*
+         Mirrors one password field into local state.
+        */
         const { name, value } = event.target;
         setPasswordForm((previous) => ({ ...previous, [name]: value }));
     }
-
     async function onSubmit(event) {
+        /*
+         Validates and submits the profile form.
+        */
+        /*
+         Validates and submits the profile form.
+        */
         event.preventDefault();
         setMessage({ type: "", text: "" });
 
@@ -245,6 +316,9 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
     }
 
     async function onPasswordSubmit(event) {
+        /*
+         Validates and submits the password change form.
+        */
         event.preventDefault();
         setPasswordMessage({ type: "", text: "" });
 
@@ -921,30 +995,31 @@ export function AvailabilityTab({
     lang = "en",
 }) {
     return (
-        <section className={`${styles.createClubLayout} ${styles.contentFade}`}>
+        <section className={`${styles.availabilityLayout} ${styles.contentFade}`}>
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>
                         {texts?.availability_title || defaultText(lang, "My Availability", "Mijn beschikbaarheid")}
                 </h3>
                 <form className={styles.form} onSubmit={onAvailabilitySubmit}>
+                    <label className={styles.formLabel}>
+                        {texts?.weekday || defaultText(lang, "Weekday", "Weekdag")}
+                        <select
+                            className={styles.formInput}
+                            name="weekday"
+                            value={availabilityForm.weekday}
+                            onChange={onAvailabilityFieldChange}
+                            required
+                        >
+                            <option value="">{texts?.select_weekday || defaultText(lang, "Choose a weekday", "Kies een weekdag")}</option>
+                            {(weekdayOptions || (isDutchLang(lang) ? NL_WEEKDAY_LABELS : EN_WEEKDAY_LABELS).map((label, index) => ({ value: String(index), label }))).map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+
                     <div className={styles.formRow}>
-                        <label className={styles.formLabel}>
-                            {texts?.weekday || defaultText(lang, "Weekday", "Weekdag")}
-                            <select
-                                className={styles.formInput}
-                                name="weekday"
-                                value={availabilityForm.weekday}
-                                onChange={onAvailabilityFieldChange}
-                                required
-                            >
-                                <option value="">{texts?.select_weekday || defaultText(lang, "Choose a weekday", "Kies een weekdag")}</option>
-                                {(weekdayOptions || (isDutchLang(lang) ? NL_WEEKDAY_LABELS : EN_WEEKDAY_LABELS).map((label, index) => ({ value: String(index), label }))).map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
                         <label className={styles.formLabel}>
                             {texts?.start_time || defaultText(lang, "Start time", "Starttijd")}
                             <input
@@ -956,19 +1031,18 @@ export function AvailabilityTab({
                                 required
                             />
                         </label>
+                        <label className={styles.formLabel}>
+                            {texts?.end_time || defaultText(lang, "End time", "Eindtijd")}
+                            <input
+                                className={styles.formInput}
+                                type="time"
+                                name="endTime"
+                                value={availabilityForm.endTime}
+                                onChange={onAvailabilityFieldChange}
+                                required
+                            />
+                        </label>
                     </div>
-
-                    <label className={styles.formLabel}>
-                        {texts?.end_time || defaultText(lang, "End time", "Eindtijd")}
-                        <input
-                            className={styles.formInput}
-                            type="time"
-                            name="endTime"
-                            value={availabilityForm.endTime}
-                            onChange={onAvailabilityFieldChange}
-                            required
-                        />
-                    </label>
 
                     <div className={styles.formActions}>
                         <button
@@ -1006,6 +1080,10 @@ export function AvailabilityTab({
                         </h3>
                         <span className={styles.counter}>{availabilityBlocks.length}</span>
                     </div>
+
+                    {!availabilityLoading && (
+                        <WeeklyStrip blocks={availabilityBlocks} lang={lang} />
+                    )}
 
                     {availabilityLoading ? (
                         <p className={styles.muted}>{texts?.loading || defaultText(lang, "Loading...", "Laden...")}</p>

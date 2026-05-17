@@ -1,3 +1,5 @@
+// Reusable component for Header.
+
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { notify } from "@/hooks/useNotify.js";
@@ -6,6 +8,8 @@ import styles from "@/style/Header.module.css";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
+import { ThemeIcon } from "@/components/dashboard/DashboardIcons.jsx";
 
 /** Supported UI languages displayed in the switcher. */
 const SUPPORTED_LANGS = [
@@ -15,11 +19,16 @@ const SUPPORTED_LANGS = [
 
 export default function Header({ status }) {
     const navigate = useNavigate();
+    /*
+     Owns the public header state for menus, auth, language, and theme.
+    */
     const [menuOpen, setMenuOpen] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     //  i18n
     const { lang, setLang } = useLangContext();
+    const { theme, toggleTheme } = useThemeContext();
 
     // usePageTexts now calls /api/i18n/page/<page>?lang=<lang>
     // backed by Flask-Babel .mo catalogues — no DB query needed.
@@ -32,6 +41,9 @@ export default function Header({ status }) {
     //  dropdown close on outside click 
     useEffect(() => {
         function handleClickOutside(event) {
+            /*
+             Closes the user menu when the click happens outside the dropdown.
+            */
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setMenuOpen(false);
             }
@@ -42,6 +54,9 @@ export default function Header({ status }) {
 
     //  logout 
     async function handleLogout() {
+        /*
+         Clears the current session locally and then on the server.
+        */
         setMenuOpen(false);
         setCurrentUser(null);
         localStorage.removeItem("currentUser");
@@ -101,6 +116,23 @@ export default function Header({ status }) {
 
                 {/*  Right: lang switcher + auth  */}
                 <div className={styles.headerRight}>
+                    <button
+                        className={styles.mobileToggle}
+                        onClick={() => setMobileOpen(v => !v)}
+                        aria-label="Toggle menu"
+                    >
+                        {mobileOpen ? "✕" : "☰"}
+                    </button>
+
+                    {/* Theme toggle */}
+                    <button
+                        className={styles.themeButton}
+                        onClick={toggleTheme}
+                        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                        title={theme === "dark" ? "Light mode" : "Dark mode"}
+                    >
+                        <ThemeIcon isDarkMode={theme === "dark"} />
+                    </button>
 
                     {/* Language switcher — highlights the active locale */}
                     <div className={styles.langSwitcher}>
@@ -165,6 +197,44 @@ export default function Header({ status }) {
                     )}
                 </div>
             </div>
+            {mobileOpen && (
+                <div className={styles.mobileDrawer}>
+                    <nav className={styles.mobileNav}>
+                        <button onClick={() => { navigate("/clubs"); setMobileOpen(false); }} className={styles.mobileNavLink}>
+                            {baseTexts.clubs || "Clubs"}
+                        </button>
+                        <button onClick={() => { navigate("/teams"); setMobileOpen(false); }} className={styles.mobileNavLink}>
+                            {baseTexts.teams || "Teams"}
+                        </button>
+                    </nav>
+                    <div className={styles.mobileLang}>
+                        {SUPPORTED_LANGS.map(({ code, label }) => (
+                            <button key={code} className={`${styles.langButton} ${lang === code ? styles.langButtonActive : ""}`}
+                                onClick={() => { setLang(code); setMobileOpen(false); }}>
+                                {label}
+                            </button>
+                        ))}
+                        <button className={`${styles.langButton} ${styles.mobileThemeBtn}`}
+                            onClick={() => { toggleTheme(); setMobileOpen(false); }}>
+                            <ThemeIcon isDarkMode={theme === "dark"} />
+                            {theme === "dark" ? "Light" : "Dark"}
+                        </button>
+                    </div>
+                    <div className={styles.mobileAuth}>
+                        {!currentUser ? (
+                            <>
+                                <button onClick={() => { navigate("/login"); setMobileOpen(false); }} className={styles.headerButton}>{authTexts.log_in}</button>
+                                <button onClick={() => { navigate("/register"); setMobileOpen(false); }} className={styles.headerPrimaryButton}>{authTexts.register || "Register"}</button>
+                            </>
+                        ) : (
+                            <>
+                                <button onClick={() => { navigate("/dashboard"); setMobileOpen(false); }} className={styles.headerButton}>{baseTexts.dashboard || "Dashboard"}</button>
+                                <button onClick={handleLogout} className={`${styles.headerButton} ${styles.dangerBtn}`}>{authTexts.log_out || "Log out"}</button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </header>
     );
 }

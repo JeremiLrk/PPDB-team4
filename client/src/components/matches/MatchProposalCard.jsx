@@ -1,3 +1,5 @@
+// Match workflow UI component for MatchProposalCard.
+
 import commonStyles from "@/style/common/Common.module.css";
 import buttonStyles from "@/style/common/Buttons.module.css";
 import styles from "@/style/matches/MatchProposalCard.module.css";
@@ -5,12 +7,19 @@ import { statusLabel } from "@/components/dashboard/dashboardUtils.js";
 import { useWeather } from "@/hooks/useWeather.js";
 
 function parseDate(value) {
+    /*
+     Parses a date-like value into a Date object or null.
+     Keeps invalid values from leaking into the display formatting helpers.
+    */
     if (!value) return null;
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 function formatDateTime(value) {
+    /*
+     Formats a date-like value for display in the proposal card.
+    */
     const parsed = parseDate(value);
     if (!parsed) return value || "-";
 
@@ -21,6 +30,9 @@ function formatDateTime(value) {
 }
 
 function formatTemplate(template, values = {}) {
+    /*
+     Replaces template tokens with rendered values.
+    */
     return Object.entries(values).reduce(
         (output, [key, value]) => output.replaceAll(`{${key}}`, String(value ?? "")),
         template,
@@ -28,20 +40,31 @@ function formatTemplate(template, values = {}) {
 }
 
 function normalizeStatus(status) {
+    /*
+     Normalizes the proposal status string for style and label lookups.
+    */
     return String(status || "pending").toLowerCase();
 }
 
 function statusTone(status) {
+    /*
+     Maps a proposal status to the matching CSS tone class.
+    */
     const normalized = normalizeStatus(status);
     if (normalized === "accepted" || normalized === "approved") return styles.statusApproved;
     if (normalized === "rejected") return styles.statusRejected;
     if (normalized === "cancelled" || normalized === "canceled") return styles.statusCancelled;
+    if (normalized === "played" || normalized === "finished") return styles.statusFinished;
     return styles.statusPending;
 }
 
 function normalizeContact(contact) {
+    /*
+     Flattens contact data from the various backend shapes into one object.
+    */
     if (!contact) return null;
 
+    // Contact objects come from a few backend shapes, so normalize them once here.
     const name = contact.name || [contact.firstName, contact.lastName].filter(Boolean).join(" ").trim();
     const email = contact.email || contact.value || "";
     const phone = contact.phoneNumber || contact.phone || "";
@@ -55,6 +78,9 @@ function normalizeContact(contact) {
 }
 
 function CalendarIcon() {
+    /*
+     Renders the calendar icon used in the proposal header.
+    */
     return (
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -66,6 +92,9 @@ function CalendarIcon() {
 }
 
 function UserIcon() {
+    /*
+     Renders the user icon for contact rows.
+    */
     return (
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -77,6 +106,9 @@ function UserIcon() {
 }
 
 function MailIcon() {
+    /*
+     Renders the mail icon for contact rows.
+    */
     return (
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -88,6 +120,9 @@ function MailIcon() {
 }
 
 function PhoneIcon() {
+    /*
+     Renders the phone icon for contact rows.
+    */
     return (
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -99,6 +134,9 @@ function PhoneIcon() {
 }
 
 function CloudIcon() {
+    /*
+     Renders the weather icon for the weather strip.
+    */
     return (
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -110,6 +148,9 @@ function CloudIcon() {
 }
 
 function ContactBlock({ teamName, contacts, fallbackLabel }) {
+    /*
+     Renders one team’s contact block with a fallback when no contacts exist.
+    */
     const normalizedContacts = (contacts || []).map(normalizeContact).filter(Boolean);
 
     return (
@@ -157,17 +198,30 @@ export default function MatchProposalCard({
     onCancelScore,
     scoreSubmitting = false,
     canUpdate = true,
+    currentUserId,
     texts = {},
     statusTexts = {},
 }) {
+    /*
+     Renders one match proposal card with status, contacts, weather, and score actions.
+    */
     const normalizedStatus = normalizeStatus(proposal.status);
     const scoreStatus = String(proposal.scoreStatus || "not_submitted").toLowerCase();
     const scoreSubmissions = Array.isArray(proposal.scoreSubmissions) ? proposal.scoreSubmissions : [];
-    const canRespond = normalizedStatus === "pending" && canUpdate;
+    const currentUserHasAccepted = Number(proposal.acceptedByUserId) === Number(currentUserId);
+    const canRespond = normalizedStatus === "pending" && canUpdate && !currentUserHasAccepted;
     const canCancel = normalizedStatus === "accepted" && canUpdate;
     const canResetPending = normalizedStatus !== "pending" && normalizedStatus !== "played" && canUpdate;
-    const hasScoreSubmission = scoreSubmissions.length > 0 || scoreStatus !== "not_submitted";
+    const currentUserSubmittedScore = scoreSubmissions.some(
+        (submission) => Number(submission.submittedBy) === Number(currentUserId),
+    );
+    const hasScoreSubmission = currentUserSubmittedScore || scoreStatus === "resolved" || scoreStatus === "disputed";
     const canScore = normalizedStatus === "accepted" && typeof onReportScore === "function" && !hasScoreSubmission;
+    const displayedStatus = scoreStatus === "resolved"
+        ? "finished"
+        : proposal.acceptanceStatus === "waiting_for_other"
+        ? "waiting_for_other"
+        : proposal.status;
     const isReportingScore = reportingMatchId === proposal.id;
     const weatherClubId = proposal.team1ClubId || proposal.team2ClubId || null;
     const weatherCity = proposal.team1ClubCity || proposal.team2ClubCity || "";
@@ -191,7 +245,19 @@ export default function MatchProposalCard({
         city: weatherLocation,
         date: weatherDate,
     });
+    const clubNames = Array.from(
+        new Set([proposal.team1ClubName, proposal.team2ClubName].filter(Boolean)),
+    );
+    const clubLabel = clubNames.length > 0 ? clubNames.join(" vs ") : (texts.no_club || "No club");
+    const scoreNoticeText = scoreStatus === "resolved"
+        ? (texts.score_finalized || "Result confirmed. Elo ratings updated.")
+        : scoreStatus === "disputed"
+            ? (texts.score_disputed || "Scores do not match. A club manager will decide the decisive score.")
+            : (texts.score_waiting || "Score submitted. Waiting for the other team.");
 
+    /*
+     The card keeps all proposal state in one place so the list component can stay thin.
+    */
     return (
         <li className={styles.card}>
             <div className={styles.iconBox} aria-hidden="true">
@@ -207,10 +273,18 @@ export default function MatchProposalCard({
                         <p className={styles.subtitle}>
                             {proposedDateLabel}: {formatDateTime(proposal.proposedStartAt)} - {formatDateTime(proposal.proposedEndAt)}
                         </p>
+                        <p className={styles.clubMeta}>
+                            {(texts.club || "Club")}: {clubLabel}
+                        </p>
                     </div>
 
-                    <span className={`${styles.statusPill} ${statusTone(proposal.status)}`}>
-                        {statusLabel(proposal.status, statusTexts)}
+                    <span className={`${styles.statusPill} ${statusTone(displayedStatus)}`}>
+                        {/* Show the score state first when the result has already been finalized. */}
+                        {displayedStatus === "waiting_for_other"
+                            ? (texts.waiting_for_other_player || "Waiting for other player")
+                            : displayedStatus === "finished"
+                                ? (statusTexts.status_finished || "Finished")
+                            : statusLabel(proposal.status, statusTexts)}
                     </span>
                 </div>
 
@@ -289,6 +363,7 @@ export default function MatchProposalCard({
 
                 {isReportingScore ? (
                     <form className={styles.inlineScoreForm} onSubmit={(event) => onScoreSubmit(event, proposal.id)}>
+                        {/* The decisive score form only appears for disputed or unresolved matches. */}
                         <h4 className={styles.inlineScoreTitle}>
                             {texts.adjudicate_title || "Submit decisive score"}
                         </h4>
@@ -332,9 +407,8 @@ export default function MatchProposalCard({
 
                 {hasScoreSubmission ? (
                     <div className={`${styles.scoreNotice} ${scoreStatus === "resolved" ? styles.scoreNoticeFinalized : styles.scoreNoticePending}`}>
-                        {scoreStatus === "resolved"
-                            ? (texts.score_finalized || "Score finalized.")
-                            : (texts.score_waiting || "Score submitted. Waiting for the other team.")}
+                        {/* This notice explains whether the result is waiting, disputed, or finalized. */}
+                        {scoreNoticeText}
                     </div>
                 ) : null}
 

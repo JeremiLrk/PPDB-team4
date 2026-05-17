@@ -1,3 +1,5 @@
+// Team management hook for useCreateTeam.
+
 import { useState } from "react";
 
 const INITIAL_FORM = { name: "", clubId: "", sportTypeId: "" };
@@ -13,27 +15,44 @@ const INITIAL_FORM = { name: "", clubId: "", sportTypeId: "" };
  *
  */
 export function useCreateTeam({ onCreated } = {}) {
+    /*
+     Owns the create-team wizard state and submission flow.
+    */
     const [form, setForm]   = useState(INITIAL_FORM);
     const [step, setStep]   = useState(-1);
     const [error, setError] = useState("");
 
     function openForm() {
+        /*
+         Opens the wizard at the first step with a clean form.
+        */
         setForm(INITIAL_FORM);
         setError("");
         setStep(0);
     }
 
     function closeForm() {
+        /*
+         Closes the wizard and clears any draft values.
+        */
         setStep(-1);
         setForm(INITIAL_FORM);
         setError("");
     }
 
     function updateField(field, value) {
+        /*
+         Updates one field in the create-team form.
+        */
         setForm(prev => ({ ...prev, [field]: value }));
     }
-
     async function submit() {
+        /*
+         Validates and submits the create-team request.
+        */
+        /*
+         Validates and submits the create-team request.
+        */
         if (!form.name.trim()) {
             setError("Team name is required.");
             return;

@@ -1,12 +1,20 @@
+// React context helper for useCurrentUserContext.
+
 import { createContext, useEffect, useState, useContext } from "react";
 
 const CurrentUserContext = createContext();
 
 export function CurrentUserProvider({ children }) {
+    /*
+     Stores the authenticated user and loads it once on mount.
+    */
     const [currentUser, setCurrentUser] = useState(null);
     const [loadingUser, setLoadingUser] = useState(true);
 
     useEffect(() => {
+        /*
+         Fetches the current session user from the backend.
+        */
         fetch("/api/me", {
             credentials: "include"
         })

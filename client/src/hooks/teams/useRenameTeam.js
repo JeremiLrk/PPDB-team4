@@ -1,3 +1,5 @@
+// Team management hook for useRenameTeam.
+
 import { useState } from "react";
 
 /**
@@ -11,23 +13,37 @@ import { useState } from "react";
  * @param {{ teamId: number|string, currentName: string, onRenamed?: (team: object) => void }} options
  */
 export function useRenameTeam({ teamId, currentName, onRenamed } = {}) {
+    /*
+     Owns the rename-team panel state and submit flow.
+    */
     const [newName, setNewName] = useState("");
     const [step,    setStep]    = useState(-1);
     const [error,   setError]   = useState(null);
 
     function openPanel() {
+        /*
+         Opens the panel with an empty draft.
+        */
         setNewName("");
         setError(null);
         setStep(0);
     }
 
     function closePanel() {
+        /*
+         Closes the panel and clears the draft state.
+        */
         setStep(-1);
         setNewName("");
         setError(null);
     }
-
     async function submit() {
+        /*
+         Validates and sends the rename request.
+        */
+        /*
+         Validates and sends the rename request.
+        */
         const name = newName.trim() || currentName;
         if (!name) return;
 

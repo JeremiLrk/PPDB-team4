@@ -9,6 +9,18 @@ rule_sets_bp = Blueprint("match_rule_sets", __name__)
 
 
 def _get_rule_set_or_404(set_id: int) -> MatchRuleSet:
+    """
+    Retrieves a match rule set by its ID or raises a 404 error if not found.
+
+    Args:
+        set_id (int): The unique identifier of the match rule set to retrieve.
+
+    Returns:
+        The match rule set with the specified ID.
+
+    Postconditions:
+        - The ruleset with the specified ID is retrieved from the database, or a 404 error is raised if it does not exist.
+    """
     rs = MatchRuleSet.query.get(set_id)
     if not rs:
         abort(404, description="Match rule set not found.")
@@ -16,6 +28,17 @@ def _get_rule_set_or_404(set_id: int) -> MatchRuleSet:
 
 
 def _is_owner(resolved, rule_set: MatchRuleSet) -> bool:
+    """
+    Checks if the resolved user is the owner of the given match rule set.
+
+    Args:
+        resolved: The resolved user object.
+        rule_set (MatchRuleSet): The match rule set to check ownership for.
+
+    Returns:
+        bool: True if the user is the owner, False otherwise.
+
+    """
     from server.app.models.account import Administrator
     if isinstance(resolved, Administrator):
         return True
@@ -78,11 +101,13 @@ def _extract_settings(data: dict) -> dict:
 
 @rule_sets_bp.route("/<int:set_id>", methods=["GET"])
 def get_rule_set(set_id: int) -> tuple[Response, int]:
+    """Endpoint to retrieve a specific match rule set by its ID."""
     return jsonify({"ruleSet": _get_rule_set_or_404(set_id).to_dict()}), 200
 
 
 @rule_sets_bp.route("", methods=["GET"])
 def get_rule_sets() -> tuple[Response, int]:
+    """Endpoint to retrieve a paginated list of match rule sets that can be used by others."""
     try:
         offset = int(request.args.get("from", 0))
         to     = int(request.args.get("to",   20))
@@ -111,6 +136,21 @@ def get_rule_sets() -> tuple[Response, int]:
 @rule_sets_bp.route("", methods=["POST"])
 @login_required
 def create_rule_set(account: Account) -> tuple[Response, int]:
+    """
+    Creates a new match rule set with the provided details in the request JSON body.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The authenticated user account.
+
+    Returns:
+        json response containing a success message and the created match rule set, along with a 201 status code.
+
+    Postconditions:
+        - The match rule set is created in the database with the specified attributes and associated with the creator's account.
+    """
     data = request.get_json(silent=True)
     if data is None:
         abort(400, description="No JSON body provided.")
@@ -139,6 +179,23 @@ def create_rule_set(account: Account) -> tuple[Response, int]:
 @rule_sets_bp.route("/<int:set_id>", methods=["PUT"])
 @login_required
 def update_rule_set(account: Account, set_id: int) -> tuple[Response, int]:
+    """
+    Updates an existing match rule set with the provided details in the request JSON body if the user is the owner.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - The rule set with the specified ID must exist.
+
+    Args:
+        account (Account): The authenticated user account.
+        set_id (int): The ID of the rule set to update.
+
+    Returns:
+        json response containing a success message and the updated match rule set, along with a 200 status code.
+
+    Postconditions:
+        - The match rule set is updated in the database with the specified attributes.
+    """
     rule_set = _get_rule_set_or_404(set_id)
     if not _is_owner(account.resolved_role, rule_set):
         abort(403, description="Forbidden: you are not the owner of this rule set.")
@@ -166,6 +223,23 @@ def update_rule_set(account: Account, set_id: int) -> tuple[Response, int]:
 @rule_sets_bp.route("/<int:set_id>", methods=["DELETE"])
 @login_required
 def delete_rule_set(account: Account, set_id: int) -> tuple[Response, int]:
+    """
+    Deletes an existing match rule set if the user is the owner.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - The rule set with the specified ID must exist.
+
+    Args:
+        account (Account): The authenticated user account.
+        set_id (int): The ID of the rule set to delete.
+
+    Returns:
+        json response containing a success message, along with a 200 status code.
+
+    Postconditions:
+        - The match rule set is deleted from the database.
+    """
     rule_set = _get_rule_set_or_404(set_id)
     if not _is_owner(account.resolved_role, rule_set):
         abort(403, description="Forbidden: you are not the owner of this rule set.")

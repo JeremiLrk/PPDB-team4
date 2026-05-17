@@ -3,6 +3,14 @@
  USERS
  =====
  */
+
+CREATE TABLE IF NOT EXISTS account_role (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    name VARCHAR(255) NOT NULL,
+
+    CONSTRAINT pk_account_role
+        PRIMARY KEY (id)
+);
 CREATE TABLE IF NOT EXISTS account (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
     first_name VARCHAR(32),
@@ -25,9 +33,6 @@ CREATE TABLE IF NOT EXISTS account (
     CONSTRAINT pk_account
         PRIMARY KEY (id)
 );
-
-ALTER TABLE account ADD COLUMN IF NOT EXISTS gender VARCHAR(32);
-ALTER TABLE account ADD COLUMN IF NOT EXISTS phone VARCHAR(64);
 
 CREATE TABLE IF NOT EXISTS administrator (
     id BIGINT,

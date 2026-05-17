@@ -59,4 +59,7 @@ msgid "matches.score_waiting"
 msgstr "Score submitted. Waiting for the other team."
 
 msgid "matches.score_finalized"
-msgstr "Score finalized."
+msgstr "Result confirmed. Elo ratings updated."
+
+msgid "matches.score_disputed"
+msgstr "Scores do not match. A club manager will decide the decisive score."

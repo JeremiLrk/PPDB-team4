@@ -1,3 +1,5 @@
+// Team management UI component for PlayerCard.
+
 import commonStyles from "@/style/common/Common.module.css";
 import ItemCard from "@/components/common/ItemCard.jsx";
 import DeletePlayerButton from "@/components/team/DeletePlayerButton.jsx";
@@ -13,6 +15,9 @@ import DeletePlayerButton from "@/components/team/DeletePlayerButton.jsx";
 export default function PlayerCard({ player, teamId, onDeleted }) {
     const fullName  = [player.firstName, player.lastName].filter(Boolean).join(" ") || "-";
     const accountId = player.accountId ?? player.id;
+    /*
+     Renders one player row with the optional remove action.
+    */
 
     return (
         <ItemCard>

@@ -1,3 +1,5 @@
+// Tailwind theme config for the frontend build.
+
 module.exports = {
     content: [
         "./index.html",

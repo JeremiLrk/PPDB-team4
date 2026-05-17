@@ -1,5 +1,8 @@
+// Regression tests for setupTests.
+
 import "@testing-library/jest-dom/vitest";
 import { beforeEach, vi } from "vitest";
+// Shared test helper for arranging the scenario under test.
 
 function createMemoryStorage() {
   const store = new Map();

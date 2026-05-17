@@ -9,6 +9,9 @@
  * children {React.ReactNode} — fields, Field-components, etc.
  */
 export function FormPage({ active, children }) {
+    /*
+     Shows one step of a multi-step form when it is active.
+    */
     if (!active) return null;
     return <>{children}</>;
 }

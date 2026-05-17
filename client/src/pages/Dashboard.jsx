@@ -1,3 +1,5 @@
+// Page container for Dashboard.
+
 import styles from "@/style/dashboard/Dashboard.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import workspaceStyles from "@/style/dashboard/Workspace.module.css";
@@ -35,6 +37,7 @@ function Dashboard() {
         } else {
             document.body.classList.remove(commonStyles.light);
         }
+        // Cleanup: remove the theme class when the dashboard unmounts.
         return () => document.body.classList.remove(commonStyles.light);
     }, [workspace.theme, commonStyles.light]);
 

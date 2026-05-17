@@ -1,15 +1,22 @@
+// Team management hook for useTeamInvitations.
+
 import { useState, useEffect } from "react";
 
 export function useTeamInvitations() {
+    /*
+     Loads and mutates the current user's team invitations.
+    */
     const [invitations, setInvitations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
     useEffect(() => {
         fetchInvitations();
     }, []);
 
     async function fetchInvitations() {
+        /*
+         Fetches the pending team invitation list.
+        */
         try {
             setLoading(true);
             setError(null);
@@ -26,6 +33,9 @@ export function useTeamInvitations() {
     }
 
     async function acceptInvitation(invitationId, teamId) {
+        /*
+         Accepts one invitation and removes it from the local list.
+        */
         try {
             const response = await fetch(
                 `/api/teams/${teamId}/players/join-requests/${invitationId}/accept`,
@@ -41,6 +51,9 @@ export function useTeamInvitations() {
     }
 
     async function rejectInvitation(invitationId, teamId) {
+        /*
+         Rejects one invitation and removes it from the local list.
+        */
         try {
             const response = await fetch(
                 `/api/teams/${teamId}/players/join-requests/${invitationId}/reject`,

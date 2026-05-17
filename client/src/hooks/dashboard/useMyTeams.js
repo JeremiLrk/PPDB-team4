@@ -1,3 +1,5 @@
+// Dashboard data hook for useMyTeams.
+
 import { useTeams } from "@/hooks/teams/useTeams.js";
 
 const MY_TEAMS_DEFAULTS = {

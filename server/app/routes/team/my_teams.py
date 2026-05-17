@@ -1,11 +1,18 @@
+"""
+Personal team views and join-request actions.
+
+These routes back the "my teams", "my all teams", and join-request tabs in
+the frontend dashboard and team management screens.
+"""
+
 from flask import Blueprint, request, jsonify, abort
 from server.app.models.account import Account, Administrator
 from server.app.models.club_owner import ClubOwner
 from server.app.models.team import Team, TeamManager
 from server.app.decorators.login_required import login_required
 from server.extensions import db
-from ._helpers import _parse_pagination, _resolve_target, _get_team_or_404
-from ._permissions import _can_manage_join_request_or_403
+from ._helpers import parse_pagination, resolve_target, get_team_or_404
+from ._permissions import can_manage_join_request_or_403
 from ...models.player import PlayerTeam
 from ...models.team_join_request import TeamJoinRequest
 from ...utils.promote import promote_to_player
@@ -17,12 +24,19 @@ my_teams_bp = Blueprint("team_my", __name__)
 @login_required
 def get_my_teams(account: Account):
     """
-    GET /api/teams/my?from=0&to=20&sort=name
-    Teams managed by the current account.
-    Administrator sees all. ClubOwner — club + directly managed.
-    TeamManager — managed only. Others — empty list.
+    Return the teams managed by the current account.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account for which to retrieve the managed teams.
+
+    Returns:
+        a JSON response containing a paginated list of teams managed by the current account, 
+        along with the total count and pagination metadata.
     """
-    offset, limit, sort_col = _parse_pagination(request.args)
+    offset, limit, sort_col = parse_pagination(request.args)
 
     resolved = account.resolved_role
 
@@ -63,10 +77,19 @@ def get_my_teams(account: Account):
 @login_required
 def get_my_all_teams(account: Account):
     """
-    GET /api/teams/my-all?from=0&to=20&sort=name
-    All teams where the account is involved - as a manager, club owner or player.
+    Return every team where the account is involved.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account for which to retrieve the involved teams.
+
+    Returns:
+        a JSON response containing a paginated list of teams where the account is involved, 
+        along with the total count and pagination metadata.
     """
-    offset, limit, sort_col = _parse_pagination(request.args)
+    offset, limit, sort_col = parse_pagination(request.args)
 
     resolved = account.resolved_role
 
@@ -119,8 +142,28 @@ def get_my_all_teams(account: Account):
 @my_teams_bp.route("/<int:team_id>/players/join-requests/<int:request_id>/accept", methods=["POST"])
 @login_required
 def accept_player_join_request(account: Account, team_id: int, request_id: int):
-    """POST /api/teams/<team_id>/players/join-requests/<request_id>/accept"""
-    team = _get_team_or_404(team_id)
+    """
+    Accept a player join request.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - `team_id` must exist and be active in the database.
+        - `request_id` must exist, be active in the database, and be associated with the specified team.
+
+    Args:
+        account (Account): The account accepting the join request.
+        team_id (int): The ID of the team for which to accept the join request.
+        request_id (int): The ID of the join request to accept.
+
+    Returns:
+        a JSON response containing a success message and the accepted join request, along with a 200 status code.
+
+    Postconditions:
+        - The join request status is updated to "accepted" in the database.
+        - The user associated with the join request is promoted to a player role if not already a player.
+        - An association between the player and the team is created in the database.
+    """
+    team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
     join_request = db.session.query(TeamJoinRequest).filter(
@@ -131,7 +174,7 @@ def accept_player_join_request(account: Account, team_id: int, request_id: int):
     if not join_request:
         abort(404, description="Join request not found.")
 
-    _can_manage_join_request_or_403(resolved, join_request, team)
+    can_manage_join_request_or_403(resolved, join_request, team)
 
     if join_request.status != "pending":
         abort(409, description="Join request is not in pending status.")
@@ -139,7 +182,7 @@ def accept_player_join_request(account: Account, team_id: int, request_id: int):
     join_request.status = "accepted"
     db.session.flush()
 
-    target = _resolve_target(join_request.user_id)
+    target = resolve_target(join_request.user_id)
     promote_to_player(target)
 
     assoc = PlayerTeam(player_id=target.player.id, team_id=team.id)
@@ -155,8 +198,28 @@ def accept_player_join_request(account: Account, team_id: int, request_id: int):
 @my_teams_bp.route("/<int:team_id>/players/join-requests/<int:request_id>/reject", methods=["POST"])
 @login_required
 def reject_player_join_request(account: Account, team_id: int, request_id: int):
-    """POST /api/teams/<team_id>/players/join-requests/<request_id>/reject"""
-    team = _get_team_or_404(team_id)
+    """
+    Reject a player join request.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - `team_id` must exist and be active in the database.
+        - `request_id` must exist, be active in the database, and be associated with the specified team.
+
+    Args:
+        account (Account): The account rejecting the join request.
+        team_id (int): The ID of the team for which to reject the join request.
+        request_id (int): The ID of the join request to reject.
+
+    Returns:
+        a JSON response containing a success message and the rejected join request, along with a 200 status code.
+
+    Postconditions:
+        - The join request status is updated to "rejected" in the database.
+        - The user associated with the join request is not promoted to a player role.
+        - No association between the player and the team is created in the database.
+    """
+    team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
     join_request = db.session.query(TeamJoinRequest).filter(
@@ -167,7 +230,7 @@ def reject_player_join_request(account: Account, team_id: int, request_id: int):
     if not join_request:
         abort(404, description="Join request not found.")
 
-    _can_manage_join_request_or_403(resolved, join_request, team)
+    can_manage_join_request_or_403(resolved, join_request, team)
 
     if join_request.status != "pending":
         abort(409, description="Join request is not in pending status.")
@@ -183,9 +246,19 @@ def reject_player_join_request(account: Account, team_id: int, request_id: int):
 @my_teams_bp.route("/my-join-requests", methods=["GET"])
 @login_required
 def get_my_join_requests(account: Account):
-    """GET /api/teams/my-join-requests — list all active (pending) join requests
-    sent by the currently authenticated user across all teams."""
+    """
+    Return the pending join requests made by the current account.
 
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account for which to retrieve the pending join requests.
+
+    Returns:
+        a JSON response containing a list of pending join requests made by the current account, 
+        along with the total count.
+    """
     requests = (
         db.session.query(TeamJoinRequest)
         .filter(

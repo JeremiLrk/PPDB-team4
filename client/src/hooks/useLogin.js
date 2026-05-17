@@ -1,13 +1,21 @@
+// Shared hook for useLogin.
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { notify } from "@/hooks/useNotify.js";
 
 export function useLogin(setUser) {
+    /*
+     Owns the login form state and submit flow.
+    */
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
 
     const handleSubmit = async (event) => {
+        /*
+         Validates and submits the login form.
+        */
         event.preventDefault();
 
         try {

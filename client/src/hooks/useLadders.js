@@ -1,25 +1,33 @@
+// Shared hook for useLadders.
+
 import { useEffect, useState } from "react";
 
 export function useLadders(clubId) {
-  const [ladders, setLadders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    /*
+     Loads the ladder list for one club.
+    */
+    const [ladders, setLadders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!clubId) return;
+    useEffect(() => {
+        if (!clubId) return;
 
-    fetch(`/api/clubs/${clubId}/ladders`)
-      .then(res => res.json())
-      .then(data => {
-        setLadders(data.ladders);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err);
-        setLoading(false);
-      });
+        /*
+         Fetches the ladders for the active club id.
+        */
+        fetch(`/api/clubs/${clubId}/ladders`)
+            .then(res => res.json())
+            .then(data => {
+                setLadders(data.ladders);
+                setLoading(false);
+            })
+            .catch(err => {
+                setError(err);
+                setLoading(false);
+            });
 
-  }, [clubId]);
+    }, [clubId]);
 
   return { ladders, loading, error };
 }

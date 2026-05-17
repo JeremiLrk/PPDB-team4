@@ -1,3 +1,5 @@
+// Shared hook for useSportTypes.
+
 import { useEffect, useState } from "react";
 
 /**
@@ -5,14 +7,19 @@ import { useEffect, useState } from "react";
  * @returns {{ sportTypes: {id: number, name: string}[], loading: boolean, error: string|null }}
  */
 export function useSportTypes() {
+    /*
+     Loads the list of available sport types for select menus.
+    */
     const [sportTypes, setSportTypes] = useState([]);
     const [loading, setLoading]       = useState(true);
     const [error, setError]           = useState(null);
-
     useEffect(() => {
         let alive = true;
 
         async function load() {
+            /*
+             Fetches sport types from the backend.
+            */
             try {
                 const res = await fetch("/api/sport-types", { credentials: "include" });
                 if (!res.ok) throw new Error("Failed to load sport types");

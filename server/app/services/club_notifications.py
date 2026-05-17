@@ -10,6 +10,7 @@ FRONTEND_URL = (os.getenv("FRONTEND_URL") or "").rstrip("/")
 
 
 def safe_send(to_email: str, subject: str, html: str) -> None:
+    """Send an email using Resend, but fail silently if the recipient email is not provided."""
     if not to_email:
         return
 
@@ -27,6 +28,7 @@ def safe_send(to_email: str, subject: str, html: str) -> None:
 
 
 def send_join_request_confirmation_to_player(player_email: str, player_name: str, club_name: str, club_id: int):
+    """Send a confirmation email to the player after they submit a join request."""
     name = player_name or "there"
     club_url = f"{FRONTEND_URL}/clubs/{club_id}"
     safe_send(
@@ -41,6 +43,7 @@ def send_join_request_confirmation_to_player(player_email: str, player_name: str
 
 
 def send_join_request_notification_to_owner(owner_email: str, owner_name: str, player_name: str, club_name: str, club_id: int):
+    """Send a notification email to the club owner when a new join request is submitted."""
     name = owner_name or "there"
     dashboard_url = f"{FRONTEND_URL}/dashboard"
     safe_send(
@@ -56,6 +59,7 @@ def send_join_request_notification_to_owner(owner_email: str, owner_name: str, p
 
 
 def send_join_request_decision_to_player(player_email: str, player_name: str, club_name: str, decision: str, club_id: int) -> None:
+    """Send an email to the player notifying them of the club owner's decision on their join request."""
     name = player_name or "there"
     normalized_decision = (decision or "").lower()
     decision_label = "approved" if normalized_decision == "approved" else "rejected"

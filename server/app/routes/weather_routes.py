@@ -1,3 +1,11 @@
+"""
+Weather lookup for clubs and match proposals.
+
+The frontend uses this route to preview the weather for a club city on the
+date of a proposed match.  The route falls back from OpenWeather's one-call
+forecast to the 3-hour forecast when needed.
+"""
+
 import os
 from datetime import date, datetime, timedelta, timezone
 
@@ -20,7 +28,8 @@ OPENWEATHER_ONECALL_URL = "https://api.openweathermap.org/data/3.0/onecall"
 OPENWEATHER_FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
 
 
-def _parse_target_date(value: str | None) -> date | None:
+def parse_target_date(value: str | None) -> date | None:
+    """Parse the target date query parameter into a date, if possible."""
     cleaned = (value or "").strip()
     if not cleaned:
         return None
@@ -31,7 +40,8 @@ def _parse_target_date(value: str | None) -> date | None:
         return None
 
 
-def _resolve_coordinates(city: str) -> dict | None:
+def resolve_coordinates(city: str) -> dict | None:
+    """Resolve a club city into weather API coordinates and a display label."""
     suggestions = search_cities(city, limit=1)
     if not suggestions:
         return None
@@ -47,7 +57,8 @@ def _resolve_coordinates(city: str) -> dict | None:
     }
 
 
-def _select_daily_forecast(payload: dict, target_date: date) -> dict | None:
+def select_daily_forecast(payload: dict, target_date: date) -> dict | None:
+    """Select the one-call daily forecast row for the requested date."""
     daily_rows = payload.get("daily") or []
     timezone_offset = payload.get("timezone_offset") or 0
     for row in daily_rows:
@@ -82,7 +93,8 @@ def _select_daily_forecast(payload: dict, target_date: date) -> dict | None:
     return None
 
 
-def _select_three_hour_forecast(payload: dict, target_date: date) -> dict | None:
+def select_three_hour_forecast(payload: dict, target_date: date) -> dict | None:
+    """Select the best 3-hour forecast row for the requested date."""
     forecast_rows = payload.get("list") or []
     timezone_offset = (payload.get("city") or {}).get("timezone") or payload.get("timezone_offset") or 0
     candidates = []
@@ -122,6 +134,7 @@ def _select_three_hour_forecast(payload: dict, target_date: date) -> dict | None
 
 @weather.get("/weather/<int:club_id>")  # Using int: for safety
 def get_weather(club_id):
+    """Return current weather or forecast data for a club city."""
     club = Club.query.get(club_id)
     
     if not club:
@@ -134,8 +147,8 @@ def get_weather(club_id):
     if not key:
         return jsonify({"error": "WEATHER_API_KEY is not configured."}), 500
 
-    target_date = _parse_target_date(request.args.get("target_dt"))
-    resolved = _resolve_coordinates(club.city)
+    target_date = parse_target_date(request.args.get("target_dt"))
+    resolved = resolve_coordinates(club.city)
     if not resolved:
         return jsonify({"error": "Could not resolve weather location."}), 404
 
@@ -148,6 +161,7 @@ def get_weather(club_id):
 
     try:
         if target_date is None:
+            # Current weather uses the simple endpoint and returns immediately.
             response = requests.get(OPENWEATHER_CURRENT_URL, params=params, timeout=10)
 
             if response.status_code == 401:
@@ -173,7 +187,7 @@ def get_weather(club_id):
                     "appid": key,
                     "units": "metric",
                 },
-                _select_daily_forecast,
+                select_daily_forecast,
             ),
             (
                 OPENWEATHER_FORECAST_URL,
@@ -183,12 +197,13 @@ def get_weather(club_id):
                     "appid": key,
                     "units": "metric",
                 },
-                _select_three_hour_forecast,
+                select_three_hour_forecast,
             ),
         ):
             response = requests.get(url, params=params_override, timeout=10)
 
             if response.status_code in {401, 403}:
+                # Keep trying the next forecast source if the first one rejects the key.
                 auth_error = response
                 continue
 
@@ -203,6 +218,7 @@ def get_weather(club_id):
                 return forecast
 
         if auth_error is not None:
+            # If both forecast sources reject the key, surface the auth error.
             return {
                 "error": "Activation Error",
                 "message": "API Key unauthorized. Check .env loading or activation status."

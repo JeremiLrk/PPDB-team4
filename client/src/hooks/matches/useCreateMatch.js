@@ -1,3 +1,5 @@
+// Match workflow hook for useCreateMatch.
+
 import { useState, useCallback, useEffect } from "react";
 
 /**
@@ -14,7 +16,9 @@ import { useState, useCallback, useEffect } from "react";
  * step numbers 0-2 are never overloaded with a second meaning.
  */
 export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
-    // -1 = closed, 0-2 = wizard page index
+    /*
+     Owns the match-creation wizard state and submission flow.
+    */
     const [step,      setStep]      = useState(-1);
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -40,6 +44,9 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
     // ------------------------------------------------------------------
 
     const openPanel = useCallback(() => {
+        /*
+         Opens the wizard and resets all draft selections.
+        */
         setStep(0);
         setIsLoading(false);
         setIsSuccess(false);
@@ -54,6 +61,9 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
     }, [managedTeams]);
 
     const closePanel = useCallback(() => {
+        /*
+         Closes the wizard and clears transient state.
+        */
         setStep(-1);
         setIsLoading(false);
         setIsSuccess(false);
@@ -79,8 +89,10 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
         setSelectedLadderId("");
         setPeers([]);
         setSelectedPeerId("");
-
         async function loadLadders() {
+            /*
+             Loads the ladders for the selected managed team.
+            */
             try {
                 const team = managedTeams.find(t => String(t.id) === String(selectedTeamId));
                 if (!team) throw new Error("Selected team not found.");
@@ -152,6 +164,9 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
         setSelectedPeerId("");
 
         async function loadPeers() {
+            /*
+             Loads the opponent teams from the selected ladder.
+            */
             try {
                 const res  = await fetch(
                     `/api/teams/${selectedTeamId}/ladder-peers?ladder_id=${selectedLadderId}`,
@@ -186,11 +201,17 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
     // ------------------------------------------------------------------
 
     const nextStep = useCallback(() => {
+        /*
+         Advances the wizard one step forward.
+        */
         setError("");
         setStep(s => s + 1);
     }, []);
 
     const prevStep = useCallback(() => {
+        /*
+         Moves the wizard one step back.
+        */
         setError("");
         setStep(s => s - 1);
     }, []);
@@ -208,6 +229,9 @@ export function useCreateMatch({ managedTeams = [], onCreated } = {}) {
     // ------------------------------------------------------------------
 
     const submit = useCallback(async () => {
+        /*
+         Creates the match proposal from the selected team and opponent.
+        */
         if (!selectedTeamId || !selectedPeerId) return;
 
         setIsLoading(true);

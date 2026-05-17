@@ -1,6 +1,11 @@
+// Reusable component for Spinner.
+
 import styles from "@/style/common/Forms.module.css"
 
 export function Spinner() {
+    /*
+     Renders the shared loading spinner icon.
+    */
     return (
         <svg
             className={styles.spinner}

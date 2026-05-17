@@ -1,6 +1,11 @@
+// Club settings UI component for ClubOverview.
+
 import styles from "@/style/ClubSettings.module.css";
 
 export function ClubOverview({ club, texts = {} }) {
+    /*
+     Renders the static club overview cards.
+    */
     return (
         <div className={`${styles.contentGrid} ${styles.contentFade}`}>
 

@@ -1,4 +1,6 @@
-import { useState } from "react";
+// Club settings UI component for ClubLadders.
+
+import { useEffect, useState } from "react";
 import { useSportTypes } from "@/hooks/useSportTypes";
 import styles from "@/style/ClubSettings.module.css";
 
@@ -9,9 +11,13 @@ export function ClubLadders({
     ruleSets = [],
     eligibleTeams = [],
     onAddTeam,
+    supportsRuleSets = true,
     texts = {},
 }) {
     const { sportTypes } = useSportTypes();
+    /*
+     Owns the ladder creation form and ladder-team linking form.
+    */
 
     const [form, setForm] = useState({
         name: "",
@@ -29,8 +35,21 @@ export function ClubLadders({
     const [submitting, setSubmitting] = useState(false);
     const [addingTeam, setAddingTeam] = useState(false);
     const [teamMessage, setTeamMessage] = useState(null);
+    const showRuleSetField = supportsRuleSets;
+
+    useEffect(() => {
+        if (!showRuleSetField && form.rule_set_id) {
+            setForm((prev) => ({
+                ...prev,
+                rule_set_id: "",
+            }));
+        }
+    }, [form.rule_set_id, showRuleSetField]);
 
     const handleChange = (event) => {
+        /*
+         Updates one field in the ladder creation form.
+        */
         const { name, value } = event.target;
         setForm((prev) => ({
             ...prev,
@@ -39,15 +58,25 @@ export function ClubLadders({
     };
 
     const handleTeamChange = (event) => {
+        /*
+         Updates one field in the ladder-team linking form.
+        */
         const { name, value } = event.target;
         setTeamForm((prev) => ({
             ...prev,
             [name]: value,
         }));
     };
-
     const handleCreate = async () => {
-        if (!form.name.trim() || !form.sport_type_id || !form.rule_set_id || !form.ladder_rating_function_id) {
+        /*
+         Creates a new ladder after validating the required fields.
+        */
+        if (
+            !form.name.trim()
+            || !form.sport_type_id
+            || !form.ladder_rating_function_id
+            || (showRuleSetField && !form.rule_set_id)
+        ) {
             alert(texts.fill_all_required_fields || "Vul alle verplichte velden in.");
             return;
         }
@@ -57,7 +86,7 @@ export function ClubLadders({
             await onCreate({
                 ...form,
                 sport_type_id: Number(form.sport_type_id),
-                ruleset_id: Number(form.rule_set_id),
+                ruleset_id: showRuleSetField && form.rule_set_id ? Number(form.rule_set_id) : null,
                 ladder_rating_function_id: Number(form.ladder_rating_function_id),
             });
             setForm({
@@ -73,6 +102,9 @@ export function ClubLadders({
     };
 
     const handleAddTeam = async (event) => {
+        /*
+         Links one selected team to one selected ladder.
+        */
         event.preventDefault();
 
         if (!teamForm.ladder_id || !teamForm.team_id) {
@@ -136,12 +168,14 @@ export function ClubLadders({
                             ))}
                         </select>
 
-                        <select className={styles.formInput} name="rule_set_id" value={form.rule_set_id} onChange={handleChange}>
-                            <option value="" disabled>{texts.choose_rule_set || "Kies een regelset"}</option>
-                            {ruleSets.map((ruleSet) => (
-                                <option key={ruleSet.id} value={ruleSet.id}>{ruleSet.name}</option>
-                            ))}
-                        </select>
+                        {showRuleSetField ? (
+                            <select className={styles.formInput} name="rule_set_id" value={form.rule_set_id} onChange={handleChange}>
+                                <option value="" disabled>{texts.choose_rule_set || "Kies een regelset"}</option>
+                                {ruleSets.map((ruleSet) => (
+                                    <option key={ruleSet.id} value={ruleSet.id}>{ruleSet.name}</option>
+                                ))}
+                            </select>
+                        ) : null}
 
                         <select className={styles.formInput} name="ladder_rating_function_id" value={form.ladder_rating_function_id} onChange={handleChange}>
                             <option value="" disabled>{texts.choose_rating_function || "Kies ratingsysteem"}</option>

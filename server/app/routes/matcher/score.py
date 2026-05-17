@@ -49,7 +49,7 @@ def post_score(account, match_id: int):
 
     The caller's SubmissionRole is resolved from their permissions:
       - ClubOwner/Admin whose club owns the ladder -> 'ladder_admin'
-        (only accepted when scores from both team sides disagree)
+        (authoritative and final immediately)
       - manager/owner/player on team1 → 'team1_side'
       - manager/owner/player on team2 → 'team2_side'
 
@@ -134,7 +134,27 @@ def list_disputed(account):
     ---------
     200  {"matches": [...], "total": int}
     """
+    club_id = request.args.get("club_id")
+    if club_id is not None:
+        try:
+            club_id = int(club_id)
+        except (TypeError, ValueError):
+            return jsonify({"message": "club_id must be an integer."}), 422
+
+    def belongs_to_club(match, target_club_id: int) -> bool:
+        return target_club_id in {
+            club_id
+            for club_id in (
+                match.ladder.club_id if match.ladder is not None else None,
+                match.team1.club_id if match.team1 is not None else None,
+                match.team2.club_id if match.team2 is not None else None,
+            )
+            if club_id is not None
+        }
+
     matches = get_disputed_matches_resolvable_by(account)
+    if club_id is not None:
+        matches = [match for match in matches if belongs_to_club(match, club_id)]
     return jsonify({
         "matches": [m.to_dict_full() for m in matches],
         "total": len(matches),

@@ -1,4 +1,9 @@
+// Icon component for PlusIcon.
+
 export function PlusIcon({ rotated }) {
+    /*
+     Renders the plus icon used by expandable buttons.
+    */
     return (
         <svg
             width="13" height="13"

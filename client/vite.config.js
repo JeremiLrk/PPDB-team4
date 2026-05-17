@@ -1,3 +1,5 @@
+// Vite build and test configuration for the frontend app.
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";

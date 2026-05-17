@@ -1,8 +1,11 @@
+// Page container for ClubSettings.
+
 import styles from "@/style/ClubSettings.module.css";
 import { useParams } from "react-router-dom";
 import { useClubSettings } from "@/hooks/useClubSettings";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 import ClubSidebar from "@/components/club_settings/ClubSidebar.jsx";
 import ClubOverview from "@/components/club_settings/ClubOverview.jsx";
@@ -18,6 +21,8 @@ function ClubSettings() {
     const { lang } = useLangContext();
     const texts = usePageTexts("club_settings", lang);
     const settings = useClubSettings(clubId, texts);
+    const { theme } = useThemeContext();
+    const isLight = theme === "light";
 
     if (!texts.sidebar_title) {
         return <div className={styles.loading}>{texts.loading || "Club laden..."}</div>;
@@ -26,16 +31,20 @@ function ClubSettings() {
     if (settings.loading) {
         return <div className={styles.loading}>{texts.loading || "Club laden..."}</div>;
     }
+    /*
+     Renders the active club settings section.
+    */
 
     return (
-        <section className={styles.shell}>
+        <section className={`${styles.shell} ${isLight ? styles.light : ""}`}>
             <ClubSidebar
                 activeTab={settings.activeTab}
                 onTabChange={settings.setActiveTab}
                 texts={texts}
+                supportsRuleSets={settings.supportsRuleSets}
             />
 
-            <div className={styles.settings}>
+            <div className={styles.workspace}>
 
                 {settings.activeTab === "overview" && (
                     <ClubOverview club={settings.club} texts={texts} />
@@ -63,6 +72,7 @@ function ClubSettings() {
                         ruleSets={settings.ruleSets}
                         eligibleTeams={settings.eligibleTeams}
                         onAddTeam={settings.addTeamToLadder}
+                        supportsRuleSets={settings.supportsRuleSets}
                         texts={texts}
                     />
                 )}
@@ -76,7 +86,7 @@ function ClubSettings() {
                     />
                 )}
 
-                {settings.activeTab === "rules" && (
+                {settings.activeTab === "rules" && settings.supportsRuleSets && (
                     <ClubMatchRules clubId={clubId} texts={texts} />
                 )}
 

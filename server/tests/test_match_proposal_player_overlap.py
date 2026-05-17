@@ -106,6 +106,7 @@ def _make_club(name: str, sport_type: SportType) -> Club:
     return club
 
 
+# Verifies weekly generator skips shared player pair.
 def test_weekly_generator_skips_shared_player_pair(app):
     with app.app_context():
         tennis = SportType.query.filter_by(name="Tennis").first()
@@ -143,6 +144,7 @@ def test_weekly_generator_skips_shared_player_pair(app):
         assert result["skipped"][0]["reason"] == "shared_players"
 
 
+# Verifies match proposal route rejects shared player pair.
 def test_match_proposal_route_rejects_shared_player_pair(app, client, monkeypatch):
     with app.app_context():
         tennis = SportType.query.filter_by(name="Tennis").first()

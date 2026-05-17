@@ -1,3 +1,5 @@
+// Match workflow UI component for CreateMatchButton.
+
 import { FormPanel } from "@/components/forms/FormPanel.jsx";
 import { FormPage }  from "@/components/forms/FormPage.jsx";
 import { Field }     from "@/components/forms/Field.jsx";
@@ -25,6 +27,9 @@ import buttonStyles from "@/style/common/Buttons.module.css";
  * entry in managedTeamIds.
  */
 function canProposeMath(account) {
+    /*
+     Checks whether the current account may open the match proposal wizard.
+     */
     if (!account) return false;
     const roles = account.roles ?? [];
     if (roles.includes("administrator")) return true;
@@ -81,7 +86,6 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
         submit,
     } = useCreateMatch({ managedTeams, onCreated });
 
-    // Render nothing when the account cannot propose matches.
     if (!canProposeMath(currentUser)) return null;
     if (managedTeams.length === 0)    return null;
 
@@ -116,7 +120,6 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
             ariaLabel={t("create_match_aria", "Create a new match proposal")}
         >
 
-            {/* ---- Step 0: choose team1 -------------------------------- */}
             <FormPage active={step === 0}>
                 <Field label={t("create_match_your_team", "Your Team *")}>
                     <select
@@ -139,7 +142,6 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
                 </Field>
             </FormPage>
 
-            {/* ---- Step 1: choose ladder ------------------------------- */}
             <FormPage active={step === 1}>
                 {laddersLoading && (
                     <LoadingRow label={t("create_match_loading_ladders", "Loading ladders...")} />
@@ -176,7 +178,6 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
                 )}
             </FormPage>
 
-            {/* ---- Step 2: choose opponent (team2) --------------------- */}
             <FormPage active={step === 2}>
                 {peersLoading && (
                     <LoadingRow label={t("create_match_loading_opponents", "Loading opponents...")} />
@@ -231,6 +232,9 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
  * Inline spinner row shown while async data is loading inside the panel.
  */
 function LoadingRow({ label }) {
+    /*
+     Shows a compact loading row for async panel steps.
+    */
     return (
         <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.4rem 0" }}>
             <Spinner />
@@ -244,6 +248,9 @@ function LoadingRow({ label }) {
  * Shows the team name, club, rank, and rating with a toggle-select button.
  */
 function PeerCard({ peer, selected, onSelect, selectLabel, selectedLabel }) {
+    /*
+     Renders one selectable opponent row inside the final wizard step.
+    */
     return (
         <ItemCard>
             <div style={{ flex: 1, minWidth: 0 }}>
