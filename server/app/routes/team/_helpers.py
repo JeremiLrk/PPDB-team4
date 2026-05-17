@@ -277,7 +277,13 @@ def _ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
 
 def _delete_teams_cache_keys():
     """Gets raw redis client and deletes all cache keys for the team listing page"""
-    redis_client = getattr(cache.cache, "_write_client", getattr(cache.cache, "_client", None))
+    redis_client = getattr(cache.cache, "_write_client", None) or getattr(cache.cache, "_client", None)
+    if redis_client is None:
+        # Some cache backends do not expose the private Redis client objects
+        # we use in production. Clearing the cache is the safe fallback.
+        cache.clear()
+        return
+
     keys_to_delete = redis_client.keys("ppdb:/api/teams*")
     if keys_to_delete:
         redis_client.delete(*keys_to_delete)
