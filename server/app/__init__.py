@@ -40,7 +40,8 @@ from sqlalchemy import text
 
 def _init_cache(app: Flask) -> None:
     redis_url = os.getenv("REDIS_URL", "").strip()
-    if app.testing or not redis_url:
+    running_pytest = bool(os.getenv("PYTEST_CURRENT_TEST"))
+    if app.testing or app.config.get("TESTING") or running_pytest or not redis_url:
         app.config["CACHE_TYPE"] = "NullCache"
     else:
         app.config["CACHE_TYPE"] = "RedisCache"
