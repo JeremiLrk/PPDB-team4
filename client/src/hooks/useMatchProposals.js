@@ -85,6 +85,7 @@ async function fetchMatchProposals(filters = {}) {
         params.set("week_start_date", filters.weekStartDate);
     }
     if (filters.archived) {
+        // Archived mode is an explicit opt-in so the default list stays short.
         params.set("archived", "1");
     }
 
@@ -151,6 +152,7 @@ export function useMatchProposals(filters = {}) {
 
         try {
             const updatedProposal = await updateMatchProposalStatus(proposalId, status, extra);
+            // Replace only the changed proposal so list position and filters stay stable.
             setProposals((previous) =>
                 previous.map((proposal) =>
                     proposal.id === proposalId ? updatedProposal : proposal,

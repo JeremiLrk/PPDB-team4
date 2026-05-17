@@ -1,3 +1,10 @@
+"""
+Shared helpers for matcher routes.
+
+These utilities keep the match-list and match-detail endpoints aligned on the
+same lookup and pagination rules.
+"""
+
 from flask import abort
 
 from server.app.models.account import Administrator
@@ -11,21 +18,24 @@ from server.app.models.match import (
 # Internal helpers
 # ===========================================================================
 
-def _get_proposal_or_404(match_id: int) -> MatchProposal:
+def get_proposal_or_404(match_id: int) -> MatchProposal:
+    """Load a match proposal or abort with 404 if it is missing."""
     proposal = MatchProposal.query.get(match_id)
     if not proposal:
         abort(404, description="Match proposal not found.")
     return proposal
 
 
-def _get_team_or_404(team_id: int) -> Team:
+def get_team_or_404(team_id: int) -> Team:
+    """Load a team or abort with 404 if it does not exist."""
     team = Team.query.get(team_id)
     if not team:
         abort(404, description=f"Team {team_id} not found.")
     return team
 
 
-def _parse_pagination(args):
+def parse_pagination(args):
+    """Parse the shared from/to pagination arguments."""
     try:
         offset = int(args.get("from", 0))
         to     = int(args.get("to",   20))
@@ -37,8 +47,8 @@ def _parse_pagination(args):
     return offset, to - offset
 
 
-def _team_ids_managed_by(resolved) -> set[int] | None:
-    """Returns the set of team IDs the resolved role manages."""
+def team_ids_managed_by(resolved) -> set[int] | None:
+    """Return the set of team ids managed by the resolved role."""
     if isinstance(resolved, Administrator):
         # Admin sees everything — return sentinel
         return None  # handled by callers
@@ -55,3 +65,10 @@ def _team_ids_managed_by(resolved) -> set[int] | None:
     if isinstance(resolved, TeamManager):
         return {a.team_id for a in resolved.team_associations}
     return set()
+
+
+# Compatibility aliases for older imports and tests.
+_get_proposal_or_404 = get_proposal_or_404
+_get_team_or_404 = get_team_or_404
+_parse_pagination = parse_pagination
+_team_ids_managed_by = team_ids_managed_by

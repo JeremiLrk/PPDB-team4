@@ -24,12 +24,14 @@ export default function MatchProposalList({
     emptyText,
 }) {
     if (loading) {
+        // Loading state stays compact so the list can swap in place.
         return <p className={commonStyles.muted}>{texts.loading || "Match proposals loading..."}</p>;
     }
 
     if (error) {
         return (
             <div style={{ display: "grid", gap: "0.7rem" }}>
+                {/* Surface the backend error and keep the retry action next to it. */}
                 <p className={commonStyles.muted}>{error}</p>
                 <button className={buttonStyles.primaryButton} type="button" onClick={onReload}>
                     {texts.retry || "Retry"}
@@ -39,6 +41,7 @@ export default function MatchProposalList({
     }
 
     if (proposals.length === 0) {
+        // Empty state is still explicit so the user knows the list loaded correctly.
         return <p className={commonStyles.muted}>{emptyText || texts.empty || "No match proposals yet."}</p>;
     }
 

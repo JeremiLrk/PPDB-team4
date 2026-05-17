@@ -1,3 +1,10 @@
+"""
+Dashboard and club-landing routes.
+
+These endpoints power the signed-in dashboard, club join-request actions,
+and the lightweight achievements summary shown on the frontend.
+"""
+
 from flask import Blueprint, jsonify, request
 import jwt
 
@@ -19,7 +26,8 @@ from datetime import datetime, timezone
 dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api")
 
 
-def _get_current_user_id_from_cookie():
+def get_current_user_id_from_cookie():
+    """Read the signed-in user id from the access-token cookie."""
     token = request.cookies.get("access_token")
     if not token:
         return None
@@ -31,7 +39,8 @@ def _get_current_user_id_from_cookie():
         return None
 
 
-def _serialize_upcoming_matches(account):
+def serialize_upcoming_matches(account):
+    """Serialize accepted matches involving the current user's teams."""
     player = getattr(account, "player", None)
     if not player:
         return []
@@ -79,12 +88,14 @@ def _serialize_upcoming_matches(account):
     return upcoming_matches
 
 
-def _is_admin(account_id: int) -> bool:
+def is_admin(account_id: int) -> bool:
+    """Return whether the given account id belongs to an administrator."""
     return Administrator.query.filter_by(id=account_id).first() is not None
 
 
 @dashboard_bp.get("/me/dashboard")
 def get_my_dashboard():
+    """Return the signed-in user's dashboard payload."""
     user_id = _get_current_user_id_from_cookie()
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
@@ -106,6 +117,7 @@ def get_my_dashboard():
         club_owner = ClubOwner.query.filter_by(id=user_id).first()
 
         if club_owner:
+            # Owners see clubs linked through the owner table first.
             owned_links = ClubOwnerClub.query.filter_by(
                 club_owner_id=club_owner.id
             ).all()
@@ -125,6 +137,7 @@ def get_my_dashboard():
         member_ids = [link.club_id for link in member_links]
 
         if member_ids:
+            # Player membership is merged in only when it is not already owned.
             member_clubs = Club.query.filter(Club.id.in_(member_ids)).all()
 
             for club in member_clubs:
@@ -149,6 +162,7 @@ def get_my_dashboard():
 
 @dashboard_bp.get("/club/join-request")
 def get_join_requests_for_owner():
+    """Return club join requests visible to the current club owner."""
     user_id = _get_current_user_id_from_cookie()
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
@@ -180,6 +194,7 @@ def get_join_requests_for_owner():
     data = []
     for request_obj, first_name in results:
         serialized = request_obj.serialize()
+        # The UI expects a display name alongside the raw request payload.
         serialized["user_name"] = first_name
         data.append(serialized)
 
@@ -188,6 +203,7 @@ def get_join_requests_for_owner():
 
 @dashboard_bp.post("/club/join-request")
 def set_join():
+    """Create a club join request for the signed-in user."""
     user_id = _get_current_user_id_from_cookie()
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
@@ -206,6 +222,7 @@ def set_join():
         return jsonify({"message": "Club not found"}), 404
     
     if ClubJoinRequest.query.filter_by(club_id=club_id, user_id=user_id).first():
+        # Treat duplicate join clicks as success so the UI stays idempotent.
         return jsonify({"status": True}), 200
 
     join_request = ClubJoinRequest(
@@ -246,6 +263,7 @@ def set_join():
 
 @dashboard_bp.post("/club/join-request/decide")
 def decide_request():
+    """Accept or reject a pending club join request."""
     owner_id = _get_current_user_id_from_cookie()
     if not owner_id:
         return jsonify({"message": "Unauthorized"}), 401
@@ -279,6 +297,7 @@ def decide_request():
         return jsonify({"message": "You do not have permission to manage this club"}), 403
 
     if decision == "approved":
+        # Promote the account to player only when the approval path is taken.
         existing_player = Player.query.filter_by(id=player_id).first()
         if not existing_player:
             new_player = Player(id=player_id)
@@ -303,6 +322,7 @@ def decide_request():
     
 @dashboard_bp.get("/me/achievements")
 def get_my_achievements():
+    """Return the current player's win and streak summary."""
     user_id = _get_current_user_id_from_cookie()
     if not user_id:
         return jsonify({"message": "Unauthorized"}), 401
@@ -333,6 +353,7 @@ def get_my_achievements():
     team_id_set = set(team_ids)
     outcomes = []
     for proposal, played in rows:
+        # Each result counts as a win only for the team that belongs to the player.
         t1_mine = proposal.team1_id in team_id_set
         t2_mine = proposal.team2_id in team_id_set
         if t1_mine and played.score_team1 > played.score_team2:
@@ -371,6 +392,7 @@ def get_my_achievements():
 
 @dashboard_bp.post("/club/delete")
 def delete_club():
+    """Delete a club after verifying ownership or admin access."""
     owner_id = _get_current_user_id_from_cookie()
     if not owner_id:
         return jsonify({"message": "Unauthorized"}), 401
@@ -405,3 +427,9 @@ def delete_club():
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": "An error occurred while deleting the club", "error": str(e)}), 500
+
+
+# Compatibility aliases for older imports and tests.
+_get_current_user_id_from_cookie = get_current_user_id_from_cookie
+_serialize_upcoming_matches = serialize_upcoming_matches
+_is_admin = is_admin

@@ -15,16 +15,19 @@ export function Clubowners({ owners, onRemove, onAdd, searchAccounts, texts = {}
         setQuery(value);
 
         if (value.length > 2) {
+            // Wait for a short query before hitting the search endpoint.
             setIsSearching(true);
             const accounts = await searchAccounts(value);
             setResults(accounts);
             setIsSearching(false);
         } else {
+            // Short queries are cleared so we do not spam the backend.
             setResults([]);
         }
     };
 
     const handleAdd = (userId) => {
+        // After adding, clear the search so the owner list stays the focus.
         onAdd(userId);
         setQuery(""); // Clear search after adding
         setResults([]);
@@ -64,6 +67,7 @@ export function Clubowners({ owners, onRemove, onAdd, searchAccounts, texts = {}
                                         onClick={() => handleAdd(user.id)}
                                         style={{ color: '#4ade80', marginLeft: 'auto' }}
                                     >
+                                        {/* Adding an owner is just selecting one of the searched accounts. */}
                                         {texts.add || defaultText(lang, "Add", "Toevoegen")} +
                                     </button>
                                 </li>

@@ -30,12 +30,14 @@ export function useDashboard() {
 
                 const data = await response.json();
                 if (alive) {
+                    // Keep the latest dashboard payload only while this hook instance is still mounted.
                     setDashboardData(data);
                     setError("");
                 }
             } catch (err) {
                 // Fallback to mock keeps frontend flow buildable while backend evolves.
                 if (alive) {
+                    // Fall back to the stub payload instead of breaking the whole dashboard shell.
                     setDashboardData(mockDashboardData);
                     setError(err?.message || "Onbekende fout bij dashboard laden.");
                 }

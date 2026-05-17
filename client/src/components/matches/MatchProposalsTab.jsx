@@ -24,6 +24,7 @@ function proposalIsManaged(proposal, currentUser) {
         return true;
     }
 
+    // Managed proposals are visible when the user controls either team or club.
     const managedTeamIds = toIdSet(currentUser?.managedTeamIds);
     const managedClubIds = toIdSet(currentUser?.clubIds);
 
@@ -49,6 +50,7 @@ function proposalCanUpdate(proposal, currentUser) {
     }
 
     if (Number(currentUser?.id) === Number(proposal.proposedByUserId)) {
+        // The creator can always manage their own proposal.
         return true;
     }
 
@@ -98,6 +100,7 @@ export default function MatchProposalsTab() {
         () => proposals.filter((proposal) => proposalIsPlayer(proposal, currentUser)),
         [currentUser, proposals],
     );
+    // Split the list so players see their own matches before the broader management set.
     const canUpdateProposal = (proposal) => proposalCanUpdate(proposal, currentUser);
     const roleLoading = loadingUser && !currentUser;
 
@@ -116,6 +119,7 @@ export default function MatchProposalsTab() {
         const scoreTeam1 = Number.parseInt(scoreValues.team1, 10);
         const scoreTeam2 = Number.parseInt(scoreValues.team2, 10);
         if (!Number.isInteger(scoreTeam1) || !Number.isInteger(scoreTeam2) || scoreTeam1 < 0 || scoreTeam2 < 0) {
+            // Invalid input is ignored so the form can keep its current values.
             return;
         }
 
@@ -134,6 +138,7 @@ export default function MatchProposalsTab() {
             if (!response.ok) {
                 throw new Error(payload?.message || "Could not submit score.");
             }
+            // Reset the form only after the backend accepts the decisive score.
             setReportingMatchId(null);
             setScoreValues({ team1: "", team2: "" });
             await load();
@@ -180,10 +185,12 @@ export default function MatchProposalsTab() {
                         onClick={() => setShowArchived((current) => !current)}
                         disabled={loading}
                     >
+                        {/* Toggle just switches the server filter between active and archived views. */}
                         {showArchived ? showActiveLabel : showArchivedLabel}
                     </button>
 
                     {!managedLoading ? (
+                        // The create button only appears once the managed team list is ready.
                         <CreateMatchButton
                             managedTeams={managedTeams}
                             onCreated={handleMatchCreated}

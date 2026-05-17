@@ -1,3 +1,10 @@
+"""
+Team membership routes.
+
+This module handles manager assignment, player membership changes, join
+requests, permission lookups, and the ladder-size safeguards around them.
+"""
+
 from flask import Blueprint, request, jsonify, Response, abort
 from datetime import datetime, timezone
 
@@ -12,16 +19,16 @@ from server.app.utils.promote import promote_to_team_manager, promote_to_player
 from server.app.models.match import MatchProposal, MatchStatus
 from server.app.models.ladder_team import LadderTeam
 from ._helpers import (
-    _get_team_or_404,
-    _resolve_target,
-    _search_accounts,
-    _handle_team_after_last_manager_removed,
-    _ladders_exceeding_max_after_add,
-    _ladders_violating_min_after_remove,
+    get_team_or_404,
+    resolve_target,
+    search_accounts,
+    handle_team_after_last_manager_removed,
+    ladders_exceeding_max_after_add,
+    ladders_violating_min_after_remove,
 )
 from ._permissions import (
-    _can_edit_players_or_403,
-    _can_edit_managers_or_403, _get_permissions
+    can_edit_players_or_403,
+    can_edit_managers_or_403, get_permissions
 )
 
 membership_bp = Blueprint("team_membership", __name__)
@@ -31,15 +38,15 @@ membership_bp = Blueprint("team_membership", __name__)
 @login_required
 def add_manager_to_team(account: Account, team_id: int) -> tuple[Response, int]:
     """POST /api/teams/<team_id>/managers — Add a manager."""
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_managers_or_403(account.resolved_role, team)
+    can_edit_managers_or_403(account.resolved_role, team)
 
     data = request.get_json(silent=True)
     if data is None:
         abort(400, description="No JSON body provided.")
 
-    target= _resolve_target(data.get("accountId"))
+    target= resolve_target(data.get("accountId"))
 
     if target.team_manager:
         already = any(a.team_id == team.id for a in target.team_manager.team_associations)
@@ -79,11 +86,11 @@ def remove_manager_from_team(account: Account, team_id: int, account_id: int):
 
     resolved = account.resolved_role
 
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_managers_or_403(resolved, team)
+    can_edit_managers_or_403(resolved, team)
 
-    target = _resolve_target(account_id)
+    target = resolve_target(account_id)
 
     assoc = next(
         (a for a in (target.team_manager.team_associations if target.team_manager else [])
@@ -96,7 +103,7 @@ def remove_manager_from_team(account: Account, team_id: int, account_id: int):
     db.session.delete(assoc)
     db.session.flush()
 
-    _handle_team_after_last_manager_removed(team)
+    handle_team_after_last_manager_removed(team)
     db.session.commit()
 
     cache.delete_memoized(get_team_managers, team_id)
@@ -112,7 +119,7 @@ def get_team_players(team_id: int):
     """GET /api/teams/<team_id>/players — list of team players."""
 
     # Call to check if this team exists
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
     players = (
         db.session.query(Account)
@@ -134,7 +141,7 @@ def get_team_players(team_id: int):
 @membership_bp.route("/<int:team_id>/members", methods=["GET"])
 def get_team_members(team_id: int):
     """GET /api/teams/<team_id>/members — public list of team members (name only, no personal info)."""
-    _get_team_or_404(team_id)
+    get_team_or_404(team_id)
 
     players = (
         db.session.query(Account)
@@ -159,16 +166,16 @@ def get_team_members(team_id: int):
 @login_required
 def add_player_to_team(account: Account, team_id: int):
     """POST /api/teams/<team_id>/players — send player join request."""
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
-    _can_edit_players_or_403(resolved, team)
+    can_edit_players_or_403(resolved, team)
 
     data = request.get_json(silent=True)
     if data is None:
         abort(400, description="No JSON body provided.")
 
-    target = _resolve_target(data.get("accountId"))
+    target = resolve_target(data.get("accountId"))
 
     if target.player:
         already = any(a.team_id == team.id for a in target.player.playerteam_associations)
@@ -189,7 +196,7 @@ def add_player_to_team(account: Account, team_id: int):
         abort(409, description="Join request for this player to this team already exists.")
 
     # Check if adding player would exceed ladder size limits
-    exceeding_ladders = _ladders_exceeding_max_after_add(team_id)
+    exceeding_ladders = ladders_exceeding_max_after_add(team_id)
 
     confirm_exceed = request.args.get("confirmExceed", "").lower() == "true"
 
@@ -225,12 +232,12 @@ def add_player_to_team(account: Account, team_id: int):
 @login_required
 def remove_player_from_team(account: Account, team_id: int, account_id: int):
     """DELETE /api/teams/<team_id>/players/<account_id>."""
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
-    _can_edit_players_or_403(resolved, team)
+    can_edit_players_or_403(resolved, team)
 
-    target = _resolve_target(account_id)
+    target = resolve_target(account_id)
 
     assoc = next(
         (a for a in (target.player.playerteam_associations if target.player else [])
@@ -241,7 +248,7 @@ def remove_player_from_team(account: Account, team_id: int, account_id: int):
         abort(404, description="This account is not a player in this team.")
 
     # Check if removing player would violate minimum roster size in active ladders
-    violating_ladders = _ladders_violating_min_after_remove(team_id)
+    violating_ladders = ladders_violating_min_after_remove(team_id)
 
     # Get confirmation flag from query parameters
     confirm_remove = request.args.get("confirmViolate", "").lower() == "true"
@@ -274,11 +281,11 @@ def check_player_add_exceeds_ladder_max(account: Account, team_id: int):
     would exceed the sport type's maximum_number_of_players_per_team.
     Returns 200 when no constraint would be violated.
     """
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_players_or_403(account.resolved_role, team)
+    can_edit_players_or_403(account.resolved_role, team)
 
-    violating = _ladders_exceeding_max_after_add(team_id)
+    violating = ladders_exceeding_max_after_add(team_id)
     if violating:
         return jsonify({
             "message": "Adding a player would exceed the maximum roster size for one or more ladders.",
@@ -298,16 +305,16 @@ def add_player_dropping_exceeding_ladders(account: Account, team_id: int):
     removes the team from that ladder and deletes all its pending or accepted
     match proposals in that ladder.
     """
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
-    _can_edit_players_or_403(resolved, team)
+    can_edit_players_or_403(resolved, team)
 
     data = request.get_json(silent=True)
     if data is None:
         abort(400, description="No JSON body provided.")
 
-    target = _resolve_target(data.get("accountId"))
+    target = resolve_target(data.get("accountId"))
 
     if target.player:
         already = any(a.team_id == team.id for a in target.player.playerteam_associations)
@@ -327,8 +334,8 @@ def add_player_dropping_exceeding_ladders(account: Account, team_id: int):
         abort(409, description="Join request for this player to this team already exists.")
 
     # Determine violating ladders BEFORE the join request is created so that
-    # _count_effective_players still reflects the current state.
-    violating_ladders = _ladders_exceeding_max_after_add(team_id)
+    # count_effective_players still reflects the current state.
+    violating_ladders = ladders_exceeding_max_after_add(team_id)
 
     active_statuses = [MatchStatus.PENDING, MatchStatus.ACCEPTED]
     for ladder in violating_ladders:
@@ -388,12 +395,12 @@ def check_player_remove_violates_ladder_min(account: Account, team_id: int, acco
     Uses DELETE so that the client can use the same account_id segment
     as the force-remove sibling route.
     """
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_players_or_403(account.resolved_role, team)
+    can_edit_players_or_403(account.resolved_role, team)
 
     # Verify the player is actually in this team before checking constraints.
-    target = _resolve_target(account_id)
+    target = resolve_target(account_id)
     assoc = next(
         (a for a in (target.player.playerteam_associations if target.player else [])
          if a.team_id == team.id),
@@ -402,7 +409,7 @@ def check_player_remove_violates_ladder_min(account: Account, team_id: int, acco
     if not assoc:
         abort(404, description="This account is not a player in this team.")
 
-    violating = _ladders_violating_min_after_remove(team_id)
+    violating = ladders_violating_min_after_remove(team_id)
     if violating:
         return jsonify({
             "message": "Removing this player would drop the team below the minimum roster size for one or more ladders.",
@@ -422,11 +429,11 @@ def remove_player_dropping_violated_ladders(account: Account, team_id: int, acco
     from that ladder and deletes all its pending or accepted match proposals
     in that ladder.
     """
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_players_or_403(account.resolved_role, team)
+    can_edit_players_or_403(account.resolved_role, team)
 
-    target = _resolve_target(account_id)
+    target = resolve_target(account_id)
 
     assoc = next(
         (a for a in (target.player.playerteam_associations if target.player else [])
@@ -437,7 +444,7 @@ def remove_player_dropping_violated_ladders(account: Account, team_id: int, acco
         abort(404, description="This account is not a player in this team.")
 
     # Determine which ladders will violate the minimum BEFORE deleting.
-    violating_ladders = _ladders_violating_min_after_remove(team_id)
+    violating_ladders = ladders_violating_min_after_remove(team_id)
 
     active_statuses = [MatchStatus.PENDING, MatchStatus.ACCEPTED]
     for ladder in violating_ladders:
@@ -483,9 +490,9 @@ def remove_player_dropping_violated_ladders(account: Account, team_id: int, acco
 @cache.memoize(timeout=90)
 def search_accounts_not_in_team(account: Account, team_id: int):
     """GET /api/teams/<team_id>/players/search?q=<string>."""
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_players_or_403(account.resolved_role, team)
+    can_edit_players_or_403(account.resolved_role, team)
 
     q = request.args.get("q", "").strip()
     if not q:
@@ -506,7 +513,7 @@ def search_accounts_not_in_team(account: Account, team_id: int):
 
     exclude_ids = exclude_ids.union(pending_ids)
 
-    matches = _search_accounts(q, exclude_ids)
+    matches = search_accounts(q, exclude_ids)
     return jsonify({
         "teamId": team_id,
         "q": q,
@@ -518,8 +525,8 @@ def search_accounts_not_in_team(account: Account, team_id: int):
 @login_required
 def get_my_permissions(account: Account, team_id: int):
     """GET /api/teams/<team_id>/my-permissions — returns current user's permissions for the team."""
-    team = _get_team_or_404(team_id)
-    permissions = _get_permissions(account.resolved_role, team)
+    team = get_team_or_404(team_id)
+    permissions = get_permissions(account.resolved_role, team)
     return jsonify({
         "teamId":      team_id,
         "permissions": permissions,
@@ -535,9 +542,9 @@ def search_accounts_not_manager_of_team(account: Account, team_id: int):
     Returns a list of accounts that are NOT yet managers of this team.
     Only available to those with the can_edit_managers permission for this team.
     """
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
-    _can_edit_managers_or_403(account.resolved_role, team)
+    can_edit_managers_or_403(account.resolved_role, team)
 
     q = request.args.get("q", "").strip()
     if not q:
@@ -551,7 +558,7 @@ def search_accounts_not_manager_of_team(account: Account, team_id: int):
     ).fetchall()
     exclude_ids = {row.team_manager_id for row in existing}
 
-    matches = _search_accounts(q, exclude_ids)
+    matches = search_accounts(q, exclude_ids)
     return jsonify({
         "teamId":  team_id,
         "q":       q,
@@ -562,7 +569,7 @@ def search_accounts_not_manager_of_team(account: Account, team_id: int):
 @cache.memoize(timeout=300)
 def get_team_managers(team_id: int):
     """GET /api/teams/<team_id>/managers — a list of team managers with their rights."""
-    team = _get_team_or_404(team_id)
+    team = get_team_or_404(team_id)
 
     # Load manager accounts along with their association (rights)
     rows = (
@@ -591,4 +598,3 @@ def get_team_managers(team_id: int):
         "total":    len(managers),
         "managers": managers,
     }), 200
-

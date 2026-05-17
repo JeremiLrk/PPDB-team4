@@ -1,10 +1,17 @@
+"""
+Core team routes.
+
+These endpoints cover public team lookup plus create, rename, and delete
+operations for the team management UI.
+"""
+
 from flask import Blueprint, request, jsonify, abort
 from server.extensions import cache, db
 from server.app.models.account import Account, Administrator
 from server.app.models.team import Team, TeamManagerTeam, TeamManager
 from server.app.decorators.login_required import login_required
 from server.app.utils.promote import promote_to_team_manager
-from ._helpers import _get_team_or_404, _parse_pagination
+from ._helpers import get_team_or_404, parse_pagination
 from ._permissions import require_can_delete_team, require_can_rename_team
 from ...models.club_owner import ClubOwner
 
@@ -14,8 +21,8 @@ core_bp = Blueprint("team_core", __name__)
 @core_bp.route("/<int:team_id>", methods=["GET"])
 @cache.memoize(timeout=300)
 def get_team(team_id: int):
-    """GET /api/teams/<team_id> — public."""
-    team = _get_team_or_404(team_id)
+    """Return one public team record."""
+    team = get_team_or_404(team_id)
     return jsonify({
         "team": team.to_dict()
     }), 200
@@ -24,8 +31,8 @@ def get_team(team_id: int):
 @core_bp.route("", methods=["GET"])
 @cache.cached(timeout=300, query_string=True, key_prefix="teams_list")
 def get_teams():
-    """GET /api/teams?from=0&to=20&sort=name — public."""
-    offset, limit, sort_col =  _parse_pagination(request.args)
+    """Return the public team list."""
+    offset, limit, sort_col =  parse_pagination(request.args)
 
     total = Team.query.count()
     teams = Team.query.order_by(sort_col).offset(offset).limit(limit).all()
@@ -40,13 +47,13 @@ def get_teams():
 # Not used anywhere?
 @core_bp.route("/by-club/<int:club_id>", methods=["GET"])
 def get_teams_by_club(club_id: int):
-    """GET /api/teams/by-club/<club_id>?from=0&to=20&sort=name"""
+    """Return public teams for a specific club."""
     from server.app.models.club import Club
     club = Club.query.get(club_id)
     if not club:
         abort(404, description="Club not found.")
 
-    offset, limit, sort_col = _parse_pagination(request.args)
+    offset, limit, sort_col = parse_pagination(request.args)
 
     base_query = Team.query.filter_by(club_id=club_id)
     total = base_query.count()
@@ -64,7 +71,7 @@ def get_teams_by_club(club_id: int):
 @core_bp.route("", methods=["POST"])
 @login_required
 def create_team(account: Account):
-    """POST /api/teams — make team."""
+    """Create a new team and attach the acting manager when needed."""
     data = request.get_json(silent=True)
     if data is None:
         abort(400, description="No JSON body provided.")
@@ -127,8 +134,8 @@ def create_team(account: Account):
 @login_required
 @require_can_delete_team
 def delete_team(account: Account, team_id: int):
-    """DELETE /api/teams/<team_id> - delete team."""
-    team = _get_team_or_404(team_id)
+    """Delete a team."""
+    team = get_team_or_404(team_id)
 
     db.session.delete(team)
     db.session.commit()
@@ -145,8 +152,8 @@ def delete_team(account: Account, team_id: int):
 @login_required
 @require_can_rename_team
 def rename_team(account: Account, team_id: int):
-    """PATCH /api/teams/<team_id> — renaming a team."""
-    team = _get_team_or_404(team_id)
+    """Rename a team."""
+    team = get_team_or_404(team_id)
 
     data = request.get_json(silent=True)
     if data is None:

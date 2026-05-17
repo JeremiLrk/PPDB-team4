@@ -1,3 +1,12 @@
+"""
+Weekly match proposal generation.
+
+This service turns ladder ordering and player availability into match
+suggestions for the coming week.  It pairs nearby ladder teams, checks that
+all players have overlapping availability, enforces rematch cooldowns, and
+creates pending proposals only when every guard passes.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -27,16 +36,19 @@ class TimeWindow:
 
 
 def week_start_for(value: date | datetime) -> date:
+    """Return the Monday start date for the supplied date or timestamp."""
     current_date = value.date() if isinstance(value, datetime) else value
     return current_date - timedelta(days=current_date.weekday())
 
 
 def next_week_start(reference: date | None = None) -> date:
+    """Return the Monday that starts the next calendar week."""
     today = reference or date.today()
     return week_start_for(today) + timedelta(days=7)
 
 
 def latest_allowed_proposal_week_start(reference: date | None = None) -> date:
+    """Return the latest week start the generator will accept."""
     return next_week_start(reference) + timedelta(weeks=DEFAULT_MAX_PROPOSAL_LEAD_WEEKS)
 
 
@@ -64,6 +76,7 @@ def generate_weekly_match_proposals(
     target_week_start = week_start_date or next_week_start()
     reference_date = generated_at.date() if generated_at else date.today()
     if target_week_start > latest_allowed_proposal_week_start(reference_date):
+        # Keep the generator from scheduling too far ahead of the allowed window.
         raise ValueError(
             f"week_start_date cannot be more than {DEFAULT_MAX_PROPOSAL_LEAD_WEEKS} weeks ahead."
         )
@@ -101,6 +114,7 @@ def generate_weekly_match_proposals(
                 continue
 
             if teams_share_players(team1, team2):
+                # Never generate a match if the same player would appear on both sides.
                 skipped.append(skip(ladder.id, team1.id, team2.id, "shared_players"))
                 continue
 
@@ -117,6 +131,7 @@ def generate_weekly_match_proposals(
                 team2_id=ordered_team2_id,
             ).first()
             if existing:
+                # The pair already has a proposal for that week, so we stop here.
                 skipped.append(skip(ladder.id, team1.id, team2.id, "already_exists", existing.id))
                 continue
 
@@ -125,6 +140,7 @@ def generate_weekly_match_proposals(
                 team2.id,
                 required_other_matches=DEFAULT_REMATCH_OTHER_MATCHES_REQUIRED,
             ):
+                # Cooldown keeps the generator from suggesting the same match too often.
                 skipped.append(skip(ladder.id, team1.id, team2.id, "rematch_cooldown"))
                 continue
 
@@ -138,6 +154,7 @@ def generate_weekly_match_proposals(
                 not_before=not_before,
             )
             if not common_window:
+                # If the teams never overlap in the requested week, we skip the pair.
                 skipped.append(skip(ladder.id, team1.id, team2.id, "no_common_availability"))
                 continue
 
@@ -175,10 +192,12 @@ def generate_weekly_match_proposals(
 
 
 def resolve_status(name: str):
+    """Look up a match status by name."""
     return MatchStatus.query.filter(MatchStatus.name.ilike(name)).first()
 
 
 def load_ladders(ladder_id: int | None) -> list[Ladder]:
+    """Load ladders, optionally filtered to one ladder."""
     query = Ladder.query
     if ladder_id is not None:
         query = query.filter(Ladder.id == ladder_id)
@@ -186,6 +205,7 @@ def load_ladders(ladder_id: int | None) -> list[Ladder]:
 
 
 def load_ladder_rows(ladder_id: int) -> list[LadderTeam]:
+    """Load ladder-team rows ordered by rank and rating."""
     return (
         LadderTeam.query.filter_by(ladder_id=ladder_id)
         .order_by(LadderTeam.rank.asc(), LadderTeam.rating.desc(), LadderTeam.team_id.asc())
@@ -194,6 +214,7 @@ def load_ladder_rows(ladder_id: int) -> list[LadderTeam]:
 
 
 def pair_ladder_rows(rows: list[LadderTeam], *, ladder_id: int, week_start_date: date):
+    """Yield ladder pairings for the weekly generator."""
     index = 0
     while index + 3 < len(rows):
         block = rows[index:index + 4]
@@ -228,12 +249,14 @@ def find_common_team_window(
     duration: timedelta,
     not_before: datetime | None = None,
 ) -> TimeWindow | None:
+    """Find the first overlapping window that can hold the match duration."""
     team1_windows = team_available_windows(team1, week_start_at, week_end_at)
     team2_windows = team_available_windows(team2, week_start_at, week_end_at)
 
     for window in intersect_window_lists(team1_windows, team2_windows):
         candidate_start = window.start
         if not_before and candidate_start < not_before:
+            # Scheduled generation can only start after the not-before guard.
             candidate_start = not_before
         if window.end - candidate_start >= duration:
             return TimeWindow(start=candidate_start, end=window.end)
@@ -241,6 +264,7 @@ def find_common_team_window(
 
 
 def meets_rematch_cooldown(team1_id: int, team2_id: int, *, required_other_matches: int) -> bool:
+    # A pair is allowed again only after each team has played enough other matches.
     latest_played_at = latest_pair_played_at(team1_id, team2_id)
     if latest_played_at is None:
         return True
@@ -259,6 +283,7 @@ def meets_rematch_cooldown(team1_id: int, team2_id: int, *, required_other_match
 
 
 def latest_pair_played_at(team1_id: int, team2_id: int) -> datetime | None:
+    """Return when the two teams last played each other, if ever."""
     ordered_team1_id, ordered_team2_id = sorted((team1_id, team2_id))
     latest = (
         db.session.query(MatchPlayed.played_at)
@@ -280,6 +305,7 @@ def count_other_played_matches_since(
     excluded_opponent_id: int,
     since: datetime,
 ) -> int:
+    """Count other matches for the team since a given timestamp."""
     played_matches = (
         db.session.query(MatchProposal.team1_id, MatchProposal.team2_id)
         .join(MatchPlayed, MatchPlayed.id == MatchProposal.id)
@@ -303,6 +329,7 @@ def count_other_played_matches_since(
 
 
 def auto_generation_not_before(generated_at: datetime) -> datetime:
+    """Delay scheduled generation so proposals are not too close to now."""
     threshold = generated_at + timedelta(days=DEFAULT_AUTOGEN_MIN_LEAD_DAYS)
     earliest_on_threshold_day = datetime.combine(
         threshold.date(),
@@ -314,6 +341,7 @@ def auto_generation_not_before(generated_at: datetime) -> datetime:
 
 
 def team_available_windows(team: Team, week_start_at: datetime, week_end_at: datetime) -> list[TimeWindow]:
+    """Return the time windows where every player on the team is available."""
     player_ids = [player.id for player in team.players]
     if not player_ids:
         return []
@@ -322,6 +350,7 @@ def team_available_windows(team: Team, week_start_at: datetime, week_end_at: dat
     for player_id in player_ids:
         player_windows = player_available_windows(player_id, week_start_at, week_end_at)
         if not player_windows:
+            # One unavailable player is enough to make the whole team unavailable.
             return []
         team_windows = player_windows if team_windows is None else intersect_window_lists(team_windows, player_windows)
 
@@ -329,6 +358,7 @@ def team_available_windows(team: Team, week_start_at: datetime, week_end_at: dat
 
 
 def player_available_windows(player_id: int, week_start_at: datetime, week_end_at: datetime) -> list[TimeWindow]:
+    """Return a player's availability windows inside the requested week."""
     blocks = (
         AvailabilityBlock.query.filter_by(user_id=player_id)
         .order_by(AvailabilityBlock.weekday.asc(), AvailabilityBlock.start_time.asc(), AvailabilityBlock.id.asc())
@@ -353,6 +383,7 @@ def player_available_windows(player_id: int, week_start_at: datetime, week_end_a
 
 
 def merge_windows(windows: list[TimeWindow]) -> list[TimeWindow]:
+    """Merge overlapping or touching availability windows."""
     if not windows:
         return []
 
@@ -370,6 +401,7 @@ def merge_windows(windows: list[TimeWindow]) -> list[TimeWindow]:
 
 
 def intersect_window_lists(first: list[TimeWindow], second: list[TimeWindow]) -> list[TimeWindow]:
+    """Return the overlap between two ordered window lists."""
     intersections = []
     left = 0
     right = 0
@@ -389,6 +421,7 @@ def intersect_window_lists(first: list[TimeWindow], second: list[TimeWindow]) ->
 
 
 def skip(ladder_id: int, team1_id: int, team2_id: int, reason: str, proposal_id: int | None = None) -> dict:
+    """Build the structured skip record returned by the generator."""
     skipped = {
         "ladder_id": ladder_id,
         "team1_id": team1_id,

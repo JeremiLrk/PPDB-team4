@@ -166,7 +166,7 @@ def _resolve_role(proposal: MatchProposal, account: Account) -> SubmissionRole:
     Priority: ladder_admin > team1_side > team2_side.
     Raises ScoreSubmissionError if account has no valid role.
     """
-    from server.app.routes.matcher._permissions import _can_manage_match
+    from server.app.routes.matcher._permissions import can_manage_match
 
     resolved = account.resolved_role
 
@@ -193,12 +193,12 @@ def _can_score_for_team(account: Account, team, *, resolved=None) -> bool:
     Team scores can be submitted by the usual managers/owners as well as by
     players who are actually on the team.
     """
-    from server.app.routes.matcher._permissions import _can_manage_match
+    from server.app.routes.matcher._permissions import can_manage_match
 
     if resolved is None:
         resolved = account.resolved_role
 
-    if _can_manage_match(resolved, team):
+    if can_manage_match(resolved, team):
         return True
 
     if account.team_manager is not None and account.team_manager.can_manage_match_in(team):

@@ -12,7 +12,8 @@ from server.app.models.club_owner import ClubOwner
 from server.app.models.team import TeamManager
 
 
-def _parse_pagination(args):
+def parse_pagination(args):
+    """Parse the legacy team pagination arguments."""
     try:
         offset = int(args.get("from", 0))
         to = int(args.get("to", 20))
@@ -39,7 +40,8 @@ def _parse_pagination(args):
     return offset, limit, sort_col, None
 
 
-def _can_edit_team(resolved, team):
+def can_edit_team(resolved, team):
+    """Return whether the legacy edit helper allows access."""
     if isinstance(resolved, Administrator):
         return True
     if isinstance(resolved, ClubOwner):
@@ -49,3 +51,8 @@ def _can_edit_team(resolved, team):
         # the team has no club owner context.
         return team in resolved.teams and team.club_id is None
     return False
+
+
+# Compatibility aliases for older imports and tests.
+_parse_pagination = parse_pagination
+_can_edit_team = can_edit_team

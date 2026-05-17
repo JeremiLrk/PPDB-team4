@@ -1,9 +1,15 @@
+"""
+Shared helper logic for team routes.
+
+These helpers keep the team endpoints small by handling common lookups,
+pagination, roster counting, and ladder-size checks in one place.
+"""
+
 from typing import Any
 
 from flask import abort
 from sqlalchemy import func
 
-from server.app.routes.team._permissions import _is_admin
 from server.extensions import db
 from server.app.models.account import Account, AccountRole
 from server.app.models.team import Team, TeamManagerTeam, TeamManager
@@ -13,15 +19,16 @@ from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
 
 
-def _get_team_or_404(team_id: int) -> Team:
+def get_team_or_404(team_id: int) -> Team:
+    """Load a team or abort with 404 if it does not exist."""
     team = Team.query.get(team_id)
     if not team:
         abort(404, description="Team not found.")
     return team
 
 
-def _resolve_target(account_id: int) -> Account:
-    """Finds an account by ID or returns an error."""
+def resolve_target(account_id: int) -> Account:
+    """Load an account or abort with a validation or 404 error."""
     if not account_id:
         abort(422, description="Field 'accountId' is required.")
     target = Account.query.get(account_id)
@@ -30,12 +37,8 @@ def _resolve_target(account_id: int) -> Account:
     return target
 
 
-def _parse_pagination(args) -> tuple[int, int, Any]:
-    """
-    Retrieves pagination parameters from the query string.
-    ?from=0&to=20&sort=name|id
-    Returns (offset, limit, sort_col, error).
-    """
+def parse_pagination(args) -> tuple[int, int, Any]:
+    """Parse the common from/to/sort pagination arguments."""
     try:
         offset = int(args.get("from", 0))
         to     = int(args.get("to",   20))
@@ -58,11 +61,8 @@ def _parse_pagination(args) -> tuple[int, int, Any]:
     return offset, limit, sort_col
 
 
-def _handle_team_after_last_manager_removed(team: Team) -> None:
-    """
-    Called after the last manager is removed from a team WITHOUT a club.
-    Promotes a random player to manager, or removes the team.
-    """
+def handle_team_after_last_manager_removed(team: Team) -> None:
+    """Promote a player or delete the team when the last manager is removed."""
     if team.club_id is not None:
         return
 
@@ -76,6 +76,7 @@ def _handle_team_after_last_manager_removed(team: Team) -> None:
         return
 
     if team.players:
+        # Reuse the first available player so the team does not become unmanaged.
         random_player = team.players[0]
         account = random_player.account
 
@@ -98,16 +99,8 @@ def _handle_team_after_last_manager_removed(team: Team) -> None:
         db.session.delete(team)
 
 
-def _search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
-    """
-    Search for accounts containing the string “q”, excluding players who have already been added.
-
-    Match priority:
-      1. Exact match by id       (q — integer)
-      2. Exact match by email    (case-insensitive)
-      3. Trigram similarity >= 0.3 by first_name or last_name
-         (requires pg_trgm; fallback — ILIKE)
-    """
+def search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
+    """Search for accounts while excluding ids already attached to the team."""
 
     q = q.strip()
     if not q:
@@ -123,6 +116,7 @@ def _search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
             .first()
         )
         if account:
+            # Exact id matches are the strongest signal, so return immediately.
             return [account]
     except ValueError:
         pass
@@ -133,6 +127,7 @@ def _search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
         .first()
     )
     if account:
+        # Exact email matches are the next best lookup after ids.
         return [account]
 
     SIMILARITY_THRESHOLD = 0.3
@@ -150,6 +145,7 @@ def _search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
         )
     except Exception:
         db.session.rollback()
+        # If trigram matching is unavailable, fall back to simple pattern search.
         pattern = f"%{q}%"
         return (
             db.session.query(Account)
@@ -170,8 +166,8 @@ def _search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
 # count confirmed (accepted) players in a team
 # ---------------------------------------------------------------------------
 
-def _count_confirmed_players(team_id: int) -> int:
-    """Returns the number of players who are already members of the team."""
+def count_confirmed_players(team_id: int) -> int:
+    """Count players who are already confirmed members of the team."""
     return (
         db.session.query(func.count())
         .select_from(PlayerTeam)
@@ -184,13 +180,9 @@ def _count_confirmed_players(team_id: int) -> int:
 # count effective players (confirmed + pending join requests)
 # ---------------------------------------------------------------------------
 
-def _count_effective_players(team_id: int) -> int:
-    """Returns confirmed players + players with a pending join request.
-
-    This reflects the realistic future roster size once all pending
-    requests are accepted.
-    """
-    confirmed = _count_confirmed_players(team_id)
+def count_effective_players(team_id: int) -> int:
+    """Count confirmed players plus pending join requests for roster checks."""
+    confirmed = count_confirmed_players(team_id)
 
     pending = (
         db.session.query(func.count())
@@ -209,14 +201,9 @@ def _count_effective_players(team_id: int) -> int:
 # ladders that would exceed max players after adding one more
 # ---------------------------------------------------------------------------
 
-def _ladders_exceeding_max_after_add(team_id: int) -> list[Ladder]:
-    """Returns every Ladder the team participates in where adding one more
-    player would exceed the sport type's maximum_number_of_players_per_team.
-
-    Uses _count_effective_players(team_id) + 1 as the projected roster size,
-    so pending join requests are already accounted for.
-    """
-    projected = _count_effective_players(team_id) + 1
+def ladders_exceeding_max_after_add(team_id: int) -> list[Ladder]:
+    """Return ladders that would exceed roster maximum after one more player."""
+    projected = count_effective_players(team_id) + 1
 
     team = db.session.get(Team, team_id)
     if team is None or team.sport_type is None:
@@ -244,14 +231,9 @@ def _ladders_exceeding_max_after_add(team_id: int) -> list[Ladder]:
 # Helper : ladders that would violate min players after removing one
 # ---------------------------------------------------------------------------
 
-def _ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
-    """Returns every Ladder the team participates in where removing one player
-    would drop below the sport type's minimum_number_of_players_on_a_team.
-
-    Uses _count_effective_players(team_id) - 1 as the projected roster size,
-    so pending join requests are already accounted for.
-    """
-    projected = _count_effective_players(team_id) - 1
+def ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
+    """Return ladders that would violate roster minimum after one player leaves."""
+    projected = count_effective_players(team_id) - 1
 
     team = db.session.get(Team, team_id)
     if team is None or team.sport_type is None:
@@ -274,3 +256,15 @@ def _ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
     )
 
     return ladders
+
+
+# Compatibility aliases for older imports and tests.
+_get_team_or_404 = get_team_or_404
+_resolve_target = resolve_target
+_parse_pagination = parse_pagination
+_handle_team_after_last_manager_removed = handle_team_after_last_manager_removed
+_search_accounts = search_accounts
+_count_confirmed_players = count_confirmed_players
+_count_effective_players = count_effective_players
+_ladders_exceeding_max_after_add = ladders_exceeding_max_after_add
+_ladders_violating_min_after_remove = ladders_violating_min_after_remove

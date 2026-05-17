@@ -43,6 +43,7 @@ function statusTone(status) {
 function normalizeContact(contact) {
     if (!contact) return null;
 
+    // Contact objects come from a few backend shapes, so normalize them once here.
     const name = contact.name || [contact.firstName, contact.lastName].filter(Boolean).join(" ").trim();
     const email = contact.email || contact.value || "";
     const phone = contact.phoneNumber || contact.phone || "";
@@ -165,6 +166,7 @@ export default function MatchProposalCard({
     const normalizedStatus = normalizeStatus(proposal.status);
     const scoreStatus = String(proposal.scoreStatus || "not_submitted").toLowerCase();
     const scoreSubmissions = Array.isArray(proposal.scoreSubmissions) ? proposal.scoreSubmissions : [];
+    // Score actions are only available when the match is accepted and unresolved.
     const currentUserHasAccepted = Number(proposal.acceptedByUserId) === Number(currentUserId);
     const canRespond = normalizedStatus === "pending" && canUpdate && !currentUserHasAccepted;
     const canCancel = normalizedStatus === "accepted" && canUpdate;
@@ -233,6 +235,7 @@ export default function MatchProposalCard({
                     </div>
 
                     <span className={`${styles.statusPill} ${statusTone(displayedStatus)}`}>
+                        {/* Show the score state first when the result has already been finalized. */}
                         {displayedStatus === "waiting_for_other"
                             ? (texts.waiting_for_other_player || "Waiting for other player")
                             : displayedStatus === "finished"
@@ -316,6 +319,7 @@ export default function MatchProposalCard({
 
                 {isReportingScore ? (
                     <form className={styles.inlineScoreForm} onSubmit={(event) => onScoreSubmit(event, proposal.id)}>
+                        {/* The decisive score form only appears for disputed or unresolved matches. */}
                         <h4 className={styles.inlineScoreTitle}>
                             {texts.adjudicate_title || "Submit decisive score"}
                         </h4>
@@ -359,6 +363,7 @@ export default function MatchProposalCard({
 
                 {hasScoreSubmission ? (
                     <div className={`${styles.scoreNotice} ${scoreStatus === "resolved" ? styles.scoreNoticeFinalized : styles.scoreNoticePending}`}>
+                        {/* This notice explains whether the result is waiting, disputed, or finalized. */}
                         {scoreNoticeText}
                     </div>
                 ) : null}

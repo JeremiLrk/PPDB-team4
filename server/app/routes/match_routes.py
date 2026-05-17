@@ -1,3 +1,10 @@
+"""
+Legacy match proposal routes.
+
+This module keeps the older proposal workflow available alongside the newer
+matcher blueprints, including manual creation, listing, and weekly generation.
+"""
+
 from datetime import date, datetime, timedelta, timezone
 
 from flask import Blueprint, jsonify, request
@@ -32,6 +39,7 @@ ARCHIVE_AFTER_DAYS = 30
 
 
 def proposal_payload(proposal: MatchProposal):
+    """Serialize a proposal in the shape expected by the frontend."""
     # This serializer is shared by the list, create, and status endpoints so
     # the frontend sees one stable proposal shape regardless of where it came from.
     accepted_by_user_id = proposal.accepted.response_by_user_id if proposal.accepted else None
@@ -68,6 +76,7 @@ def proposal_payload(proposal: MatchProposal):
 
 
 def is_archived_proposal(proposal: MatchProposal, *, reference_date: date | None = None) -> bool:
+    """Return whether a proposal should live in the archived list."""
     # Archiving is week-based, not status-based: older proposals move out of the
     # default list even if they were never explicitly accepted or rejected.
     if proposal.week_start_date is None:
@@ -78,6 +87,7 @@ def is_archived_proposal(proposal: MatchProposal, *, reference_date: date | None
 
 
 def parse_timestamp(value):
+    """Parse an ISO timestamp string into a naive UTC datetime."""
     if not isinstance(value, str):
         return None
     try:
@@ -93,6 +103,7 @@ def parse_timestamp(value):
 
 
 def parse_date(value):
+    """Parse a YYYY-MM-DD string into a date."""
     if not isinstance(value, str):
         return None
     try:
@@ -102,16 +113,19 @@ def parse_date(value):
 
 
 def week_start_for(timestamp):
+    """Return the Monday date for the supplied timestamp."""
     return (timestamp - timedelta(days=timestamp.weekday())).date()
 
 
 def resolve_status(name):
+    """Look up a match status by name."""
     if not name:
         return None
     return MatchStatus.query.filter(func.lower(MatchStatus.name) == name.lower()).first()
 
 
 def resolve_managed_team_ids(account):
+    """Return the set of team ids managed by the current account."""
     resolved = account.resolved_role
     if isinstance(resolved, Administrator):
         return None
@@ -135,6 +149,7 @@ def resolve_managed_team_ids(account):
 
 
 def resolve_visible_team_ids(account):
+    """Return the set of team ids visible to the current account."""
     managed_ids = resolve_managed_team_ids(account)
     if managed_ids is None:
         return None
@@ -148,6 +163,7 @@ def resolve_visible_team_ids(account):
 
 
 def can_manage_team(account, team):
+    """Return whether the current account may manage the given team."""
     resolved = account.resolved_role
     if isinstance(resolved, Administrator):
         return True
@@ -164,10 +180,12 @@ def can_manage_team(account, team):
 
 
 def is_player_on_team(account, team):
+    """Return whether the current account is a player on the team."""
     return account.player is not None and team in account.player.teams
 
 
 def can_respond_to_proposal(account, team1, team2):
+    """Return whether the current account may answer the proposal."""
     return (
         (team1 and (can_manage_team(account, team1) or is_player_on_team(account, team1)))
         or (team2 and (can_manage_team(account, team2) or is_player_on_team(account, team2)))
@@ -175,6 +193,7 @@ def can_respond_to_proposal(account, team1, team2):
 
 
 def acceptance_side_for(account, team1, team2):
+    """Return which side the account belongs to for acceptance handling."""
     team1_member = team1 and (can_manage_team(account, team1) or is_player_on_team(account, team1))
     team2_member = team2 and (can_manage_team(account, team2) or is_player_on_team(account, team2))
     if team1_member and not team2_member:
@@ -187,6 +206,7 @@ def acceptance_side_for(account, team1, team2):
 @match_proposals_bp.post("/proposals")
 @login_required
 def create_match_proposal(account):
+    """Create a manual match proposal."""
     data = request.get_json() or {}
 
     # The create flow validates identity, permissions, scheduling, and sport
@@ -214,6 +234,7 @@ def create_match_proposal(account):
     if not can_manage_either_team:
         return jsonify({"message": "Forbidden: you must manage at least one of the teams."}), 403
     if teams_share_players(team1, team2):
+        # Reject invalid fixtures before we create a row that would need cleanup.
         return jsonify({"message": "team1_id and team2_id cannot share players."}), 422
 
     proposed_start_at = parse_timestamp(data.get("proposed_start_at"))
@@ -253,8 +274,8 @@ def create_match_proposal(account):
 
     if venue_type_id is not None:
         venue_exists = db.session.get(VenueType, venue_type_id)
-        if not venue_exists:
-            return jsonify({"message": "venue_type_id not found."}), 404
+    if not venue_exists:
+        return jsonify({"message": "venue_type_id not found."}), 404
 
     # Canonical pair ordering keeps the uniqueness constraint stable no matter
     # which side the caller picked first in the UI.
@@ -287,6 +308,7 @@ def create_match_proposal(account):
 @match_proposals_bp.get("/proposals")
 @login_required
 def list_match_proposals(account):
+    """List visible proposals with archive and team filters applied."""
     # The list endpoint applies role-based visibility first, then archive and
     # team/week filters so the frontend can drive all views with one hook.
     query = MatchProposal.query
@@ -339,6 +361,7 @@ def list_match_proposals(account):
 @match_proposals_bp.post("/proposals/generate-weekly")
 @login_required
 def generate_weekly_proposals(account):
+    """Run the weekly proposal generator from the API."""
     data = request.get_json() or {}
 
     # This endpoint is the manual entry point for the weekly generator used by
@@ -383,6 +406,7 @@ def generate_weekly_proposals(account):
 @match_proposals_bp.patch("/proposals/<int:proposal_id>/status")
 @login_required
 def update_match_proposal_status(account, proposal_id):
+    """Update a proposal status and related score data."""
     # Status updates are locked to the participants, the proposer, or admins.
     # The same endpoint also records side data like accepted/rejected reasons.
     proposal = MatchProposal.query.filter_by(id=proposal_id).with_for_update().first()
@@ -424,6 +448,7 @@ def update_match_proposal_status(account, proposal_id):
         if current_status_name == "pending":
             return jsonify({"proposal": proposal_payload(proposal)}), 200
 
+        # Pending is the neutral state, so clear the mutually exclusive rows.
         clear_mutually_exclusive_rows(keep_played=True)
         proposal.status_id = next_status.id
         proposal.updated_at = datetime.utcnow()
@@ -431,6 +456,7 @@ def update_match_proposal_status(account, proposal_id):
         return jsonify({"proposal": proposal_payload(proposal)}), 200
 
     if normalized_status == "accepted":
+        # Accepted proposals keep a single acceptance row and drop the others.
         proposal.rejected = None
         proposal.cancelled = None
         accepted = db.session.get(MatchAccepted, proposal.id)
@@ -458,6 +484,7 @@ def update_match_proposal_status(account, proposal_id):
             accepted.response_by_user_id = account.id
         accepted.response_text = data.get("response_text") or accepted.response_text
     elif normalized_status == "rejected":
+        # Rejections are stored as their own row so the frontend can show the reason.
         proposal.accepted = None
         proposal.cancelled = None
         rejected = db.session.get(MatchRejected, proposal.id)
@@ -467,6 +494,7 @@ def update_match_proposal_status(account, proposal_id):
         rejected.response_by_user_id = account.id
         rejected.response_text = data.get("response_text")
     elif normalized_status == "cancelled":
+        # Cancellations are separate from rejections because the proposing side can cancel later.
         proposal.accepted = None
         proposal.rejected = None
         cancelled = db.session.get(MatchCancelled, proposal.id)
@@ -482,6 +510,7 @@ def update_match_proposal_status(account, proposal_id):
             if not existing_played:
                 return jsonify({"message": "Proposal is already in played status."}), 409
 
+        # "Played" is the only state that requires the final score payload.
         score_team1 = data.get("score_team1")
         score_team2 = data.get("score_team2")
         if score_team1 is None or score_team2 is None:
