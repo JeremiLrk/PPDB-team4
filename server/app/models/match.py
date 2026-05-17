@@ -41,6 +41,7 @@ def _contact_display_name(account: Account) -> str:
 
 
 def _serialize_contact_info(account: Account) -> dict:
+    """Converts the model instance to a dictionary representation for passing information in match proposals."""
     return {
         "id": account.id,
         "name": _contact_display_name(account),
@@ -50,6 +51,18 @@ def _serialize_contact_info(account: Account) -> dict:
 
 
 def _team_contact_accounts(team) -> list[Account]:
+    """
+    Checks for accounts associated with the team through both players and managers, returning a deduplicated list of Account objects.
+
+    Preconditions:
+        - team is a valid Team object
+
+    Args:
+        team (Team): The team object to check for associated accounts.
+
+    Returns:
+        list[Account]: A list of unique Account objects associated with the team.
+    """
     if not team:
         return []
 
@@ -87,10 +100,23 @@ def _team_contact_accounts(team) -> list[Account]:
 
 
 def _serialize_team_contacts(team) -> list[dict]:
+    """Converts the model instance to a dictionary representation."""
     return [_serialize_contact_info(account) for account in _team_contact_accounts(team)]
 
 
 def _team_player_accounts(team) -> list[Account]:
+    """
+    Checks for accounts associated with the team through players, returning a deduplicated list of Account objects.
+
+    Preconditions:
+        - team is a valid Team object
+
+    Args:
+        team (Team): The team object to check for associated accounts.
+
+    Returns:
+        list[Account]: A list of unique Account objects associated with the team.
+    """
     if not team:
         return []
 
@@ -122,10 +148,12 @@ def _team_player_accounts(team) -> list[Account]:
 
 
 def team_player_account_ids(team) -> set[int]:
+    """Returns the set of account IDs associated with the team through players."""
     return {account.id for account in _team_player_accounts(team)}
 
 
 def teams_share_players(team1, team2) -> bool:
+    """Returns True if team1 and team2 share at least one player account."""
     return bool(team_player_account_ids(team1) & team_player_account_ids(team2))
 
 
@@ -159,6 +187,7 @@ class MatchStatus(db.Model):
     PLAYED    = 5
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {"id": self.id, "name": self.name}
 
 
@@ -195,6 +224,7 @@ class MatchScoreSubmission(db.Model):
         return self.score_team1 == other.score_team1 and self.score_team2 == other.score_team2
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "id":              self.id,
             "matchId":         self.match_id,
@@ -491,6 +521,7 @@ class MatchAccepted(db.Model):
     response_by_user = db.relationship("Account", foreign_keys=[response_by_user_id])
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "responseByUserId": self.response_by_user_id,
             "responseText":     self.response_text,
@@ -520,6 +551,7 @@ class MatchRejected(db.Model):
     response_by_user = db.relationship("Account", foreign_keys=[response_by_user_id])
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "responseByUserId": self.response_by_user_id,
             "responseText":     self.response_text,
@@ -546,6 +578,7 @@ class MatchPlayed(db.Model):
     proposal = db.relationship("MatchProposal", back_populates="played")
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "scoreTeam1": self.score_team1,
             "scoreTeam2": self.score_team2,
@@ -572,6 +605,7 @@ class MatchCancelled(db.Model):
     proposal = db.relationship("MatchProposal", back_populates="cancelled")
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "reason":      self.reason,
             "cancelledAt": self.cancelled_at.isoformat() if self.cancelled_at else None,

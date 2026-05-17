@@ -43,6 +43,7 @@ class MatchRuleSet(db.Model):
     club    = db.relationship("Club",    foreign_keys=[club_id])
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "id":                   self.id,
             "name":                 self.name,

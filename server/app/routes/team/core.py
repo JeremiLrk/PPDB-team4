@@ -71,7 +71,15 @@ def get_teams_by_club(club_id: int):
 @core_bp.route("", methods=["POST"])
 @login_required
 def create_team(account: Account):
-    """Create a new team and attach the acting manager when needed."""
+    """
+    Create a new team and attach the acting manager when needed.
+
+    Args:
+        account (Account): The account creating the team.
+
+    Returns:
+        tuple: A tuple containing the response and status code.
+    """
     data = request.get_json(silent=True)
     if data is None:
         abort(400, description="No JSON body provided.")
@@ -134,7 +142,22 @@ def create_team(account: Account):
 @login_required
 @require_can_delete_team
 def delete_team(account: Account, team_id: int):
-    """Delete a team."""
+    """
+    Delete a team if the user has permission.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account attempting to delete the team.
+        team_id (int): The unique identifier of the team to delete.
+
+    Returns:
+        a JSON response containing a success message, along with a 200 status code.
+
+    Postconditions:
+        - The specified team is deleted from the database if the user has permission.
+    """
     team = get_team_or_404(team_id)
 
     db.session.delete(team)
@@ -152,7 +175,22 @@ def delete_team(account: Account, team_id: int):
 @login_required
 @require_can_rename_team
 def rename_team(account: Account, team_id: int):
-    """Rename a team."""
+    """
+    Rename a team if the user has permission.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account attempting to rename the team.
+        team_id (int): The unique identifier of the team to rename.
+
+    Returns:
+        a JSON response containing a success message, along with a 200 status code.
+
+    Postconditions:
+        - The specified team is renamed in the database if the user has permission.
+    """
     team = get_team_or_404(team_id)
 
     data = request.get_json(silent=True)

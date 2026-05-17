@@ -88,6 +88,7 @@ class Team(db.Model):
         return [a.player for a in self.player_associations]
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "id":          self.id,
             "name":        self.name,
@@ -141,6 +142,7 @@ class TeamManager(db.Model):
             None,
         )
 
+    """Convenience methods for checking permissions on a per-team basis."""
     def can_rename_team(self, team: Team) -> bool:
         a = self.assoc_for(team)
         return a is not None and a.can_rename
@@ -162,6 +164,7 @@ class TeamManager(db.Model):
         return a is not None and a.can_edit_managers
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "id":    self.id,
             "teams": [a.to_dict() for a in self.team_associations],

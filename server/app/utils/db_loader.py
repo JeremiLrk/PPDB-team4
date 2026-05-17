@@ -6,6 +6,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _resolve_sql_path(path: str) -> Path:
+    """Resolve a SQL file path, allowing for both absolute and project-relative paths."""
     candidate = Path(path)
     if candidate.is_absolute():
         return candidate
@@ -13,6 +14,7 @@ def _resolve_sql_path(path: str) -> Path:
 
 
 def load_sql(sql_file_paths: list[str]):
+    """ Execute SQL scripts from the provided file paths."""
     try:
         with psycopg.connect(
             dbname=config_data['db_name'],

@@ -37,6 +37,7 @@ class TeamJoinRequest(db.Model):
     account = db.relationship("Account")
 
     def serialize(self):
+        """Converts the model instance to a dictionary representation."""
         return {
             "id": self.id,
             "team_id": self.team_id,

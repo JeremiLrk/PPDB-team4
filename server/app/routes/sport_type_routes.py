@@ -7,6 +7,7 @@ sport_type_bp = Blueprint("sport_type", __name__, url_prefix="/api/sport-types")
 @sport_type_bp.route("", methods=["GET"])
 @cache.cached(timeout=600, key_prefix="sport_types")
 def get_sport_types():
+  """Endpoint to retrieve all available sport types."""
   sport_types = SportType.query.order_by(SportType.name).all()
   return jsonify({
     "sportTypes": [

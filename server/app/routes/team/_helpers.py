@@ -20,7 +20,15 @@ from server.app.models.ladder_team import LadderTeam
 
 
 def get_team_or_404(team_id: int) -> Team:
-    """Load a team or abort with 404 if it does not exist."""
+    """
+    Load a team by ID or abort with a 404 error if not found.
+
+    Args:
+        team_id (int): The unique identifier of the team to retrieve.
+
+    Returns:
+        Team: The retrieved team object.
+    """
     team = Team.query.get(team_id)
     if not team:
         abort(404, description="Team not found.")
@@ -28,7 +36,15 @@ def get_team_or_404(team_id: int) -> Team:
 
 
 def resolve_target(account_id: int) -> Account:
-    """Load an account or abort with a validation or 404 error."""
+    """
+    Load an account by ID or abort with a 404 error if not found.
+
+    Args:
+        account_id (int): The unique identifier of the account to retrieve.
+
+    Returns:
+        Account: The retrieved account object.
+    """
     if not account_id:
         abort(422, description="Field 'accountId' is required.")
     target = Account.query.get(account_id)
@@ -62,7 +78,12 @@ def parse_pagination(args) -> tuple[int, int, Any]:
 
 
 def handle_team_after_last_manager_removed(team: Team) -> None:
-    """Promote a player or delete the team when the last manager is removed."""
+    """
+    If a team has no more managers, either assign a new one from the players or delete the team.
+
+    Args:
+        team_id (int): The unique identifier of the team to retrieve.
+    """
     if team.club_id is not None:
         return
 
@@ -100,7 +121,16 @@ def handle_team_after_last_manager_removed(team: Team) -> None:
 
 
 def search_accounts(q: str, exclude_player_ids: set[int]) -> list[Account]:
-    """Search for accounts while excluding ids already attached to the team."""
+    """
+    Search for accounts while excluding ids already attached to the team.
+
+    Args:
+        q (str): The search query.
+        exclude_player_ids (set[int]): A set of player IDs to exclude from the search.
+
+    Returns:
+        list[Account]: A list of matching accounts.
+    """
 
     q = q.strip()
     if not q:

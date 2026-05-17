@@ -37,7 +37,23 @@ membership_bp = Blueprint("team_membership", __name__)
 @membership_bp.route("/<int:team_id>/managers", methods=["POST"])
 @login_required
 def add_manager_to_team(account: Account, team_id: int) -> tuple[Response, int]:
-    """POST /api/teams/<team_id>/managers — Add a manager."""
+    """
+    Add a manager to a team.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - `team_id` must exist and be active in the database.
+
+    Args:
+        account (Account): The account adding the manager.
+        team_id (int): The ID of the team to which the manager will be added.
+
+    Returns:
+        a JSON response containing a success message and the added manager's details, along with a 201 status code.
+
+    Postconditions:
+        - The specified manager is added to the team in the database if the user has permission.
+    """
     team = get_team_or_404(team_id)
 
     can_edit_managers_or_403(account.resolved_role, team)
@@ -82,7 +98,24 @@ def add_manager_to_team(account: Account, team_id: int) -> tuple[Response, int]:
 @membership_bp.route("/<int:team_id>/managers/<int:account_id>", methods=["DELETE"])
 @login_required
 def remove_manager_from_team(account: Account, team_id: int, account_id: int):
-    """DELETE /api/teams/<team_id>/managers/<account_id>."""
+    """
+    Remove a manager from a team.
+    If this removes the last manager, promotes a player to manager or deletes the team.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - `team_id` must exist and be active in the database.
+
+    Args:
+        account (Account): The account removing the manager.
+        team_id (int): The ID of the team from which the manager will be removed.
+
+    Returns:
+        a JSON response containing a success message, along with a 200 status code.
+
+    Postconditions:
+        - The specified manager is removed from the team in the database if the user has permission. 
+    """
 
     resolved = account.resolved_role
 
@@ -116,7 +149,18 @@ def remove_manager_from_team(account: Account, team_id: int, account_id: int):
 @membership_bp.route("/<int:team_id>/players", methods=["GET"])
 @cache.memoize(timeout=300)
 def get_team_players(team_id: int):
-    """GET /api/teams/<team_id>/players — list of team players."""
+    """
+    List players on a team.
+
+    Preconditions:
+        - `team_id` must exist and be active in the database.
+
+    Args:
+        team_id (int): The ID of the team to which the manager will be added.
+
+    Returns:
+        a JSON response containing a list of players on the team, along with the total count, and a 200 status code.
+    """
 
     # Call to check if this team exists
     team = get_team_or_404(team_id)
@@ -140,7 +184,18 @@ def get_team_players(team_id: int):
 
 @membership_bp.route("/<int:team_id>/members", methods=["GET"])
 def get_team_members(team_id: int):
-    """GET /api/teams/<team_id>/members — public list of team members (name only, no personal info)."""
+    """
+    List members on a team.
+
+    Preconditions:
+        - `team_id` must exist and be active in the database.
+
+    Args:
+        team_id (int): The ID of the team to which the manager will be added.
+
+    Returns:
+        a JSON response containing a list of members on the team, along with the total count, and a 200 status code.
+    """
     get_team_or_404(team_id)
 
     players = (
@@ -165,7 +220,23 @@ def get_team_members(team_id: int):
 @membership_bp.route("/<int:team_id>/players", methods=["POST"])
 @login_required
 def add_player_to_team(account: Account, team_id: int):
-    """POST /api/teams/<team_id>/players — send player join request."""
+    """
+    Add a player to a team.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - `team_id` must exist and be active in the database.
+
+    Args:
+        account (Account): The account adding the player.
+        team_id (int): The ID of the team to which the player will be added.
+
+    Returns:
+        a JSON response containing a success message and the created join request, along with a 201 status code.
+
+    Postconditions:
+        - The specified player is added to the team in the database if the user has permission.
+    """
     team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
@@ -231,7 +302,24 @@ def add_player_to_team(account: Account, team_id: int):
 @membership_bp.route("/<int:team_id>/players/<int:account_id>", methods=["DELETE"])
 @login_required
 def remove_player_from_team(account: Account, team_id: int, account_id: int):
-    """DELETE /api/teams/<team_id>/players/<account_id>."""
+    """
+    Remove a player from a team.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - `team_id` must exist and be active in the database.
+
+    Args:
+        account (Account): The account removing the player.
+        team_id (int): The ID of the team from which the player will be removed.
+        account_id (int): The ID of the account to be removed as a player.
+
+    Returns:
+        a JSON response containing a success message, along with a 200 status code.
+
+    Postconditions:
+        - The specified player is removed from the team in the database if the user has permission. 
+    """
     team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
@@ -489,7 +577,21 @@ def remove_player_dropping_violated_ladders(account: Account, team_id: int, acco
 @login_required
 @cache.memoize(timeout=90)
 def search_accounts_not_in_team(account: Account, team_id: int):
-    """GET /api/teams/<team_id>/players/search?q=<string>."""
+    """
+    gets all accounts matching the query that are not already players in the team or have pending join requests to the team.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - `team_id` must exist and be active in the database.
+
+    Args:
+        account (Account): The account asking for the search results.
+        team_id (int): The ID of the team from which the search will exclude existing players and pending join requests.
+
+    Returns:
+        a JSON response containing a list of accounts matching the search query that are not already players in the team 
+        or have pending join requests to the team, along with the total count, and a 200 status code.
+    """
     team = get_team_or_404(team_id)
 
     can_edit_players_or_403(account.resolved_role, team)
@@ -568,7 +670,19 @@ def search_accounts_not_manager_of_team(account: Account, team_id: int):
 @membership_bp.route("/<int:team_id>/managers", methods=["GET"])
 @cache.memoize(timeout=300)
 def get_team_managers(team_id: int):
-    """GET /api/teams/<team_id>/managers — a list of team managers with their rights."""
+    """
+    Gets all managers of a team along with their permissions.
+
+    Preconditions:
+        - `team_id` must exist and be active in the database.
+
+    Args:
+        team_id (int): the ID of the team for which to retrieve the managers.
+
+    Returns:
+        a JSON response containing a list of managers of the team along with their permissions,
+        and a 200 status code.
+    """
     team = get_team_or_404(team_id)
 
     # Load manager accounts along with their association (rights)

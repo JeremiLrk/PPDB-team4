@@ -25,6 +25,16 @@ my_teams_bp = Blueprint("team_my", __name__)
 def get_my_teams(account: Account):
     """
     Return the teams managed by the current account.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account for which to retrieve the managed teams.
+
+    Returns:
+        a JSON response containing a paginated list of teams managed by the current account, 
+        along with the total count and pagination metadata.
     """
     offset, limit, sort_col = parse_pagination(request.args)
 
@@ -68,6 +78,16 @@ def get_my_teams(account: Account):
 def get_my_all_teams(account: Account):
     """
     Return every team where the account is involved.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account for which to retrieve the involved teams.
+
+    Returns:
+        a JSON response containing a paginated list of teams where the account is involved, 
+        along with the total count and pagination metadata.
     """
     offset, limit, sort_col = parse_pagination(request.args)
 
@@ -122,7 +142,27 @@ def get_my_all_teams(account: Account):
 @my_teams_bp.route("/<int:team_id>/players/join-requests/<int:request_id>/accept", methods=["POST"])
 @login_required
 def accept_player_join_request(account: Account, team_id: int, request_id: int):
-    """Accept a player join request."""
+    """
+    Accept a player join request.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - `team_id` must exist and be active in the database.
+        - `request_id` must exist, be active in the database, and be associated with the specified team.
+
+    Args:
+        account (Account): The account accepting the join request.
+        team_id (int): The ID of the team for which to accept the join request.
+        request_id (int): The ID of the join request to accept.
+
+    Returns:
+        a JSON response containing a success message and the accepted join request, along with a 200 status code.
+
+    Postconditions:
+        - The join request status is updated to "accepted" in the database.
+        - The user associated with the join request is promoted to a player role if not already a player.
+        - An association between the player and the team is created in the database.
+    """
     team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
@@ -158,7 +198,27 @@ def accept_player_join_request(account: Account, team_id: int, request_id: int):
 @my_teams_bp.route("/<int:team_id>/players/join-requests/<int:request_id>/reject", methods=["POST"])
 @login_required
 def reject_player_join_request(account: Account, team_id: int, request_id: int):
-    """Reject a player join request."""
+    """
+    Reject a player join request.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+        - `team_id` must exist and be active in the database.
+        - `request_id` must exist, be active in the database, and be associated with the specified team.
+
+    Args:
+        account (Account): The account rejecting the join request.
+        team_id (int): The ID of the team for which to reject the join request.
+        request_id (int): The ID of the join request to reject.
+
+    Returns:
+        a JSON response containing a success message and the rejected join request, along with a 200 status code.
+
+    Postconditions:
+        - The join request status is updated to "rejected" in the database.
+        - The user associated with the join request is not promoted to a player role.
+        - No association between the player and the team is created in the database.
+    """
     team = get_team_or_404(team_id)
     resolved = account.resolved_role
 
@@ -186,8 +246,19 @@ def reject_player_join_request(account: Account, team_id: int, request_id: int):
 @my_teams_bp.route("/my-join-requests", methods=["GET"])
 @login_required
 def get_my_join_requests(account: Account):
-    """Return the pending join requests sent by the current user."""
+    """
+    Return the pending join requests made by the current account.
 
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account for which to retrieve the pending join requests.
+
+    Returns:
+        a JSON response containing a list of pending join requests made by the current account, 
+        along with the total count.
+    """
     requests = (
         db.session.query(TeamJoinRequest)
         .filter(

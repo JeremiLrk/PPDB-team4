@@ -54,6 +54,7 @@ class Club(db.Model):
         self.sport_type_id = match.id if match else None
 
     def serialize(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "id":           self.id,
             "name":         self.name,

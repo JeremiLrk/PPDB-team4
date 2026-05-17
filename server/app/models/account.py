@@ -37,6 +37,7 @@ class Account(db.Model):
         return self
 
     def to_dict(self, include=None):
+        """Converts the model instance to a dictionary representation."""
         include = include or []
         resolved = self.resolved_role
 
@@ -99,6 +100,7 @@ class Administrator(db.Model):
     account = db.relationship("Account", back_populates="administrator")
 
     def to_dict(self):
+        """Converts the model instance to a dictionary representation."""
         return {
             "id":          self.id,
             "accessLevel": self.access_level,

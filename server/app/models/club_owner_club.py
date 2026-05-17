@@ -34,6 +34,7 @@ class ClubOwnerClub(db.Model):
     club       = db.relationship("Club",      back_populates="owner_associations")
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "clubId":               self.club_id,
             "canRename":            self.can_rename,

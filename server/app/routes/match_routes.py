@@ -206,7 +206,21 @@ def acceptance_side_for(account, team1, team2):
 @match_proposals_bp.post("/proposals")
 @login_required
 def create_match_proposal(account):
-    """Create a manual match proposal."""
+    """
+    Create a new match proposal between two teams.
+
+    Preconditions:
+        - The request must include `team1_id`, `team2_id`, `proposed_start_at`, and `proposed_end_at` in the JSON body.
+
+    Args:
+        account: The authenticated account making the proposal.
+
+    Returns:
+        dict: A dictionary containing the created match proposal details.
+
+    Postconditions:
+        - A new match proposal is created in the database.
+    """
     data = request.get_json() or {}
 
     # The create flow validates identity, permissions, scheduling, and sport
@@ -308,7 +322,18 @@ def create_match_proposal(account):
 @match_proposals_bp.get("/proposals")
 @login_required
 def list_match_proposals(account):
-    """List visible proposals with archive and team filters applied."""
+    """
+    Lists visible match proposals with archive and team filters applied.
+
+    Preconditions:
+        - The user must be authenticated.
+
+    Args:
+        account: The authenticated account for whom to list proposals.
+
+    Returns:
+        dict: A dictionary containing the list of visible match proposals and their total count.
+    """
     # The list endpoint applies role-based visibility first, then archive and
     # team/week filters so the frontend can drive all views with one hook.
     query = MatchProposal.query
@@ -406,7 +431,25 @@ def generate_weekly_proposals(account):
 @match_proposals_bp.patch("/proposals/<int:proposal_id>/status")
 @login_required
 def update_match_proposal_status(account, proposal_id):
-    """Update a proposal status and related score data."""
+    """
+    Update the status of a match proposal, including acceptances, rejections, cancellations, and played results.
+
+    Preconditions:
+        - The user must be authenticated and have permission to respond to the proposal.
+        - The request must include a valid `status` in the JSON body, and for "played" status, 
+        it must also include `score_team1` and `score_team2`.
+
+    Args:
+        account: The authenticated account making the status update.
+        proposal_id: The unique identifier of the match proposal to update.
+
+    Returns:
+        dict: A dictionary containing the updated proposal information.
+
+    Postconditions:
+        - The match proposal's status is updated according to the specified rules, and if marked as "played", 
+        the match result is recorded and Elo ratings are updated accordingly.
+    """
     # Status updates are locked to the participants, the proposer, or admins.
     # The same endpoint also records side data like accepted/rejected reasons.
     proposal = MatchProposal.query.filter_by(id=proposal_id).with_for_update().first()
