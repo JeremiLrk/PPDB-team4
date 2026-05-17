@@ -116,7 +116,7 @@ npm test
 
 ## Features
 
-NetRank is built around a clear hierarchy of users and competitive objects.
+NetRank follows a simple flow: people join, clubs organize them, teams compete, ladders track results, and disputed matches get resolved when needed. The short version is below; the deeper system notes live in [doc/README.md](doc/README.md).
 
 ```text
 Account
@@ -128,55 +128,48 @@ Account
 Club
 |-- Teams
 |-- Ladders
-    |-- Ladder teams
-    |-- Rulesets
-    |-- Match proposals
-    |-- Score submissions
-    |-- Disputed matches
+|   |-- Rulesets
+|   |-- Match proposals
+|   |-- Score submissions
+|   |-- Disputed matches
 ```
 
-### User Roles
+### Accounts And Access
 
-- `Account` is the base identity for every user. It stores login details, profile data, and verification state.
-- `Player` is the user type for someone who takes part in teams and match activity.
-- `TeamManager` is the role for handling team administration.
-- `ClubOwner` is the role for managing clubs and the teams inside them.
-- `Administrator` is the top-level role for platform-wide moderation and dispute handling.
+Every user starts as an `Account`. From there the app separates people into roles so each part of the system stays in the right hands: `Player` for match activity, `TeamManager` for team administration, `ClubOwner` for club-level control, and `Administrator` for broader moderation and dispute handling.
+
+Signing up sends a verification email. Logging in stores the access token in an HTTP-only cookie. If someone forgets their password, they can request a reset link by email. Users can also update profile details and change their password from the dashboard.
+
+### Dashboard
+
+The dashboard is the main workspace after login. It collects the account, club, team, availability, and match tools in one place. See [doc/dashboard.md](doc/dashboard.md) for the page-level overview.
 
 ### Clubs And Teams
 
-- Clubs are the main organizational unit in the platform.
-- A club can contain multiple teams.
-- Teams can contain players and managers.
-- Team managers and club owners do not have the same scope of access, which keeps ownership and day-to-day management separated.
-- Users can search for clubs, request to join them, and review join requests when they have permission.
+Clubs are the main organizing unit in the app, and teams are the groups that compete inside them or on their own. See [doc/club-page.md](doc/club-page.md) for the club home page and [doc/club-settings.md](doc/club-settings.md) for club management.
 
-### Ladders
+### Ladders, Matches, And Rules
 
-- Ladders belong to clubs and define the competition structure.
-- A ladder decides which teams participate, which ruleset is used, and how rankings are calculated.
-- Teams can be added to a ladder when they qualify for that competition.
-- Ladder standings are updated automatically after matches are finalized.
+Ladders belong to clubs and define how competition works. They decide which teams take part, which ruleset is used, and how rankings are calculated. When matches are completed, ladder standings update automatically.
 
-### Match Flow
+Match play follows a clear path. Teams can be matched in two ways: an authorized club owner, team manager, or administrator can create a manual proposal for a valid team pair, or the weekly generator can create proposals from ladder order and player availability. The invited side accepts or rejects the proposal, and both sides can submit scores once the match is played. If the scores match, the result finalizes automatically. If they do not match, the match moves to a disputed state. Authorized club staff can then review the dispute and resolve it, after which the ladder rankings update again.
 
-- Match proposals are created between eligible teams.
-- The proposal is then accepted or rejected by the invited side.
-- After the match is played, both sides can submit a score.
-- If both submissions match, the result is finalized automatically.
-- If the submissions differ, the match becomes disputed.
-- Club owners or administrators can resolve disputed matches when they have the right permissions.
-- Final results update the ladder ranking automatically.
+Rulesets keep the match rules consistent. They store the format of the match, third-set handling, deuce rules, and other game settings. The same ruleset can be reused across several ladders.
 
-### Rulesets
+### Themes, Availability, And Email
 
-- Rulesets store the match rules that a ladder uses.
-- They define things like match format, third-set handling, deuce rules, and game format.
-- The same ruleset can be reused across multiple ladders so the competition rules stay consistent.
+The dashboard and club pages support light and dark themes. Availability blocks are used by the weekly match proposal system to find good match times, so the availability calendar is part of match planning rather than a separate calendar feature. Club creation uses city lookup, and match proposal cards can show weather for the proposed time and place.
 
-### Player Dashboard
+Email support is built into the key flows. NetRank sends signup verification emails, password reset emails, and club activity emails such as join request notifications and join request decisions. The app also uses email links to send people back into the right part of the site, such as a club page or the dashboard.
 
-- Users can edit profile details and password.
-- Users can manage availability blocks.
-- Users can see notifications and account-specific actions from one place.
-- The dashboard gives a single view of the clubs and teams the account is connected to.
+### Deep Dives
+
+- [doc/README.md](doc/README.md) for the feature map and detailed explanations.
+- [doc/matches.md](doc/matches.md) for match proposals, score submission, disputes, and ladder ranking updates.
+- [doc/ladders-and-elo.md](doc/ladders-and-elo.md) for how ladder rankings and Elo work.
+- [doc/availability.md](doc/availability.md) for the availability calendar and weekly proposal generation.
+- [doc/clubs-and-teams.md](doc/clubs-and-teams.md) for club, team, and membership management.
+- [doc/auth.md](doc/auth.md) for signup, login, email verification, and password reset.
+- [doc/dashboard.md](doc/dashboard.md) for the dashboard workspace.
+- [doc/club-page.md](doc/club-page.md) for the club home page.
+- [doc/club-settings.md](doc/club-settings.md) for the club settings pages.
