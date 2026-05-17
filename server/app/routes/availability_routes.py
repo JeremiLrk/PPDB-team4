@@ -14,11 +14,13 @@ from server.app.services.availability_service import (
 availability_bp = Blueprint("availability", __name__, url_prefix="/api/me/availability")
 
 def _get_current_user():
+    """Helper function to retrieve the currently authenticated user based on the access token in cookies."""
     token = request.cookies.get("access_token")
     return verify_user(token)
 
 @availability_bp.get("")
 def get_my_availability():
+    """Retrieves the availability blocks for the currently authenticated user."""
     account = _get_current_user()
     if not account:
         return jsonify({"message": "Unauthorized."}), 401
@@ -27,6 +29,16 @@ def get_my_availability():
 
 @availability_bp.post("")
 def create_my_availability_block():
+    """
+    Creates a new availability block for the currently authenticated user.
+
+    Returns:
+        dict: A dictionary containing a success message.
+
+    Postconditions:
+        - The new availability block is created and associated with the user.
+        - The block does not overlap with any existing blocks for the user.
+    """
     account = _get_current_user()
     if not account:
         return jsonify({"message": "Unauthorized."}), 401
@@ -58,6 +70,21 @@ def create_my_availability_block():
 
 @availability_bp.delete("/<int:block_id>")
 def delete_my_availability_block(block_id):
+    """
+    Deletes an existing availability block for the currently authenticated user.
+
+    Preconditions:
+        - The block with `block_id` must exist and be associated with the user.
+
+    Args:
+        block_id (int): The ID of the availability block to be deleted.
+
+    Returns:
+        dict: A dictionary containing a success message.
+
+    Postconditions:
+        - The availability block with `block_id` is deleted from the user's schedule.
+    """
     account = _get_current_user()
     if not account:
         return jsonify({"message": "Unauthorized."}), 401

@@ -1,10 +1,17 @@
+"""
+Core team routes.
+
+These endpoints cover public team lookup plus create, rename, and delete
+operations for the team management UI.
+"""
+
 from flask import Blueprint, request, jsonify, abort
 from server.extensions import cache, db
 from server.app.models.account import Account, Administrator
 from server.app.models.team import Team, TeamManagerTeam, TeamManager
 from server.app.decorators.login_required import login_required
 from server.app.utils.promote import promote_to_team_manager
-from ._helpers import delete_teams_cache_keys, get_team_or_404, parse_pagination
+from ._helpers import get_team_or_404, parse_pagination
 from ._permissions import require_can_delete_team, require_can_rename_team
 from ...models.club_owner import ClubOwner
 
@@ -14,7 +21,7 @@ core_bp = Blueprint("team_core", __name__)
 @core_bp.route("/<int:team_id>", methods=["GET"])
 @cache.memoize(timeout=300)
 def get_team(team_id: int):
-    """GET /api/teams/<team_id> — public."""
+    """Return one public team record."""
     team = get_team_or_404(team_id)
     return jsonify({
         "team": team.to_dict()
@@ -24,7 +31,7 @@ def get_team(team_id: int):
 @core_bp.route("", methods=["GET"])
 @cache.cached(timeout=300, query_string=True, key_prefix="teams_list")
 def get_teams():
-    """GET /api/teams?from=0&to=20&sort=name — public."""
+    """Return the public team list."""
     offset, limit, sort_col =  parse_pagination(request.args)
 
     total = Team.query.count()
@@ -40,7 +47,7 @@ def get_teams():
 # Not used anywhere?
 @core_bp.route("/by-club/<int:club_id>", methods=["GET"])
 def get_teams_by_club(club_id: int):
-    """GET /api/teams/by-club/<club_id>?from=0&to=20&sort=name"""
+    """Return public teams for a specific club."""
     from server.app.models.club import Club
     club = Club.query.get(club_id)
     if not club:
@@ -64,7 +71,15 @@ def get_teams_by_club(club_id: int):
 @core_bp.route("", methods=["POST"])
 @login_required
 def create_team(account: Account):
-    """POST /api/teams — make team."""
+    """
+    Create a new team and attach the acting manager when needed.
+
+    Args:
+        account (Account): The account creating the team.
+
+    Returns:
+        tuple: A tuple containing the response and status code.
+    """
     data = request.get_json(silent=True)
     if data is None:
         abort(400, description="No JSON body provided.")
@@ -114,7 +129,7 @@ def create_team(account: Account):
         )
         db.session.add(assoc)
 
-    delete_teams_cache_keys()
+    cache.delete("teams_list")
 
     db.session.commit()
     return jsonify({
@@ -127,14 +142,29 @@ def create_team(account: Account):
 @login_required
 @require_can_delete_team
 def delete_team(account: Account, team_id: int):
-    """DELETE /api/teams/<team_id> - delete team."""
+    """
+    Delete a team if the user has permission.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account attempting to delete the team.
+        team_id (int): The unique identifier of the team to delete.
+
+    Returns:
+        a JSON response containing a success message, along with a 200 status code.
+
+    Postconditions:
+        - The specified team is deleted from the database if the user has permission.
+    """
     team = get_team_or_404(team_id)
 
     db.session.delete(team)
     db.session.commit()
 
     cache.delete_memoized(get_team, team_id)
-    delete_teams_cache_keys()
+    cache.delete("teams_list")
 
     return jsonify({
         "message": "Team deleted successfully."
@@ -145,7 +175,22 @@ def delete_team(account: Account, team_id: int):
 @login_required
 @require_can_rename_team
 def rename_team(account: Account, team_id: int):
-    """PATCH /api/teams/<team_id> — renaming a team."""
+    """
+    Rename a team if the user has permission.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account attempting to rename the team.
+        team_id (int): The unique identifier of the team to rename.
+
+    Returns:
+        a JSON response containing a success message, along with a 200 status code.
+
+    Postconditions:
+        - The specified team is renamed in the database if the user has permission.
+    """
     team = get_team_or_404(team_id)
 
     data = request.get_json(silent=True)
@@ -170,7 +215,7 @@ def rename_team(account: Account, team_id: int):
     db.session.commit()
 
     cache.delete_memoized(get_team, team_id)
-    delete_teams_cache_keys()
+    cache.delete("teams_list")
 
     return jsonify({
         "message": "Team renamed successfully.",

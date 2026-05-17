@@ -23,6 +23,7 @@ class ClubJoinRequest(db.Model):
     club = db.relationship("Club") 
 
     def serialize(self):
+        """Converts the model instance to a dictionary representation."""
         return {
             "club_id": self.club_id,
             "user_id": self.user_id,

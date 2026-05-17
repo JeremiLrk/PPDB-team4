@@ -21,7 +21,12 @@ matches_list_bp = Blueprint("matches_list", __name__)
 
 @matches_list_bp.route("/active", methods=["GET"])
 def get_active_matches() -> tuple[Response, int]:
-    """Return accepted match proposals that are still active."""
+    """
+    Return accepted match proposals that are still active
+
+    Returns:
+        a JSON response containing a paginated list of active match proposals, along with the total count and pagination metadata.
+    """
     offset, limit = parse_pagination(request.args)
 
     base  = MatchProposal.query.filter_by(status_id=MatchStatus.ACCEPTED)
@@ -42,7 +47,12 @@ def get_active_matches() -> tuple[Response, int]:
 
 @matches_list_bp.route("/played", methods=["GET"])
 def get_played_matches() -> tuple[Response, int]:
-    """Return match proposals that already have a final result."""
+    """
+    Return finished matches with a score
+
+    Returns:
+        a JSON response containing a paginated list of finished matches, along with the total count and pagination metadata.
+    """
     offset, limit = parse_pagination(request.args)
 
     base  = MatchProposal.query.filter_by(status_id=MatchStatus.PLAYED)
@@ -64,7 +74,12 @@ def get_played_matches() -> tuple[Response, int]:
 @matches_list_bp.route("/pending", methods=["GET"])
 @login_required
 def get_pending_matches(account: Account) -> tuple[Response, int]:
-    """Return pending proposals the current user can answer."""
+    """
+    Return pending match proposals the current user can answer.
+
+    Returns:
+        a JSON response containing a paginated list of pending match proposals, along with the total count and pagination metadata.
+    """
     resolved      = account.resolved_role
     offset, limit = parse_pagination(request.args)
 
@@ -94,7 +109,12 @@ def get_pending_matches(account: Account) -> tuple[Response, int]:
 @matches_list_bp.route("/awaiting-result", methods=["GET"])
 @login_required
 def get_awaiting_result_matches(account: Account) -> tuple[Response, int]:
-    """Return accepted matches that still need a score result."""
+    """
+    Return accepted match proposals that still need a score result
+
+    Returns:
+        a JSON response containing a paginated list of accepted match proposals, along with the total count and pagination metadata.
+    """
     resolved      = account.resolved_role
     offset, limit = parse_pagination(request.args)
 

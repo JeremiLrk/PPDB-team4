@@ -1,3 +1,10 @@
+"""
+Team membership routes.
+
+This module covers manager assignment, player membership changes, join
+requests, permissions, and the ladder-size checks that protect those flows.
+"""
+
 from flask import Blueprint, request, jsonify, Response, abort
 from datetime import datetime, timezone
 

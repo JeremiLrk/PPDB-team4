@@ -20,6 +20,24 @@ _ALLOWED_GENDERS = frozenset({"male", "female", "other"})
 
 
 def register_user(email, password, first_name, last_name, date_of_birth, gender=None, phone=None):
+    """
+    Registers a new user with the provided details.
+
+    Args:
+        email (str): The user's email address.
+        password (str): The user's password.
+        first_name (str): The user's first name.
+        last_name (str): The user's last name.
+        date_of_birth (datetime.date): The user's date of birth.
+        gender (str, optional): The user's gender.
+        phone (str, optional): The user's phone number.
+
+    Returns:
+        Account: The newly created user account.
+
+    Postconditions:
+        - A new user account is created in the database.
+    """
     if len(password) < 6:
         raise ValueError("Password is too short.")
 
@@ -57,6 +75,16 @@ def register_user(email, password, first_name, last_name, date_of_birth, gender=
     return new_user
 
 def login_user(email, password):
+    """
+    Logs in a user with the provided email and password.
+
+    Args:
+        email (str): The user's email address.
+        password (str): The user's password.
+
+    Returns:
+        tuple: A tuple containing the authentication token and the user account, or None if login fails.
+    """
     account = Account.query.filter_by(email=email).first()
     if not account or not check_password_hash(account.password_hash, password):
         return None
@@ -76,6 +104,15 @@ def login_user(email, password):
     return token, account
 
 def verify_user(token):
+    """
+    Verifies a user with the provided token.
+
+    Args:
+        token (str): The authentication token.
+
+    Returns:
+        Account: The verified user account, or None if verification fails.
+    """
     if not token:
         return None
 
@@ -93,15 +130,18 @@ def verify_user(token):
     return Account.query.filter_by(id=user_id).first()
 
 def generate_reset_token(email):
+    """Generates a password reset token for the given email address."""
     serializer = URLSafeTimedSerializer(SECRET_KEY)
     return serializer.dumps(email, salt=PW_RESET_SALT)
 
 
 def generate_verification_token(email):
+    """Generates an email verification token for the given email address."""
     serializer = URLSafeTimedSerializer(SECRET_KEY)
     return serializer.dumps(email, salt=EMAIL_VERIFICATION_SALT)
 
 def verify_reset_token(token, expiration=900):
+    """Verifies a password reset token, returning the associated email if valid or None if invalid or expired."""
     serializer = URLSafeTimedSerializer(SECRET_KEY)
     try:
         email = serializer.loads(token, salt=PW_RESET_SALT, max_age=expiration)
@@ -111,6 +151,7 @@ def verify_reset_token(token, expiration=900):
 
 
 def verify_email_token(token, expiration=86400):
+    """Verifies an email verification token, returning the associated email if valid or None if invalid or expired."""
     serializer = URLSafeTimedSerializer(SECRET_KEY)
     try:
         email = serializer.loads(token, salt=EMAIL_VERIFICATION_SALT, max_age=expiration)
@@ -120,6 +161,7 @@ def verify_email_token(token, expiration=86400):
 
 
 def mark_user_as_verified(email):
+    """Marks the user with the given email address as verified, returning the updated account or raising an error if the account is not found."""
     account = Account.query.filter_by(email=email).first()
     if not account:
         raise ValueError("User not found.")
@@ -129,6 +171,7 @@ def mark_user_as_verified(email):
     return account
     
 def update_password(email, password):
+    """Updates the password for the user with the given email address, returning the updated account or raising an error if the account is not found or the password is invalid."""
     if len(password) < 6:
         raise ValueError("Password is too short.")
 
@@ -143,6 +186,7 @@ def update_password(email, password):
 
 
 def change_password(account, current_password, new_password, repeat_password=None):
+    """Changes the password for the given user account, verifying the current password and ensuring the new password meets requirements."""
     if not current_password or not new_password:
         raise ValueError("Current password and new password are required.")
 

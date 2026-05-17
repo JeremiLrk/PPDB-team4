@@ -25,6 +25,26 @@ ALLOWED_ACCOUNT_GENDERS = frozenset({"male", "female", "other"})
 
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
+    """
+    Registers a new user with the provided details.
+
+    Args:
+        email (str): The user's email address.
+        password (str): The user's password.
+        first_name (str): The user's first name.
+        last_name (str): The user's last name.
+        date_of_birth (datetime.date): The user's date of birth.
+        gender (str, optional): The user's gender.
+        phone (str, optional): The user's phone number.
+
+    Returns:
+        Account: The newly created user account.
+
+    Postconditions:
+        - A new user account is created in the database with the provided details.
+        - A verification email is sent to the user's email address with a link to verify their account.
+        - The user's account is marked as unverified until they click the verification link in the email
+    """
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
@@ -68,6 +88,16 @@ def signup():
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
+    """
+    Logs in a user with the provided email and password.
+
+    Args:
+        email (str): The user's email address.
+        password (str): The user's password.
+
+    Returns:
+        tuple: A tuple containing the authentication token and the user account, or None if login fails.
+    """
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
@@ -99,6 +129,12 @@ def login():
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
+    """
+    Logs out the currently logged-in user.
+
+    Returns:
+        dict: A dictionary containing a success message.
+    """
     response = make_response(jsonify({"message": "Successfully logged out."}), 200)
     secure_cookie = current_app.testing or (not current_app.debug and request.is_secure)
     response.set_cookie(
@@ -114,6 +150,15 @@ def logout():
 @auth_bp.route("/me", methods=["GET"])
 @login_required
 def me(account: Account):
+    """
+    Retrieves the details of the currently logged-in user.
+
+    Args:
+        account (Account): The user account object.
+
+    Returns:
+        dict: A dictionary containing the user's details.
+    """
     base = account.to_dict()
 
     managed_team_ids = []
@@ -140,6 +185,15 @@ def me(account: Account):
 @auth_bp.route("/me", methods=["PATCH"])
 @login_required
 def update_me(account: Account):
+    """
+    Updates the details of the currently logged-in user.
+
+    Args:
+        account (Account): The user account object.
+
+    Returns:
+        dict: A dictionary containing the updated user details.
+    """
     data = request.get_json() or {}
 
     first_name = (data.get("firstName") or "").strip()
@@ -181,6 +235,15 @@ def update_me(account: Account):
 @auth_bp.route("/me/password", methods=["PATCH"])
 @login_required
 def update_my_password(account: Account):
+    """
+    Updates the password for the currently logged-in user.
+
+    Args:
+        account (Account): The user account object.
+
+    Returns:
+        dict: A dictionary containing a success message.
+    """
     data = request.get_json() or {}
     current_password = data.get("currentPassword") or ""
     new_password = data.get("password") or ""
@@ -197,6 +260,7 @@ def update_my_password(account: Account):
 @auth_bp.route("/me/details", methods=["GET"])
 @login_required
 def me_details(account: Account):
+    """Retrieves the detailed information of the currently logged-in user, including their roles and associated teams/clubs."""
     base = account.to_dict(include=["team_manager", "club_owner", "player", "administrator"])
 
     return jsonify({
@@ -205,6 +269,17 @@ def me_details(account: Account):
 
 @auth_bp.route("/forgot-password", methods=["POST"])
 def forgot_password():
+    """
+    Initiates the password reset process for a user who has forgotten their password.
+
+    Returns:
+        dict: A dictionary containing a success message.
+
+    Postconditions:
+        - If the provided email is associated with an account, a password reset token is generated and sent to the user's email address 
+            with a link to reset their password.
+        - If the provided email is not associated with any account, a generic success message is returned
+    """
     data = request.get_json() or {}
     email = (data.get("email") or "").strip().lower()
 
@@ -232,6 +307,7 @@ def forgot_password():
 
 @auth_bp.route("/verify-email/<token>", methods=["GET"])
 def verify_email(token):
+    """Verifies a user's email address using the provided verification token."""
     email = verify_email_token(token)
 
     if not email:
@@ -246,6 +322,7 @@ def verify_email(token):
 
 @auth_bp.route("/reset-password/<token>", methods=["POST"])
 def reset_password(token):
+    """Resets a user's password using the provided password reset token."""
     email = verify_reset_token(token)
     
     data = request.get_json() or {}

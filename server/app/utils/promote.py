@@ -17,6 +17,7 @@ def _get_or_create_role(name: str) -> AccountRole:
     return role
 
 
+"""Utility functions for promoting accounts to new roles."""
 def promote_to_player(target: Account) -> None:
     """Promotes an account to Player if it is not already one."""
     if target.player:

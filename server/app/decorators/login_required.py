@@ -6,6 +6,15 @@ from server.extensions import db
 
 
 def login_required(f):
+  """
+    Checks for a valid login token in the request cookies and verifies the associated user account.
+
+    Returns:
+        the account found in the database
+
+    Postconditions:
+        - The request token is valid and corresponds to an existing user account.
+    """
   @wraps(f)
   def decorated(*args, **kwargs):
     token = request.cookies.get("access_token")

@@ -75,6 +75,7 @@ def apply_schemas(conn, schema_files) -> None:
 
 
 def main(argv=None) -> None:
+    """Main entry point for the reset_db script."""
     parser = argparse.ArgumentParser(
         description="Reset the PostgreSQL database schema for the PPDB project.",
         formatter_class=argparse.RawDescriptionHelpFormatter,

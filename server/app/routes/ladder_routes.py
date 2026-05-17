@@ -18,6 +18,7 @@ ladder_bp = Blueprint("ladder", __name__, url_prefix="/api")
 
 
 def _can_manage_club(account, club_id: int) -> bool:
+    """Helper function to check if the given account has management permissions for the specified club."""
     with db.session.no_autoflush:
         if Administrator.query.filter_by(id=account.id).first() is not None:
             return True
@@ -32,6 +33,7 @@ def _can_manage_club(account, club_id: int) -> bool:
 @ladder_bp.get("/clubs/<int:club_id>/eligible-teams")
 @login_required
 def get_eligible_teams(account, club_id: int):
+    """Endpoint to retrieve teams that are eligible to be added to a ladder within the specified club."""
     if not _can_manage_club(account, club_id):
         return jsonify({"message": "Forbidden."}), 403
 
@@ -48,6 +50,16 @@ def get_eligible_teams(account, club_id: int):
 
 @ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>/players")
 def get_players(club_id, ladder_id):
+    """
+    Retrieves the list of players in a specific ladder.
+
+    Args:
+        club_id (int): The ID of the club to which the ladder belongs.
+        ladder_id (int): The ID of the ladder for which to retrieve players.
+
+    Returns:
+        list: A list of dictionaries containing player information.
+    """
     rows = get_all_players_ladder(ladder_id)
     achievement_stats = get_ladder_player_achievement_stats(ladder_id)
     return [
@@ -72,6 +84,24 @@ def get_players(club_id, ladder_id):
 @ladder_bp.post("/clubs/<int:club_id>/ladders/<int:ladder_id>/teams/<int:team_id>")
 @login_required
 def add_team_to_ladder(account, club_id: int, ladder_id: int, team_id: int):
+    """
+    Adds a team to a specific ladder.
+
+    Preconditions:
+        - The user must have management permissions for the specified club.
+
+    Args:
+        account (Account): The account of the currently authenticated user.
+        club_id (int): The unique identifier of the club to which the ladder belongs.
+        ladder_id (int): The unique identifier of the ladder to which the team will be added.
+        team_id (int): The unique identifier of the team to be added to the ladder.
+
+    Returns:
+        dict: A dictionary containing a success message, the added team's information, and the ladder team details.
+
+    Postconditions:
+        - The specified team is added to the ladder with an initial rating and rank.
+    """
     if not _can_manage_club(account, club_id):
         return jsonify({"message": "Forbidden."}), 403
 
@@ -83,12 +113,12 @@ def add_team_to_ladder(account, club_id: int, ladder_id: int, team_id: int):
     if not team:
         return jsonify({"message": "Team not found."}), 404
 
-    if team.club_id is not None and team.club_id != club_id:
-        return jsonify({"message": "Team belongs to a different club."}), 400
-
     existing = LadderTeam.query.filter_by(ladder_id=ladder_id, team_id=team_id).first()
     if existing:
         return jsonify({"message": "Team is already in this ladder."}), 400
+
+    if team.club_id is not None and team.club_id != club_id:
+        return jsonify({"message": "Team belongs to a different club."}), 400
 
     if team.club_id is None:
         team.club_id = club_id
@@ -138,6 +168,7 @@ def get_ladder_rows(club_id, ladder_id):
 
 @ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>/details")
 def get_ladder_details(club_id, ladder_id):
+    """Retrieves detailed information about a specific ladder, including its associated sport type, ruleset, and rating function."""
     result = (
         db.session.query(Ladder, SportType.name, MatchRuleSet, LadderRatingFunction.name)
         .outerjoin(SportType, Ladder.sport_type_id == SportType.id)

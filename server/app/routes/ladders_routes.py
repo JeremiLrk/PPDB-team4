@@ -10,6 +10,7 @@ ladders_bp = Blueprint("ladders", __name__, url_prefix="/api")
 
 @ladders_bp.get("/clubs/<int:club_id>/ladders")
 def get_ladders(club_id):
+    """Endpoint to retrieve all ladders associated with a specific club."""
     ladders = get_all_club_ladders(club_id)
 
     return jsonify({
@@ -29,6 +30,7 @@ def get_ladders(club_id):
 
 @ladders_bp.get("/clubs/<int:club_id>/top-players")
 def get_top_players(club_id: int, limit: int = 3):
+    """Endpoint to retrieve the top players in a specific club based on their ladder ratings."""
     results = (
         db.session.query(Team, LadderTeam)
         .join(LadderTeam, Team.id == LadderTeam.team_id)

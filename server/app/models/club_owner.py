@@ -49,6 +49,7 @@ class ClubOwner(db.Model):
             None,
         )
 
+    """Convenience methods for checking permissions on a per-club basis."""
     def owns_club(self, club: Club) -> bool:
         return self.assoc_for(club) is not None
 
@@ -77,6 +78,7 @@ class ClubOwner(db.Model):
         return a is not None and a.can_add_club_rule
 
     def to_dict(self) -> dict:
+        """Converts the model instance to a dictionary representation."""
         return {
             "id":      self.id,
             "clubs":   [a.to_dict() for a in self.club_associations],

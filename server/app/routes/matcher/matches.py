@@ -44,7 +44,19 @@ matches_core_bp = Blueprint("matches_core", __name__)
 @login_required
 def create_match_proposal(account: Account) -> tuple[Response, int]:
     """
-    Create a new match proposal.
+    Create a new match proposal with the provided details.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account creating the match proposal.
+
+    Returns:
+        a JSON response containing a success message and the created match proposal, along with a 201 status code.
+
+    Postconditions:
+        - The match proposal is created in the database with the specified attributes and is in a pending state.
     """
     resolved = account.resolved_role
 
@@ -140,6 +152,19 @@ def create_match_proposal(account: Account) -> tuple[Response, int]:
 def accept_match(account: Account, match_id: int) -> tuple[Response, int]:
     """
     Accept a pending match proposal.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account accepting the match proposal.
+        match_id (int): The ID of the match proposal to accept.
+
+    Returns:
+        a JSON response containing a success message and the accepted match proposal, along with a 200 status code.
+
+    Postconditions:
+        - The match proposal is updated in the database to reflect its accepted status, and the acceptance details are recorded.
     """
     resolved = account.resolved_role
     proposal = get_proposal_or_404(match_id)
@@ -178,6 +203,19 @@ def accept_match(account: Account, match_id: int) -> tuple[Response, int]:
 def reject_match(account: Account, match_id: int) -> tuple[Response, int]:
     """
     Reject a pending match proposal.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account rejecting the match proposal.
+        match_id (int): The ID of the match proposal to reject.
+
+    Returns:
+        a JSON response containing a success message and the rejected match proposal, along with a 200 status code.
+
+    Postconditions:
+        - The match proposal is updated in the database to reflect its rejected status, and the rejection details are recorded.
     """
     resolved = account.resolved_role
     proposal = get_proposal_or_404(match_id)
@@ -216,6 +254,16 @@ def reject_match(account: Account, match_id: int) -> tuple[Response, int]:
 def check_match_result(account: Account, match_id: int) -> tuple[Response, int]:
     """
     Validate a proposed match result without saving it.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account validating the match result.
+        match_id (int): The ID of the match proposal for which to validate the result.
+
+    Returns:
+        a JSON response containing a success message and the validated match proposal, along with a 200 status code.
     """
     resolved = account.resolved_role
     proposal = get_proposal_or_404(match_id)
@@ -260,7 +308,20 @@ def check_match_result(account: Account, match_id: int) -> tuple[Response, int]:
 @login_required
 def submit_match_result(account: Account, match_id: int) -> tuple[Response, int]:
     """
-    Save the final match result and apply Elo updates.
+    Save the result and update the elo of a match proposal.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account submitting the match result.
+        match_id (int): The ID of the match for which to submit a result.
+
+    Returns:
+        a JSON response containing a success message and the completed match proposal, along with a 200 status code.
+
+    Postconditions:
+        - The match proposal is updated in the database to reflect its completed status.
     """
     resolved = account.resolved_role
     proposal = MatchProposal.query.filter_by(id=match_id).with_for_update().first()
@@ -342,6 +403,19 @@ def submit_match_result(account: Account, match_id: int) -> tuple[Response, int]
 def cancel_match(account: Account, match_id: int) -> tuple[Response, int]:
     """
     Cancel an accepted match proposal.
+
+    Preconditions:
+        - `account` must exist and be active in the database.
+
+    Args:
+        account (Account): The account cancelling the match proposal.
+        match_id (int): The ID of the match proposal to cancel.
+
+    Returns:
+        a JSON response containing a success message and the cancelled match proposal, along with a 200 status code.
+
+    Postconditions:
+        - The match proposal is updated in the database to reflect its cancelled status, and the cancellation details are recorded.
     """
     resolved = account.resolved_role
     proposal = get_proposal_or_404(match_id)
