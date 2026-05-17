@@ -1,7 +1,7 @@
 @reference "tailwindcss";
 
 .verifyContainer {
-    @apply min-h-screen flex items-center justify-center px-4;
+    @apply flex-1 flex items-center justify-center;
 }
 
 .verifyCard {
@@ -17,5 +17,29 @@
 }
 
 .verifyLink {
-    @apply mt-6 inline-block text-blue-500 hover:text-blue-300 underline;
+    @apply mt-6 inline-block underline;
+    color: #38bdf8;
+}
+.verifyLink:hover {
+    color: #67e8f9;
+}
+
+
+/*  Light mode overrides  */
+
+:global(html.light) .verifyCard {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(71, 85, 105, 0.2);
+}
+:global(html.light) .verifyTitle {
+    color: #0f172a;
+}
+:global(html.light) .verifySubtitle {
+    color: #475569;
+}
+:global(html.light) .verifyLink {
+    color: #0284c7;
+}
+:global(html.light) .verifyLink:hover {
+    color: #0369a1;
 }

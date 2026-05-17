@@ -26,3 +26,21 @@
     color: var(--text-heading);
     box-shadow: 0 8px 20px rgba(2, 132, 199, 0.15);
 }
+
+@media (max-width: 1040px) {
+    .nav {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        flex: 1;
+        min-width: 0;
+        overflow-x: auto;
+    }
+    .navButton {
+        font-size: 0.78rem;
+        padding: 0.4rem 0.6rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+}

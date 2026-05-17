@@ -475,3 +475,98 @@
         align-items: flex-start;
     }
 }
+
+/*  Light mode overrides  */
+
+:global(html.light) .pageBackdrop {
+    background-color: #f8fafc;
+    filter: saturate(1) contrast(1);
+}
+
+:global(html.light) .pageOverlay {
+    background:
+        radial-gradient(circle at 20% 20%, rgba(186, 230, 253, 0.22), transparent 28%),
+        radial-gradient(circle at 80% 25%, rgba(125, 211, 252, 0.12), transparent 30%),
+        radial-gradient(circle at 50% 78%, rgba(103, 232, 249, 0.08), transparent 26%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 250, 252, 0.9) 52%, rgba(226, 232, 240, 0.96) 100%);
+}
+
+:global(html.light) .panel,
+:global(html.light) .heroPanel {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(71, 85, 105, 0.18);
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.08);
+}
+
+:global(html.light) .panelTitle,
+:global(html.light) .heroTitle,
+:global(html.light) .linkLabel,
+:global(html.light) .performerName,
+:global(html.light) .matchTeam {
+    color: #0f172a;
+}
+
+:global(html.light) .muted,
+:global(html.light) .performerLadder,
+:global(html.light) .performerRating small,
+:global(html.light) .heroSubtitle,
+:global(html.light) .matchVs,
+:global(html.light) .resultDash {
+    color: rgba(15, 23, 42, 0.72);
+}
+
+:global(html.light) .heroEyebrow {
+    background: rgba(186, 230, 253, 0.6);
+    border-color: rgba(14, 165, 233, 0.28);
+    color: #0369a1;
+}
+
+:global(html.light) .linkCard,
+:global(html.light) .performerCard,
+:global(html.light) .matchCard,
+:global(html.light) .resultCard {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(71, 85, 105, 0.18);
+}
+
+:global(html.light) .linkCard:hover {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: rgba(14, 165, 233, 0.24);
+}
+
+:global(html.light) .rankBadge {
+    color: #0f172a;
+}
+
+:global(html.light) .matchLadderPill {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(14, 165, 233, 0.16);
+    color: #0369a1;
+}
+
+:global(html.light) .loadMoreButton {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(14, 165, 233, 0.18);
+    color: #0369a1;
+}
+
+:global(html.light) .loadMoreButton:hover {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(14, 165, 233, 0.3);
+}
+
+:global(html.light) .primaryAction {
+    box-shadow: 0 14px 30px rgba(14, 165, 233, 0.14);
+}
+
+:global(html.light) .secondaryAction {
+    background: rgba(255, 255, 255, 0.72);
+    border-color: rgba(71, 85, 105, 0.24);
+    color: #0f172a;
+}
+
+:global(html.light) .manageButton {
+    background: rgba(254, 240, 138, 0.35);
+    border-color: rgba(245, 158, 11, 0.22);
+    color: #b45309;
+}

@@ -4,8 +4,11 @@
     padding: 1.5rem;
 }
 
+:global(html.light) .loading {
+    color: #0f172a;
+}
+
 .shell {
-    /* Split shell: sidebar on the left, content workspace on the right. */
     --app-bg: radial-gradient(circle at 8% 8%, #22d3ee 0%, #0f172a 36%, #020617 100%);
     --app-bg-accent: radial-gradient(circle at 88% 14%, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0));
     --text-primary: #e2e8f0;
@@ -34,23 +37,39 @@
     --danger-text: #fecaca;
     --counter-bg: linear-gradient(120deg, rgba(14, 165, 233, 0.3), rgba(16, 185, 129, 0.28));
     width: 100%;
+    height: 100vh;
+    height: 100dvh;
     min-height: 100vh;
+    min-height: 100dvh;
     display: grid;
-    grid-template-columns: 284px 1fr;
-    gap: 1rem;
-    padding: 1rem;
+    grid-template-columns: 272px 1fr;
+    gap: 0;
+    background: var(--app-bg);
     color: var(--text-primary);
     position: relative;
     isolation: isolate;
     overflow: hidden;
 }
-
-.settings {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 100%;
+.shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--app-bg-accent);
+    pointer-events: none;
+    z-index: -1;
+}
+.shell::after {
+    content: "";
+    position: absolute;
+    width: 46rem;
+    height: 46rem;
+    border-radius: 999px;
+    right: -16rem;
+    top: -18rem;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.22), rgba(56, 189, 248, 0));
+    animation: floatGlow 9s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
 }
 
 
@@ -73,37 +92,101 @@
     --nav-active-border: rgba(14, 165, 233, 0.58);
     --input-bg: rgba(255, 255, 255, 0.98);
     --input-border: rgba(71, 85, 105, 0.38);
-    --action-bg: linear-gradient(120deg, rgba(186, 230, 253, 0.86), rgba(153, 246, 228, 0.68));
-    --action-border: rgba(6, 182, 212, 0.6);
-    --action-text: #0f172a;
-    --action-hover-bg: linear-gradient(120deg, rgba(147, 197, 253, 0.78), rgba(94, 234, 212, 0.72));
-    --action-hover-border: rgba(8, 145, 178, 0.72);
+    --action-bg: linear-gradient(120deg, #0891b2, #059669);
+    --action-border: rgba(8, 145, 178, 0.85);
+    --action-text: #ffffff;
+    --action-hover-bg: linear-gradient(120deg, #0e7490, #047857);
+    --action-hover-border: rgba(6, 182, 212, 0.95);
     --danger-bg: rgba(254, 226, 226, 0.92);
     --danger-border: rgba(239, 68, 68, 0.42);
     --danger-text: #7f1d1d;
-    --counter-bg: linear-gradient(120deg, rgba(186, 230, 253, 0.8), rgba(153, 246, 228, 0.55));
+    --counter-bg: linear-gradient(120deg, rgba(8, 145, 178, 0.22), rgba(5, 150, 105, 0.18));
 }
 
 .sidebar {
-    /* Keep hover effects contained so the sidebar never visually spills outside its frame. */
-    border: 1px solid var(--shell-border);
-    border-radius: 1.35rem;
+    border-right: 1px solid var(--shell-border);
     background: var(--sidebar-bg);
     backdrop-filter: blur(8px);
-    padding: 1.25rem 1rem;
+    padding: 0.95rem 0.85rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
+    height: 100%;
+    min-height: 0;
     overflow: hidden;
+    position: relative;
+    z-index: 30;
 }
 
-.sidebarTitle {
-    margin: 0;
+.desktopSidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+    flex: 1;
+}
+
+.mobileBar {
+    display: none;
+}
+
+.mobileToggle {
+    border: 1px solid var(--shell-border);
+    border-radius: 0.55rem;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.45rem 0.72rem;
     font-size: 1rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.mobileToggleIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+}
+
+.mobileMenu {
+    display: none;
+    z-index: 100;
+}
+
+.mobileMenuHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0 1rem 0.55rem;
+    border-bottom: 1px solid var(--muted-border);
+    margin-bottom: 0.35rem;
+}
+
+.mobileMenuUser {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    word-break: break-word;
+}
+
+.mobileActiveLabel {
+    margin: 0;
     color: var(--text-heading);
-    text-transform: uppercase;
+    font-size: 0.875rem;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mobileMenuNav {
+    display: flex;
+    flex-direction: column;
+}
+
+.mobileMenuNav .navButton {
+    width: 100%;
 }
 
 .brand {
@@ -138,27 +221,30 @@
 }
 
 .nav {
-    display: grid;
-    gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .navButton {
-    width: 100%;
-    border: 1px solid var(--soft-border);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: 0.78rem;
+    background: transparent;
     color: var(--text-secondary);
     text-align: left;
-    font-size: 0.95rem;
-    font-weight: 700;
-    padding: 0.9rem 0.95rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 0.65rem 0.78rem;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.18s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .navButton:hover {
     background: var(--nav-hover);
     color: var(--text-heading);
+    transform: translateY(-1px);
 }
 
 .navButtonActive {
@@ -166,8 +252,13 @@
     background: var(--nav-active-bg);
     color: var(--text-heading);
     box-shadow: 0 8px 20px rgba(2, 132, 199, 0.15);
-    padding-left: 0.95rem;
-    border-left-width: 4px;
+}
+
+.navButtonActiveDanger {
+    border-color: rgba(248, 113, 113, 0.55);
+    background: rgba(127, 29, 29, 0.28);
+    color: #fca5a5;
+    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.12);
 }
 
 .sidebarFooter {
@@ -213,15 +304,23 @@
 }
 
 .workspace {
-    /* Main settings canvas mirrors the sidebar card so the page reads as one coherent layout. */
     background: var(--workspace-bg);
-    padding: 1.1rem 1.25rem;
-    display: grid;
-    align-content: start;
+    padding: 1.05rem 1.15rem;
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
-    min-height: 100%;
-    border-radius: 1.25rem;
-    border: 1px solid var(--shell-border);
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-width: 0;
+}
+
+.settings {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .workspaceHeader {
@@ -259,6 +358,9 @@
     display: grid;
     grid-template-columns: 1.22fr 0.78fr;
     gap: 1rem;
+    min-height: 0;
+    flex: 1;
+    min-width: 0;
 }
 
 .profileStack {
@@ -305,13 +407,28 @@
     background: var(--surface-bg);
     backdrop-filter: blur(4px);
     padding: 0.95rem;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     transition: transform 0.22s ease, box-shadow 0.24s ease, border-color 0.2s ease;
 }
 
-.panel:hover {
-    transform: translateY(-2px);
-    border-color: var(--nav-active-border);
-    box-shadow: 0 12px 28px rgba(2, 132, 199, 0.14);
+.panelScroll {
+    min-height: 0;
+    overflow: auto;
+    min-width: 0;
+    display: grid;
+    gap: 1rem;
+}
+
+/* Only apply hover lift on real pointer devices — not touch, where :hover sticks */
+@media (hover: hover) {
+    .panel:hover {
+        transform: translateY(-2px);
+        border-color: var(--nav-active-border);
+        box-shadow: 0 12px 28px rgba(2, 132, 199, 0.14);
+    }
 }
 
 .panelTopRow {
@@ -319,6 +436,9 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 0.75rem;
+    gap: 0.5rem;
+    min-width: 0;
+    flex-wrap: wrap;
 }
 
 .panelTitle {
@@ -342,6 +462,8 @@
 .formInput,
 .formTextarea {
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     border: 1px solid var(--input-border);
     background: var(--input-bg);
     color: var(--text-primary);
@@ -396,12 +518,16 @@
 .primaryText {
     margin: 0;
     font-weight: 700;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .secondaryText {
     margin: 0.2rem 0 0;
     color: var(--text-secondary);
     font-size: 0.88rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .metrics {
@@ -447,15 +573,19 @@
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.discoverCard:hover {
-    transform: translateY(-3px);
-    border-color: var(--nav-active-border);
-    box-shadow: 0 10px 24px rgba(2, 132, 199, 0.16);
+@media (hover: hover) {
+    .discoverCard:hover {
+        transform: translateY(-3px);
+        border-color: var(--nav-active-border);
+        box-shadow: 0 10px 24px rgba(2, 132, 199, 0.16);
+    }
 }
 
 .actionRow {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .primaryButton,
@@ -526,9 +656,67 @@
     gap: 1rem;
 }
 
+.availabilityLayout {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 1100px) {
+    .availabilityLayout {
+        grid-template-columns: 1.1fr 0.9fr;
+    }
+}
+
 .availabilityStack {
     display: grid;
     gap: 1rem;
+}
+
+.weeklyStrip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.3rem;
+    margin-bottom: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.weeklyDay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.32rem;
+    padding: 0.5rem 0.15rem 0.45rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--muted-border);
+    background: rgba(255, 255, 255, 0.02);
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.weeklyDayActive {
+    border-color: rgba(56, 189, 248, 0.4);
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.weeklyDayLabel {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+}
+
+.weeklyDayActive .weeklyDayLabel {
+    color: #67e8f9;
+}
+
+.weeklyDayDot {
+    width: 0.38rem;
+    height: 0.38rem;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 5px rgba(56, 189, 248, 0.55);
 }
 
 .availabilityList {
@@ -560,6 +748,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.7rem;
+    min-width: 0;
 }
 
 .formLabel {
@@ -568,6 +757,7 @@
     font-size: 0.84rem;
     font-weight: 600;
     color: var(--text-secondary);
+    min-width: 0;
 }
 
 .formActions {
@@ -713,21 +903,92 @@
 @media (max-width: 1040px) {
     .shell {
         grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
     }
 
     .sidebar {
         border-right: none;
         border-bottom: 1px solid var(--shell-border);
+        height: auto;
+        overflow: visible;
+        padding: 0;
     }
 
-    .contentGrid {
-        grid-template-columns: 1fr;
+    .desktopSidebar {
+        display: none;
     }
+
+    .mobileBar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.7rem 0.9rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .mobileMenu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 20;
+        width: 100%;
+        max-height: calc(100dvh - 4rem);
+        overflow: auto;
+        display: block;
+        background: rgba(15, 23, 42, 0.985);
+        background-image: none;
+        border-bottom: 1px solid var(--shell-border);
+        box-shadow: 0 18px 44px rgba(2, 6, 23, 0.32);
+        backdrop-filter: none;
+        padding: 0.6rem 0 0.75rem;
+    }
+
+    .workspace {
+        overflow-y: auto;
+        position: relative;
+        z-index: 1;
+    }
+}
+
+:global(html.light) .mobileMenu {
+    background: rgba(255, 255, 255, 0.985);
 }
 
 @media (max-width: 640px) {
     .workspace {
         padding: 0.9rem;
+    }
+
+    .panel {
+        padding: 0.85rem;
+    }
+
+    .panelTopRow {
+        align-items: flex-start;
+    }
+
+    .metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .discoverGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .weeklyStrip {
+        display: flex;
+        gap: 0.35rem;
+        overflow-x: auto;
+        padding-bottom: 0.15rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .weeklyDay {
+        min-width: 3.9rem;
+        flex: 0 0 3.9rem;
     }
 
     .formRow {
@@ -742,5 +1003,82 @@
     .availabilityCard {
         flex-direction: column;
         align-items: flex-start;
+        gap: 0.75rem;
     }
+
+    .requestActions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .requestActions .submitButton,
+    .availabilityCard .primaryButton,
+    .discoverCard .primaryButton,
+    .discoverCard .linkButton,
+    .listItem .linkButton {
+        width: 100%;
+    }
+
+    .actionRow {
+        align-items: stretch;
+    }
+
+    .actionRow .primaryButton {
+        width: 100%;
+    }
+}
+
+
+/*  Light mode overrides  */
+
+:global(html.light) .statusPending {
+    color: #92400e;
+    border-color: rgba(217, 119, 6, 0.55);
+    background: rgba(254, 243, 199, 0.9);
+}
+:global(html.light) .statusApproved {
+    color: #065f46;
+    border-color: rgba(16, 185, 129, 0.55);
+    background: rgba(209, 250, 229, 0.9);
+}
+:global(html.light) .statusRejected {
+    color: #7f1d1d;
+    border-color: rgba(239, 68, 68, 0.55);
+    background: rgba(254, 226, 226, 0.9);
+}
+:global(html.light) .statusCancelled {
+    color: #334155;
+    border-color: rgba(71, 85, 105, 0.4);
+    background: rgba(241, 245, 249, 0.95);
+}
+
+:global(html.light) .noticeSuccess {
+    border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(209, 250, 229, 0.9);
+    color: #065f46;
+}
+:global(html.light) .noticeInfo {
+    border-color: rgba(14, 165, 233, 0.5);
+    background: rgba(186, 230, 253, 0.85);
+    color: #0c4a6e;
+}
+:global(html.light) .noticeError {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(254, 226, 226, 0.9);
+    color: #7f1d1d;
+}
+
+:global(html.light) .weeklyDayActive .weeklyDayLabel {
+    color: #0369a1;
+}
+:global(html.light) .weeklyDay {
+    background: rgba(0, 0, 0, 0.02);
+}
+:global(html.light) .availabilityCard {
+    background: rgba(0, 0, 0, 0.02);
+}
+:global(html.light) .navButtonActiveDanger {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(254, 226, 226, 0.85);
+    color: #b91c1c;
 }

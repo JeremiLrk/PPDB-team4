@@ -5,6 +5,7 @@ import { useClubSettings } from "@/hooks/useClubSettings.js";
 import { useDisputedMatches } from "@/hooks/matches/useDisputedMatches.js";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 import ClubSidebar from "@/components/club_settings/ClubSidebar.jsx";
 import styles from "@/style/ClubSettings.module.css";
@@ -31,6 +32,8 @@ export default function ClubDisputedMatchesPage() {
     // Pull shared club data (same hook as ClubSettings) so sidebar has the
     // same context as all other settings tabs.
     const settings = useClubSettings(clubId, texts);
+    const { theme } = useThemeContext();
+    const isLight = theme === "light";
 
     // Disputed-match data
     const {
@@ -113,7 +116,7 @@ export default function ClubDisputedMatchesPage() {
     // Render
     // -----------------------------------------------------------------------
     return (
-        <section className={styles.shell}>
+        <section className={`${styles.shell} ${isLight ? styles.light : ""}`}>
 
             {/* Sidebar — same as ClubSettings, "disputed" is the active tab */}
             <ClubSidebar
@@ -212,24 +215,26 @@ export default function ClubDisputedMatchesPage() {
 
                             {/* LEFT — detail / adjudication panel */}
                             <article className={styles.panel}>
-                                {!selectedMatch ? (
-                                    <EmptyDetailPanel texts={texts} hasMatches={matches.length > 0} />
-                                ) : (
-                                    <AdjudicationPanel
-                                        match={selectedMatch}
-                                        adjScore={adjScore}
-                                        setAdjScore={setAdjScore}
-                                        adjSubmitting={adjSubmitting}
-                                        adjMessage={adjMessage}
-                                        onSubmit={submitAdjudication}
-                                        onClear={() => {
-                                            setSelectedId(null);
-                                            setAdjMessage(null);
-                                            setAdjScore({ team1: "", team2: "" });
-                                        }}
-                                        texts={texts}
-                                    />
-                                )}
+                                <div className={styles.panelScroll}>
+                                    {!selectedMatch ? (
+                                        <EmptyDetailPanel texts={texts} hasMatches={matches.length > 0} />
+                                    ) : (
+                                        <AdjudicationPanel
+                                            match={selectedMatch}
+                                            adjScore={adjScore}
+                                            setAdjScore={setAdjScore}
+                                            adjSubmitting={adjSubmitting}
+                                            adjMessage={adjMessage}
+                                            onSubmit={submitAdjudication}
+                                            onClear={() => {
+                                                setSelectedId(null);
+                                                setAdjMessage(null);
+                                                setAdjScore({ team1: "", team2: "" });
+                                            }}
+                                            texts={texts}
+                                        />
+                                    )}
+                                </div>
                             </article>
 
                             {/* RIGHT — disputed matches list */}
@@ -256,34 +261,36 @@ export default function ClubDisputedMatchesPage() {
                                     </button>
                                 </div>
 
-                                {matches.length === 0 ? (
-                                    <div style={{
-                                        padding: "2rem",
-                                        textAlign: "center",
-                                        border: "1px dashed var(--muted-border)",
-                                        borderRadius: "0.85rem",
-                                    }}>
-                                        <p className={styles.muted}>
-                                            {texts.no_disputed || "No disputed matches at this time."}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <ul className={styles.list}>
-                                        {matches.map(match => (
-                                            <DisputedMatchRow
-                                                key={match.id}
-                                                match={match}
-                                                isSelected={selectedId === match.id}
-                                                onSelect={() => {
-                                                    setSelectedId(match.id);
-                                                    setAdjMessage(null);
-                                                    setAdjScore({ team1: "", team2: "" });
-                                                }}
-                                                texts={texts}
-                                            />
-                                        ))}
-                                    </ul>
-                                )}
+                                <div className={styles.panelScroll}>
+                                    {matches.length === 0 ? (
+                                        <div style={{
+                                            padding: "2rem",
+                                            textAlign: "center",
+                                            border: "1px dashed var(--muted-border)",
+                                            borderRadius: "0.85rem",
+                                        }}>
+                                            <p className={styles.muted}>
+                                                {texts.no_disputed || "No disputed matches at this time."}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <ul className={styles.list}>
+                                            {matches.map(match => (
+                                                <DisputedMatchRow
+                                                    key={match.id}
+                                                    match={match}
+                                                    isSelected={selectedId === match.id}
+                                                    onSelect={() => {
+                                                        setSelectedId(match.id);
+                                                        setAdjMessage(null);
+                                                        setAdjScore({ team1: "", team2: "" });
+                                                    }}
+                                                    texts={texts}
+                                                />
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
                             </article>
 
                         </div>
