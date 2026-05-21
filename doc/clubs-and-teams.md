@@ -26,6 +26,23 @@ Team features include:
 - open the team settings page when the user has permission
 - manage the team from the team settings page
 
+## Independent Teams Joining Clubs
+
+Independent teams are not silently claimed by a club.
+
+When a club manager wants to place an independent team in a club ladder, NetRank creates a team-club invitation instead of changing the team immediately.
+
+The invitation is sent to the team managers. A team manager with manager-edit rights can accept or reject it from the Teams tab in the dashboard.
+
+When the invitation is accepted:
+
+- the team becomes part of the club
+- the team is added to the requested ladder when the ladder is still valid
+- the current team managers become club members
+- the current team players become club members
+
+This keeps consent with the team while still giving club managers a clear path to invite outside teams into their club competitions.
+
 ## Why The Separation Matters
 
 NetRank separates club management from team management on purpose.

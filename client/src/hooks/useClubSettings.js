@@ -199,9 +199,82 @@ export function useClubSettings(clubId, texts = {}) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
 
+            setEligibleTeams((prev) => prev.map((team) => {
+                if (Number(team.id) !== Number(teamId)) return team;
+                if (data.action === "invitation_sent") {
+                    return {
+                        ...team,
+                        pendingClubInvitation: data.invitation,
+                    };
+                }
+                const ladderIds = Array.isArray(team.ladderIds) ? team.ladderIds : [];
+                return {
+                    ...team,
+                    ladderIds: [...new Set([...ladderIds.map(Number), Number(ladderId)])],
+                };
+            }));
+
             return data;
         } catch (err) {
             setError(err.message || texts.could_not_add_team_to_ladder || "Could not add team to ladder.");
+            throw err;
+        }
+    };
+
+    const removeTeamFromLadder = async (ladderId, teamId) => {
+        /*
+         Removes one team from one ladder.
+        */
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/ladders/${ladderId}/teams/${teamId}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            setEligibleTeams((prev) => prev.map((team) => {
+                if (Number(team.id) !== Number(teamId)) return team;
+                return {
+                    ...team,
+                    ladderIds: Array.isArray(team.ladderIds)
+                        ? team.ladderIds.map(Number).filter((id) => id !== Number(ladderId))
+                        : [],
+                };
+            }));
+
+            return data;
+        } catch (err) {
+            setError(err.message || texts.could_not_remove_team_from_ladder || "Could not remove team from ladder.");
+            throw err;
+        }
+    };
+
+    const deleteLadder = async (ladderId) => {
+        /*
+         Deletes one ladder from the current club.
+        */
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/ladders/${ladderId}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            setLadders((prev) => prev.filter((ladder) => Number(ladder.id) !== Number(ladderId)));
+            setEligibleTeams((prev) => prev.map((team) => ({
+                ...team,
+                ladderIds: Array.isArray(team.ladderIds)
+                    ? team.ladderIds.map(Number).filter((id) => id !== Number(ladderId))
+                    : [],
+            })));
+
+            return data;
+        } catch (err) {
+            setError(err.message || texts.could_not_delete_ladder || "Could not delete ladder.");
             throw err;
         }
     };
@@ -349,6 +422,8 @@ export function useClubSettings(clubId, texts = {}) {
         createLadder,
         eligibleTeams,
         addTeamToLadder,
+        removeTeamFromLadder,
+        deleteLadder,
 
         ratingFunctions,
         ruleSets,

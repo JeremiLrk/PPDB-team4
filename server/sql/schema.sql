@@ -94,3 +94,41 @@ CREATE TABLE IF NOT EXISTS ladder_team (
     CONSTRAINT pk_ladder_team
         PRIMARY KEY (ladder_id, team_id)
 );
+
+CREATE TABLE IF NOT EXISTS team_club_join_request (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    club_id BIGINT NOT NULL,
+    team_id BIGINT NOT NULL,
+    ladder_id BIGINT NULL,
+    requested_by BIGINT NULL,
+    date TIMESTAMPTZ NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+
+    CONSTRAINT fk_team_club_join_request_club
+        FOREIGN KEY (club_id)
+        REFERENCES club(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_team_club_join_request_team
+        FOREIGN KEY (team_id)
+        REFERENCES team(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_team_club_join_request_ladder
+        FOREIGN KEY (ladder_id)
+        REFERENCES ladder(id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT fk_team_club_join_request_requested_by
+        FOREIGN KEY (requested_by)
+        REFERENCES account(id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT pk_team_club_join_request
+        PRIMARY KEY (id)
+);
+
+-- A club can have only one open invitation for the same independent team.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_team_club_join_request_pending
+    ON team_club_join_request (club_id, team_id)
+    WHERE status = 'pending';

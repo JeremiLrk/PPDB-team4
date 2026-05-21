@@ -312,6 +312,75 @@ msgstr "Adding..."
 msgid "club_settings.team_added_to_ladder"
 msgstr "Team added to ladder."
 
+msgid "club_settings.team_invitation_sent"
+msgstr "Invitation sent to the team manager."
+
+msgid "club_settings.invite_team"
+msgstr "Invite team"
+
+msgid "club_settings.team_already_in_ladder"
+msgstr "This team is already in the selected ladder."
+
+msgid "club_settings.team_invite_pending"
+msgstr "This team already has a pending club invitation."
+
+msgid "club_settings.team_needs_invite"
+msgstr "This independent team needs manager approval before it can join the club and ladder."
+
+msgid "club_settings.team_can_add_directly"
+msgstr "This club team can be added directly."
+
+msgid "club_settings.team_managers_label"
+msgstr "Managers"
+
+msgid "club_settings.team_players_label"
+msgstr "Players"
+
+msgid "club_settings.no_team_managers"
+msgstr "No team managers"
+
+msgid "club_settings.no_team_players"
+msgstr "No players"
+
+msgid "club_settings.teams_in_ladder"
+msgstr "Teams in ladder"
+
+msgid "club_settings.delete_ladder"
+msgstr "Delete ladder"
+
+msgid "club_settings.deleting"
+msgstr "Deleting..."
+
+msgid "club_settings.ladder_deleted"
+msgstr "Ladder deleted."
+
+msgid "club_settings.could_not_delete_ladder"
+msgstr "Could not delete ladder."
+
+msgid "club_settings.remove_from_ladder"
+msgstr "Remove"
+
+msgid "club_settings.removing"
+msgstr "Removing..."
+
+msgid "club_settings.team_removed_from_ladder"
+msgstr "Team removed from ladder."
+
+msgid "club_settings.team_removed_matches_cancelled"
+msgstr "Team removed. Unplayed matches in this ladder were cancelled."
+
+msgid "club_settings.could_not_remove_team_from_ladder"
+msgstr "Could not remove team from ladder."
+
+msgid "club_settings.no_teams_in_ladder"
+msgstr "No teams in this ladder yet."
+
+msgid "club_settings.confirm_remove_team_from_ladder"
+msgstr "Remove this team from the ladder? Unplayed matches for this team in this ladder will be cancelled."
+
+msgid "club_settings.confirm_delete_ladder"
+msgstr "Delete this ladder? Teams will be removed from this ladder, but existing match history is kept."
+
 msgid "club_settings.could_not_add_team_to_ladder"
 msgstr "Could not add team to ladder."
 

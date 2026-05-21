@@ -72,6 +72,8 @@ function ClubSettings() {
                         ruleSets={settings.ruleSets}
                         eligibleTeams={settings.eligibleTeams}
                         onAddTeam={settings.addTeamToLadder}
+                        onRemoveTeam={settings.removeTeamFromLadder}
+                        onDeleteLadder={settings.deleteLadder}
                         supportsRuleSets={settings.supportsRuleSets}
                         texts={texts}
                     />

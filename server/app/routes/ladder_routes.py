@@ -1,12 +1,16 @@
+from datetime import datetime, timezone
+
 from flask import Blueprint, jsonify, request
 
 from server.app.decorators.login_required import login_required
-from server.app.models.account import Administrator
+from server.app.models.account import Account, Administrator
 from server.app.models.club_owner import ClubOwner, ClubOwnerClub
 from server.app.models.ladder import Ladder, LadderRatingFunction
 from server.app.models.ladder_team import LadderTeam
+from server.app.models.match import cancel_unplayed_matches_for_team
 from server.app.models.match_rule import MatchRuleSet
 from server.app.models.team import Team
+from server.app.models.team_club_join_request import TeamClubJoinRequest
 from server.app.models.sport_type import SportType
 from server.app.services.ladder_service import (
     get_all_players_ladder,
@@ -30,6 +34,102 @@ def _can_manage_club(account, club_id: int) -> bool:
     return False
 
 
+def _next_ladder_rank(ladder_id: int) -> int:
+    return (
+        db.session.query(db.func.coalesce(db.func.max(LadderTeam.rank), 0))
+        .filter_by(ladder_id=ladder_id)
+        .scalar()
+    ) + 1
+
+
+def _recompute_ladder_ranks(ladder_id: int) -> None:
+    rows = (
+        LadderTeam.query
+        .filter_by(ladder_id=ladder_id)
+        .order_by(LadderTeam.rank.asc().nullslast(), LadderTeam.rating.desc(), LadderTeam.team_id.asc())
+        .all()
+    )
+    for rank, row in enumerate(rows, start=1):
+        row.rank = rank
+
+
+def _serialize_account_name(account: Account | None) -> dict | None:
+    if account is None:
+        return None
+    name = " ".join(part for part in [account.first_name, account.last_name] if part).strip()
+    return {
+        "id": account.id,
+        "name": name or account.email,
+    }
+
+
+def _pending_team_club_invitation(club_id: int, team_id: int) -> TeamClubJoinRequest | None:
+    return TeamClubJoinRequest.query.filter_by(
+        club_id=club_id,
+        team_id=team_id,
+        status="pending",
+    ).first()
+
+
+def _serialize_ladder_candidate(team: Team, club_id: int) -> dict:
+    payload = team.to_dict()
+    ladder_rows = LadderTeam.query.filter_by(team_id=team.id).all()
+    pending_invitation = _pending_team_club_invitation(club_id, team.id)
+
+    managers = [
+        item
+        for item in (_serialize_account_name(manager.account) for manager in team.managers)
+        if item is not None
+    ]
+    players = [
+        item
+        for item in (_serialize_account_name(player.account) for player in team.players)
+        if item is not None
+    ]
+
+    payload.update({
+        "membershipStatus": "club" if team.club_id == club_id else "independent",
+        "ladderIds": [row.ladder_id for row in ladder_rows],
+        "pendingClubInvitation": pending_invitation.serialize() if pending_invitation else None,
+        "managers": managers,
+        "players": players,
+        "managerCount": len(managers),
+        "playerCount": len(players),
+        "canAddDirectly": team.club_id == club_id,
+        "requiresInvite": team.club_id is None,
+    })
+    return payload
+
+
+def _create_or_refresh_team_club_invitation(
+    *,
+    account: Account,
+    club_id: int,
+    team: Team,
+    ladder: Ladder,
+) -> TeamClubJoinRequest:
+    if not team.managers:
+        return None
+
+    invitation = _pending_team_club_invitation(club_id, team.id)
+    if invitation is None:
+        invitation = TeamClubJoinRequest(
+            club_id=club_id,
+            team_id=team.id,
+            ladder_id=ladder.id,
+            requested_by=account.id,
+            date=datetime.now(timezone.utc),
+            status="pending",
+        )
+        db.session.add(invitation)
+    else:
+        invitation.ladder_id = ladder.id
+        invitation.requested_by = account.id
+        invitation.date = datetime.now(timezone.utc)
+
+    return invitation
+
+
 @ladder_bp.get("/clubs/<int:club_id>/eligible-teams")
 @login_required
 def get_eligible_teams(account, club_id: int):
@@ -45,7 +145,9 @@ def get_eligible_teams(account, club_id: int):
         .all()
     )
 
-    return jsonify({"teams": [team.to_dict() for team in teams]}), 200
+    return jsonify({
+        "teams": [_serialize_ladder_candidate(team, club_id) for team in teams],
+    }), 200
 
 
 @ladder_bp.get("/clubs/<int:club_id>/ladders/<int:ladder_id>/players")
@@ -113,26 +215,42 @@ def add_team_to_ladder(account, club_id: int, ladder_id: int, team_id: int):
     if not team:
         return jsonify({"message": "Team not found."}), 404
 
-    existing = LadderTeam.query.filter_by(ladder_id=ladder_id, team_id=team_id).first()
-    if existing:
-        return jsonify({"message": "Team is already in this ladder."}), 400
-
     if team.club_id is not None and team.club_id != club_id:
         return jsonify({"message": "Team belongs to a different club."}), 400
 
     if team.club_id is None:
-        team.club_id = club_id
+        invitation = _create_or_refresh_team_club_invitation(
+            account=account,
+            club_id=club_id,
+            team=team,
+            ladder=ladder,
+        )
+        if invitation is None:
+            return jsonify({
+                "message": "Independent teams need a team manager before they can be invited to a club ladder.",
+            }), 400
+        db.session.commit()
+        return jsonify({
+            "message": f"Invitation sent to {team.name}. A team manager must accept before the team joins {ladder.name}.",
+            "action": "invitation_sent",
+            "team": _serialize_ladder_candidate(team, club_id),
+            "invitation": invitation.serialize(),
+        }), 202
 
-    next_rank = (
-        db.session.query(db.func.coalesce(db.func.max(LadderTeam.rank), 0))
-        .filter_by(ladder_id=ladder_id)
-        .scalar()
-    ) + 1
+    existing = LadderTeam.query.filter_by(ladder_id=ladder_id, team_id=team_id).first()
+    if existing:
+        return jsonify({"message": "Team is already in this ladder."}), 400
+
+    if ladder.sport_type_id and team.sport_type_id and ladder.sport_type_id != team.sport_type_id:
+        return jsonify({"message": "Team sport type does not match this ladder."}), 400
+
+    if ladder.sport_type_id and not team.sport_type_id:
+        team.sport_type_id = ladder.sport_type_id
 
     ladder_team = LadderTeam(
         ladder_id=ladder_id,
         team_id=team_id,
-        rank=next_rank,
+        rank=_next_ladder_rank(ladder_id),
         rating=1000,
         matches_played=0,
     )
@@ -141,6 +259,7 @@ def add_team_to_ladder(account, club_id: int, ladder_id: int, team_id: int):
 
     return jsonify({
         "message": f"Successfully added {team.name} to {ladder.name}.",
+        "action": "added",
         "team": team.to_dict(),
         "ladderTeam": {
             "ladderId": ladder_team.ladder_id,
@@ -149,6 +268,61 @@ def add_team_to_ladder(account, club_id: int, ladder_id: int, team_id: int):
             "rating": ladder_team.rating,
             "matchesPlayed": ladder_team.matches_played,
         },
+    }), 200
+
+
+@ladder_bp.delete("/clubs/<int:club_id>/ladders/<int:ladder_id>/teams/<int:team_id>")
+@login_required
+def remove_team_from_ladder(account, club_id: int, ladder_id: int, team_id: int):
+    """Remove one team from a club ladder and cancel its unplayed ladder matches."""
+    if not _can_manage_club(account, club_id):
+        return jsonify({"message": "Forbidden."}), 403
+
+    ladder = db.session.get(Ladder, ladder_id)
+    if not ladder or ladder.club_id != club_id:
+        return jsonify({"message": "Ladder not found."}), 404
+
+    ladder_team = LadderTeam.query.filter_by(ladder_id=ladder_id, team_id=team_id).first()
+    if not ladder_team:
+        return jsonify({"message": "Team is not in this ladder."}), 404
+
+    cancelled = cancel_unplayed_matches_for_team(
+        team_id=team_id,
+        ladder_ids=[ladder_id],
+        reason="Team was removed from ladder.",
+    )
+    db.session.delete(ladder_team)
+    db.session.flush()
+    _recompute_ladder_ranks(ladder_id)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Team removed from ladder.",
+        "teamId": team_id,
+        "ladderId": ladder_id,
+        "cancelledMatches": len(cancelled),
+    }), 200
+
+
+@ladder_bp.delete("/clubs/<int:club_id>/ladders/<int:ladder_id>")
+@login_required
+def delete_ladder(account, club_id: int, ladder_id: int):
+    """Delete a club ladder."""
+    if not _can_manage_club(account, club_id):
+        return jsonify({"message": "Forbidden."}), 403
+
+    ladder = db.session.get(Ladder, ladder_id)
+    if not ladder or ladder.club_id != club_id:
+        return jsonify({"message": "Ladder not found."}), 404
+
+    team_count = LadderTeam.query.filter_by(ladder_id=ladder_id).count()
+    db.session.delete(ladder)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Ladder deleted.",
+        "ladderId": ladder_id,
+        "removedTeams": team_count,
     }), 200
 
 

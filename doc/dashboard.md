@@ -50,3 +50,14 @@ The dashboard is the place where most signed-in users will start:
 - club owners use it for club requests and management
 - team managers use it for match and team work
 - the whole page is designed to keep controls usable on narrow screens
+
+## Team Invitations
+
+The Teams tab shows team-related invitations.
+
+There are two invitation types:
+
+- player invitations, where a user is invited to join a team
+- club invitations, where a club asks a managed independent team to join the club and optionally enter a ladder
+
+Accepting a club invitation moves the team into the club, adds current team managers and players as club members, and places the team in the requested ladder when one was selected.

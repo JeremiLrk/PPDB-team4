@@ -5,6 +5,7 @@ import click
 from flask import Flask, jsonify
 
 from server.app.models.match_rule import MatchRuleSet  # noqa: F401 – needed for db.create_all()
+from server.app.models.team_club_join_request import TeamClubJoinRequest  # noqa: F401 – needed for db.create_all()
 from server.app.routes.sport_type_routes import sport_type_bp
 from server.app.routes.team import team_bp
 from server.app.routes.match_rule import match_rule_bp, match_rule_set_bp

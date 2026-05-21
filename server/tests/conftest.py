@@ -10,7 +10,7 @@ import psycopg
 # Seed tables (account_role, page_text, match_rule_set, ladder_rating_function,
 # sport_type, venue_type, match_status) are intentionally excluded.
 _TEST_TABLES = (
-    "team_manager_team, player_team, club_owner_club, club_join_request, "
+    "team_manager_team, player_team, club_owner_club, club_join_request, team_club_join_request, "
     "club_player, availability_block, "
     "ladder_team, ladder, "
     "match_score_submission, "

@@ -312,6 +312,75 @@ msgstr "Toevoegen..."
 msgid "club_settings.team_added_to_ladder"
 msgstr "Team toegevoegd aan ladder."
 
+msgid "club_settings.team_invitation_sent"
+msgstr "Uitnodiging verstuurd naar de teambeheerder."
+
+msgid "club_settings.invite_team"
+msgstr "Team uitnodigen"
+
+msgid "club_settings.team_already_in_ladder"
+msgstr "Dit team zit al in de geselecteerde ladder."
+
+msgid "club_settings.team_invite_pending"
+msgstr "Dit team heeft al een open clubuitnodiging."
+
+msgid "club_settings.team_needs_invite"
+msgstr "Dit onafhankelijke team heeft goedkeuring van een teambeheerder nodig voordat het bij de club en ladder kan komen."
+
+msgid "club_settings.team_can_add_directly"
+msgstr "Dit clubteam kan direct worden toegevoegd."
+
+msgid "club_settings.team_managers_label"
+msgstr "Beheerders"
+
+msgid "club_settings.team_players_label"
+msgstr "Spelers"
+
+msgid "club_settings.no_team_managers"
+msgstr "Geen teambeheerders"
+
+msgid "club_settings.no_team_players"
+msgstr "Geen spelers"
+
+msgid "club_settings.teams_in_ladder"
+msgstr "Teams in ladder"
+
+msgid "club_settings.delete_ladder"
+msgstr "Ladder verwijderen"
+
+msgid "club_settings.deleting"
+msgstr "Verwijderen..."
+
+msgid "club_settings.ladder_deleted"
+msgstr "Ladder verwijderd."
+
+msgid "club_settings.could_not_delete_ladder"
+msgstr "Kon ladder niet verwijderen."
+
+msgid "club_settings.remove_from_ladder"
+msgstr "Verwijderen"
+
+msgid "club_settings.removing"
+msgstr "Verwijderen..."
+
+msgid "club_settings.team_removed_from_ladder"
+msgstr "Team uit ladder verwijderd."
+
+msgid "club_settings.team_removed_matches_cancelled"
+msgstr "Team verwijderd. Niet-gespeelde wedstrijden in deze ladder zijn geannuleerd."
+
+msgid "club_settings.could_not_remove_team_from_ladder"
+msgstr "Kon team niet uit ladder verwijderen."
+
+msgid "club_settings.no_teams_in_ladder"
+msgstr "Nog geen teams in deze ladder."
+
+msgid "club_settings.confirm_remove_team_from_ladder"
+msgstr "Dit team uit de ladder verwijderen? Niet-gespeelde wedstrijden voor dit team in deze ladder worden geannuleerd."
+
+msgid "club_settings.confirm_delete_ladder"
+msgstr "Deze ladder verwijderen? Teams worden uit deze ladder gehaald, maar bestaande wedstrijdhistoriek blijft bewaard."
+
 msgid "club_settings.could_not_add_team_to_ladder"
 msgstr "Kon team niet aan ladder toevoegen."
 

@@ -11,6 +11,8 @@ export function ClubLadders({
     ruleSets = [],
     eligibleTeams = [],
     onAddTeam,
+    onRemoveTeam,
+    onDeleteLadder,
     supportsRuleSets = true,
     texts = {},
 }) {
@@ -34,8 +36,31 @@ export function ClubLadders({
 
     const [submitting, setSubmitting] = useState(false);
     const [addingTeam, setAddingTeam] = useState(false);
+    const [ladderAction, setLadderAction] = useState(null);
     const [teamMessage, setTeamMessage] = useState(null);
     const showRuleSetField = supportsRuleSets;
+    const selectedLadderId = teamForm.ladder_id ? Number(teamForm.ladder_id) : null;
+    const selectedTeamId = teamForm.team_id ? Number(teamForm.team_id) : null;
+    const selectedTeam = eligibleTeams.find((team) => Number(team.id) === selectedTeamId) || null;
+    const selectedTeamLadderIds = Array.isArray(selectedTeam?.ladderIds) ? selectedTeam.ladderIds.map(Number) : [];
+    const selectedTeamAlreadyInLadder = selectedLadderId ? selectedTeamLadderIds.includes(selectedLadderId) : false;
+    const selectedTeamPendingInvite = selectedTeam?.pendingClubInvitation || null;
+    const selectedTeamNeedsInvite = selectedTeam?.requiresInvite || selectedTeam?.membershipStatus === "independent";
+    const selectedTeamHasManagers = Number(selectedTeam?.managerCount || 0) > 0;
+    const addTeamDisabled = (
+        addingTeam
+        || !teamForm.ladder_id
+        || !teamForm.team_id
+        || selectedTeamAlreadyInLadder
+        || Boolean(selectedTeamPendingInvite)
+        || (selectedTeamNeedsInvite && !selectedTeamHasManagers)
+    );
+    const teamsByLadder = ladders.reduce((acc, ladder) => {
+        acc[ladder.id] = eligibleTeams
+            .filter((team) => Array.isArray(team.ladderIds) && team.ladderIds.map(Number).includes(Number(ladder.id)))
+            .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
+        return acc;
+    }, {});
 
     useEffect(() => {
         if (!showRuleSetField && form.rule_set_id) {
@@ -127,10 +152,12 @@ export function ClubLadders({
         setTeamMessage(null);
 
         try {
-            await onAddTeam(Number(teamForm.ladder_id), Number(teamForm.team_id));
+            const result = await onAddTeam(Number(teamForm.ladder_id), Number(teamForm.team_id));
             setTeamMessage({
                 type: "success",
-                text: texts.team_added_to_ladder || "Team added to ladder.",
+                text: result?.action === "invitation_sent"
+                    ? (texts.team_invitation_sent || "Invitation sent to the team manager.")
+                    : (texts.team_added_to_ladder || "Team added to ladder."),
             });
             setTeamForm({
                 ladder_id: "",
@@ -143,6 +170,69 @@ export function ClubLadders({
             });
         } finally {
             setAddingTeam(false);
+        }
+    };
+
+    const handleRemoveTeam = async (ladderId, teamId, teamName) => {
+        /*
+         Removes one team from one ladder after confirmation.
+        */
+        if (typeof onRemoveTeam !== "function") return;
+        const confirmed = window.confirm(
+            texts.confirm_remove_team_from_ladder
+            || `Remove ${teamName || "this team"} from this ladder? Unplayed matches for this team in this ladder will be cancelled.`
+        );
+        if (!confirmed) return;
+
+        setLadderAction(`remove-${ladderId}-${teamId}`);
+        setTeamMessage(null);
+        try {
+            const result = await onRemoveTeam(Number(ladderId), Number(teamId));
+            setTeamMessage({
+                type: "success",
+                text: result?.cancelledMatches
+                    ? (texts.team_removed_matches_cancelled || `Team removed. ${result.cancelledMatches} unplayed match(es) cancelled.`)
+                    : (texts.team_removed_from_ladder || "Team removed from ladder."),
+            });
+        } catch (error) {
+            setTeamMessage({
+                type: "error",
+                text: error?.message || texts.could_not_remove_team_from_ladder || "Could not remove team from ladder.",
+            });
+        } finally {
+            setLadderAction(null);
+        }
+    };
+
+    const handleDeleteLadder = async (ladderId, ladderName) => {
+        /*
+         Deletes one ladder after confirmation.
+        */
+        if (typeof onDeleteLadder !== "function") return;
+        const confirmed = window.confirm(
+            texts.confirm_delete_ladder
+            || `Delete ${ladderName || "this ladder"}? Teams will be removed from this ladder, but existing match history is kept.`
+        );
+        if (!confirmed) return;
+
+        setLadderAction(`delete-${ladderId}`);
+        setTeamMessage(null);
+        try {
+            await onDeleteLadder(Number(ladderId));
+            if (Number(teamForm.ladder_id) === Number(ladderId)) {
+                setTeamForm((prev) => ({ ...prev, ladder_id: "" }));
+            }
+            setTeamMessage({
+                type: "success",
+                text: texts.ladder_deleted || "Ladder deleted.",
+            });
+        } catch (error) {
+            setTeamMessage({
+                type: "error",
+                text: error?.message || texts.could_not_delete_ladder || "Could not delete ladder.",
+            });
+        } finally {
+            setLadderAction(null);
         }
     };
 
@@ -240,16 +330,54 @@ export function ClubLadders({
                             {eligibleTeams.map((team) => (
                                 <option key={team.id} value={team.id}>
                                     {team.name}
+                                    {team.membershipStatus === "independent" ? " - invite required" : " - club team"}
+                                    {Array.isArray(team.ladderIds) && selectedLadderId && team.ladderIds.map(Number).includes(selectedLadderId) ? " - already in ladder" : ""}
+                                    {team.pendingClubInvitation ? " - invite pending" : ""}
                                 </option>
                             ))}
                         </select>
 
+                        {selectedTeam ? (
+                            <div className={styles.formMetaBox}>
+                                <p className={styles.primaryText}>
+                                    {selectedTeam.name}
+                                </p>
+                                <p className={styles.secondaryText}>
+                                    {selectedTeamAlreadyInLadder
+                                        ? (texts.team_already_in_ladder || "This team is already in the selected ladder.")
+                                        : selectedTeamPendingInvite
+                                            ? (texts.team_invite_pending || "This team already has a pending club invitation.")
+                                            : selectedTeamNeedsInvite
+                                                ? (texts.team_needs_invite || "This independent team needs manager approval before it can join the club and ladder.")
+                                                : (texts.team_can_add_directly || "This club team can be added directly.")}
+                                </p>
+                                <p className={styles.secondaryText}>
+                                    {(texts.team_managers_label || "Managers")}: {
+                                        selectedTeam.managers?.length
+                                            ? selectedTeam.managers.map((manager) => manager.name).join(", ")
+                                            : (texts.no_team_managers || "No team managers")
+                                    }
+                                </p>
+                                <p className={styles.secondaryText}>
+                                    {(texts.team_players_label || "Players")}: {
+                                        selectedTeam.players?.length
+                                            ? selectedTeam.players.map((player) => player.name).join(", ")
+                                            : (texts.no_team_players || "No players")
+                                    }
+                                </p>
+                            </div>
+                        ) : null}
+
                         <button
                             className={styles.submitButton}
                             type="submit"
-                            disabled={addingTeam || !teamForm.ladder_id || !teamForm.team_id}
+                            disabled={addTeamDisabled}
                         >
-                            {addingTeam ? (texts.adding_team || "Toevoegen...") : (texts.add_team || "Team toevoegen")}
+                            {addingTeam
+                                ? (texts.adding_team || "Toevoegen...")
+                                : selectedTeamNeedsInvite
+                                    ? (texts.invite_team || "Invite team")
+                                    : (texts.add_team || "Team toevoegen")}
                         </button>
 
                         {teamMessage ? (
@@ -270,11 +398,58 @@ export function ClubLadders({
                     <ul className={styles.list}>
                         {ladders.map((ladder) => (
                             <li key={ladder.id} className={styles.listItem}>
-                                <div>
+                                <div className={styles.ladderManageBlock}>
+                                    <div>
                                     <p className={styles.primaryText}>{ladder.name}</p>
                                     <p className={styles.secondaryText}>
                                         {ladder.description || texts.no_ladder_description || "Geen omschrijving"}
                                     </p>
+                                        <p className={styles.secondaryText}>
+                                            {(texts.teams_in_ladder || "Teams in ladder")}: {(teamsByLadder[ladder.id] || []).length}
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        className={styles.deleteButton}
+                                        onClick={() => handleDeleteLadder(ladder.id, ladder.name)}
+                                        disabled={ladderAction === `delete-${ladder.id}`}
+                                    >
+                                        {ladderAction === `delete-${ladder.id}`
+                                            ? (texts.deleting || "Deleting...")
+                                            : (texts.delete_ladder || "Delete ladder")}
+                                    </button>
+
+                                    {(teamsByLadder[ladder.id] || []).length > 0 ? (
+                                        <ul className={styles.nestedList}>
+                                            {teamsByLadder[ladder.id].map((team) => (
+                                                <li key={team.id} className={styles.nestedListItem}>
+                                                    <div>
+                                                        <p className={styles.primaryText}>{team.name}</p>
+                                                        <p className={styles.secondaryText}>
+                                                            {(texts.team_players_label || "Players")}: {team.playerCount || 0}
+                                                            {" · "}
+                                                            {(texts.team_managers_label || "Managers")}: {team.managerCount || 0}
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.deleteButton}
+                                                        onClick={() => handleRemoveTeam(ladder.id, team.id, team.name)}
+                                                        disabled={ladderAction === `remove-${ladder.id}-${team.id}`}
+                                                    >
+                                                        {ladderAction === `remove-${ladder.id}-${team.id}`
+                                                            ? (texts.removing || "Removing...")
+                                                            : (texts.remove_from_ladder || "Remove")}
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className={styles.muted}>
+                                            {texts.no_teams_in_ladder || "No teams in this ladder yet."}
+                                        </p>
+                                    )}
                                 </div>
                             </li>
                         ))}

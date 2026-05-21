@@ -13,6 +13,35 @@ A ladder can point to:
 
 In practice, this lets a club run more than one competition at the same time without mixing their rankings or rules.
 
+## Adding Teams To Ladders
+
+Club teams can be added to a club ladder directly by a club owner or administrator.
+
+Independent teams use an invitation flow:
+
+1. The club manager selects the independent team in the ladder settings.
+2. NetRank creates a pending invitation for the team manager.
+3. The team manager accepts or rejects the invitation from the dashboard.
+4. On acceptance, the team joins the club and is added to the ladder.
+
+The ladder chooser shows the practical state of each candidate team:
+
+- whether it is already a club team
+- whether it needs an invitation
+- whether an invitation is already pending
+- whether the team is already in the selected ladder
+- current managers and players
+
+NetRank does not assign an independent team to a club without team-manager approval.
+
+Club managers can also manage existing ladder membership from the same settings area:
+
+- remove a team from a ladder
+- delete a ladder
+- see how many teams are currently in each ladder
+
+Removing a team from a ladder cancels that team's unplayed matches in that ladder. Deleting a ladder removes the ladder membership rows while keeping historical match records in the database.
+
 ## How Elo Works
 
 NetRank uses an Elo-style rating system for ladder rankings. In plain language, that means every match changes a team’s rating based on whether it did better or worse than the system expected.

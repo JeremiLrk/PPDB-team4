@@ -533,6 +533,58 @@ describe("Disputed matches and rulesets", () => {
         expect(screen.getByText("Choose a ruleset")).toBeInTheDocument();
     });
 
+    // Verifies ladder settings expose remove-team and delete-ladder controls.
+    test("ladder management controls remove teams and delete ladders", async () => {
+        const user = userEvent.setup();
+        const onRemoveTeam = vi.fn().mockResolvedValue({ cancelledMatches: 1 });
+        const onDeleteLadder = vi.fn().mockResolvedValue({});
+        const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+        renderWithLang(
+            <ClubLadders
+                ladders={[{ id: 10, name: "Premier Ladder", description: "Top division" }]}
+                onCreate={vi.fn()}
+                ratingFunctions={[{ id: 1, name: "Elo" }]}
+                ruleSets={[{ id: 1, name: "Standard Ladder" }]}
+                eligibleTeams={[
+                    {
+                        id: 44,
+                        name: "NetRank Aces",
+                        membershipStatus: "club",
+                        ladderIds: [10],
+                        playerCount: 2,
+                        managerCount: 1,
+                        players: [],
+                        managers: [],
+                    },
+                ]}
+                onAddTeam={vi.fn()}
+                onRemoveTeam={onRemoveTeam}
+                onDeleteLadder={onDeleteLadder}
+                supportsRuleSets={true}
+                texts={{
+                    ladders_title: "Ladders",
+                    delete_ladder: "Delete ladder",
+                    remove_from_ladder: "Remove",
+                    teams_in_ladder: "Teams in ladder",
+                    team_players_label: "Players",
+                    team_managers_label: "Managers",
+                }}
+            />,
+        );
+
+        expect(screen.getByText("Teams in ladder: 1")).toBeInTheDocument();
+        expect(screen.getByText("NetRank Aces")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Remove" }));
+        expect(onRemoveTeam).toHaveBeenCalledWith(10, 44);
+
+        await user.click(screen.getByRole("button", { name: "Delete ladder" }));
+        expect(onDeleteLadder).toHaveBeenCalledWith(10);
+
+        confirmSpy.mockRestore();
+    });
+
     // Verifies non-racket clubs do not show the rules tab in settings.
     test("settings sidebar hides rules tab for basketball", async () => {
         renderWithLang(

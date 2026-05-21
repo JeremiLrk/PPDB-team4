@@ -8,17 +8,24 @@ import buttonStyles from "@/style/common/Buttons.module.css";
 import formStyles from "@/style/common/Forms.module.css";
 import dashboardStyles from "@/style/dashboard/Dashboard.module.css";
 import { useThemeContext } from "@/context/useThemeContext.jsx";
-import { usePageTexts } from "@/hooks/common/usePageTexts.js";
-import { useLangContext } from "@/context/useLangContext.jsx";
 import { useTeamInvitations } from "@/hooks/teams/useTeamInvitations.js";
 
 export default function TeamInvitations() {
     const navigate = useNavigate();
     const { theme } = useThemeContext();
     const isLight = theme === "light";
-    const { lang } = useLangContext();
-    const texts = usePageTexts("teams", lang);
-    const { invitations, loading, error, acceptInvitation, rejectInvitation } = useTeamInvitations();
+    const {
+        invitations,
+        clubInvitations,
+        loading,
+        error,
+        acceptInvitation,
+        rejectInvitation,
+        acceptClubInvitation,
+        rejectClubInvitation,
+    } = useTeamInvitations();
+    const teamInvitationRows = Array.isArray(invitations) ? invitations : [];
+    const clubInvitationRows = Array.isArray(clubInvitations) ? clubInvitations : [];
     // Local state keeps track of which invitation is currently being processed.
     const [processing, setProcessing] = useState(null);
 
@@ -40,11 +47,29 @@ export default function TeamInvitations() {
         setProcessing(null);
     }
 
+    async function handleClubAccept(id, teamId) {
+        /*
+         Accepts one club invitation for a managed team.
+        */
+        setProcessing(`club-${id}`);
+        await acceptClubInvitation(id, teamId);
+        setProcessing(null);
+    }
+
+    async function handleClubReject(id, teamId) {
+        /*
+         Rejects one club invitation for a managed team.
+        */
+        setProcessing(`club-${id}`);
+        await rejectClubInvitation(id, teamId);
+        setProcessing(null);
+    }
+
     if (loading) {
         return <div className={commonStyles.loading}>Loading invitations...</div>;
     }
 
-    if (invitations.length === 0) {
+    if (teamInvitationRows.length === 0 && clubInvitationRows.length === 0) {
         return null;
     }
 
@@ -52,13 +77,72 @@ export default function TeamInvitations() {
         <article className={panelStyles.panel}>
             <div className={panelStyles.panelTopRow}>
                 <h3 className={panelStyles.panelTitle}>Team Invitations</h3>
-                <span className={panelStyles.panelCounter}>{invitations.length}</span>
+                <span className={panelStyles.panelCounter}>{teamInvitationRows.length + clubInvitationRows.length}</span>
             </div>
 
             {error && <p className={commonStyles.warning}>{error}</p>}
 
             <ul className={panelStyles.list}>
-                        {invitations.map(inv => (
+                        {clubInvitationRows.map(inv => (
+                            <li key={`club-${inv.id}`} className={panelStyles.listItem}>
+                                <div>
+                            <p
+                                className={dashboardStyles.teamCardName}
+                                style={{
+                                    color: isLight ? "#020617" : "#ffffff",
+                                    WebkitTextFillColor: isLight ? "#020617" : "#ffffff",
+                                }}
+                            >
+                                {inv.teamName || inv.team_name}
+                            </p>
+                            <p
+                                className={dashboardStyles.teamCardMeta}
+                                style={{
+                                    color: isLight ? "#334155" : "#cbd5e1",
+                                    WebkitTextFillColor: isLight ? "#334155" : "#cbd5e1",
+                                }}
+                            >
+                                {(inv.clubName || inv.club_name) ? `Club invite: ${inv.clubName || inv.club_name}` : "Club invite"}
+                            </p>
+                            {(inv.ladderName || inv.ladder_name) && (
+                                <p
+                                    className={dashboardStyles.teamCardMeta}
+                                    style={{
+                                        color: isLight ? "#334155" : "#cbd5e1",
+                                        WebkitTextFillColor: isLight ? "#334155" : "#cbd5e1",
+                                    }}
+                                >
+                                    Ladder: {inv.ladderName || inv.ladder_name}
+                                </p>
+                            )}
+                        </div>
+
+                        <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexShrink: 0 }}>
+                            <button
+                                className={buttonStyles.primaryButton}
+                                onClick={() => navigate(`/teams/${inv.teamId || inv.team_id}`)}
+                                disabled={processing}
+                            >
+                                View
+                            </button>
+                            <button
+                                className={buttonStyles.primaryButton}
+                                onClick={() => handleClubAccept(inv.id, inv.teamId || inv.team_id)}
+                                disabled={processing === `club-${inv.id}`}
+                            >
+                                {processing === `club-${inv.id}` ? "..." : "Accept"}
+                            </button>
+                            <button
+                                className={`${buttonStyles.primaryButton} ${formStyles.danger}`}
+                                onClick={() => handleClubReject(inv.id, inv.teamId || inv.team_id)}
+                                disabled={processing === `club-${inv.id}`}
+                            >
+                                {processing === `club-${inv.id}` ? "..." : "Reject"}
+                            </button>
+                        </div>
+                    </li>
+                ))}
+                        {teamInvitationRows.map(inv => (
                             <li key={inv.id} className={panelStyles.listItem}>
                                 <div>
                                     {/* Team name, club, and sport are stacked so the invite stays readable on small screens. */}
