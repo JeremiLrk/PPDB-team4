@@ -29,7 +29,7 @@ const PAGE_SIZE_OPTIONS = [6, 12, 24];
  *
  * managedTeams (teams from /api/teams/my) are fetched here so that
  */
-export function TeamsTab({ texts, theme }) {
+export function TeamsTab({ texts, theme, onInvitationsChanged }) {
     /*
      Owns the dashboard tab that lists the current account's teams.
     */
@@ -55,6 +55,14 @@ export function TeamsTab({ texts, theme }) {
          Reloads the team list after a team is created.
         */
         void load({ sort, pageSize });
+    }
+
+    function handleInvitationsResolved() {
+        /*
+         Keeps the invitation count and the team list in sync after a response.
+        */
+        void load({ sort, pageSize });
+        void onInvitationsChanged?.();
     }
     return (
         <div className={`${animationStyles.contentGrid} ${animationStyles.contentFade}`}>
@@ -172,7 +180,7 @@ export function TeamsTab({ texts, theme }) {
 
             {/* Team Invitations Section */}
             <div style={{ gridColumn: "1 / -1" }}>
-                <TeamInvitations />
+                <TeamInvitations onResolved={handleInvitationsResolved} />
             </div>
         </div>
     );

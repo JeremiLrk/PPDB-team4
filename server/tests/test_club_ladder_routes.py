@@ -3,6 +3,7 @@ from server.app.models.club import Club
 from server.app.models.club_player import ClubPlayer
 from server.app.models.ladder import Ladder
 from server.app.models.ladder_team import LadderTeam
+from server.app.models.match_rule import MatchRuleSet
 from server.app.models.player import Player, PlayerTeam
 from server.app.models.sport_type import SportType
 from server.app.models.team import Team, TeamManager, TeamManagerTeam
@@ -146,6 +147,92 @@ def test_admin_can_add_club_team_to_ladder(app, client, monkeypatch):
         assert team.club_id == club_id
 
 
+# Verifies oversized teams warn first but can still be added after confirmation.
+def test_admin_warns_on_oversized_team_before_adding_to_ladder(app, client, monkeypatch):
+    with app.app_context():
+        club = _club()
+        sport = SportType(name="Test Singles", minimum_number_of_players_on_a_team=1, maximum_number_of_players_per_team=1)
+        db.session.add(sport)
+        db.session.flush()
+        ruleset = MatchRuleSet(name="Singles Rules", game_format="singles")
+        db.session.add(ruleset)
+        db.session.flush()
+        ladder = Ladder(club_id=club.id, name="Singles Ladder", sport_type_id=sport.id, ruleset_id=ruleset.id)
+        db.session.add(ladder)
+        team = _team("Oversized Club Team", club)
+        admin = _admin("oversized-ladder-admin@test.com")
+        player_a = _account("oversized-a@test.com", role_name="user")
+        player_b = _account("oversized-b@test.com", role_name="user")
+        _add_player(team, player_a)
+        _add_player(team, player_b)
+        club_id = club.id
+        ladder_id = ladder.id
+        team_id = team.id
+        db.session.commit()
+
+    authed = _authed_client(client, monkeypatch, admin)
+    response = authed.post(
+        f"/api/clubs/{club_id}/ladders/{ladder_id}/teams/{team_id}",
+        json={},
+    )
+
+    assert response.status_code == 202
+    payload = response.get_json()
+    assert payload["warning"] == "oversized_team"
+    assert payload["requireConfirm"] is True
+
+    confirmed = authed.post(
+        f"/api/clubs/{club_id}/ladders/{ladder_id}/teams/{team_id}",
+        json={"confirmOversizedTeam": True},
+    )
+    assert confirmed.status_code == 200
+
+    with app.app_context():
+        ladder_team = db.session.get(LadderTeam, (ladder_id, team_id))
+        assert ladder_team is not None
+
+
+# Verifies sport mismatches warn first but still allow adding a club team to the ladder.
+def test_admin_warns_on_sport_mismatch_before_adding_to_ladder(app, client, monkeypatch):
+    with app.app_context():
+        club = _club()
+        tennis = _sport_type("Tennis")
+        padel = _sport_type("Padel")
+        ladder = Ladder(club_id=club.id, name="Tennis Ladder", sport_type_id=tennis.id)
+        db.session.add(ladder)
+        team = _team("Padel Club Team", club)
+        team.sport_type_id = padel.id
+        admin = _admin("sport-mismatch-ladder-admin@test.com")
+        club_id = club.id
+        ladder_id = ladder.id
+        team_id = team.id
+        tennis_id = tennis.id
+        db.session.commit()
+
+    authed = _authed_client(client, monkeypatch, admin)
+    response = authed.post(
+        f"/api/clubs/{club_id}/ladders/{ladder_id}/teams/{team_id}",
+        json={},
+    )
+
+    assert response.status_code == 202
+    payload = response.get_json()
+    assert payload["warning"] == "sport_mismatch"
+    assert payload["requireConfirm"] is True
+
+    confirmed = authed.post(
+        f"/api/clubs/{club_id}/ladders/{ladder_id}/teams/{team_id}",
+        json={"confirmSportMismatch": True},
+    )
+    assert confirmed.status_code == 200
+
+    with app.app_context():
+        team = db.session.get(Team, team_id)
+        ladder_team = db.session.get(LadderTeam, (ladder_id, team_id))
+        assert ladder_team is not None
+        assert team.sport_type_id == tennis_id
+
+
 # Verifies independent teams receive an invitation instead of being claimed.
 def test_admin_invites_independent_team_instead_of_assigning_club(app, client, monkeypatch):
     with app.app_context():
@@ -225,6 +312,97 @@ def test_team_manager_accepts_club_invite_and_team_people_join_club(app, client,
         assert ladder_team is not None
         assert ClubPlayer.query.filter_by(club_id=club_id, player_id=manager_id).first() is not None
         assert ClubPlayer.query.filter_by(club_id=club_id, player_id=player_id).first() is not None
+
+
+def test_team_manager_accepts_club_invite_and_syncs_team_sport_to_ladder(app, client, monkeypatch):
+    with app.app_context():
+        club = _club()
+        tennis = _sport_type("Tennis")
+        padel = _sport_type("Padel")
+        ladder = Ladder(club_id=club.id, name="Tennis Ladder", sport_type_id=tennis.id)
+        db.session.add(ladder)
+        manager = _account("sport-sync-manager@test.com")
+        player = _account("sport-sync-player@test.com", role_name="user")
+        admin = _admin("sport-sync-admin@test.com")
+        assert manager is not None
+        assert player is not None
+        assert admin is not None
+        team = _managed_team("Padel Invite Team", manager)
+        team.sport_type_id = padel.id
+        _add_player(team, player)
+        invitation = TeamClubJoinRequest(
+            club_id=club.id,
+            team_id=team.id,
+            ladder_id=ladder.id,
+            requested_by=admin.id,
+            date=db.func.now(),
+            status="pending",
+        )
+        db.session.add(invitation)
+        db.session.flush()
+        club_id = club.id
+        ladder_id = ladder.id
+        team_id = team.id
+        invitation_id = invitation.id
+        tennis_id = tennis.id
+        db.session.commit()
+
+    authed = _authed_client(client, monkeypatch, manager)
+    response = authed.post(
+        f"/api/teams/{team_id}/club-invitations/{invitation_id}/accept",
+    )
+
+    assert response.status_code == 200
+
+    with app.app_context():
+        team = db.session.get(Team, team_id)
+        invitation = db.session.get(TeamClubJoinRequest, invitation_id)
+        ladder_team = db.session.get(LadderTeam, (ladder_id, team_id))
+        assert team.club_id == club_id
+        assert team.sport_type_id == tennis_id
+        assert invitation.status == "accepted"
+        assert ladder_team is not None
+
+
+def test_accepting_the_same_club_invite_twice_is_idempotent(app, client, monkeypatch):
+    with app.app_context():
+        club = _club()
+        ladder = _ladder(club)
+        manager = _account("ladder-repeat-manager@test.com")
+        player = _account("ladder-repeat-player@test.com", role_name="user")
+        admin = _admin("repeat-ladder-admin@test.com")
+        team = _managed_team("Repeat Invite Team", manager)
+        _add_player(team, player)
+        invitation = TeamClubJoinRequest(
+            club_id=club.id,
+            team_id=team.id,
+            ladder_id=ladder.id,
+            requested_by=admin.id,
+            date=db.func.now(),
+            status="pending",
+        )
+        db.session.add(invitation)
+        db.session.flush()
+        club_id = club.id
+        ladder_id = ladder.id
+        team_id = team.id
+        invitation_id = invitation.id
+        db.session.commit()
+
+    authed = _authed_client(client, monkeypatch, manager)
+    first = authed.post(f"/api/teams/{team_id}/club-invitations/{invitation_id}/accept")
+    second = authed.post(f"/api/teams/{team_id}/club-invitations/{invitation_id}/accept")
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+
+    with app.app_context():
+        team = db.session.get(Team, team_id)
+        invitation = db.session.get(TeamClubJoinRequest, invitation_id)
+        ladder_team = db.session.get(LadderTeam, (ladder_id, team_id))
+        assert team.club_id == club_id
+        assert invitation.status == "accepted"
+        assert ladder_team is not None
 
 
 def test_admin_can_remove_team_from_ladder(app, client, monkeypatch):

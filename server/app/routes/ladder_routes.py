@@ -130,6 +130,22 @@ def _create_or_refresh_team_club_invitation(
     return invitation
 
 
+def _ladder_max_players(ladder: Ladder) -> int | None:
+    """Return the maximum roster size the ladder expects, if known."""
+    if ladder.rule_set and ladder.rule_set.game_format == "singles":
+        return 1
+    if ladder.rule_set and ladder.rule_set.game_format == "doubles":
+        return 2
+
+    if ladder.sport_type_id is None:
+        return None
+
+    sport_type = db.session.get(SportType, ladder.sport_type_id)
+    if sport_type is None:
+        return None
+    return sport_type.maximum_number_of_players_per_team
+
+
 @ladder_bp.get("/clubs/<int:club_id>/eligible-teams")
 @login_required
 def get_eligible_teams(account, club_id: int):
@@ -218,6 +234,56 @@ def add_team_to_ladder(account, club_id: int, ladder_id: int, team_id: int):
     if team.club_id is not None and team.club_id != club_id:
         return jsonify({"message": "Team belongs to a different club."}), 400
 
+    data = request.get_json(silent=True) or {}
+
+    max_players = _ladder_max_players(ladder)
+    team_player_count = len(team.players)
+    ladder_sport_name = None
+    if ladder.sport_type_id:
+        ladder_sport = db.session.get(SportType, ladder.sport_type_id)
+        ladder_sport_name = ladder_sport.name if ladder_sport else None
+
+    team_sport_name = team.sport_type.name if team.sport_type else None
+    sport_mismatch = bool(
+        ladder.sport_type_id
+        and team.sport_type_id
+        and ladder.sport_type_id != team.sport_type_id
+    )
+    if sport_mismatch and data.get("confirmSportMismatch") is not True:
+        return jsonify({
+            "message": (
+                f"{team.name} is {team_sport_name or 'unknown'}, but {ladder.name} expects {ladder_sport_name or 'another'}."
+                f" Accepting will change the team's sport type to {ladder_sport_name or 'the ladder sport'}."
+            ),
+            "warning": "sport_mismatch",
+            "requireConfirm": True,
+            "teamSportName": team_sport_name,
+            "ladderSportName": ladder_sport_name,
+            "team": team.to_dict(),
+            "ladder": {
+                "id": ladder.id,
+                "name": ladder.name,
+            },
+        }), 202
+
+    if (
+        max_players is not None
+        and team_player_count > max_players
+        and data.get("confirmOversizedTeam") is not True
+    ):
+        return jsonify({
+            "message": f"{team.name} has {team_player_count} players, but {ladder.name} expects teams of at most {max_players}.",
+            "warning": "oversized_team",
+            "requireConfirm": True,
+            "maxPlayers": max_players,
+            "teamPlayerCount": team_player_count,
+            "team": team.to_dict(),
+            "ladder": {
+                "id": ladder.id,
+                "name": ladder.name,
+            },
+        }), 202
+
     if team.club_id is None:
         invitation = _create_or_refresh_team_club_invitation(
             account=account,
@@ -241,10 +307,7 @@ def add_team_to_ladder(account, club_id: int, ladder_id: int, team_id: int):
     if existing:
         return jsonify({"message": "Team is already in this ladder."}), 400
 
-    if ladder.sport_type_id and team.sport_type_id and ladder.sport_type_id != team.sport_type_id:
-        return jsonify({"message": "Team sport type does not match this ladder."}), 400
-
-    if ladder.sport_type_id and not team.sport_type_id:
+    if ladder.sport_type_id and team.sport_type_id != ladder.sport_type_id:
         team.sport_type_id = ladder.sport_type_id
 
     ladder_team = LadderTeam(

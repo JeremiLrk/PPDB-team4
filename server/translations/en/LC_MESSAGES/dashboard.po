@@ -145,6 +145,15 @@ msgstr "Sport"
 msgid "dashboard.independent_team"
 msgstr "Independent"
 
+msgid "dashboard.player_invite"
+msgstr "Player invite"
+
+msgid "dashboard.ladder_invite"
+msgstr "Ladder invite"
+
+msgid "dashboard.club_invite"
+msgstr "Club invite"
+
 msgid "dashboard.quick_highlights"
 msgstr "Quick Highlights"
 

@@ -7,13 +7,17 @@ import panelStyles from "@/style/common/Panel.module.css";
 import buttonStyles from "@/style/common/Buttons.module.css";
 import formStyles from "@/style/common/Forms.module.css";
 import dashboardStyles from "@/style/dashboard/Dashboard.module.css";
+import { useLangContext } from "@/context/useLangContext.jsx";
 import { useThemeContext } from "@/context/useThemeContext.jsx";
+import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 import { useTeamInvitations } from "@/hooks/teams/useTeamInvitations.js";
 
-export default function TeamInvitations() {
+export default function TeamInvitations({ onResolved } = {}) {
     const navigate = useNavigate();
+    const { lang } = useLangContext();
     const { theme } = useThemeContext();
     const isLight = theme === "light";
+    const dashboardTexts = usePageTexts("dashboard", lang);
     const {
         invitations,
         clubInvitations,
@@ -28,14 +32,37 @@ export default function TeamInvitations() {
     const clubInvitationRows = Array.isArray(clubInvitations) ? clubInvitations : [];
     // Local state keeps track of which invitation is currently being processed.
     const [processing, setProcessing] = useState(null);
+    const inviteTagStyle = {
+        display: "inline-flex",
+        alignItems: "center",
+        width: "fit-content",
+        padding: "0.15rem 0.5rem",
+        borderRadius: "999px",
+        border: isLight ? "1px solid rgba(14, 165, 233, 0.35)" : "1px solid rgba(56, 189, 248, 0.35)",
+        background: isLight ? "rgba(14, 165, 233, 0.08)" : "rgba(15, 118, 110, 0.24)",
+        color: isLight ? "#0369a1" : "#7dd3fc",
+        fontSize: "0.72rem",
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        textTransform: "uppercase",
+        marginBottom: "0.45rem",
+    };
 
     async function handleAccept(id, teamId) {
         /*
          Accepts one invitation and keeps the row busy until completion.
         */
         setProcessing(id);
-        await acceptInvitation(id, teamId);
-        setProcessing(null);
+        try {
+            await acceptInvitation(id, teamId);
+            try {
+                await onResolved?.();
+            } catch {
+                // Refresh failures should not undo a successful invite response.
+            }
+        } finally {
+            setProcessing(null);
+        }
     }
 
     async function handleReject(id, teamId) {
@@ -43,8 +70,16 @@ export default function TeamInvitations() {
          Rejects one invitation using the same processing state.
         */
         setProcessing(id);
-        await rejectInvitation(id, teamId);
-        setProcessing(null);
+        try {
+            await rejectInvitation(id, teamId);
+            try {
+                await onResolved?.();
+            } catch {
+                // Refresh failures should not undo a successful invite response.
+            }
+        } finally {
+            setProcessing(null);
+        }
     }
 
     async function handleClubAccept(id, teamId) {
@@ -52,8 +87,16 @@ export default function TeamInvitations() {
          Accepts one club invitation for a managed team.
         */
         setProcessing(`club-${id}`);
-        await acceptClubInvitation(id, teamId);
-        setProcessing(null);
+        try {
+            await acceptClubInvitation(id, teamId);
+            try {
+                await onResolved?.();
+            } catch {
+                // Refresh failures should not undo a successful invite response.
+            }
+        } finally {
+            setProcessing(null);
+        }
     }
 
     async function handleClubReject(id, teamId) {
@@ -61,8 +104,16 @@ export default function TeamInvitations() {
          Rejects one club invitation for a managed team.
         */
         setProcessing(`club-${id}`);
-        await rejectClubInvitation(id, teamId);
-        setProcessing(null);
+        try {
+            await rejectClubInvitation(id, teamId);
+            try {
+                await onResolved?.();
+            } catch {
+                // Refresh failures should not undo a successful invite response.
+            }
+        } finally {
+            setProcessing(null);
+        }
     }
 
     if (loading) {
@@ -83,9 +134,12 @@ export default function TeamInvitations() {
             {error && <p className={commonStyles.warning}>{error}</p>}
 
             <ul className={panelStyles.list}>
-                        {clubInvitationRows.map(inv => (
-                            <li key={`club-${inv.id}`} className={panelStyles.listItem}>
-                                <div>
+                {clubInvitationRows.map((inv) => (
+                    <li key={`club-${inv.id}`} className={panelStyles.listItem}>
+                        <div>
+                            <p style={inviteTagStyle}>
+                                {dashboardTexts.ladder_invite || "Ladder invite"}
+                            </p>
                             <p
                                 className={dashboardStyles.teamCardName}
                                 style={{
@@ -100,9 +154,9 @@ export default function TeamInvitations() {
                                 style={{
                                     color: isLight ? "#334155" : "#cbd5e1",
                                     WebkitTextFillColor: isLight ? "#334155" : "#cbd5e1",
-                                }}
-                            >
-                                {(inv.clubName || inv.club_name) ? `Club invite: ${inv.clubName || inv.club_name}` : "Club invite"}
+                                    }}
+                                >
+                                {(inv.clubName || inv.club_name) ? `${dashboardTexts.club_invite || "Club invite"}: ${inv.clubName || inv.club_name}` : (dashboardTexts.club_invite || "Club invite")}
                             </p>
                             {(inv.ladderName || inv.ladder_name) && (
                                 <p
@@ -115,13 +169,35 @@ export default function TeamInvitations() {
                                     Ladder: {inv.ladderName || inv.ladder_name}
                                 </p>
                             )}
+                            {(inv.sportName || inv.sport_name) && (
+                                <p
+                                    className={dashboardStyles.teamCardMeta}
+                                    style={{
+                                        color: isLight ? "#334155" : "#cbd5e1",
+                                        WebkitTextFillColor: isLight ? "#334155" : "#cbd5e1",
+                                    }}
+                                >
+                                    Sport: {inv.sportName || inv.sport_name}
+                                </p>
+                            )}
+                            {(inv.sportMismatch || inv.sport_mismatch) && (inv.ladderSportName || inv.ladder_sport_name) && (inv.sportName || inv.sport_name) ? (
+                                <p
+                                    className={dashboardStyles.teamCardMeta}
+                                    style={{
+                                        color: isLight ? "#b45309" : "#fbbf24",
+                                        WebkitTextFillColor: isLight ? "#b45309" : "#fbbf24",
+                                    }}
+                                >
+                                    Accepting this invite will change the team's sport to {inv.ladderSportName || inv.ladder_sport_name}.
+                                </p>
+                            ) : null}
                         </div>
 
                         <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexShrink: 0 }}>
                             <button
                                 className={buttonStyles.primaryButton}
                                 onClick={() => navigate(`/teams/${inv.teamId || inv.team_id}`)}
-                                disabled={processing}
+                                disabled={processing === `club-${inv.id}`}
                             >
                                 View
                             </button>
@@ -142,10 +218,13 @@ export default function TeamInvitations() {
                         </div>
                     </li>
                 ))}
-                        {teamInvitationRows.map(inv => (
-                            <li key={inv.id} className={panelStyles.listItem}>
-                                <div>
-                                    {/* Team name, club, and sport are stacked so the invite stays readable on small screens. */}
+                {teamInvitationRows.map((inv) => (
+                    <li key={inv.id} className={panelStyles.listItem}>
+                        <div>
+                            <p style={inviteTagStyle}>
+                                {dashboardTexts.player_invite || "Player invite"}
+                            </p>
+                            {/* Team name, club, and sport are stacked so the invite stays readable on small screens. */}
                             <p
                                 className={dashboardStyles.teamCardName}
                                 style={{
@@ -183,7 +262,7 @@ export default function TeamInvitations() {
                             <button
                                 className={buttonStyles.primaryButton}
                                 onClick={() => navigate(`/teams/${inv.team_id}`)}
-                                disabled={processing}
+                                disabled={processing === inv.id}
                             >
                                 {/* View opens the team page without changing invite state. */}
                                 View

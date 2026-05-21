@@ -19,6 +19,7 @@ from server.extensions import db
 from server.app.models.team import Team, TeamManagerTeam
 from server.app.models.player import Player, PlayerTeam
 from server.app.models.team_join_request import TeamJoinRequest
+from server.app.models.match_rule import MatchRuleSet
 
 from server.app.routes.team._helpers import (
     get_team_or_404,
@@ -372,6 +373,23 @@ class TestLaddersExceedingMaxAfterAdd:
             assert any(l.id == ladder.id for l in result)
             db.session.rollback()
 
+    # Verifies ladder ruleset singles override a wider sport maximum.
+    def test_ruleset_singles_uses_ladder_limit(self, app):
+        with app.app_context():
+            st = _make_sport_type(max_players=4, name="WideSport LadExc")
+            ruleset = MatchRuleSet(name="Singles Ladder Rules", game_format="singles")
+            db.session.add(ruleset)
+            db.session.flush()
+            team = _make_team(name="Ruleset Singles Team")
+            team.sport_type_id = st.id
+            _add_player_to_team(team, "ruleset_singles_1@t.com")
+            ladder = _make_ladder(name="Ruleset Singles Ladder")
+            ladder.ruleset_id = ruleset.id
+            _enroll(team, ladder)
+            result = ladders_exceeding_max_after_add(team.id)
+            assert any(l.id == ladder.id for l in result)
+            db.session.rollback()
+
 
 # ===========================================================================
 # ladders_violating_min_after_remove
@@ -424,4 +442,22 @@ class TestLaddersViolatingMinAfterRemove:
             ladder = _make_ladder(name="AboveMin Ladder LadVio")
             _enroll(team, ladder)
             assert ladders_violating_min_after_remove(team.id) == []
+            db.session.rollback()
+
+    # Verifies ladder ruleset doubles override a wider sport minimum.
+    def test_ruleset_doubles_uses_ladder_limit(self, app):
+        with app.app_context():
+            st = _make_sport_type(min_players=1, name="WideSport LadVio")
+            ruleset = MatchRuleSet(name="Doubles Ladder Rules", game_format="doubles")
+            db.session.add(ruleset)
+            db.session.flush()
+            team = _make_team(name="Ruleset Doubles Team")
+            team.sport_type_id = st.id
+            for i in range(2):
+                _add_player_to_team(team, f"ruleset_doubles_{i}@t.com")
+            ladder = _make_ladder(name="Ruleset Doubles Ladder")
+            ladder.ruleset_id = ruleset.id
+            _enroll(team, ladder)
+            result = ladders_violating_min_after_remove(team.id)
+            assert any(l.id == ladder.id for l in result)
             db.session.rollback()

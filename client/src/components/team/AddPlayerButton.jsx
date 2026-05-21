@@ -12,6 +12,7 @@ import { Spinner }      from "@/components/forms/Spinner.jsx";
 import { FormPanel }    from "@/components/forms/FormPanel.jsx";
 import { FormPage }     from "@/components/forms/FormPage.jsx";
 import ItemCard         from "@/components/common/ItemCard.jsx";
+import { useNavigate }  from "react-router-dom";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
@@ -27,6 +28,7 @@ export default function AddPlayerButton({ teamId, onAdded }) {
      Owns the search-and-add flow for team members.
     */
     const { lang } = useLangContext();
+    const navigate = useNavigate();
     const texts = usePageTexts("team_settings", lang);
     const {
         isOpen, openPanel, closePanel,
@@ -56,6 +58,12 @@ export default function AddPlayerButton({ teamId, onAdded }) {
             await addPlayer(confirmWarning.accountId, true);
             setConfirmWarning(null);
         }
+    };
+
+    const handleCreateNewTeam = () => {
+        setConfirmWarning(null);
+        closePanel();
+        navigate("/dashboard?tab=teams");
     };
 
     return (
@@ -95,6 +103,9 @@ export default function AddPlayerButton({ teamId, onAdded }) {
                         <p className={commonStyles.warningText}>
                             {texts.add_player_warn_exceed || confirmWarning.message}
                         </p>
+                        <p className={commonStyles.secondaryText}>
+                            {texts.add_player_warn_action || "You can continue and remove this team from the ladder, or create a new team instead."}
+                        </p>
                         {confirmWarning.ladders && confirmWarning.ladders.length > 0 && (
                             <div className={teamStyles.laddersList}>
                                 <p className={commonStyles.warningText}>
@@ -109,10 +120,10 @@ export default function AddPlayerButton({ teamId, onAdded }) {
                                 </ul>
                             </div>
                         )}
-                        <div >
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                             <button
                                 type="button"
-                                className={`${btnStyles.submitButton} ${formStyles.btnSecondary}`}
+                                className={`${btnStyles.linkButton} ${formStyles.btnSecondary}`}
                                 onClick={() => setConfirmWarning(null)}
                             >
                                 {/* Cancel keeps the warning state but returns the user to the search results. */}
@@ -120,11 +131,18 @@ export default function AddPlayerButton({ teamId, onAdded }) {
                             </button>
                             <button
                                 type="button"
+                                className={`${btnStyles.primaryButton} ${formStyles.btnSecondary}`}
+                                onClick={handleCreateNewTeam}
+                            >
+                                {texts.create_new_team || "Create new team"}
+                            </button>
+                            <button
+                                type="button"
                                 className={`${btnStyles.nextBtn} ${formStyles.btnSecondary}`}
                                 onClick={handleConfirmExceed}
                                 disabled={addingId}
                             >
-                                {addingId ? <Spinner /> : (texts.add_player_confirm_exceed || "Add Anyway")}
+                                {addingId ? <Spinner /> : (texts.add_player_confirm_exceed || "Remove from ladders and add")}
                             </button>
                         </div>
                     </div>

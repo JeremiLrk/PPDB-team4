@@ -62,6 +62,9 @@ const dashboardTextsState = vi.hoisted(() => ({
         my_clubs: "My Clubs",
         no_clubs_yet: "You are not a member of any club yet.",
         open: "Open",
+        player_invite: "Player invite",
+        ladder_invite: "Ladder invite",
+        club_invite: "Club invite",
         requests_i_sent: "Requests I sent",
         pending_join_requests: "Pending join requests",
         incoming_join_requests: "Incoming requests to review",
@@ -103,6 +106,10 @@ function setupDashboardFetch({
     availability,
     me,
     joinRequests,
+    clubInvitations,
+    joinRequestStatus = 200,
+    clubInvitationAcceptStatus = 200,
+    clubInvitationAcceptDescription = "Team joined the club successfully.",
 } = {}) {
     const state = {
         dashboardData: clone(
@@ -173,6 +180,24 @@ function setupDashboardFetch({
             return jsonResponse({ club: { id: 99, ...body } });
         }
 
+        if (path === "/api/teams/my-join-requests" && method === "GET") {
+            return jsonResponse({ joinRequests: clone(state.joinRequests) });
+        }
+
+        if (path === "/api/teams/my-club-invitations" && method === "GET") {
+            return jsonResponse({ clubInvitations: clone(clubInvitations || []) });
+        }
+
+        const clubInviteAcceptMatch = path.match(/^\/api\/teams\/(\d+)\/club-invitations\/(\d+)\/accept$/);
+        if (clubInviteAcceptMatch && method === "POST") {
+            return jsonResponse(
+                clubInvitationAcceptStatus >= 200 && clubInvitationAcceptStatus < 300
+                    ? { message: clubInvitationAcceptDescription }
+                    : { description: clubInvitationAcceptDescription },
+                clubInvitationAcceptStatus,
+            );
+        }
+
         if (path === "/api/sport-types" && method === "GET") {
             return jsonResponse({ sportTypes: state.sportTypes });
         }
@@ -182,11 +207,37 @@ function setupDashboardFetch({
         }
 
         if (path === "/api/club/join-request" && method === "GET") {
-            return jsonResponse({ requests: state.joinRequests });
+            return jsonResponse(
+                { requests: state.joinRequests },
+                joinRequestStatus,
+            );
         }
 
         if (path === "/api/club/join-request" && method === "POST") {
+            state.dashboardData = {
+                ...state.dashboardData,
+                pending_requests: {
+                    ...(state.dashboardData.pending_requests || {}),
+                    my_requests: [
+                        ...(state.dashboardData.pending_requests?.my_requests || []),
+                        {
+                            id: 501,
+                            club_id: body.club_id,
+                            club_name: state.clubs.find((club) => club.id === body.club_id)?.name || `Club #${body.club_id}`,
+                            status: "pending",
+                        },
+                    ],
+                    my_club_creation_requests: [],
+                },
+            };
             return jsonResponse({ message: "Join request submitted." });
+        }
+
+        if (path === "/api/club/join-request/decide" && method === "POST") {
+            state.joinRequests = state.joinRequests.filter(
+                (request) => !(request.club_id === body.club_id && request.user_id === body.user_id),
+            );
+            return jsonResponse({ message: "Join request updated." });
         }
 
         if (path === "/api/me/availability" && method === "GET") {
@@ -221,7 +272,7 @@ function setupDashboardFetch({
     return state;
 }
 
-function renderDashboard({ lang = "en", currentUser = null } = {}) {
+function renderDashboard({ lang = "en", currentUser = null, route = "/dashboard" } = {}) {
     const onCurrentUserChange = vi.fn();
 
     function Harness() {
@@ -243,7 +294,7 @@ function renderDashboard({ lang = "en", currentUser = null } = {}) {
         };
 
         return (
-            <MemoryRouter>
+            <MemoryRouter initialEntries={[route]}>
                 <LangContext.Provider value={{ lang, setLang: () => {} }}>
                     <CurrentUserContext.Provider
                         value={{
@@ -314,6 +365,111 @@ describe("Dashboard frontend flows", () => {
 
         expect(screen.queryByText("Tuesday 12:00 - 14:00")).not.toBeInTheDocument();
         expect(screen.getByText("Availability block deleted.")).toBeInTheDocument();
+    });
+
+    // Verifies the dashboard can open directly on the teams tab for the ladder shortcut.
+    test("dashboard query tab opens the teams panel", async () => {
+        renderDashboard({ route: "/dashboard?tab=teams" });
+
+        expect(await screen.findByRole("button", { name: "New Team" })).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "My Teams" })).toBeInTheDocument();
+    });
+
+    // Verifies upcoming matches in the availability tab show a date-only recommendation.
+    test("availability upcoming matches hide timestamps", async () => {
+        setupDashboardFetch({
+            dashboardData: {
+                roles: ["user"],
+                clubs: [],
+                pending_requests: { my_requests: [], my_club_creation_requests: [] },
+                upcoming_matches: [
+                    {
+                        id: 21,
+                        team1Id: 11,
+                        team2Id: 12,
+                        team1Name: "NetRank Aces",
+                        team2Name: "Rally Rockets",
+                        status: "accepted",
+                        weekStartDate: "2026-05-18",
+                        proposedStartAt: "2026-05-21T10:00:00Z",
+                        proposedEndAt: "2026-05-21T11:00:00Z",
+                    },
+                ],
+            },
+        });
+
+        const user = userEvent.setup();
+        renderDashboard();
+
+        await screen.findByRole("button", { name: "Availability" });
+        await user.click(screen.getByRole("button", { name: "Availability" }));
+
+        expect(await screen.findByText("NetRank Aces vs Rally Rockets")).toBeInTheDocument();
+        expect(screen.getByText("Week of 2026-05-18")).toBeInTheDocument();
+        expect(screen.queryByText("10:00")).not.toBeInTheDocument();
+        expect(screen.queryByText("11:00")).not.toBeInTheDocument();
+    });
+
+    // Verifies non-owner dashboards do not treat the owner join-request reload as a failure.
+    test("join request reload ignores forbidden responses for non owners", async () => {
+        const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        setupDashboardFetch({ joinRequestStatus: 403 });
+
+        renderDashboard();
+
+        await waitFor(() => {
+            expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+                "Not an owner or fetch failed",
+                expect.any(Error),
+            );
+        });
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    // Verifies club invitation acceptance succeeds and removes the row from the list.
+    test("club invitation accept succeeds for a mismatched sport invitation", async () => {
+        const user = userEvent.setup();
+        setupDashboardFetch({
+            joinRequests: [
+                {
+                    id: 12,
+                    team_id: 88,
+                    team_name: "Serve Squad",
+                    club_name: "NetRank Club",
+                    sport_name: "Padel",
+                },
+            ],
+            clubInvitations: [
+                {
+                    id: 4,
+                    teamId: 37,
+                    teamName: "LrkSolo",
+                    clubName: "Player Demo Club",
+                    ladderName: "Player Demo Singles",
+                    sportName: "Tennis",
+                    ladderSportName: "Tennis",
+                    sportMismatch: true,
+                },
+            ],
+            clubInvitationAcceptStatus: 200,
+            clubInvitationAcceptDescription: "Team joined the club successfully.",
+        });
+
+        renderDashboard();
+
+        await screen.findByRole("button", { name: /My teams/i });
+        await user.click(screen.getByRole("button", { name: /My teams/i }));
+
+        expect(screen.getByText("Player invite")).toBeInTheDocument();
+        expect(screen.getByText("Ladder invite")).toBeInTheDocument();
+        expect(screen.getByText("Accepting this invite will change the team's sport to Tennis.")).toBeInTheDocument();
+        const ladderInviteRow = screen.getByText("Ladder invite").closest("li");
+        await user.click(within(ladderInviteRow).getByRole("button", { name: "Accept" }));
+
+        await waitFor(() => {
+            expect(screen.queryByText("LrkSolo")).not.toBeInTheDocument();
+        });
     });
 
     // Verifies the profile form submits the edited personal details.
@@ -434,5 +590,75 @@ describe("Dashboard frontend flows", () => {
 
         const joinRequestCall = getFetchCall("/api/club/join-request", "POST");
         expect(JSON.parse(joinRequestCall[1].body)).toEqual({ club_id: 2 });
+    });
+
+    // Verifies a submitted club request appears in the requests tab without a page refresh.
+    test("club join request appears in my requests after submitting", async () => {
+        const user = userEvent.setup();
+
+        renderDashboard({
+            currentUser: {
+                id: 7,
+                email: "demo@netrank.com",
+                firstName: "Demo",
+                lastName: "User",
+                gender: "male",
+                phoneNumber: "0400000000",
+            },
+        });
+
+        await screen.findByRole("button", { name: "Search clubs" });
+        await user.click(screen.getByRole("button", { name: "Search clubs" }));
+        await user.type(screen.getByPlaceholderText("Search by club name"), "Rally");
+
+        await user.click(await screen.findByRole("button", { name: "Request to Join" }));
+
+        await waitFor(() => {
+            expect(screen.getByText("Request sent.")).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByRole("button", { name: /My requests/i }));
+
+        expect(await screen.findByRole("heading", { name: "My Join Requests" })).toBeInTheDocument();
+        expect(screen.getByText("Rally Rockets")).toBeInTheDocument();
+    });
+
+    // Verifies club-owner decisions remove the request row without reloading the page.
+    test("incoming join request disappears after approving it", async () => {
+        const user = userEvent.setup();
+
+        setupDashboardFetch({
+            joinRequests: [
+                {
+                    club_id: 1,
+                    user_id: 33,
+                    user_name: "Alex",
+                    club_name: "NetRank Club",
+                    status: "pending",
+                },
+            ],
+        });
+
+        renderDashboard({
+            currentUser: {
+                id: 7,
+                email: "owner@netrank.com",
+                firstName: "Owner",
+                lastName: "User",
+                gender: "male",
+                phoneNumber: "0400000000",
+            },
+        });
+
+        await screen.findByRole("button", { name: /Manage your clubs/i });
+        await user.click(screen.getByRole("button", { name: /Manage your clubs/i }));
+
+        expect(await screen.findByText("Alex")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Approve" }));
+
+        await waitFor(() => {
+            expect(screen.queryByText("Alex")).not.toBeInTheDocument();
+        });
     });
 });

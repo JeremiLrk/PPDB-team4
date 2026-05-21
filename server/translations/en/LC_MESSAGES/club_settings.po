@@ -330,6 +330,15 @@ msgstr "This independent team needs manager approval before it can join the club
 msgid "club_settings.team_can_add_directly"
 msgstr "This club team can be added directly."
 
+msgid "club_settings.team_sport_mismatch_warning_title"
+msgstr "Team sport warning"
+
+msgid "club_settings.team_sport_mismatch_warning_body"
+msgstr "This team is a different sport, but this ladder expects another sport. Accepting will change the team's sport type to match the ladder."
+
+msgid "club_settings.team_sport_mismatch_warning_team"
+msgstr "Current sport"
+
 msgid "club_settings.team_managers_label"
 msgstr "Managers"
 
@@ -383,6 +392,33 @@ msgstr "Delete this ladder? Teams will be removed from this ladder, but existing
 
 msgid "club_settings.could_not_add_team_to_ladder"
 msgstr "Could not add team to ladder."
+
+msgid "club_settings.team_size_warning_title"
+msgstr "Team size warning"
+
+msgid "club_settings.team_size_warning_body"
+msgstr "This team is larger than the selected ladder expects. You can still add it, or create a new team instead."
+
+msgid "club_settings.team_size_warning_team"
+msgstr "Team"
+
+msgid "club_settings.team_size_warning_ladder"
+msgstr "Ladder"
+
+msgid "club_settings.ladder_team_size_hint"
+msgstr "This ladder expects teams up to the selected size."
+
+msgid "club_settings.team_too_large_for_ladder"
+msgstr "This team is larger than the selected ladder expects."
+
+msgid "club_settings.team_fits_ladder_format"
+msgstr "This team fits the selected ladder format."
+
+msgid "club_settings.add_team_confirm_oversize"
+msgstr "Add anyway"
+
+msgid "club_settings.create_new_team"
+msgstr "Create new team"
 
 msgid "club_settings.delete_club"
 msgstr "Delete club"

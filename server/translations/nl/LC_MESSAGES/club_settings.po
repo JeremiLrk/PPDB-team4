@@ -330,6 +330,15 @@ msgstr "Dit onafhankelijke team heeft goedkeuring van een teambeheerder nodig vo
 msgid "club_settings.team_can_add_directly"
 msgstr "Dit clubteam kan direct worden toegevoegd."
 
+msgid "club_settings.team_sport_mismatch_warning_title"
+msgstr "Teamsport waarschuwing"
+
+msgid "club_settings.team_sport_mismatch_warning_body"
+msgstr "Dit team heeft een andere sport, terwijl deze ladder een andere sport verwacht. Accepteren wijzigt de sport van het team zodat die overeenkomt met de ladder."
+
+msgid "club_settings.team_sport_mismatch_warning_team"
+msgstr "Huidige sport"
+
 msgid "club_settings.team_managers_label"
 msgstr "Beheerders"
 
@@ -383,6 +392,33 @@ msgstr "Deze ladder verwijderen? Teams worden uit deze ladder gehaald, maar best
 
 msgid "club_settings.could_not_add_team_to_ladder"
 msgstr "Kon team niet aan ladder toevoegen."
+
+msgid "club_settings.team_size_warning_title"
+msgstr "Waarschuwing teamgrootte"
+
+msgid "club_settings.team_size_warning_body"
+msgstr "Dit team is groter dan de geselecteerde ladder verwacht. Je kunt het toch toevoegen, of in plaats daarvan een nieuw team maken."
+
+msgid "club_settings.team_size_warning_team"
+msgstr "Team"
+
+msgid "club_settings.team_size_warning_ladder"
+msgstr "Ladder"
+
+msgid "club_settings.ladder_team_size_hint"
+msgstr "Deze ladder verwacht teams tot de geselecteerde grootte."
+
+msgid "club_settings.team_too_large_for_ladder"
+msgstr "Dit team is groter dan de geselecteerde ladder verwacht."
+
+msgid "club_settings.team_fits_ladder_format"
+msgstr "Dit team past binnen het geselecteerde ladderformaat."
+
+msgid "club_settings.add_team_confirm_oversize"
+msgstr "Toch toevoegen"
+
+msgid "club_settings.create_new_team"
+msgstr "Nieuw team maken"
 
 msgid "club_settings.delete_club"
 msgstr "Club verwijderen"

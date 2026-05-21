@@ -385,20 +385,37 @@ def accept_team_club_invitation(account: Account, team_id: int, invitation_id: i
     ).first()
     if invitation is None:
         abort(404, description="Team club invitation not found.")
+
+    ladder = db.session.get(Ladder, invitation.ladder_id) if invitation.ladder_id else None
+
     if invitation.status != "pending":
+        if team.club_id == invitation.club_id:
+            if ladder is not None and ladder.sport_type_id and team.sport_type_id != ladder.sport_type_id:
+                team.sport_type_id = ladder.sport_type_id
+            ladder_team = _add_team_to_ladder_if_needed(team, ladder)
+            db.session.commit()
+            return jsonify({
+                "message": "Team joined the club successfully.",
+                "invitation": invitation.serialize(),
+                "team": team.to_dict(),
+                "ladderTeam": {
+                    "ladderId": ladder_team.ladder_id,
+                    "teamId": ladder_team.team_id,
+                    "rank": ladder_team.rank,
+                    "rating": ladder_team.rating,
+                    "matchesPlayed": ladder_team.matches_played,
+                } if ladder_team is not None else None,
+            }), 200
         abort(409, description="Team club invitation is not pending.")
 
     if team.club_id is not None and team.club_id != invitation.club_id:
         abort(409, description="Team already belongs to a different club.")
 
-    ladder = db.session.get(Ladder, invitation.ladder_id) if invitation.ladder_id else None
     if ladder is not None and ladder.club_id != invitation.club_id:
         abort(409, description="Invitation ladder does not belong to the invited club.")
 
     if ladder is not None:
-        if ladder.sport_type_id and team.sport_type_id and ladder.sport_type_id != team.sport_type_id:
-            abort(409, description="Team sport type does not match the invited ladder.")
-        if ladder.sport_type_id and not team.sport_type_id:
+        if ladder.sport_type_id and team.sport_type_id != ladder.sport_type_id:
             team.sport_type_id = ladder.sport_type_id
 
     team.club_id = invitation.club_id

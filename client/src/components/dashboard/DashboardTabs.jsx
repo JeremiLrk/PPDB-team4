@@ -47,6 +47,22 @@ function formatLocalTimestamp(value, locale = "en-US") {
     return parsed.toLocaleString(locale)
 }
 
+function formatLocalDate(value, locale = "en-US") {
+    /*
+     Formats an API date or timestamp as a date-only label.
+    */
+    const parsed = parseUtcTimestamp(value)
+    if (!parsed) {
+        return value || "-"
+    }
+
+    return parsed.toLocaleDateString(locale, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    })
+}
+
 const EN_WEEKDAY_LABELS = [
     "Monday",
     "Tuesday",
@@ -117,19 +133,13 @@ function formatUpcomingMatchDate(match, texts, lang) {
      Formats the date label for one upcoming match card.
     */
     const locale = isDutchLang(lang) ? "nl-BE" : "en-US"
-    const start = formatLocalTimestamp(match?.proposedStartAt, locale)
-    const end = formatLocalTimestamp(match?.proposedEndAt, locale)
-
-    if (match?.proposedStartAt && match?.proposedEndAt) {
-        return `${start} - ${end}`
-    }
-
-    if (match?.proposedStartAt) {
-        return start
-    }
 
     if (match?.weekStartDate) {
         return `${texts?.week_of || defaultText(lang, "Week of", "Week van")} ${match.weekStartDate}`
+    }
+
+    if (match?.proposedStartAt) {
+        return formatLocalDate(match.proposedStartAt, locale)
     }
 
     return texts?.date_tbd || defaultText(lang, "Date/time TBD", "Datum/tijd volgt")
@@ -667,9 +677,40 @@ export function SearchTab({
     myClubIds,
     pendingJoinRequestClubIds,
     clubJoinrequest,
+    onRequestSubmitted,
     texts,
     lang = "en",
 }) {
+    const [processingClubId, setProcessingClubId] = useState(null)
+    const [actionMessage, setActionMessage] = useState(null)
+
+    async function handleClubRequest(clubId) {
+        /*
+         Sends a join request and refreshes the dashboard lists afterwards.
+        */
+        setProcessingClubId(clubId)
+        setActionMessage(null)
+        try {
+            await clubJoinrequest(clubId)
+            try {
+                await onRequestSubmitted?.()
+            } catch {
+                // Refresh failures should not hide a successful join request.
+            }
+            setActionMessage({
+                type: "success",
+                text: texts?.join_request_sent || defaultText(lang, "Request sent.", "Aanvraag verstuurd."),
+            })
+        } catch (error) {
+            setActionMessage({
+                type: "error",
+                text: error?.message || texts?.could_not_request_join || defaultText(lang, "Could not send request.", "Aanvraag versturen mislukt."),
+            })
+        } finally {
+            setProcessingClubId(null)
+        }
+    }
+
     return (
         <article className={`${styles.panel} ${styles.contentFade}`}>
             <div className={styles.panelTopRow}>
@@ -720,8 +761,12 @@ export function SearchTab({
                                                 <button
                                                     className={styles.primaryButton}
                                                     type="button"
-                                                    onClick={(e) => {clubJoinrequest(clubId);e.currentTarget.disabled = true;}}>
-                                                    {texts?.request_to_join || defaultText(lang, "Request to Join", "Lidmaatschap aanvragen")}
+                                                    onClick={() => handleClubRequest(clubId)}
+                                                    disabled={processingClubId === clubId}
+                                                >
+                                                    {processingClubId === clubId
+                                                        ? (texts?.submitting || defaultText(lang, "Sending...", "Bezig..."))
+                                                        : (texts?.request_to_join || defaultText(lang, "Request to Join", "Lidmaatschap aanvragen"))}
                                                 </button>
                                         ) : null}
                                     </div>
@@ -730,6 +775,12 @@ export function SearchTab({
                         })}
                     </div>
                 )
+            ) : null}
+
+            {actionMessage ? (
+                <p className={`${styles.notice} ${actionMessage.type === "error" ? styles.noticeError : styles.noticeSuccess}`}>
+                    {actionMessage.text}
+                </p>
             ) : null}
         </article>
     );
@@ -876,10 +927,41 @@ export function ManageClubsTab({
     decideJoinrequest,
     isClubOwner,
     onGoSettings,
+    onRequestsUpdated,
     texts,
     lang = "en",
 }) {
+    const [processingRequest, setProcessingRequest] = useState(null);
+    const [actionMessage, setActionMessage] = useState(null);
     const ownedClubs = myClubs.filter(club => club.membership_status === "owner");
+
+    async function handleRequestDecision(req, status) {
+        /*
+         Updates one join request and refreshes the list when done.
+        */
+        const key = `${req.club_id}-${req.user_id}-${status}`;
+        setProcessingRequest(key);
+        setActionMessage(null);
+        try {
+            await decideJoinrequest(req.club_id, req.user_id, status);
+            try {
+                await onRequestsUpdated?.()
+            } catch {
+                // Refresh failures should not hide a successful moderation decision.
+            }
+            setActionMessage({
+                type: "success",
+                text: texts?.request_updated || defaultText(lang, "Request updated.", "Aanvraag bijgewerkt."),
+            });
+        } catch (error) {
+            setActionMessage({
+                type: "error",
+                text: error?.message || texts?.could_not_update_request || defaultText(lang, "Could not update request.", "Aanvraag bijwerken mislukt."),
+            });
+        } finally {
+            setProcessingRequest(null);
+        }
+    }
 
     if (!isClubOwner && ownedClubs.length === 0) {
         return (
@@ -947,32 +1029,36 @@ export function ManageClubsTab({
                                     <button
                                         className={styles.submitButton}
                                         type="button"
-                                        onClick={(e) => {
-                                            const row = e.currentTarget.closest(`.${styles.requestCard}`);
-                                            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                                            decideJoinrequest(req.club_id, req.user_id, "approved");
-                                        }}
+                                        disabled={processingRequest === `${req.club_id}-${req.user_id}-approved`}
+                                        onClick={() => handleRequestDecision(req, "approved")}
                                     >
-                                        {texts?.approve || defaultText(lang, "Approve", "Goedkeuren")}
+                                        {processingRequest === `${req.club_id}-${req.user_id}-approved`
+                                            ? (texts?.saving || defaultText(lang, "Saving...", "Bezig..."))
+                                            : (texts?.approve || defaultText(lang, "Approve", "Goedkeuren"))}
                                     </button>
 
                                     <button
                                         className={styles.submitButton}
                                         type="button"
                                         style={{ filter: 'grayscale(1) brightness(0.7)' }}
-                                        onClick={(e) => {
-                                            const row = e.currentTarget.closest(`.${styles.requestCard}`);
-                                            row.querySelectorAll('button').forEach(btn => btn.disabled = true);
-                                            decideJoinrequest(req.club_id, req.user_id, "rejected");
-                                        }}
+                                        disabled={processingRequest === `${req.club_id}-${req.user_id}-rejected`}
+                                        onClick={() => handleRequestDecision(req, "rejected")}
                                     >
-                                        {texts?.reject || defaultText(lang, "Reject", "Afwijzen")}
+                                        {processingRequest === `${req.club_id}-${req.user_id}-rejected`
+                                            ? (texts?.saving || defaultText(lang, "Saving...", "Bezig..."))
+                                            : (texts?.reject || defaultText(lang, "Reject", "Afwijzen"))}
                                     </button>
                                 </div>
                             </li>
                         ))}
                     </ul>
                 )}
+
+                {actionMessage ? (
+                    <p className={`${styles.notice} ${actionMessage.type === "error" ? styles.noticeError : styles.noticeSuccess}`}>
+                        {actionMessage.text}
+                    </p>
+                ) : null}
             </article>
         </div>
     );

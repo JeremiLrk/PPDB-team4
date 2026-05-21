@@ -9,6 +9,7 @@ import { FormPanel }       from "@/components/forms/FormPanel.jsx";
 import { FormPage }        from "@/components/forms/FormPage.jsx";
 import teamStyles    from "@/style/TeamSettings.module.css";
 import {TrashIcon} from "@/components/icon/TrashIcon.jsx";
+import { useNavigate } from "react-router-dom";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
@@ -23,6 +24,7 @@ import { usePageTexts } from "@/hooks/common/usePageTexts.js";
  */
 export default function DeletePlayerButton({ teamId, playerId, onDeleted }) {
     const { lang } = useLangContext();
+    const navigate = useNavigate();
     const texts = usePageTexts("team_settings", lang);
     const {
         isOpen, openDialog, closeDialog,
@@ -46,6 +48,12 @@ export default function DeletePlayerButton({ teamId, playerId, onDeleted }) {
             confirmDelete(true);
             setViolateWarning(null);
         }
+    };
+
+    const handleCreateNewTeam = () => {
+        setViolateWarning(null);
+        closeDialog();
+        navigate("/dashboard?tab=teams");
     };
 
     return (
@@ -84,6 +92,9 @@ export default function DeletePlayerButton({ teamId, playerId, onDeleted }) {
                         <p className={commonStyles.warningText}>
                             {texts.remove_player_warn_violate || violateWarning.message}
                         </p>
+                        <p className={commonStyles.secondaryText}>
+                            {texts.remove_player_warn_action || "You can continue and remove this team from the ladder, or create a new team instead."}
+                        </p>
                         {violateWarning.ladders && violateWarning.ladders.length > 0 && (
                             <div className={teamStyles.laddersList}>
                                 <p className={commonStyles.secondaryText}>
@@ -104,6 +115,12 @@ export default function DeletePlayerButton({ teamId, playerId, onDeleted }) {
                                 onClick={() => setViolateWarning(null)}
                             >
                                 {texts.cancel_btn || "Cancel"}
+                            </button>
+                            <button
+                                className={`${formStyles.btn} ${formStyles.btnSecondary}`}
+                                onClick={handleCreateNewTeam}
+                            >
+                                {texts.create_new_team || "Create new team"}
                             </button>
                             <button
                                 className={`${formStyles.btn} ${formStyles.btnPrimary}`}

@@ -363,11 +363,13 @@
     min-height: 0;
     flex: 1;
     min-width: 0;
+    align-items: start;
 }
 
 .profileStack {
     display: grid;
     gap: 1rem;
+    min-height: 0;
 }
 
 .manageClubsLayout {
@@ -422,6 +424,7 @@
     min-width: 0;
     display: grid;
     gap: 1rem;
+    align-self: start;
 }
 
 /* Only apply hover lift on real pointer devices — not touch, where :hover sticks */

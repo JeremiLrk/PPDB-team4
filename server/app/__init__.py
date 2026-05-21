@@ -249,7 +249,7 @@ def _seed_reference_tables():
     seed_table(
         model=MatchRuleSet,
         seeds_file="server/seeds/match_rule_set.json",
-        unique_fields=[],
+        unique_fields=["name"],
     )
     seed_table(
         model=LadderRatingFunction,

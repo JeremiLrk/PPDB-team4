@@ -14,6 +14,15 @@ export function useTeamInvitations() {
         fetchInvitations();
     }, []);
 
+    async function readErrorMessage(response, fallback) {
+        try {
+            const data = await response.json();
+            return data?.message || data?.description || fallback;
+        } catch {
+            return fallback;
+        }
+    }
+
     async function fetchInvitations() {
         /*
          Fetches the pending team invitation list.
@@ -48,7 +57,9 @@ export function useTeamInvitations() {
                 `/api/teams/${teamId}/players/join-requests/${invitationId}/accept`,
                 { method: "POST", credentials: "include" }
             );
-            if (!response.ok) throw new Error("Failed to accept");
+            if (!response.ok) {
+                throw new Error(await readErrorMessage(response, "Failed to accept"));
+            }
             setInvitations(prev => prev.filter(inv => inv.id !== invitationId));
             return true;
         } catch (err) {
@@ -66,7 +77,9 @@ export function useTeamInvitations() {
                 `/api/teams/${teamId}/players/join-requests/${invitationId}/reject`,
                 { method: "POST", credentials: "include" }
             );
-            if (!response.ok) throw new Error("Failed to reject");
+            if (!response.ok) {
+                throw new Error(await readErrorMessage(response, "Failed to reject"));
+            }
             setInvitations(prev => prev.filter(inv => inv.id !== invitationId));
             return true;
         } catch (err) {
@@ -84,7 +97,9 @@ export function useTeamInvitations() {
                 `/api/teams/${teamId}/club-invitations/${invitationId}/accept`,
                 { method: "POST", credentials: "include" }
             );
-            if (!response.ok) throw new Error("Failed to accept");
+            if (!response.ok) {
+                throw new Error(await readErrorMessage(response, "Failed to accept"));
+            }
             setClubInvitations(prev => prev.filter(inv => inv.id !== invitationId));
             return true;
         } catch (err) {
@@ -102,7 +117,9 @@ export function useTeamInvitations() {
                 `/api/teams/${teamId}/club-invitations/${invitationId}/reject`,
                 { method: "POST", credentials: "include" }
             );
-            if (!response.ok) throw new Error("Failed to reject");
+            if (!response.ok) {
+                throw new Error(await readErrorMessage(response, "Failed to reject"));
+            }
             setClubInvitations(prev => prev.filter(inv => inv.id !== invitationId));
             return true;
         } catch (err) {

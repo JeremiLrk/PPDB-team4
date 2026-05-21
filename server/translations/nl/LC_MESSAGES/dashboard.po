@@ -145,6 +145,15 @@ msgstr "Sport"
 msgid "dashboard.independent_team"
 msgstr "Onafhankelijk"
 
+msgid "dashboard.player_invite"
+msgstr "Spelersuitnodiging"
+
+msgid "dashboard.ladder_invite"
+msgstr "Ladderuitnodiging"
+
+msgid "dashboard.club_invite"
+msgstr "Clubuitnodiging"
+
 msgid "dashboard.quick_highlights"
 msgstr "Snelle highlights"
 

@@ -194,8 +194,8 @@ beforeEach(() => {
     ];
     rulesState.nextRuleId = 3;
     sportTypesState.sportTypes = [
-        { id: 1, name: "Tennis" },
-        { id: 2, name: "Basketball" },
+        { id: 1, name: "Tennis", maxPlayers: 1 },
+        { id: 2, name: "Basketball", maxPlayers: 5 },
     ];
     addPlayerState.searchHits = [
         {
@@ -283,7 +283,7 @@ describe("Disputed matches and rulesets", () => {
         await user.click(screen.getByRole("button", { name: "Add Alice Runner" }));
 
         expect(await screen.findByText("Adding this player would exceed the maximum roster size in one or more ladders.")).toBeInTheDocument();
-        await user.click(screen.getByRole("button", { name: "Add Anyway" }));
+        await user.click(screen.getByRole("button", { name: "Remove from ladders and add" }));
 
         await waitFor(() => expect(onAdded).toHaveBeenCalledTimes(1));
         expect(global.fetch).toHaveBeenCalledWith(
@@ -542,7 +542,7 @@ describe("Disputed matches and rulesets", () => {
 
         renderWithLang(
             <ClubLadders
-                ladders={[{ id: 10, name: "Premier Ladder", description: "Top division" }]}
+                ladders={[{ id: 10, name: "Premier Ladder", description: "Top division", ruleset_id: 1 }]}
                 onCreate={vi.fn()}
                 ratingFunctions={[{ id: 1, name: "Elo" }]}
                 ruleSets={[{ id: 1, name: "Standard Ladder" }]}
@@ -574,7 +574,8 @@ describe("Disputed matches and rulesets", () => {
         );
 
         expect(screen.getByText("Teams in ladder: 1")).toBeInTheDocument();
-        expect(screen.getByText("NetRank Aces")).toBeInTheDocument();
+        expect(screen.getByText("Rule set: Standard Ladder")).toBeInTheDocument();
+        expect(screen.getByText("NetRank Aces", { selector: "p" })).toBeInTheDocument();
 
         await user.click(screen.getByRole("button", { name: "Remove" }));
         expect(onRemoveTeam).toHaveBeenCalledWith(10, 44);
@@ -583,6 +584,184 @@ describe("Disputed matches and rulesets", () => {
         expect(onDeleteLadder).toHaveBeenCalledWith(10);
 
         confirmSpy.mockRestore();
+    });
+
+    // Verifies oversized independent teams also show the warning before the invite is sent.
+    test("oversized independent team shows warning before invitation", async () => {
+        const user = userEvent.setup();
+        const onAddTeam = vi.fn()
+            .mockResolvedValueOnce({
+                action: "invitation_sent",
+                invitation: { id: 77 },
+            });
+
+        renderWithLang(
+            <ClubLadders
+                ladders={[{ id: 10, name: "Padel Ladder", ruleset_id: 1, sport_type_id: 2 }]}
+                onCreate={vi.fn()}
+                ratingFunctions={[{ id: 1, name: "Elo" }]}
+                ruleSets={[{ id: 1, name: "Standard Padel", gameFormat: "doubles" }]}
+                eligibleTeams={[
+                    {
+                        id: 77,
+                        name: "Nomads United",
+                        membershipStatus: "independent",
+                        requiresInvite: true,
+                        ladderIds: [],
+                        playerCount: 3,
+                        managerCount: 1,
+                        players: [{ name: "A" }, { name: "B" }, { name: "C" }],
+                        managers: [{ name: "Coach" }],
+                    },
+                ]}
+                onAddTeam={onAddTeam}
+                supportsRuleSets={true}
+                texts={{
+                    add_team_title: "Team toevoegen aan ladder",
+                    add_team_subtitle: "Select a ladder and a team to link them.",
+                    ladder_team_size_hint: "This ladder expects teams of up to 2 players.",
+                    team_too_large_for_ladder: "This team has 3 players, but the selected ladder expects teams of at most 2.",
+                    team_group_hint: "Club teams can be added directly. Independent teams need an invite first. Ladder team size limits are shown for the selected ladder.",
+                    select_ladder: "Selecteer een ladder",
+                    select_team: "Selecteer een team",
+                    teams_from_your_club: "Teams from your club",
+                    independent_teams: "Independent teams",
+                    team_size_warning_title: "Team size warning",
+                    team_size_warning_body: "This team is larger than the selected ladder expects. You can still add it, or create a new team instead.",
+                    create_new_team: "Create new team",
+                    invite_team: "Invite team",
+                }}
+            />,
+        );
+
+        const selects = screen.getAllByRole("combobox");
+        await user.selectOptions(selects[3], "10");
+        await user.selectOptions(selects[4], "77");
+
+        expect(screen.getByText("This team has 3 players, but the selected ladder expects teams of at most 2.")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Invite team" }));
+        expect(onAddTeam).toHaveBeenCalledTimes(1);
+        expect(onAddTeam).toHaveBeenCalledWith(10, 77, true, false);
+        expect(await screen.findByText("Invitation sent to the team manager.")).toBeInTheDocument();
+    });
+
+    // Verifies sport mismatches warn first but still allow adding the team.
+    test("sport mismatch warns before adding the team", async () => {
+        const user = userEvent.setup();
+        const onAddTeam = vi.fn().mockResolvedValueOnce({
+            action: "added",
+            team: { id: 44, name: "Padel Club Team", sportTypeId: 1, sportName: "Tennis" },
+        });
+
+        renderWithLang(
+            <ClubLadders
+                ladders={[{ id: 10, name: "Tennis Ladder", ruleset_id: 1, sport_type_id: 1 }]}
+                onCreate={vi.fn()}
+                ratingFunctions={[{ id: 1, name: "Elo" }]}
+                ruleSets={[{ id: 1, name: "Standard Tennis", gameFormat: "doubles" }]}
+                eligibleTeams={[
+                    {
+                        id: 44,
+                        name: "Padel Club Team",
+                        membershipStatus: "club",
+                        ladderIds: [],
+                        playerCount: 2,
+                        managerCount: 1,
+                        sportTypeId: 2,
+                        sportName: "Padel",
+                        players: [{ name: "A" }, { name: "B" }],
+                        managers: [{ name: "Coach" }],
+                    },
+                ]}
+                onAddTeam={onAddTeam}
+                supportsRuleSets={true}
+                texts={{
+                    add_team_title: "Team toevoegen aan ladder",
+                    add_team_subtitle: "Select a ladder and a team to link them.",
+                    ladder_team_size_hint: "This ladder expects teams of up to 2 players.",
+                    team_group_hint: "Club teams can be added directly. Independent teams need an invite first. Ladder team size limits are shown for the selected ladder.",
+                    select_ladder: "Selecteer een ladder",
+                    select_team: "Selecteer een team",
+                    teams_from_your_club: "Teams from your club",
+                    independent_teams: "Independent teams",
+                    team_sport_mismatch_warning_title: "Team sport warning",
+                    team_sport_mismatch_warning_body: "This team is a different sport, but this ladder expects another sport. Accepting will change the team's sport type to match the ladder.",
+                    team_sport_mismatch_warning_team: "Current sport",
+                }}
+            />,
+        );
+
+        const selects = screen.getAllByRole("combobox");
+        await user.selectOptions(selects[3], "10");
+        await user.selectOptions(selects[4], "44");
+
+        expect(screen.getByText("This team is a different sport, but this ladder expects another sport. Accepting will change the team's sport type to match the ladder.")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Team toevoegen" }));
+        await waitFor(() => expect(onAddTeam).toHaveBeenCalledTimes(1));
+        expect(onAddTeam).toHaveBeenCalledWith(10, 44, false, true);
+        expect(await screen.findByText("Team added to ladder.")).toBeInTheDocument();
+    });
+
+    // Verifies ladder warnings still allow club managers to continue after confirmation.
+    test("ladder warning allows oversized team add after confirmation", async () => {
+        const user = userEvent.setup();
+        const onAddTeam = vi.fn()
+            .mockResolvedValueOnce({
+                action: "added",
+                team: { id: 44, name: "NetRank Aces" },
+            });
+
+        renderWithLang(
+            <ClubLadders
+                ladders={[{ id: 10, name: "Singles Ladder", sport_type_id: 1 }]}
+                onCreate={vi.fn()}
+                ratingFunctions={[{ id: 1, name: "Elo" }]}
+                ruleSets={[{ id: 1, name: "Standard Ladder" }]}
+                eligibleTeams={[
+                    {
+                        id: 44,
+                        name: "NetRank Aces",
+                        membershipStatus: "club",
+                        ladderIds: [],
+                        playerCount: 2,
+                        managerCount: 1,
+                        players: [{ name: "Alice" }, { name: "Bob" }],
+                        managers: [{ name: "Coach" }],
+                    },
+                ]}
+                onAddTeam={onAddTeam}
+                supportsRuleSets={true}
+                texts={{
+                    add_team_title: "Team toevoegen aan ladder",
+                    add_team_subtitle: "Select a ladder and a team to link them.",
+                    ladder_team_size_hint: "This ladder expects teams of up to 1 player.",
+                    team_too_large_for_ladder: "This team has 2 players, but the selected ladder expects teams of at most 1.",
+                    team_group_hint: "Club teams can be added directly. Independent teams need an invite first. Ladder team size limits are shown for the selected ladder.",
+                    select_ladder: "Selecteer een ladder",
+                    select_team: "Selecteer een team",
+                    teams_from_your_club: "Teams from your club",
+                    independent_teams: "Independent teams",
+                    team_size_warning_title: "Team size warning",
+                    team_size_warning_body: "This team is larger than the selected ladder expects. You can still add it, or create a new team instead.",
+                }}
+            />,
+        );
+
+        const selects = screen.getAllByRole("combobox");
+        await user.selectOptions(selects[3], "10");
+        await user.selectOptions(selects[4], "44");
+
+        expect(screen.getByText("This ladder expects teams of up to 1 player.")).toBeInTheDocument();
+        expect(screen.getByText("This team has 2 players, but the selected ladder expects teams of at most 1.")).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Create a team first" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Team toevoegen" })).not.toBeDisabled();
+
+        await user.click(screen.getByRole("button", { name: "Team toevoegen" }));
+        await waitFor(() => expect(onAddTeam).toHaveBeenCalledTimes(1));
+        expect(onAddTeam).toHaveBeenCalledWith(10, 44, true, false);
+        expect(await screen.findByText("Team added to ladder.")).toBeInTheDocument();
     });
 
     // Verifies non-racket clubs do not show the rules tab in settings.

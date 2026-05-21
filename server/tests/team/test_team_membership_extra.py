@@ -67,6 +67,7 @@ from datetime import datetime, timezone
 
 from server.extensions import db
 from server.app.models.account import Account, Administrator
+from server.app.models.match_rule import MatchRuleSet
 from server.app.models.team import Team
 from server.app.models.player import Player, PlayerTeam
 from server.app.models.team_join_request import TeamJoinRequest
@@ -891,6 +892,35 @@ class TestCheckMaxExceeded:
         body = resp.get_json()
         assert "ladders" in body
         assert "CheckMax 409 Ladder" in body["ladders"]
+
+    # Verifies ladder ruleset singles can trigger the max warning even when the sport cap is wider.
+    def test_ruleset_singles_triggers_409_when_sport_cap_is_wider(
+        self, client, app, monkeypatch
+    ):
+        with app.app_context():
+            st = _make_sport_type(max_players=4, name="CheckMaxRulesetSport")
+            ruleset = MatchRuleSet(name="CheckMax Singles Rules", game_format="singles")
+            db.session.add(ruleset)
+            db.session.flush()
+            acc = _make_account(email="checkmax_ruleset@t.com")
+            tm = _make_team_manager(acc)
+            team = _make_team(name="CheckMax Ruleset Team")
+            team.sport_type_id = st.id
+            _make_assoc(tm, team, can_edit_players=True)
+            _add_player_to_team(team, "checkmax_ruleset_filler@t.com")
+            ladder = _make_ladder(name="CheckMax Ruleset Ladder")
+            ladder.ruleset_id = ruleset.id
+            _enroll(team, ladder)
+            db.session.commit()
+            team_id, acc_id = team.id, acc.id
+
+        with app.app_context():
+            _authed_client(client, monkeypatch, Account.query.get(acc_id))
+
+        resp = client.post(f"/api/teams/{team_id}/players/check-max-exceeded", json={})
+        assert resp.status_code == 409
+        body = resp.get_json()
+        assert "CheckMax Ruleset Ladder" in body["ladders"]
 
 
 # ===========================================================================

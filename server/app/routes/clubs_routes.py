@@ -163,7 +163,13 @@ def get_club_ladders(club_id: int):
     
     # Zet ze om naar een lijst die React begrijpt
     return jsonify([
-        {"id": l.id, "name": l.name, "description": l.description,"ruleset_id": l.ruleset_id}
+        {
+            "id": l.id,
+            "name": l.name,
+            "description": l.description,
+            "sport_type_id": l.sport_type_id,
+            "ruleset_id": l.ruleset_id,
+        }
         for l in ladders
     ]), 200
 

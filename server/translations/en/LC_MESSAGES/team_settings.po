@@ -166,17 +166,26 @@ msgstr "Are you sure you want to remove this manager from the team?"
 msgid "team_settings.add_player_warn_exceed"
 msgstr "Adding this player would exceed team size limits in active ladders."
 
+msgid "team_settings.add_player_warn_action"
+msgstr "You can continue and remove this team from the ladder, or create a new team instead."
+
 msgid "team_settings.add_player_warn_ladders"
 msgstr "Affected ladders:"
 
 msgid "team_settings.add_player_confirm_exceed"
-msgstr "Add Anyway"
+msgstr "Remove from ladders and add"
+
+msgid "team_settings.create_new_team"
+msgstr "Create new team"
 
 msgid "team_settings.cancel_btn"
 msgstr "Cancel"
 
 msgid "team_settings.remove_player_warn_violate"
 msgstr "Removing this player would drop below minimum team size in active ladders."
+
+msgid "team_settings.remove_player_warn_action"
+msgstr "You can continue and remove this team from the ladder, or create a new team instead."
 
 msgid "team_settings.remove_player_warn_ladders"
 msgstr "Affected ladders:"
