@@ -33,7 +33,7 @@ export function TeamsTab({ texts, theme, onInvitationsChanged }) {
     /*
      Owns the dashboard tab that lists the current account's teams.
     */
-    const { currentUser } = useCurrentUserContext();
+    const { currentUser, reloadCurrentUser } = useCurrentUserContext();
 
     // All teams the account is involved with (my-all) — shown in the list
     const {
@@ -50,10 +50,13 @@ export function TeamsTab({ texts, theme, onInvitationsChanged }) {
 
     const { clubs: myClubs } = useMyClubs();
 
-    function handleTeamCreated() {
+    function handleTeamCreated(_team) {
         /*
-         Reloads the team list after a team is created.
+         Reloads the current user and team list after a team is created.
+         The /api/me refresh keeps the new team-manager role available
+         immediately so the user does not need a manual refresh.
         */
+        void reloadCurrentUser?.();
         void load({ sort, pageSize });
     }
 

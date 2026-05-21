@@ -8,12 +8,15 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import { LangContext } from "../src/context/useLangContext.jsx";
+import CurrentUserContext from "../src/context/useCurrentUserContext.jsx";
+import { ThemeContext } from "../src/context/useThemeContext.jsx";
 import ClubDisputedMatchesPage from "../src/pages/ClubDisputedMatchesPage.jsx";
 import ClubSidebar from "../src/components/club_settings/ClubSidebar.jsx";
 import ClubLadders from "../src/components/club_settings/ClubLadders.jsx";
 import ClubMatchRules from "../src/components/club_settings/ClubMatchRules.jsx";
 import Ladder from "../src/pages/Ladder.jsx";
 import AddPlayerButton from "../src/components/team/AddPlayerButton.jsx";
+import AddManagerButton from "../src/components/team/AddManagerButton.jsx";
 
 const clubSettingsTextState = vi.hoisted(() => ({
     sidebar_title: "Settings",
@@ -294,6 +297,42 @@ describe("Disputed matches and rulesets", () => {
                 body: JSON.stringify({ accountId: 91, confirmDropLadders: true }),
             }),
         );
+    });
+
+    // Verifies the manager panel still opens cleanly in light mode.
+    test("team settings add-manager panel opens in light mode", async () => {
+        const user = userEvent.setup();
+
+        render(
+            <MemoryRouter initialEntries={["/clubs/1/settings/members"]}>
+                <LangContext.Provider value={{ lang: "en", setLang: () => {} }}>
+                    <ThemeContext.Provider value={{ theme: "light", toggleTheme: () => {} }}>
+                        <CurrentUserContext.Provider
+                            value={{
+                                currentUser: {
+                                    id: 1,
+                                    roles: ["administrator"],
+                                    clubIds: [],
+                                    managedTeamIds: [],
+                                },
+                                setCurrentUser: () => {},
+                                loadingUser: false,
+                                reloadCurrentUser: vi.fn(),
+                            }}
+                        >
+                            <AddManagerButton
+                                teamId={77}
+                                team={{ id: 77, clubId: 1 }}
+                                onAdded={vi.fn()}
+                            />
+                        </CurrentUserContext.Provider>
+                    </ThemeContext.Provider>
+                </LangContext.Provider>
+            </MemoryRouter>,
+        );
+
+        await user.click(screen.getByRole("button", { name: "Beheerder toevoegen" }));
+        expect(screen.getByPlaceholderText("Naam, e-mail of ID…")).toBeInTheDocument();
     });
 
     // Verifies disputed score submission updates ratings and clears the queue.

@@ -8,6 +8,7 @@ import { useTeamPlayers }    from "@/hooks/teams/useTeamPlayers.js";
 import { useTeamManagers }   from "@/hooks/teams/useTeamManagers.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 import { useLangContext } from "@/context/useLangContext.jsx";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 
 import AddPlayerButton   from "@/components/team/AddPlayerButton.jsx";
@@ -52,6 +53,7 @@ export default function TeamSettings() {
     const { teamId }      = useParams();
     const { currentUser } = useCurrentUserContext();
     const { lang } = useLangContext();
+    const { theme } = useThemeContext();
     const navigate        = useNavigate();
     const texts = usePageTexts("team_settings", lang);
 
@@ -136,6 +138,7 @@ export default function TeamSettings() {
                                     teamId={teamId}
                                     currentName={teamName}
                                     onRenamed={t => setDisplayName(t.name)}
+                                    theme={theme}
                                 />
                             </div>
                         <div className={styles.tags}>
@@ -163,6 +166,7 @@ export default function TeamSettings() {
                         teamId={teamId}
                         team={team}
                         onAdded={reloadManagers}
+                        theme={theme}
                     />
                 </div>
 
@@ -208,7 +212,7 @@ export default function TeamSettings() {
                             <span className={panelStyles.panelCounter}>{playersTotal}</span>
                         )}
                     </div>
-                    <AddPlayerButton teamId={teamId} onAdded={reloadPlayers} />
+                    <AddPlayerButton teamId={teamId} onAdded={reloadPlayers} theme={theme} />
                 </div>
 
                 {playersLoading && (

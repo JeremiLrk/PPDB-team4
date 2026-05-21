@@ -12,6 +12,7 @@ import {TrashIcon} from "@/components/icon/TrashIcon.jsx";
 import { useNavigate } from "react-router-dom";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 /**
  * DeletePlayerButton - trash icon that opens a confirmation dropdown.
@@ -22,8 +23,10 @@ import { usePageTexts } from "@/hooks/common/usePageTexts.js";
  *   playerId  {number|string}  - the account/player id to remove
  *   onDeleted {() => void}     - called after successful deletion
  */
-export default function DeletePlayerButton({ teamId, playerId, onDeleted }) {
+export default function DeletePlayerButton({ teamId, playerId, onDeleted, theme: providedTheme }) {
     const { lang } = useLangContext();
+    const { theme: contextTheme } = useThemeContext();
+    const theme = providedTheme || contextTheme;
     const navigate = useNavigate();
     const texts = usePageTexts("team_settings", lang);
     const {
@@ -84,6 +87,7 @@ export default function DeletePlayerButton({ teamId, playerId, onDeleted }) {
 
             panelClassName={teamStyles.confirmPanel}
             ariaLabel={texts.confirm_remove_player || "Confirm player removal"}
+            theme={theme}
         >
             {/* --- Minimum roster violation warning dialog [NEW] ------- */}
             {violateWarning && (

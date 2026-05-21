@@ -61,3 +61,22 @@ There are two invitation types:
 - club invitations, where a club asks a managed independent team to join the club and optionally enter a ladder
 
 Accepting a club invitation moves the team into the club, adds current team managers and players as club members, and places the team in the requested ladder when one was selected.
+
+## Team Creation And Self-Add
+
+When a manager creates a team from the dashboard, NetRank refreshes the shared
+current-user context right away so the new team-manager role is visible without
+a hard refresh.
+
+The Teams tab also shows a small follow-up action for the newly created team:
+
+- `Add yourself as player`
+
+That shortcut uses the normal player join-request flow and immediately accepts
+the request when the backend creates it successfully. It exists so a new team
+manager does not need to open a second invite flow just to become a player on
+the same team.
+
+## Where The Invitation Hierarchy Lives
+
+For the full invitation and role hierarchy, see [team-system.md](team-system.md).

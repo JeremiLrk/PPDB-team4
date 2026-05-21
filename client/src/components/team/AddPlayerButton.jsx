@@ -15,6 +15,7 @@ import ItemCard         from "@/components/common/ItemCard.jsx";
 import { useNavigate }  from "react-router-dom";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 /**
  * AddPlayerButton - dropdown panel for searching and adding players to a team.
@@ -23,12 +24,14 @@ import { usePageTexts } from "@/hooks/common/usePageTexts.js";
  *   teamId    {number|string}  - the team to add players to
  *   onAdded   {() => void}     - called after a player is successfully added
  */
-export default function AddPlayerButton({ teamId, onAdded }) {
+export default function AddPlayerButton({ teamId, onAdded, theme: providedTheme }) {
     /*
      Owns the search-and-add flow for team members.
     */
     const { lang } = useLangContext();
+    const { theme: contextTheme } = useThemeContext();
     const navigate = useNavigate();
+    const theme = providedTheme || contextTheme;
     const texts = usePageTexts("team_settings", lang);
     const {
         isOpen, openPanel, closePanel,
@@ -94,6 +97,7 @@ export default function AddPlayerButton({ teamId, onAdded }) {
 
             panelClassName={teamStyles.addPlayerPanel}
             ariaLabel={texts.add_player_aria || "Add player to team"}
+            theme={theme}
 
         >
             {/* --- Confirmation dialog for exceeding ladder limits ------- */}

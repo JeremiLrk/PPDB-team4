@@ -65,6 +65,13 @@ const dashboardTextsState = vi.hoisted(() => ({
         player_invite: "Player invite",
         ladder_invite: "Ladder invite",
         club_invite: "Club invite",
+        new_team_created: "Team created",
+        add_self_as_player: "Add yourself as player",
+        team_created_and_self_added: "Team created and you were added as a player.",
+        self_add_success: "You are now added as a player.",
+        self_add_failed: "Could not add yourself as a player.",
+        self_add_missing_request: "Missing join request for self-add.",
+        self_add_warning: "Adding yourself would exceed the ladder roster limit.",
         requests_i_sent: "Requests I sent",
         pending_join_requests: "Pending join requests",
         incoming_join_requests: "Incoming requests to review",
@@ -180,6 +187,35 @@ function setupDashboardFetch({
             return jsonResponse({ club: { id: 99, ...body } });
         }
 
+        if (path === "/api/teams" && method === "POST") {
+            return jsonResponse({ team: { id: 99, ...body } }, 201);
+        }
+
+        const addSelfMatch = path.match(/^\/api\/teams\/(\d+)\/players$/);
+        if (addSelfMatch && method === "POST") {
+            return jsonResponse({
+                message: "Player join request created successfully.",
+                request: {
+                    id: 777,
+                    team_id: Number(addSelfMatch[1]),
+                    user_id: body.accountId,
+                    status: "pending",
+                },
+            }, 201);
+        }
+
+        const acceptSelfMatch = path.match(/^\/api\/teams\/(\d+)\/players\/join-requests\/(\d+)\/accept$/);
+        if (acceptSelfMatch && method === "POST") {
+            return jsonResponse({
+                message: "Player join request accepted successfully.",
+                request: {
+                    id: Number(acceptSelfMatch[2]),
+                    team_id: Number(acceptSelfMatch[1]),
+                    status: "accepted",
+                },
+            });
+        }
+
         if (path === "/api/teams/my-join-requests" && method === "GET") {
             return jsonResponse({ joinRequests: clone(state.joinRequests) });
         }
@@ -202,7 +238,11 @@ function setupDashboardFetch({
             return jsonResponse({ sportTypes: state.sportTypes });
         }
 
-        if (path === "/api/teams/my-all" || path === "/api/teams") {
+        if (path === "/api/teams/my-all" && method === "GET") {
+            return jsonResponse({ total: 0, from: 0, to: 0, teams: [] });
+        }
+
+        if (path === "/api/teams" && method === "GET") {
             return jsonResponse({ total: 0, from: 0, to: 0, teams: [] });
         }
 
@@ -293,6 +333,21 @@ function renderDashboard({ lang = "en", currentUser = null, route = "/dashboard"
             onCurrentUserChange(nextUser);
         };
 
+        const reloadCurrentUser = async () => {
+            const response = await fetch("/api/me", {
+                method: "GET",
+                credentials: "include",
+            });
+            if (!response.ok) {
+                updateUser(null);
+                return null;
+            }
+            const data = await response.json();
+            const account = data?.account ?? null;
+            updateUser(account);
+            return account;
+        };
+
         return (
             <MemoryRouter initialEntries={[route]}>
                 <LangContext.Provider value={{ lang, setLang: () => {} }}>
@@ -301,6 +356,7 @@ function renderDashboard({ lang = "en", currentUser = null, route = "/dashboard"
                             currentUser: user,
                             setCurrentUser: updateUser,
                             loadingUser: false,
+                            reloadCurrentUser,
                         }}
                     >
                         <Dashboard />
@@ -373,6 +429,45 @@ describe("Dashboard frontend flows", () => {
 
         expect(await screen.findByRole("button", { name: "New Team" })).toBeInTheDocument();
         expect(screen.getByRole("heading", { name: "My Teams" })).toBeInTheDocument();
+    });
+
+    // Verifies creating a team refreshes the current user and exposes the self-add shortcut.
+    test("team creation refreshes current user and offers add-yourself checkbox", async () => {
+        const user = userEvent.setup();
+        const { onCurrentUserChange } = renderDashboard({ route: "/dashboard?tab=teams" });
+
+        await user.click(await screen.findByRole("button", { name: "New Team" }));
+        await user.type(await screen.findByLabelText("Team Name *"), "Fresh Crew");
+        await user.click(screen.getByRole("checkbox", { name: "Add yourself as player" }));
+        await user.click(screen.getByRole("button", { name: "Create Team" }));
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledWith(
+                "/api/me",
+                expect.objectContaining({ method: "GET" }),
+            );
+        });
+
+        expect(await screen.findByText("Team created and you were added as a player.")).toBeInTheDocument();
+        expect(onCurrentUserChange).toHaveBeenCalled();
+    });
+
+    // Verifies the self-add checkbox uses the normal join-request and accept flow.
+    test("team creation self-add checkbox accepts the new player request", async () => {
+        const user = userEvent.setup();
+        renderDashboard({ route: "/dashboard?tab=teams" });
+
+        await user.click(await screen.findByRole("button", { name: "New Team" }));
+        await user.type(await screen.findByLabelText("Team Name *"), "Fresh Crew");
+        await user.click(screen.getByRole("checkbox", { name: "Add yourself as player" }));
+        await user.click(screen.getByRole("button", { name: "Create Team" }));
+
+        await waitFor(() => {
+            expect(getFetchCall("/api/teams/99/players", "POST")).toBeTruthy();
+            expect(getFetchCall("/api/teams/99/players/join-requests/777/accept", "POST")).toBeTruthy();
+        });
+
+        expect(screen.getByText("Team created and you were added as a player.", { selector: "p" })).toBeInTheDocument();
     });
 
     // Verifies upcoming matches in the availability tab show a date-only recommendation.

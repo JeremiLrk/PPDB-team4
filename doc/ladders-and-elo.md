@@ -13,6 +13,11 @@ A ladder can point to:
 
 In practice, this lets a club run more than one competition at the same time without mixing their rankings or rules.
 
+The ladder ruleset is the preferred source for roster-size behavior when it is
+available. Older ladders still fall back to the sport-type limits, which keeps
+legacy basketball, squash, and similar club data working while newer ladders
+use the explicit ruleset model.
+
 ## Adding Teams To Ladders
 
 Club teams can be added to a club ladder directly by a club owner or administrator.
@@ -33,6 +38,11 @@ The ladder chooser shows the practical state of each candidate team:
 - current managers and players
 
 NetRank does not assign an independent team to a club without team-manager approval.
+
+If a club manager tries to add a team that is technically too large for the
+ladder, the UI warns first instead of silently blocking the action. The
+confirmation flow then lets the manager decide whether to continue and remove
+the ladder membership or create a new team instead.
 
 Club managers can also manage existing ladder membership from the same settings area:
 

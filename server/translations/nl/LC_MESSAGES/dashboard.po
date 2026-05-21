@@ -103,6 +103,30 @@ msgstr "Team aangemaakt!"
 msgid "dashboard.create_team"
 msgstr "Team aanmaken"
 
+msgid "dashboard.new_team_created"
+msgstr "Team aangemaakt"
+
+msgid "dashboard.add_self_as_player"
+msgstr "Voeg jezelf toe als speler"
+
+msgid "dashboard.team_created_and_self_added"
+msgstr "Team aangemaakt en je bent als speler toegevoegd."
+
+msgid "dashboard.self_add_success"
+msgstr "Je bent nu toegevoegd als speler."
+
+msgid "dashboard.added_label"
+msgstr "Toegevoegd"
+
+msgid "dashboard.self_add_failed"
+msgstr "Je kon niet als speler worden toegevoegd."
+
+msgid "dashboard.self_add_missing_request"
+msgstr "Ontbrekend aanmeldverzoek voor zelf-toevoegen."
+
+msgid "dashboard.self_add_warning"
+msgstr "Jezelf toevoegen zou de limiet van de ladder overschrijden."
+
 msgid "dashboard.switch_to_light_mode"
 msgstr "Wissel naar lichte modus"
 

@@ -8,6 +8,7 @@ import { useRenameTeam } from "@/hooks/teams/useRenameTeam.js";
 import styles from "@/style/common/Forms.module.css";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 /**
  * RenameTeamButton — pencil icon that opens a rename panel.
@@ -17,8 +18,10 @@ import { usePageTexts } from "@/hooks/common/usePageTexts.js";
  *   currentName {string}
  *   onRenamed   {(team: object) => void}
  */
-export default function RenameTeamButton({ teamId, currentName, onRenamed }) {
+export default function RenameTeamButton({ teamId, currentName, onRenamed, theme: providedTheme }) {
     const { lang } = useLangContext();
+    const { theme: contextTheme } = useThemeContext();
+    const theme = providedTheme || contextTheme;
     const texts = usePageTexts("team_settings", lang);
     const {
         newName, setNewName,
@@ -54,6 +57,7 @@ export default function RenameTeamButton({ teamId, currentName, onRenamed }) {
 
             submitLabel={texts.rename_team_submit || "Rename"}
             canNext={canSubmit}
+            theme={theme}
         >
             <FormPage active={!isSuccess}>
                 <Field label={texts.rename_team_new_name || "New Name"}>

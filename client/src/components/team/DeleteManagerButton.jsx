@@ -8,6 +8,7 @@ import { TrashIcon }        from "@/components/icon/TrashIcon.jsx";
 import teamStyles           from "@/style/TeamSettings.module.css";
 import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 /**
  * DeleteManagerButton — a trash can with confirmation of manager deletion.
@@ -17,8 +18,10 @@ import { usePageTexts } from "@/hooks/common/usePageTexts.js";
  * managerId {number|string} — manager account.id
  * onDeleted {() => void}
  */
-export default function DeleteManagerButton({ teamId, managerId, onDeleted }) {
+export default function DeleteManagerButton({ teamId, managerId, onDeleted, theme: providedTheme }) {
     const { lang } = useLangContext();
+    const { theme: contextTheme } = useThemeContext();
+    const theme = providedTheme || contextTheme;
     const texts = usePageTexts("team_settings", lang);
     const {
         isOpen, openDialog, closeDialog,
@@ -55,6 +58,7 @@ export default function DeleteManagerButton({ teamId, managerId, onDeleted }) {
 
             panelClassName={teamStyles.confirmPanel}
             ariaLabel={texts.confirm_remove_manager || "Confirm manager removal"}
+            theme={theme}
         >
             <FormPage active={true}>
                 <p className={teamStyles.confirmText}>

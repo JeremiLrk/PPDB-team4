@@ -103,6 +103,30 @@ msgstr "Team created!"
 msgid "dashboard.create_team"
 msgstr "Create Team"
 
+msgid "dashboard.new_team_created"
+msgstr "Team created"
+
+msgid "dashboard.add_self_as_player"
+msgstr "Add yourself as player"
+
+msgid "dashboard.team_created_and_self_added"
+msgstr "Team created and you were added as a player."
+
+msgid "dashboard.self_add_success"
+msgstr "You are now added as a player."
+
+msgid "dashboard.added_label"
+msgstr "Added"
+
+msgid "dashboard.self_add_failed"
+msgstr "Could not add yourself as a player."
+
+msgid "dashboard.self_add_missing_request"
+msgstr "Missing join request for self-add."
+
+msgid "dashboard.self_add_warning"
+msgstr "Adding yourself would exceed the ladder roster limit."
+
 msgid "dashboard.switch_to_light_mode"
 msgstr "Switch to light mode"
 

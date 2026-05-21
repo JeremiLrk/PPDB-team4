@@ -43,6 +43,13 @@ When the invitation is accepted:
 
 This keeps consent with the team while still giving club managers a clear path to invite outside teams into their club competitions.
 
+Team settings cover the rest of the day-to-day team workflow:
+
+- add and remove players
+- add and remove managers
+- create a team and optionally add yourself as a player right away
+- update the team without having to refresh the page manually
+
 ## Why The Separation Matters
 
 NetRank separates club management from team management on purpose.
@@ -58,3 +65,4 @@ That gives the app a cleaner permission model:
 - [club-page.md](club-page.md) for the club home page
 - [club-settings.md](club-settings.md) for the club settings shell and pages
 - [dashboard.md](dashboard.md) for club search, join requests, team invitations, and account actions
+- [team-system.md](team-system.md) for the full team and invitation hierarchy
