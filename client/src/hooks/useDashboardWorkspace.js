@@ -8,9 +8,7 @@ import { notify } from "@/hooks/useNotify.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext";
 import { useTeams } from "@/hooks/teams/useTeams.js";
 import { useSportTypes } from "@/hooks/useSportTypes.js"
-
-const DEFAULT_THEME = "dark"
-const THEME_STORAGE_KEY = "dashboard_theme"
+import { useThemeContext } from "@/context/useThemeContext.jsx"
 
 const EMPTY_CLUB_REQUEST_FORM = {
     name: "",
@@ -105,6 +103,7 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en", initialT
     const { dashboardData, loading, error, reload: reloadDashboard } = useDashboard();
     const { setCurrentUser } = useCurrentUserContext();
     const { sportTypes } = useSportTypes();
+    const { theme, toggleTheme } = useThemeContext()
     const {
         clubs: discoverClubs,
         loading: discoverLoading,
@@ -116,9 +115,6 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en", initialT
 
     const [activeTab, setActiveTab] = useState(initialTab || "overview")
     const [searchTerm, setSearchTerm] = useState("")
-    const [theme, setTheme] = useState(
-        () => localStorage.getItem(THEME_STORAGE_KEY) || DEFAULT_THEME,
-    )
 
     const [clubRequestForm, setClubRequestForm] = useState(
         EMPTY_CLUB_REQUEST_FORM,
@@ -208,17 +204,11 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en", initialT
         loadMore: loadMoreMyTeams,
     } = useTeams({ pageSize: 12, sort: "name", endpoint: "/api/teams/my-all" });
 
-    useEffect(() => {
-        localStorage.setItem(THEME_STORAGE_KEY, theme)
-    }, [theme])
-
     function onThemeToggle() {
         /*
          Toggles the dashboard theme without touching loaded data.
         */
-        setTheme((previousTheme) =>
-            previousTheme === "dark" ? "light" : "dark",
-        )
+        toggleTheme()
     }
 
     function onGoHome() {

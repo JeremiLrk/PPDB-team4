@@ -5,7 +5,6 @@ import workspaceStyles from "@/style/dashboard/Workspace.module.css";
 
 
 import formStyles from "@/style/common/Forms.module.css";
-import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
@@ -31,17 +30,6 @@ function Dashboard() {
     const dashboardTexts = usePageTexts("dashboard", lang)
     const initialTab = new URLSearchParams(location.search).get("tab") || "overview";
     const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts, lang, initialTab)
-
-    // Sync theme to <body> so portals rendered via createPortal inherit CSS variables
-    useEffect(() => {
-        if (workspace.theme === "light") {
-            document.body.classList.add(commonStyles.light);
-        } else {
-            document.body.classList.remove(commonStyles.light);
-        }
-        // Cleanup: remove the theme class when the dashboard unmounts.
-        return () => document.body.classList.remove(commonStyles.light);
-    }, [workspace.theme, commonStyles.light]);
 
     if (workspace.loading|| !dashboardTexts.tab_overview) {
         return (
