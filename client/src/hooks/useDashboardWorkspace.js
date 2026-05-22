@@ -95,14 +95,15 @@ function normalizePendingJoinRequestClubIds(myRequests) {
     )
 }
 
-export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
+export function useDashboardWorkspace(setUser, texts = {}, lang = "en", initialTab = "overview") {
     /*
      Owns dashboard state and the handlers the pages reuse.
     */
     const navigate = useNavigate();
-    const { dashboardData, loading, error } = useDashboard();
+    const { dashboardData, loading, error, reload: reloadDashboard } = useDashboard();
     const { setCurrentUser } = useCurrentUserContext();
     const { sportTypes } = useSportTypes();
+    const { theme, toggleTheme } = useThemeContext()
     const {
         clubs: discoverClubs,
         loading: discoverLoading,
@@ -112,9 +113,8 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
      Owns the dashboard workspace state for tabs, forms, and filters.
     */
 
+    const [activeTab, setActiveTab] = useState(initialTab || "overview")
     const { theme, toggleTheme } = useThemeContext()
-
-    const [activeTab, setActiveTab] = useState("overview")
     const [searchTerm, setSearchTerm] = useState("")
 
     const [clubRequestForm, setClubRequestForm] = useState(
@@ -139,6 +139,10 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     })
 
     const [isClubOwner, setIsClubOwner] = useState(false);
+    const [teamInvitationCount, setTeamInvitationCount] = useState(0);
+    const [teamJoinRequestCount, setTeamJoinRequestCount] = useState(0);
+    const [clubInvitationCount, setClubInvitationCount] = useState(0);
+    const [activeMatchProposalCount, setActiveMatchProposalCount] = useState(0);
     const weekdayOptions = useMemo(
         () => (String(lang).toLowerCase().startsWith("nl") ? WEEKDAY_OPTIONS_NL : WEEKDAY_OPTIONS_EN),
         [lang],
@@ -156,6 +160,44 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         () => normalizePendingJoinRequestClubIds(myRequests),
         [myRequests],
     )
+
+    const reloadTeamInvitationCount = useCallback(async () => {
+        /*
+         Refreshes dashboard action counts for team, ladder, and match work.
+        */
+        const readJson = async (url) => {
+            const response = await fetch(url, { credentials: "include" });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${url}`);
+            }
+            return response.json();
+        };
+
+        const [teamResult, clubResult, matchResult] = await Promise.allSettled([
+            readJson("/api/teams/my-join-requests"),
+            readJson("/api/teams/my-club-invitations"),
+            readJson("/api/matches/proposals"),
+        ]);
+
+        const teamData = teamResult.status === "fulfilled" ? teamResult.value : {};
+        const clubData = clubResult.status === "fulfilled" ? clubResult.value : {};
+        const matchData = matchResult.status === "fulfilled" ? matchResult.value : {};
+
+        const teamCount = Array.isArray(teamData.joinRequests) ? teamData.joinRequests.length : 0;
+        const clubCount = Array.isArray(clubData.clubInvitations) ? clubData.clubInvitations.length : 0;
+        const matchCount = Array.isArray(matchData.proposals)
+            ? matchData.proposals.filter((proposal) => {
+                const status = String(proposal?.status || proposal?.statusName || "").toLowerCase();
+                return !["played", "rejected", "cancelled"].includes(status);
+            }).length
+            : 0;
+
+        setTeamJoinRequestCount(teamCount);
+        setClubInvitationCount(clubCount);
+        setActiveMatchProposalCount(matchCount);
+        setTeamInvitationCount(teamCount + clubCount);
+
+    }, [])
 
     const filteredDiscoverClubs = useMemo(() => {
         const term = searchTerm.trim().toLowerCase()
@@ -180,6 +222,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
     } = useTeams({ pageSize: 12, sort: "name", endpoint: "/api/teams/my-all" });
 
     function onThemeToggle() {
+        /*
+         Toggles the dashboard theme without touching loaded data.
+        */
         toggleTheme()
     }
 
@@ -309,6 +354,13 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         */
         fetchAvailability()
     }, [fetchAvailability])
+
+    useEffect(() => {
+        /*
+         Loads the badge count for team invitations once per mount.
+        */
+        reloadTeamInvitationCount()
+    }, [reloadTeamInvitationCount])
 
     async function onAvailabilitySubmit(event) {
         /*
@@ -444,6 +496,44 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
             })
         }
     }
+    const fetchJoinRequests = useCallback(async () => {
+        /*
+         Loads incoming join requests and checks owner access.
+        */
+        const res = await fetch("/api/club/join-request", {
+            method: "GET",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (res.status === 200) {
+            // A 200 means the current user has owner access for this club view.
+            setIsClubOwner(true);
+        } else if (res.status === 401 || res.status === 403) {
+            setIsClubOwner(false);
+            return { requests: [] };
+        } else {
+            setIsClubOwner(false);
+        }
+
+        if (!res.ok) {
+            throw new Error("Failed to fetch join requests");
+        }
+
+        return await res.json();
+    }, []);
+    const [incomingJoinRequests, setIncomingJoinRequests] = useState([]);
+    const reloadIncomingJoinRequests = useCallback(async () => {
+        /*
+         Refreshes the owner request list after a decision has been made.
+        */
+        const data = await fetchJoinRequests();
+        setIncomingJoinRequests(data.requests || []);
+        return data;
+    }, [fetchJoinRequests]);
+
     async function clubJoinrequest(clubId) {
         /*
          Creates a join request for the selected club.
@@ -460,6 +550,7 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         if (!res.ok) {
             throw new Error("Request failed");
         }
+        return await res.json();
     }
     async function decideJoinrequest(clubId, userId, status) {
         /*
@@ -481,42 +572,16 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         if (!res.ok) {
             throw new Error("Request failed");
         }
-    }
-    async function fetchJoinRequests() {
-        /*
-         Loads incoming join requests and checks owner access.
-        */
-        const res = await fetch("/api/club/join-request", {
-            method: "GET",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json"
-            }
-        });
-
-        if (!res.ok) {
-            throw new Error("Failed to fetch join requests");
-        }
-        if (res.status === 200) {
-            // A 200 means the current user has owner access for this club view.
-            setIsClubOwner(true);
-        } else {
-            setIsClubOwner(false);
-        }
         return await res.json();
     }
-    const [incomingJoinRequests, setIncomingJoinRequests] = useState([]);
 
     useEffect(() => {
         /*
          Loads the owner-only join requests on mount.
         */
-        fetchJoinRequests()
-            .then(data => {
-                setIncomingJoinRequests(data.requests || []);
-            })
+        reloadIncomingJoinRequests()
             .catch(err => console.error("Not an owner or fetch failed", err));
-    }, []);
+    }, [reloadIncomingJoinRequests]);
 
     async function onClubRequestSubmit(event) {
         /*
@@ -617,9 +682,16 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en") {
         clubRequestMessage,
         incomingJoinRequests,
         isClubOwner,
+        teamInvitationCount,
+        teamJoinRequestCount,
+        clubInvitationCount,
+        activeMatchProposalCount,
         onGoSettings,
         decideJoinrequest,
         clubJoinrequest,
+        reloadDashboard,
+        reloadIncomingJoinRequests,
+        reloadTeamInvitationCount,
         onClubRequestFieldChange,
         onClubRequestCitySelect,
         availabilityBlocks,

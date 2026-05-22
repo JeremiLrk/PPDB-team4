@@ -16,6 +16,12 @@ msgstr "Wedstrijdvoorstellen laden..."
 msgid "matches.empty"
 msgstr "Nog geen wedstrijdvoorstellen."
 
+msgid "matches.show_active"
+msgstr "Actief"
+
+msgid "matches.show_archived"
+msgstr "Archief"
+
 msgid "matches.retry"
 msgstr "Opnieuw proberen"
 

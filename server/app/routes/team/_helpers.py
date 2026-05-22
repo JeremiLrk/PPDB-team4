@@ -12,6 +12,7 @@ from sqlalchemy import func
 
 from server.extensions import db
 from server.app.models.account import Account, AccountRole
+from server.app.models.sport_type import SportType
 from server.app.models.team import Team, TeamManagerTeam, TeamManager
 from server.app.models.player import PlayerTeam
 from server.app.models.team_join_request import TeamJoinRequest
@@ -227,6 +228,41 @@ def count_effective_players(team_id: int) -> int:
     return confirmed + pending
 
 
+def ladder_expected_roster_bounds(
+    ladder: Ladder,
+    team: Team | None = None,
+) -> tuple[int | None, int | None]:
+    """Return the roster-size bounds implied by one ladder.
+
+    Ladder-level ruleset values take precedence. If a ladder does not yet
+    define its own sport or ruleset, fall back to the team's sport type so
+    legacy ladders keep using the pre-existing behavior.
+    """
+    if ladder is None:
+        return None, None
+
+    if ladder.rule_set is not None:
+        if ladder.rule_set.game_format == "singles":
+            return 1, 1
+        if ladder.rule_set.game_format == "doubles":
+            return 2, 2
+
+    if ladder.sport_type_id is None:
+        if team is None or team.sport_type_id is None:
+            return None, None
+        sport_type = db.session.get(SportType, team.sport_type_id)
+    else:
+        sport_type = db.session.get(SportType, ladder.sport_type_id)
+
+    if sport_type is None:
+        return None, None
+
+    return (
+        sport_type.minimum_number_of_players_on_a_team,
+        sport_type.maximum_number_of_players_per_team,
+    )
+
+
 # ---------------------------------------------------------------------------
 # ladders that would exceed max players after adding one more
 # ---------------------------------------------------------------------------
@@ -236,26 +272,24 @@ def ladders_exceeding_max_after_add(team_id: int) -> list[Ladder]:
     projected = count_effective_players(team_id) + 1
 
     team = db.session.get(Team, team_id)
-    if team is None or team.sport_type is None:
+    if team is None:
         return []
 
-    max_players = team.sport_type.maximum_number_of_players_per_team
-    if max_players is None:
-        # No cap defined for this sport — nothing can be exceeded.
-        return []
-
-    if projected <= max_players:
-        return []
-
-    # Fetch every ladder this team is enrolled in.
     ladders = (
         db.session.query(Ladder)
         .join(LadderTeam, LadderTeam.ladder_id == Ladder.id)
         .filter(LadderTeam.team_id == team_id)
         .all()
     )
+    if not ladders:
+        return []
 
-    return ladders
+    violating: list[Ladder] = []
+    for ladder in ladders:
+        _, max_players = ladder_expected_roster_bounds(ladder, team)
+        if max_players is not None and projected > max_players:
+            violating.append(ladder)
+    return violating
 
 # ---------------------------------------------------------------------------
 # Helper : ladders that would violate min players after removing one
@@ -266,26 +300,24 @@ def ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
     projected = count_effective_players(team_id) - 1
 
     team = db.session.get(Team, team_id)
-    if team is None or team.sport_type is None:
+    if team is None:
         return []
 
-    min_players = team.sport_type.minimum_number_of_players_on_a_team
-    if min_players is None:
-        # No minimum defined for this sport — nothing can be violated.
-        return []
-
-    if projected >= min_players:
-        return []
-
-    # Fetch every ladder this team is enrolled in.
     ladders = (
         db.session.query(Ladder)
         .join(LadderTeam, LadderTeam.ladder_id == Ladder.id)
         .filter(LadderTeam.team_id == team_id)
         .all()
     )
+    if not ladders:
+        return []
 
-    return ladders
+    violating: list[Ladder] = []
+    for ladder in ladders:
+        min_players, _ = ladder_expected_roster_bounds(ladder, team)
+        if min_players is not None and projected < min_players:
+            violating.append(ladder)
+    return violating
 
 
 # Compatibility aliases for older imports and tests.

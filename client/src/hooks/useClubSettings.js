@@ -186,7 +186,12 @@ export function useClubSettings(clubId, texts = {}) {
         }
     };
 
-    const addTeamToLadder = async (ladderId, teamId) => {
+    const addTeamToLadder = async (
+        ladderId,
+        teamId,
+        confirmOversizedTeam = false,
+        confirmSportMismatch = false,
+    ) => {
         /*
          Adds one team to one ladder.
         */
@@ -194,14 +199,112 @@ export function useClubSettings(clubId, texts = {}) {
             const res = await fetch(`/api/clubs/${clubId}/ladders/${ladderId}/teams/${teamId}`, {
                 method: "POST",
                 credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ confirmOversizedTeam, confirmSportMismatch }),
+            });
+
+            const data = await res.json();
+            if (res.status === 202 && data.warning === "oversized_team") {
+                return data;
+            }
+            if (res.status === 202 && data.action === "invitation_sent") {
+                setEligibleTeams((prev) => prev.map((team) => {
+                    if (Number(team.id) !== Number(teamId)) return team;
+                    return {
+                        ...team,
+                        pendingClubInvitation: data.invitation,
+                    };
+                }));
+                return data;
+            }
+            if (!res.ok) throw new Error(data.message);
+
+            setEligibleTeams((prev) => prev.map((team) => {
+                if (Number(team.id) !== Number(teamId)) return team;
+                const nextTeam = data.team ? {
+                    ...team,
+                    ...data.team,
+                    sportTypeId: data.team.sportTypeId ?? data.team.sport_type_id ?? team.sportTypeId,
+                    sport_type_id: data.team.sport_type_id ?? data.team.sportTypeId ?? team.sport_type_id,
+                    sportName: data.team.sportName ?? data.team.sport_name ?? team.sportName,
+                    sport_name: data.team.sport_name ?? data.team.sportName ?? team.sport_name,
+                } : { ...team };
+                if (data.action === "invitation_sent") {
+                    return {
+                        ...nextTeam,
+                        pendingClubInvitation: data.invitation,
+                    };
+                }
+                const ladderIds = Array.isArray(team.ladderIds) ? team.ladderIds : [];
+                return {
+                    ...nextTeam,
+                    ladderIds: [...new Set([...ladderIds.map(Number), Number(ladderId)])],
+                };
+            }));
+
+            return data;
+        } catch (err) {
+            setError(err.message || texts.could_not_add_team_to_ladder || "Could not add team to ladder.");
+            throw err;
+        }
+    };
+
+    const removeTeamFromLadder = async (ladderId, teamId) => {
+        /*
+         Removes one team from one ladder.
+        */
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/ladders/${ladderId}/teams/${teamId}`, {
+                method: "DELETE",
+                credentials: "include",
             });
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
 
+            setEligibleTeams((prev) => prev.map((team) => {
+                if (Number(team.id) !== Number(teamId)) return team;
+                return {
+                    ...team,
+                    ladderIds: Array.isArray(team.ladderIds)
+                        ? team.ladderIds.map(Number).filter((id) => id !== Number(ladderId))
+                        : [],
+                };
+            }));
+
             return data;
         } catch (err) {
-            setError(err.message || texts.could_not_add_team_to_ladder || "Could not add team to ladder.");
+            setError(err.message || texts.could_not_remove_team_from_ladder || "Could not remove team from ladder.");
+            throw err;
+        }
+    };
+
+    const deleteLadder = async (ladderId) => {
+        /*
+         Deletes one ladder from the current club.
+        */
+        try {
+            const res = await fetch(`/api/clubs/${clubId}/ladders/${ladderId}`, {
+                method: "DELETE",
+                credentials: "include",
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            setLadders((prev) => prev.filter((ladder) => Number(ladder.id) !== Number(ladderId)));
+            setEligibleTeams((prev) => prev.map((team) => ({
+                ...team,
+                ladderIds: Array.isArray(team.ladderIds)
+                    ? team.ladderIds.map(Number).filter((id) => id !== Number(ladderId))
+                    : [],
+            })));
+
+            return data;
+        } catch (err) {
+            setError(err.message || texts.could_not_delete_ladder || "Could not delete ladder.");
             throw err;
         }
     };
@@ -349,6 +452,8 @@ export function useClubSettings(clubId, texts = {}) {
         createLadder,
         eligibleTeams,
         addTeamToLadder,
+        removeTeamFromLadder,
+        deleteLadder,
 
         ratingFunctions,
         ruleSets,

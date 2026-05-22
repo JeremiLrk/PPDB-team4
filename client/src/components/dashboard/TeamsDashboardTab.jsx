@@ -29,11 +29,11 @@ const PAGE_SIZE_OPTIONS = [6, 12, 24];
  *
  * managedTeams (teams from /api/teams/my) are fetched here so that
  */
-export function TeamsTab({ texts, theme }) {
+export function TeamsTab({ texts, theme, onInvitationsChanged }) {
     /*
      Owns the dashboard tab that lists the current account's teams.
     */
-    const { currentUser } = useCurrentUserContext();
+    const { currentUser, reloadCurrentUser } = useCurrentUserContext();
 
     // All teams the account is involved with (my-all) — shown in the list
     const {
@@ -50,11 +50,22 @@ export function TeamsTab({ texts, theme }) {
 
     const { clubs: myClubs } = useMyClubs();
 
-    function handleTeamCreated() {
+    function handleTeamCreated(_team) {
         /*
-         Reloads the team list after a team is created.
+         Reloads the current user and team list after a team is created.
+         The /api/me refresh keeps the new team-manager role available
+         immediately so the user does not need a manual refresh.
+        */
+        void reloadCurrentUser?.();
+        void load({ sort, pageSize });
+    }
+
+    function handleInvitationsResolved() {
+        /*
+         Keeps the invitation count and the team list in sync after a response.
         */
         void load({ sort, pageSize });
+        void onInvitationsChanged?.();
     }
     return (
         <div className={`${animationStyles.contentGrid} ${animationStyles.contentFade}`}>
@@ -172,7 +183,7 @@ export function TeamsTab({ texts, theme }) {
 
             {/* Team Invitations Section */}
             <div style={{ gridColumn: "1 / -1" }}>
-                <TeamInvitations />
+                <TeamInvitations onResolved={handleInvitationsResolved} />
             </div>
         </div>
     );

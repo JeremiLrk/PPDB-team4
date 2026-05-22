@@ -1,8 +1,9 @@
 /*
  =====
  MATCH RULE SET
- Structured ruleset for tennis/padel ladder competitions.
  =====
+ Structured rules for tennis and padel matches. Rulesets can be global,
+ account-created, or club-specific.
  */
 
 CREATE TABLE IF NOT EXISTS match_rule_set (
@@ -41,12 +42,3 @@ CREATE TABLE IF NOT EXISTS match_rule_set (
     CONSTRAINT pk_match_rule_set
         PRIMARY KEY (id)
 );
-
--- Migration: add new columns to existing tables
-ALTER TABLE match_rule_set ADD COLUMN IF NOT EXISTS match_format VARCHAR(20) NOT NULL DEFAULT 'best_of_3';
-ALTER TABLE match_rule_set ADD COLUMN IF NOT EXISTS timed_duration_minutes INT DEFAULT NULL;
-ALTER TABLE match_rule_set ADD COLUMN IF NOT EXISTS pro_set_games INT DEFAULT NULL;
-ALTER TABLE match_rule_set ADD COLUMN IF NOT EXISTS third_set_format VARCHAR(20) NOT NULL DEFAULT 'super_tiebreak';
-ALTER TABLE match_rule_set ADD COLUMN IF NOT EXISTS deuce_rule VARCHAR(20) NOT NULL DEFAULT 'advantage';
-ALTER TABLE match_rule_set ADD COLUMN IF NOT EXISTS game_format VARCHAR(20) NOT NULL DEFAULT 'doubles';
-

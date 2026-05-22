@@ -77,5 +77,8 @@ msgstr "Upcoming"
 msgid "club_home.ladder_label"
 msgstr "Ladder"
 
+msgid "club_home.club_label"
+msgstr "Club"
+
 msgid "club_home.performer_label"
 msgstr "Club performer"

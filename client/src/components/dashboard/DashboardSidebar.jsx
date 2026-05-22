@@ -14,6 +14,7 @@ export default function DashboardSidebar({
     theme,
     activeTab,
     texts,
+    tabCounts = {},
     onTabChange,
     onThemeToggle,
     onGoHome,
@@ -101,7 +102,10 @@ export default function DashboardSidebar({
                             className={`${navStyles.navButton} ${activeTab === tab.id ? btnStyles.navButtonActive : ""}`}
                             onClick={() => onTabChange(tab.id)}>
                             {/* Each tab is a direct dashboard view switch, not a route change. */}
-                            {tab.label}
+                            <span className={navStyles.navButtonLabel}>{tab.label}</span>
+                            {Number(tabCounts?.[tab.id] || 0) > 0 ? (
+                                <span className={navStyles.navBadge}>{tabCounts[tab.id]}</span>
+                            ) : null}
                         </button>
                     ))}
                 </nav>
@@ -143,7 +147,10 @@ export default function DashboardSidebar({
                                 className={`${styles.mobileMenuTab} ${activeTab === tab.id ? styles.mobileMenuTabActive : ""}`}
                                 onClick={() => handleTabChange(tab.id)}>
                                 {/* Mobile tabs close the drawer after selection so the next screen gets full width. */}
-                                {tab.label}
+                                <span className={navStyles.navButtonLabel}>{tab.label}</span>
+                                {Number(tabCounts?.[tab.id] || 0) > 0 ? (
+                                    <span className={navStyles.navBadge}>{tabCounts[tab.id]}</span>
+                                ) : null}
                             </button>
                         ))}
                     </nav>

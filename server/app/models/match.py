@@ -175,7 +175,7 @@ class MatchStatus(db.Model):
     __tablename__ = "match_status"
 
     id   = db.Column(db.BigInteger, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=False, unique=True)
 
     proposals = db.relationship("MatchProposal", back_populates="status")
 
@@ -246,7 +246,7 @@ class MatchProposal(db.Model):
     id            = db.Column(db.BigInteger, primary_key=True)
     proposed_by_user_id = db.Column(
         db.BigInteger,
-        db.ForeignKey("account.id", ondelete="RESTRICT"),
+        db.ForeignKey("account.id", ondelete="SET NULL"),
         nullable=True,
     )
     sport_type_id = db.Column(

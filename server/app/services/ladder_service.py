@@ -1,6 +1,13 @@
 from server.app.models.team import Team
 from server.app.models.ladder_team import LadderTeam
 from server.app.models.match import MatchPlayed, MatchProposal
+from server.app.services.elo_service import (
+    DEFAULT_RATING,
+    actualScore,
+    expectedScore,
+    kFactor,
+    roundHalfAwayFromZero,
+)
 from server.extensions import db
 
 def get_all_players_ladder(ladder_id: int):
@@ -14,11 +21,9 @@ def get_all_players_ladder(ladder_id: int):
 
 
 def get_ladder_player_achievement_stats(ladder_id: int) -> dict[int, dict]:
-    """Return per-team win and streak stats for a ladder.
+    """Return per-team achievement stats for a ladder.
 
-    The ladder page shows "Most wins" and "Best win streak" cards, so the
-    values need to be derived from actual resolved matches rather than from
-    the seeded rating rows alone.
+    The ladder page shows achievement cards derived from resolved matches.
     """
     rows = get_all_players_ladder(ladder_id)
     stats = {
@@ -26,9 +31,18 @@ def get_ladder_player_achievement_stats(ladder_id: int) -> dict[int, dict]:
             "wins": 0,
             "win_streak": 0,
             "best_win_streak": 0,
+            "rank1_streak": 0,
+            "best_rank1_streak": 0,
             "matches_played": 0,
         }
         for team, _ladder_team in rows
+    }
+    simulated_rows = {
+        team.id: {
+            "rating": ladder_team.rating if ladder_team.rating is not None else DEFAULT_RATING,
+            "matches_played": ladder_team.matches_played or 0,
+        }
+        for team, ladder_team in rows
     }
 
     played_rows = (
@@ -66,4 +80,49 @@ def get_ladder_player_achievement_stats(ladder_id: int) -> dict[int, dict]:
             team1_stats["win_streak"] = 0
             team2_stats["win_streak"] = 0
 
+        apply_simulated_ladder_result(simulated_rows, proposal, played)
+        leader_id = _simulated_rank1_team_id(simulated_rows)
+        for team_id, team_stats in stats.items():
+            if team_id == leader_id:
+                team_stats["rank1_streak"] += 1
+                team_stats["best_rank1_streak"] = max(
+                    team_stats["best_rank1_streak"],
+                    team_stats["rank1_streak"],
+                )
+            else:
+                team_stats["rank1_streak"] = 0
+
     return stats
+
+
+def apply_simulated_ladder_result(
+    simulated_rows: dict[int, dict],
+    proposal: MatchProposal,
+    played: MatchPlayed,
+) -> None:
+    """Apply a pure in-memory Elo update for achievement history."""
+    row1 = simulated_rows.get(proposal.team1_id)
+    row2 = simulated_rows.get(proposal.team2_id)
+    if row1 is None or row2 is None:
+        return
+
+    score1 = actualScore(played.score_team1, played.score_team2)
+    score2 = actualScore(played.score_team2, played.score_team1)
+    expected1 = expectedScore(row1["rating"], row2["rating"])
+    expected2 = expectedScore(row2["rating"], row1["rating"])
+    delta1 = roundHalfAwayFromZero(kFactor(row1["rating"], row1["matches_played"]) * (score1 - expected1))
+    delta2 = roundHalfAwayFromZero(kFactor(row2["rating"], row2["matches_played"]) * (score2 - expected2))
+
+    row1["rating"] += delta1
+    row2["rating"] += delta2
+    row1["matches_played"] += 1
+    row2["matches_played"] += 1
+
+
+def _simulated_rank1_team_id(simulated_rows: dict[int, dict]) -> int | None:
+    if not simulated_rows:
+        return None
+    return max(
+        simulated_rows.items(),
+        key=lambda item: (item[1]["rating"], -item[0]),
+    )[0]

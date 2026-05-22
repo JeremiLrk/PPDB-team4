@@ -303,6 +303,13 @@ def ensure_default_match_ruleset() -> int | None:
     return None
 
 
+def get_match_ruleset_id(name: str, fallback: int | None = None) -> int | None:
+    ruleset = MatchRuleSet.query.filter(db.func.lower(MatchRuleSet.name) == name.lower()).first()
+    if ruleset:
+        return int(ruleset.id)
+    return fallback
+
+
 def get_or_create_ladder(
     club_id, name, description, sport_type_id,
     ladder_rating_function_id, ruleset_id=None,
@@ -900,6 +907,8 @@ def seed_teams_and_users(verbose: bool = True) -> None:
 
     rating_fn_id = ensure_default_ladder_rating_function()
     ruleset_id   = ensure_default_match_ruleset()
+    tennis_ruleset_id = get_match_ruleset_id("Standaard Tennis Enkel", ruleset_id)
+    padel_ruleset_id = get_match_ruleset_id("Standaard Padel", ruleset_id)
 
     # ------------------------------------------------------------------
     # 3. Club owners (each will own one club)
@@ -1139,6 +1148,24 @@ def seed_teams_and_users(verbose: bool = True) -> None:
                 end_time=datetime.time(hour=20, minute=0),
             )
             log(f"{TAG}   player '{email}' -> '{team.name}'", verbose)
+
+        padel_extra_players = [
+            ("Paula", "De Smet", "paula.desmet@example.com"),
+            ("Simon", "Verstraete", "simon.verstraete@example.com"),
+            ("Tess", "Hermans", "tess.hermans@example.com"),
+            ("Wout", "De Bruyne", "wout.debruyne@example.com"),
+        ]
+        for team, (first_name, last_name, email) in zip(club_teams[1], padel_extra_players):
+            acc, _ = make_account(first_name, last_name, email, role_player)
+            ensure_player_on_team(acc, team)
+            ensure_team_players_in_club(team, owners[1][3])
+            get_or_create_availability_block(
+                acc.id,
+                weekday=2,
+                start_time=datetime.time(hour=18, minute=0),
+                end_time=datetime.time(hour=20, minute=0),
+            )
+            log(f"{TAG}   extra padel player '{email}' -> '{team.name}'", verbose)
     except Exception as e:
         print(f"{TAG} ERROR seeding team players: {e}")
         db.session.rollback()
@@ -1178,8 +1205,9 @@ def seed_teams_and_users(verbose: bool = True) -> None:
     try:
         for club_idx, ladder_name, desc in LADDER_SPECS:
             _, _, _, club, sport = owners[club_idx]
+            ladder_ruleset_id = tennis_ruleset_id if club_idx == 0 else padel_ruleset_id if club_idx == 1 else ruleset_id
             ladder, _ = get_or_create_ladder(
-                club.id, ladder_name, desc, sport.id, rating_fn_id, ruleset_id,
+                club.id, ladder_name, desc, sport.id, rating_fn_id, ladder_ruleset_id,
             )
             ladders[(club_idx, ladder_name)] = ladder
             log(f"{TAG}   ladder '{ladder_name}' in club '{club.name}'", verbose)
@@ -1371,7 +1399,7 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             description="Demo ladder where Jeremi is only a player.",
             sport_type_id=tennis.id,
             ladder_rating_function_id=rating_fn_id,
-            ruleset_id=ruleset_id,
+            ruleset_id=tennis_ruleset_id,
         )
         get_or_create_ladder_team(player_demo_ladder.id, player_demo_team.id,     rank=1, rating=1110, matches_played=3)
         get_or_create_ladder_team(player_demo_ladder.id, player_demo_opponent.id, rank=2, rating=1090, matches_played=3)
@@ -1551,7 +1579,7 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             description="Demo ladder where Jeremi and LRK are team managers but not club owners.",
             sport_type_id=tennis.id,
             ladder_rating_function_id=rating_fn_id,
-            ruleset_id=ruleset_id,
+            ruleset_id=tennis_ruleset_id,
         )
         get_or_create_ladder_team(manager_demo_ladder.id, manager_demo_team_a.id, rank=1, rating=1125, matches_played=0)
         get_or_create_ladder_team(manager_demo_ladder.id, manager_demo_team_b.id, rank=2, rating=1105, matches_played=0)
@@ -1618,7 +1646,7 @@ def seed_teams_and_users(verbose: bool = True) -> None:
             description="Debug ladder for reproducing match proposal flows between Jeremi and LRK.",
             sport_type_id=tennis.id,
             ladder_rating_function_id=rating_fn_id,
-            ruleset_id=ruleset_id,
+            ruleset_id=tennis_ruleset_id,
         )
         get_or_create_ladder_team(lrk_debug_ladder.id, jeremi_debug_team.id, rank=1, rating=1100, matches_played=0)
         get_or_create_ladder_team(lrk_debug_ladder.id, lrk_debug_team.id, rank=2, rating=1100, matches_played=0)

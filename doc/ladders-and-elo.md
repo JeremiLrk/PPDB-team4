@@ -13,6 +13,45 @@ A ladder can point to:
 
 In practice, this lets a club run more than one competition at the same time without mixing their rankings or rules.
 
+The ladder ruleset is the preferred source for roster-size behavior when it is
+available. Older ladders still fall back to the sport-type limits, which keeps
+legacy basketball, squash, and similar club data working while newer ladders
+use the explicit ruleset model.
+
+## Adding Teams To Ladders
+
+Club teams can be added to a club ladder directly by a club owner or administrator.
+
+Independent teams use an invitation flow:
+
+1. The club manager selects the independent team in the ladder settings.
+2. NetRank creates a pending invitation for the team manager.
+3. The team manager accepts or rejects the invitation from the dashboard.
+4. On acceptance, the team joins the club and is added to the ladder.
+
+The ladder chooser shows the practical state of each candidate team:
+
+- whether it is already a club team
+- whether it needs an invitation
+- whether an invitation is already pending
+- whether the team is already in the selected ladder
+- current managers and players
+
+NetRank does not assign an independent team to a club without team-manager approval.
+
+If a club manager tries to add a team that is technically too large for the
+ladder, the UI warns first instead of silently blocking the action. The
+confirmation flow then lets the manager decide whether to continue and remove
+the ladder membership or create a new team instead.
+
+Club managers can also manage existing ladder membership from the same settings area:
+
+- remove a team from a ladder
+- delete a ladder
+- see how many teams are currently in each ladder
+
+Removing a team from a ladder cancels that team's unplayed matches in that ladder. Deleting a ladder removes the ladder membership rows while keeping historical match records in the database.
+
 ## How Elo Works
 
 NetRank uses an Elo-style rating system for ladder rankings. In plain language, that means every match changes a team’s rating based on whether it did better or worse than the system expected.
@@ -75,3 +114,15 @@ That means:
 
 - the ladder standings update immediately after the final result
 - the ranking changes are stored, not calculated only on the fly
+
+## Ladder Achievements
+
+Ladder pages include a small achievement summary for the teams in that ladder.
+
+It highlights:
+
+- most wins in the ladder
+- best win streak in the ladder
+- longest #1 reign in the ladder
+
+These cards are derived from finalized match results for teams in the ladder. The longest #1 reign starts from the ladder rows' stored ratings and match counts, replays the ladder's finalized match history in order, and counts the longest run of consecutive completed matches where a team held the simulated top rank. The cards help explain performance history, but they do not change Elo ratings, ladder order, or match generation.

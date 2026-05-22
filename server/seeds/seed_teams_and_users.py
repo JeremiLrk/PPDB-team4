@@ -302,6 +302,13 @@ def ensure_default_match_ruleset() -> int | None:
   return None
 
 
+def get_match_ruleset_id(name: str, fallback: int | None = None) -> int | None:
+  ruleset = MatchRuleSet.query.filter(db.func.lower(MatchRuleSet.name) == name.lower()).first()
+  if ruleset:
+    return int(ruleset.id)
+  return fallback
+
+
 def get_or_create_ladder(
     club_id,
     name,
@@ -816,6 +823,8 @@ def seed_teams_and_users(verbose: bool = True):
   try:
     rating_fn_id = ensure_default_ladder_rating_function()
     ruleset_id = ensure_default_match_ruleset()
+    tennis_ruleset_id = get_match_ruleset_id("Standaard Tennis Enkel", ruleset_id)
+    padel_ruleset_id = get_match_ruleset_id("Standaard Padel", ruleset_id)
 
     demo_acc, demo_acc_created = make_account(
       "Jeremi",
@@ -895,7 +904,7 @@ def seed_teams_and_users(verbose: bool = True):
       "Primary competitive singles ladder using ELO.",
       tennis.id,
       rating_fn_id,
-      ruleset_id=ruleset_id,
+      ruleset_id=tennis_ruleset_id,
     )
     junior_ladder, _ = get_or_create_ladder(
       demo_club.id,
@@ -903,7 +912,7 @@ def seed_teams_and_users(verbose: bool = True):
       "Junior development ladder with weekly fixtures.",
       tennis.id,
       rating_fn_id,
-      ruleset_id=ruleset_id,
+      ruleset_id=tennis_ruleset_id,
     )
     get_or_create_ladder_team(men_ladder.id, men_team.id, rank=1, rating=1290, matches_played=18)
     get_or_create_ladder_team(men_ladder.id, challenger_team.id, rank=2, rating=1230, matches_played=15)
@@ -921,9 +930,15 @@ def seed_teams_and_users(verbose: bool = True):
     padel_player_one, _ = make_account("Emma", "Claes", "emma.claes@example.com", role_player)
     padel_player_two, _ = make_account("Pieter", "Maes", "pieter.maes@example.com", role_player)
     padel_player_three, _ = make_account("Sanne", "Verhoeven", "sanne.verhoeven@example.com", role_player)
+    padel_player_four, _ = make_account("Arno", "Peeters", "arno.peeters@example.com", role_player)
+    padel_player_five, _ = make_account("Lotte", "Janssens", "lotte.janssens@example.com", role_player)
+    padel_player_six, _ = make_account("Mats", "Van Damme", "mats.vandamme@example.com", role_player)
     ensure_player_on_team(padel_player_one, padel_alpha)
+    ensure_player_on_team(padel_player_four, padel_alpha)
     ensure_player_on_team(padel_player_two, padel_bravo)
+    ensure_player_on_team(padel_player_five, padel_bravo)
     ensure_player_on_team(padel_player_three, padel_charlie)
+    ensure_player_on_team(padel_player_six, padel_charlie)
     ensure_team_players_in_club(padel_alpha, padel_club)
     ensure_team_players_in_club(padel_bravo, padel_club)
     ensure_team_players_in_club(padel_charlie, padel_club)
@@ -934,7 +949,7 @@ def seed_teams_and_users(verbose: bool = True):
       "Top padel ladder for advanced doubles teams.",
       padel.id,
       rating_fn_id,
-      ruleset_id=ruleset_id,
+      ruleset_id=padel_ruleset_id,
     )
     community_padel_ladder, _ = get_or_create_ladder(
       padel_club.id,
@@ -942,7 +957,7 @@ def seed_teams_and_users(verbose: bool = True):
       "Community padel ladder for requests and friendly challenges.",
       padel.id,
       rating_fn_id,
-      ruleset_id=ruleset_id,
+      ruleset_id=padel_ruleset_id,
     )
     get_or_create_ladder_team(padel_ladder.id, padel_alpha.id, rank=1, rating=1310, matches_played=16)
     get_or_create_ladder_team(padel_ladder.id, padel_bravo.id, rank=2, rating=1275, matches_played=14)
@@ -961,7 +976,7 @@ def seed_teams_and_users(verbose: bool = True):
       description="Demo ladder where Jeremi is only a player.",
       sport_type_id=tennis.id,
       ladder_rating_function_id=rating_fn_id,
-      ruleset_id=ruleset_id,
+      ruleset_id=tennis_ruleset_id,
     )
     get_or_create_ladder_team(player_demo_ladder.id, player_demo_team.id, rank=1, rating=1110, matches_played=3)
     get_or_create_ladder_team(player_demo_ladder.id, player_demo_opponent.id, rank=2, rating=1090, matches_played=3)
@@ -1044,7 +1059,7 @@ def seed_teams_and_users(verbose: bool = True):
       description="Debug ladder for reproducing match proposal flows between Jeremi and LRK.",
       sport_type_id=tennis.id,
       ladder_rating_function_id=rating_fn_id,
-      ruleset_id=ruleset_id,
+      ruleset_id=tennis_ruleset_id,
     )
     get_or_create_ladder_team(lrk_debug_ladder.id, jeremi_debug_team.id, rank=1, rating=1100, matches_played=0)
     get_or_create_ladder_team(lrk_debug_ladder.id, lrk_debug_team.id, rank=2, rating=1100, matches_played=0)
@@ -1062,7 +1077,7 @@ def seed_teams_and_users(verbose: bool = True):
       proposed_by_user_id=demo_acc.id,
       sport_type_id=tennis.id,
       ladder_id=lrk_debug_ladder.id,
-      ruleset_id=ruleset_id,
+      ruleset_id=tennis_ruleset_id,
       proposed_start_at=debug_start,
       proposed_end_at=debug_end,
       location="LRK Debug Court",

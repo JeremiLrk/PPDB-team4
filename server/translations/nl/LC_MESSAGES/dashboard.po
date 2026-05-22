@@ -103,6 +103,30 @@ msgstr "Team aangemaakt!"
 msgid "dashboard.create_team"
 msgstr "Team aanmaken"
 
+msgid "dashboard.new_team_created"
+msgstr "Team aangemaakt"
+
+msgid "dashboard.add_self_as_player"
+msgstr "Voeg jezelf toe als speler"
+
+msgid "dashboard.team_created_and_self_added"
+msgstr "Team aangemaakt en je bent als speler toegevoegd."
+
+msgid "dashboard.self_add_success"
+msgstr "Je bent nu toegevoegd als speler."
+
+msgid "dashboard.added_label"
+msgstr "Toegevoegd"
+
+msgid "dashboard.self_add_failed"
+msgstr "Je kon niet als speler worden toegevoegd."
+
+msgid "dashboard.self_add_missing_request"
+msgstr "Ontbrekend aanmeldverzoek voor zelf-toevoegen."
+
+msgid "dashboard.self_add_warning"
+msgstr "Jezelf toevoegen zou de limiet van de ladder overschrijden."
+
 msgid "dashboard.switch_to_light_mode"
 msgstr "Wissel naar lichte modus"
 
@@ -145,8 +169,65 @@ msgstr "Sport"
 msgid "dashboard.independent_team"
 msgstr "Onafhankelijk"
 
+msgid "dashboard.player_invite"
+msgstr "Spelersuitnodiging"
+
+msgid "dashboard.ladder_invite"
+msgstr "Ladderuitnodiging"
+
+msgid "dashboard.club_invite"
+msgstr "Clubuitnodiging"
+
+msgid "dashboard.team_prefix"
+msgstr "Team"
+
+msgid "dashboard.team_one"
+msgstr "Team 1"
+
+msgid "dashboard.team_two"
+msgstr "Team 2"
+
 msgid "dashboard.quick_highlights"
 msgstr "Snelle highlights"
+
+msgid "dashboard.sent_club_requests"
+msgstr "Verzonden clubaanvragen"
+
+msgid "dashboard.sent_club_requests_hint"
+msgstr "Aanvragen die jij hebt ingediend om lid te worden van clubs."
+
+msgid "dashboard.pending_club_approvals"
+msgstr "Wachten op clubgoedkeuring"
+
+msgid "dashboard.pending_club_approvals_hint"
+msgstr "Jouw clubaanvragen die nog in behandeling zijn."
+
+msgid "dashboard.incoming_join_requests_hint"
+msgstr "Spelers die wachten op een beslissing van een clubeigenaar."
+
+msgid "dashboard.team_join_requests"
+msgstr "Teamuitnodigingen"
+
+msgid "dashboard.team_join_requests_hint"
+msgstr "Uitnodigingen om als speler bij een team aan te sluiten."
+
+msgid "dashboard.ladder_invites"
+msgstr "Ladder- en clubuitnodigingen"
+
+msgid "dashboard.ladder_invites_hint"
+msgstr "Uitnodigingen voor teams die jij beheert om bij een club of ladder te komen."
+
+msgid "dashboard.match_proposals_to_check"
+msgstr "Wedstrijdvoorstellen"
+
+msgid "dashboard.match_proposals_to_check_hint"
+msgstr "Zichtbare actieve voorstellen die mogelijk acceptatie, score-invoer of opvolging nodig hebben."
+
+msgid "dashboard.upcoming_matches_hint"
+msgstr "Geplande wedstrijden uit je dashboardoverzicht."
+
+msgid "dashboard.upcoming_matches"
+msgstr "Aankomende wedstrijden"
 
 msgid "dashboard.join_requests"
 msgstr "Aanvragen"
@@ -168,6 +249,21 @@ msgstr "Nog geen binnenkomende aanvragen."
 
 msgid "dashboard.wants_to_join"
 msgstr "wil lid worden van"
+
+msgid "dashboard.approve"
+msgstr "Goedkeuren"
+
+msgid "dashboard.reject"
+msgstr "Afwijzen"
+
+msgid "dashboard.saving"
+msgstr "Bezig..."
+
+msgid "dashboard.request_updated"
+msgstr "Aanvraag bijgewerkt."
+
+msgid "dashboard.could_not_update_request"
+msgstr "Aanvraag bijwerken mislukt."
 
 msgid "dashboard.settings"
 msgstr "Instellingen"
@@ -193,6 +289,12 @@ msgstr "Lid"
 msgid "dashboard.request_to_join"
 msgstr "Aanvraag om lid te worden"
 
+msgid "dashboard.join_request_sent"
+msgstr "Aanvraag verstuurd."
+
+msgid "dashboard.could_not_request_join"
+msgstr "Aanvraag versturen mislukt."
+
 msgid "dashboard.my_join_requests"
 msgstr "Mijn aanvragen"
 
@@ -216,6 +318,12 @@ msgstr "Starttijd"
 
 msgid "dashboard.end_time"
 msgstr "Eindtijd"
+
+msgid "dashboard.weekday"
+msgstr "Weekdag"
+
+msgid "dashboard.select_weekday"
+msgstr "Kies een weekdag"
 
 msgid "dashboard.adding"
 msgstr "Toevoegen..."
@@ -243,6 +351,9 @@ msgstr "Laden..."
 
 msgid "dashboard.no_availability_blocks"
 msgstr "Nog geen beschikbaarheidsblokken."
+
+msgid "dashboard.availability_block_detail"
+msgstr "Wekelijks terugkerend blok"
 
 msgid "dashboard.delete"
 msgstr "Verwijderen"
@@ -288,6 +399,9 @@ msgstr "Stad waar je club gevestigd is"
 
 msgid "dashboard.main_sport"
 msgstr "Hoofdsport"
+
+msgid "dashboard.select_sport_placeholder"
+msgstr "Selecteer een sport"
 
 msgid "dashboard.main_sport_placeholder"
 msgstr "Padel"
@@ -352,14 +466,41 @@ msgstr "Voornaam"
 msgid "dashboard.last_name"
 msgstr "Achternaam"
 
+msgid "dashboard.email"
+msgstr "E-mail"
+
 msgid "dashboard.date_of_birth"
 msgstr "Geboortedatum"
+
+msgid "dashboard.gender"
+msgstr "Gender"
+
+msgid "dashboard.select_gender"
+msgstr "Selecteer gender"
+
+msgid "dashboard.gender_male"
+msgstr "Man"
+
+msgid "dashboard.gender_female"
+msgstr "Vrouw"
+
+msgid "dashboard.gender_other"
+msgstr "Anders"
+
+msgid "dashboard.phone_number"
+msgstr "Telefoonnummer"
 
 msgid "dashboard.save_changes"
 msgstr "Wijzigingen opslaan"
 
 msgid "dashboard.profile_required_fields"
 msgstr "Voornaam en achternaam zijn verplicht."
+
+msgid "dashboard.profile_gender_required"
+msgstr "Gender is verplicht."
+
+msgid "dashboard.profile_phone_required"
+msgstr "Telefoonnummer is verplicht."
 
 msgid "dashboard.profile_updated_success"
 msgstr "Profiel succesvol bijgewerkt."
@@ -393,3 +534,6 @@ msgstr "Huidig wachtwoord en nieuw wachtwoord zijn verplicht."
 
 msgid "dashboard.passwords_do_not_match"
 msgstr "Wachtwoorden komen niet overeen."
+
+msgid "dashboard.your_clubs"
+msgstr "Jouw clubs"

@@ -3,7 +3,15 @@ from math import isclose
 from server.app.models.account import Account
 from server.app.models.club import Club
 from server.app.models.ladder import Ladder
+from server.app.models.ladder_team import LadderTeam
 from server.app.models.match import MatchPlayed, MatchProposal
+from server.app.services.elo_service import (
+    DEFAULT_RATING,
+    actualScore,
+    expectedScore,
+    kFactor,
+    roundHalfAwayFromZero,
+)
 from server.extensions import db
 from sqlalchemy import or_
 
@@ -66,6 +74,56 @@ def _player_stats_from_history(team_ids: list[int], *, ladder_id: int | None = N
     }
 
 
+def _rank1_streaks_from_history(team_rows: list[LadderTeam], *, ladder_id: int):
+    rows = (
+        db.session.query(MatchProposal, MatchPlayed)
+        .join(MatchPlayed, MatchPlayed.id == MatchProposal.id)
+        .filter(MatchProposal.ladder_id == ladder_id)
+        .order_by(
+            MatchPlayed.played_at.asc().nullslast(),
+            MatchProposal.id.asc(),
+        )
+        .all()
+    )
+    ratings = {
+        row.team_id: row.rating if row.rating is not None else DEFAULT_RATING
+        for row in team_rows
+    }
+    played_counts = {row.team_id: row.matches_played or 0 for row in team_rows}
+    current_streaks = {row.team_id: 0 for row in team_rows}
+    best_streaks = {row.team_id: 0 for row in team_rows}
+
+    for proposal, played in rows:
+        if proposal.team1_id not in ratings or proposal.team2_id not in ratings:
+            continue
+
+        rating1 = ratings[proposal.team1_id]
+        rating2 = ratings[proposal.team2_id]
+        delta1 = roundHalfAwayFromZero(
+            kFactor(rating1, played_counts[proposal.team1_id])
+            * (actualScore(played.score_team1, played.score_team2) - expectedScore(rating1, rating2))
+        )
+        delta2 = roundHalfAwayFromZero(
+            kFactor(rating2, played_counts[proposal.team2_id])
+            * (actualScore(played.score_team2, played.score_team1) - expectedScore(rating2, rating1))
+        )
+
+        ratings[proposal.team1_id] += delta1
+        ratings[proposal.team2_id] += delta2
+        played_counts[proposal.team1_id] += 1
+        played_counts[proposal.team2_id] += 1
+
+        leader_id = max(ratings.items(), key=lambda item: (item[1], -item[0]))[0]
+        for team_id in ratings:
+            if team_id == leader_id:
+                current_streaks[team_id] += 1
+                best_streaks[team_id] = max(best_streaks[team_id], current_streaks[team_id])
+            else:
+                current_streaks[team_id] = 0
+
+    return best_streaks
+
+
 # Verifies dashboard achievements match seeded player history.
 def test_dashboard_achievements_match_seeded_player_history(seeded_client, seeded_app):
     response = seeded_client.post(
@@ -103,8 +161,15 @@ def test_ladder_players_expose_seeded_win_and_streak_stats(seeded_client, seeded
         assert team_one is not None
         assert team_two is not None
 
-        team_one_stats = _player_stats_from_history([team_one.player.teams[0].id], ladder_id=ladder.id)
-        team_two_stats = _player_stats_from_history([team_two.player.teams[0].id], ladder_id=ladder.id)
+        team_one_id = team_one.player.teams[0].id
+        team_two_id = team_two.player.teams[0].id
+        team_one_stats = _player_stats_from_history([team_one_id], ladder_id=ladder.id)
+        team_two_stats = _player_stats_from_history([team_two_id], ladder_id=ladder.id)
+        ladder_team_rows = LadderTeam.query.filter_by(ladder_id=ladder.id).all()
+        rank1_streaks = _rank1_streaks_from_history(
+            ladder_team_rows,
+            ladder_id=ladder.id,
+        )
 
     response = seeded_client.get(f"/api/clubs/{club.id}/ladders/{ladder.id}/players")
     assert response.status_code == 200
@@ -116,9 +181,30 @@ def test_ladder_players_expose_seeded_win_and_streak_stats(seeded_client, seeded
     assert aces["wins"] == team_one_stats["wins"]
     assert aces["win_streak"] == team_one_stats["current_streak"]
     assert aces["best_win_streak"] == team_one_stats["best_streak"]
+    assert aces["best_rank1_streak"] == rank1_streaks[team_one_id]
     assert isclose(aces["win_rate"], team_one_stats["win_rate"])
 
     assert juniors["wins"] == team_two_stats["wins"]
     assert juniors["win_streak"] == team_two_stats["current_streak"]
     assert juniors["best_win_streak"] == team_two_stats["best_streak"]
+    assert juniors["best_rank1_streak"] == rank1_streaks[team_two_id]
     assert isclose(juniors["win_rate"], team_two_stats["win_rate"])
+
+
+# Verifies U14 rank reigns use the ladder's stored rating baseline, not a flat 1000 rating reset.
+def test_u14_rank1_reign_matches_seeded_ladder_order(seeded_client, seeded_app):
+    with seeded_app.app_context():
+        club = Club.query.filter_by(name="NetRank Club").first()
+        ladder = Ladder.query.filter_by(name="U14 Singles").first()
+        assert club is not None
+        assert ladder is not None
+
+    response = seeded_client.get(f"/api/clubs/{club.id}/ladders/{ladder.id}/players")
+    assert response.status_code == 200
+    payload = response.get_json()
+
+    juniors = next(row for row in payload if row["name"] == "NetRank Juniors")
+    aces = next(row for row in payload if row["name"] == "NetRank Aces")
+
+    assert juniors["best_rank1_streak"] == 10
+    assert aces["best_rank1_streak"] == 0

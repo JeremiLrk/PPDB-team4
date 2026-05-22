@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const INITIAL_FORM = { name: "", clubId: "", sportTypeId: "" };
+const INITIAL_FORM = { name: "", clubId: "", sportTypeId: "", addSelfAsPlayer: false };
 
 /**
  * Manages the create-team form state and submission.
@@ -46,10 +46,7 @@ export function useCreateTeam({ onCreated } = {}) {
         */
         setForm(prev => ({ ...prev, [field]: value }));
     }
-    async function submit() {
-        /*
-         Validates and submits the create-team request.
-        */
+    async function submit({ afterCreated } = {}) {
         /*
          Validates and submits the create-team request.
         */
@@ -81,15 +78,24 @@ export function useCreateTeam({ onCreated } = {}) {
                 return;
             }
 
+            const team = data?.team ?? null;
+
+            if (typeof afterCreated === "function") {
+                await afterCreated(team);
+            }
+
+            await onCreated?.(team);
+
             setStep(1);
-            onCreated?.(data.team);
 
             // Auto-close after success flash
             setTimeout(closeForm, 1400);
+            return team;
 
-        } catch {
-            setError("Network error. Please try again.");
+        } catch (err) {
+            setError(err?.message || "Network error. Please try again.");
             setStep(0);
+            return null;
         }
     }
 

@@ -7,45 +7,58 @@ import { useLangContext } from "@/context/useLangContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 import { useThemeContext } from "@/context/useThemeContext.jsx";
 
-const FORMAT_LABELS = {
-    best_of_3:      "Best of 3 sets",
-    timed:          "Op tijd",
-    pro_set:        "Pro Set",
-    full_set:       "Volledige derde set",
-    super_tiebreak: "Super Tiebreak (tot 10 punten)",
-    advantage:      "Klassiek (Voordeel)",
-    golden_point:   "Golden Point (No-Ad)",
-    singles:        "Enkelspel (1v1)",
-    doubles:        "Dubbelspel (2v2)",
+const FORMAT_LABEL_KEYS = {
+    best_of_3:      "format_best_of_3",
+    timed:          "format_timed",
+    pro_set:        "format_pro_set",
+    full_set:       "format_full_set",
+    super_tiebreak: "format_super_tiebreak",
+    advantage:      "format_advantage",
+    golden_point:   "format_golden_point",
+    singles:        "format_singles",
+    doubles:        "format_doubles",
 };
 
-function label(key) {
+const FORMAT_FALLBACK_LABELS = {
+    best_of_3:      "Best of 3 sets",
+    timed:          "Timed",
+    pro_set:        "Pro set",
+    full_set:       "Full third set",
+    super_tiebreak: "Super tiebreak to 10",
+    advantage:      "Classic advantage",
+    golden_point:   "Golden Point (No-Ad)",
+    singles:        "Singles (1v1)",
+    doubles:        "Doubles (2v2)",
+};
+
+function label(key, texts) {
     /*
      Maps raw ruleset values to readable labels.
     */
-    return FORMAT_LABELS[key] ?? key;
+    const textKey = FORMAT_LABEL_KEYS[key];
+    return textKey ? texts?.[textKey] || FORMAT_FALLBACK_LABELS[key] || key : key;
 }
 
-function RulesetModal({ ruleset, onClose, isLight }) {
+function RulesetModal({ ruleset, onClose, isLight, texts }) {
     /*
      Renders the ruleset details overlay for one ladder.
     */
     const rows = [];
 
     const matchFormatText = ruleset.matchFormat === "timed"
-        ? `${label("timed")} – ${ruleset.timedDurationMinutes} minuten`
+        ? `${label("timed", texts)} - ${ruleset.timedDurationMinutes} ${texts.ruleset_minutes || "minutes"}`
         : ruleset.matchFormat === "pro_set"
-            ? `${label("pro_set")} tot ${ruleset.proSetGames} games`
-            : label(ruleset.matchFormat);
+            ? `${label("pro_set", texts)} ${texts.ruleset_to || "to"} ${ruleset.proSetGames} ${texts.ruleset_games || "games"}`
+            : label(ruleset.matchFormat, texts);
 
-    rows.push({ label: "Wedstrijdformaat",  value: matchFormatText });
+    rows.push({ label: texts.ruleset_match_format || "Match format",  value: matchFormatText });
 
     if (ruleset.matchFormat === "best_of_3") {
-        rows.push({ label: "Derde set",     value: label(ruleset.thirdSetFormat) });
+        rows.push({ label: texts.ruleset_third_set || "Third set",     value: label(ruleset.thirdSetFormat, texts) });
     }
 
-    rows.push({ label: "40-40 (Deuce)",     value: label(ruleset.deuceRule) });
-    rows.push({ label: "Spelvorm",          value: label(ruleset.gameFormat) });
+    rows.push({ label: texts.ruleset_deuce || "40-40 (Deuce)",     value: label(ruleset.deuceRule, texts) });
+    rows.push({ label: texts.ruleset_game_format || "Game format",          value: label(ruleset.gameFormat, texts) });
 
     return (
         <div
@@ -67,7 +80,7 @@ function RulesetModal({ ruleset, onClose, isLight }) {
                     className={`absolute top-4 right-4 transition text-lg leading-none ${
                         isLight ? "text-slate-400 hover:text-slate-900" : "text-slate-500 hover:text-white"
                     }`}
-                    aria-label="Sluiten"
+                    aria-label={texts.close || "Close"}
                 >
                     ✕
                 </button>
@@ -132,7 +145,7 @@ function AchievementCard({ icon, label, name, value, unit, isLight }) {
     );
 }
 
-function TopAchievements({ players, isLight }) {
+function TopAchievements({ players, isLight, texts }) {
     /*
      Renders the ladder achievement summary strip.
     */
@@ -141,9 +154,9 @@ function TopAchievements({ players, isLight }) {
     const bestRank1    = topOf(players, "best_rank1_streak");
 
     const cards = [
-        { icon: "🏆", label: "Most wins",        name: mostWins?.name,   value: mostWins?.wins ?? 0,                unit: "wins" },
-        { icon: "🔥", label: "Best win streak",  name: bestStreak?.name, value: bestStreak?.best_win_streak ?? 0,  unit: "in a row" },
-        { icon: "👑", label: "Longest #1 reign", name: bestRank1?.name,  value: bestRank1?.best_rank1_streak ?? 0, unit: "matches" },
+        { icon: "🏆", label: texts.most_wins || "Most wins",        name: mostWins?.name,   value: mostWins?.wins ?? 0,                unit: texts.wins_unit || "wins" },
+        { icon: "🔥", label: texts.best_win_streak || "Best win streak",  name: bestStreak?.name, value: bestStreak?.best_win_streak ?? 0,  unit: texts.in_a_row_unit || "in a row" },
+        { icon: "👑", label: texts.longest_rank1_reign || "Longest #1 reign", name: bestRank1?.name,  value: bestRank1?.best_rank1_streak ?? 0, unit: texts.matches_unit || "matches" },
     ].filter(c => c.value > 0);
 
     if (!cards.length) return null;
@@ -151,7 +164,7 @@ function TopAchievements({ players, isLight }) {
     return (
         <div className="mt-8">
             <h2 className={`text-lg font-semibold mb-3 ${isLight ? "text-slate-700" : "text-slate-200"}`}>
-                Top Achievements
+                {texts.top_achievements || "Top Achievements"}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {cards.map(c => <AchievementCard key={c.label} {...c} isLight={isLight} />)}
@@ -268,8 +281,8 @@ function Ladder() {
                                 <th className="p-4 font-medium">{texts.rank || "Rank"}</th>
                                 <th className="p-4 font-medium">{texts.player || "Player"}</th>
                                 <th className="p-4 font-medium">{texts.rating || "Rating"}</th>
-                                <th className="p-4 font-medium hidden sm:table-cell">W</th>
-                                <th className="p-4 font-medium hidden sm:table-cell">Streak</th>
+                                <th className="p-4 font-medium hidden sm:table-cell">{texts.wins_short || "W"}</th>
+                                <th className="p-4 font-medium hidden sm:table-cell">{texts.streak || "Streak"}</th>
                             </tr>
                         </thead>
                         <tbody className={`divide-y ${isLight ? "divide-slate-100" : "divide-white/5"}`}>
@@ -313,7 +326,7 @@ function Ladder() {
 
             {/* Top Achievements */}
             {!p_loading && players.length > 0 && (
-                <TopAchievements players={players} isLight={isLight} />
+                <TopAchievements players={players} isLight={isLight} texts={texts} />
             )}
 
             {showRuleset && ladder?.ruleset && (
@@ -321,6 +334,7 @@ function Ladder() {
                     ruleset={ladder.ruleset}
                     onClose={() => setShowRuleset(false)}
                     isLight={isLight}
+                    texts={texts}
                 />
             )}
         </div>

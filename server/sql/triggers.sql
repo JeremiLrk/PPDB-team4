@@ -2,6 +2,8 @@
  =====
  TRIGGERS
  =====
+ Database-side guards for match records that depend on relationships across
+ multiple tables.
  */
 CREATE OR REPLACE FUNCTION check_teams_no_common_players()
     RETURNS TRIGGER AS $$

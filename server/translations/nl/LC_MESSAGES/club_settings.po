@@ -312,8 +312,113 @@ msgstr "Toevoegen..."
 msgid "club_settings.team_added_to_ladder"
 msgstr "Team toegevoegd aan ladder."
 
+msgid "club_settings.team_invitation_sent"
+msgstr "Uitnodiging verstuurd naar de teambeheerder."
+
+msgid "club_settings.invite_team"
+msgstr "Team uitnodigen"
+
+msgid "club_settings.team_already_in_ladder"
+msgstr "Dit team zit al in de geselecteerde ladder."
+
+msgid "club_settings.team_invite_pending"
+msgstr "Dit team heeft al een open clubuitnodiging."
+
+msgid "club_settings.team_needs_invite"
+msgstr "Dit onafhankelijke team heeft goedkeuring van een teambeheerder nodig voordat het bij de club en ladder kan komen."
+
+msgid "club_settings.team_can_add_directly"
+msgstr "Dit clubteam kan direct worden toegevoegd."
+
+msgid "club_settings.team_sport_mismatch_warning_title"
+msgstr "Teamsport waarschuwing"
+
+msgid "club_settings.team_sport_mismatch_warning_body"
+msgstr "Dit team heeft een andere sport, terwijl deze ladder een andere sport verwacht. Accepteren wijzigt de sport van het team zodat die overeenkomt met de ladder."
+
+msgid "club_settings.team_sport_mismatch_warning_team"
+msgstr "Huidige sport"
+
+msgid "club_settings.team_managers_label"
+msgstr "Beheerders"
+
+msgid "club_settings.team_players_label"
+msgstr "Spelers"
+
+msgid "club_settings.no_team_managers"
+msgstr "Geen teambeheerders"
+
+msgid "club_settings.no_team_players"
+msgstr "Geen spelers"
+
+msgid "club_settings.teams_in_ladder"
+msgstr "Teams in ladder"
+
+msgid "club_settings.delete_ladder"
+msgstr "Ladder verwijderen"
+
+msgid "club_settings.deleting"
+msgstr "Verwijderen..."
+
+msgid "club_settings.ladder_deleted"
+msgstr "Ladder verwijderd."
+
+msgid "club_settings.could_not_delete_ladder"
+msgstr "Kon ladder niet verwijderen."
+
+msgid "club_settings.remove_from_ladder"
+msgstr "Verwijderen"
+
+msgid "club_settings.removing"
+msgstr "Verwijderen..."
+
+msgid "club_settings.team_removed_from_ladder"
+msgstr "Team uit ladder verwijderd."
+
+msgid "club_settings.team_removed_matches_cancelled"
+msgstr "Team verwijderd. Niet-gespeelde wedstrijden in deze ladder zijn geannuleerd."
+
+msgid "club_settings.could_not_remove_team_from_ladder"
+msgstr "Kon team niet uit ladder verwijderen."
+
+msgid "club_settings.no_teams_in_ladder"
+msgstr "Nog geen teams in deze ladder."
+
+msgid "club_settings.confirm_remove_team_from_ladder"
+msgstr "Dit team uit de ladder verwijderen? Niet-gespeelde wedstrijden voor dit team in deze ladder worden geannuleerd."
+
+msgid "club_settings.confirm_delete_ladder"
+msgstr "Deze ladder verwijderen? Teams worden uit deze ladder gehaald, maar bestaande wedstrijdhistoriek blijft bewaard."
+
 msgid "club_settings.could_not_add_team_to_ladder"
 msgstr "Kon team niet aan ladder toevoegen."
+
+msgid "club_settings.team_size_warning_title"
+msgstr "Waarschuwing teamgrootte"
+
+msgid "club_settings.team_size_warning_body"
+msgstr "Dit team is groter dan de geselecteerde ladder verwacht. Je kunt het toch toevoegen, of in plaats daarvan een nieuw team maken."
+
+msgid "club_settings.team_size_warning_team"
+msgstr "Team"
+
+msgid "club_settings.team_size_warning_ladder"
+msgstr "Ladder"
+
+msgid "club_settings.ladder_team_size_hint"
+msgstr "Deze ladder verwacht teams tot de geselecteerde grootte."
+
+msgid "club_settings.team_too_large_for_ladder"
+msgstr "Dit team is groter dan de geselecteerde ladder verwacht."
+
+msgid "club_settings.team_fits_ladder_format"
+msgstr "Dit team past binnen het geselecteerde ladderformaat."
+
+msgid "club_settings.add_team_confirm_oversize"
+msgstr "Toch toevoegen"
+
+msgid "club_settings.create_new_team"
+msgstr "Nieuw team maken"
 
 msgid "club_settings.delete_club"
 msgstr "Club verwijderen"

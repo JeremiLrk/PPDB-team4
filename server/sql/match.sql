@@ -2,6 +2,8 @@
  =====
  MATCHES
  =====
+ Match proposals are the core match record. State-specific tables add
+ acceptance, rejection, cancellation, played result, and score-submission data.
  */
 
 CREATE TABLE IF NOT EXISTS match_proposal (
@@ -9,11 +11,10 @@ CREATE TABLE IF NOT EXISTS match_proposal (
     proposed_by_user_id BIGINT,
     sport_type_id BIGINT NOT NULL,
     rule_snapshot JSONB,
-    -- ruleset_id kept for backward compatibility; ladder_id is authoritative
-    -- for ladder matches (see ladder.ruleset_id).
+    -- Ladder matches use the ladder ruleset as the effective ruleset.
+    -- Friendly matches can store a direct ruleset reference.
     ruleset_id BIGINT,
-    -- Direct FK to the ladder this match was registered for.
-    -- NULL for friendly matches not belonging to any ladder.
+    -- NULL for friendly matches that do not belong to a ladder.
     ladder_id BIGINT,
 
     team1_id BIGINT NOT NULL,
@@ -31,7 +32,7 @@ CREATE TABLE IF NOT EXISTS match_proposal (
     CONSTRAINT fk_match_proposal_proposed_by
         FOREIGN KEY (proposed_by_user_id)
             REFERENCES account(id)
-            ON DELETE RESTRICT,
+            ON DELETE SET NULL,
 
     CONSTRAINT fk_match_proposal_sport_type_id
         FOREIGN KEY (sport_type_id)
@@ -78,6 +79,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_match_proposal_week_pair
     ON match_proposal (week_start_date, team1_id, team2_id)
     WHERE week_start_date IS NOT NULL;
 
+-- One-to-one state extension for an accepted proposal.
 CREATE TABLE IF NOT EXISTS match_accepted (
     id BIGINT PRIMARY KEY,
     response_by_user_id BIGINT,
@@ -93,6 +95,7 @@ CREATE TABLE IF NOT EXISTS match_accepted (
             REFERENCES account(id)
 );
 
+-- One-to-one state extension for a rejected proposal.
 CREATE TABLE IF NOT EXISTS match_rejected (
     id BIGINT PRIMARY KEY,
     response_by_user_id BIGINT,
@@ -108,6 +111,7 @@ CREATE TABLE IF NOT EXISTS match_rejected (
             REFERENCES account(id)
 );
 
+-- Final played score for a proposal.
 CREATE TABLE IF NOT EXISTS match_played (
     id BIGINT PRIMARY KEY,
     score_team1 INT NOT NULL,
@@ -121,6 +125,7 @@ CREATE TABLE IF NOT EXISTS match_played (
             ON DELETE CASCADE
 );
 
+-- One-to-one state extension for a cancelled proposal.
 CREATE TABLE IF NOT EXISTS match_cancelled (
     id BIGINT PRIMARY KEY,
     reason VARCHAR(512),
@@ -134,11 +139,11 @@ CREATE TABLE IF NOT EXISTS match_cancelled (
 
 -- ---------------------------------------------------------------------------
 -- match_score_submission
--- Each played match may have at most 3 submissions, one per role:
+-- Stores score reports for a match, with at most one submission per role:
 --   'team1_side'   — manager/owner authorised for team1
 --   'team2_side'   — manager/owner authorised for team2
 --   'ladder_admin' — club-owner/admin who adjudicates a disputed result
--- The unique constraint on (match_id, submitted_by_role) enforces the limit.
+-- The unique constraint on (match_id, submitted_by_role) enforces this.
 -- ---------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS match_score_submission (
@@ -164,7 +169,7 @@ CREATE TABLE IF NOT EXISTS match_score_submission (
             REFERENCES account(id)
             ON DELETE RESTRICT,
 
-    -- At most one submission per role per match
+    -- One submission per role per match.
     CONSTRAINT uq_mss_match_role
         UNIQUE (match_id, submitted_by_role)
 );

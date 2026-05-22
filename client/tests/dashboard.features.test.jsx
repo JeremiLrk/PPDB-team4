@@ -62,6 +62,16 @@ const dashboardTextsState = vi.hoisted(() => ({
         my_clubs: "My Clubs",
         no_clubs_yet: "You are not a member of any club yet.",
         open: "Open",
+        player_invite: "Player invite",
+        ladder_invite: "Ladder invite",
+        club_invite: "Club invite",
+        new_team_created: "Team created",
+        add_self_as_player: "Add yourself as player",
+        team_created_and_self_added: "Team created and you were added as a player.",
+        self_add_success: "You are now added as a player.",
+        self_add_failed: "Could not add yourself as a player.",
+        self_add_missing_request: "Missing join request for self-add.",
+        self_add_warning: "Adding yourself would exceed the ladder roster limit.",
         requests_i_sent: "Requests I sent",
         pending_join_requests: "Pending join requests",
         incoming_join_requests: "Incoming requests to review",
@@ -103,6 +113,10 @@ function setupDashboardFetch({
     availability,
     me,
     joinRequests,
+    clubInvitations,
+    joinRequestStatus = 200,
+    clubInvitationAcceptStatus = 200,
+    clubInvitationAcceptDescription = "Team joined the club successfully.",
 } = {}) {
     const state = {
         dashboardData: clone(
@@ -173,20 +187,97 @@ function setupDashboardFetch({
             return jsonResponse({ club: { id: 99, ...body } });
         }
 
+        if (path === "/api/teams" && method === "POST") {
+            return jsonResponse({ team: { id: 99, ...body } }, 201);
+        }
+
+        const addSelfMatch = path.match(/^\/api\/teams\/(\d+)\/players$/);
+        if (addSelfMatch && method === "POST") {
+            return jsonResponse({
+                message: "Player join request created successfully.",
+                request: {
+                    id: 777,
+                    team_id: Number(addSelfMatch[1]),
+                    user_id: body.accountId,
+                    status: "pending",
+                },
+            }, 201);
+        }
+
+        const acceptSelfMatch = path.match(/^\/api\/teams\/(\d+)\/players\/join-requests\/(\d+)\/accept$/);
+        if (acceptSelfMatch && method === "POST") {
+            return jsonResponse({
+                message: "Player join request accepted successfully.",
+                request: {
+                    id: Number(acceptSelfMatch[2]),
+                    team_id: Number(acceptSelfMatch[1]),
+                    status: "accepted",
+                },
+            });
+        }
+
+        if (path === "/api/teams/my-join-requests" && method === "GET") {
+            return jsonResponse({ joinRequests: clone(state.joinRequests) });
+        }
+
+        if (path === "/api/teams/my-club-invitations" && method === "GET") {
+            return jsonResponse({ clubInvitations: clone(clubInvitations || []) });
+        }
+
+        const clubInviteAcceptMatch = path.match(/^\/api\/teams\/(\d+)\/club-invitations\/(\d+)\/accept$/);
+        if (clubInviteAcceptMatch && method === "POST") {
+            return jsonResponse(
+                clubInvitationAcceptStatus >= 200 && clubInvitationAcceptStatus < 300
+                    ? { message: clubInvitationAcceptDescription }
+                    : { description: clubInvitationAcceptDescription },
+                clubInvitationAcceptStatus,
+            );
+        }
+
         if (path === "/api/sport-types" && method === "GET") {
             return jsonResponse({ sportTypes: state.sportTypes });
         }
 
-        if (path === "/api/teams/my-all" || path === "/api/teams") {
+        if (path === "/api/teams/my-all" && method === "GET") {
+            return jsonResponse({ total: 0, from: 0, to: 0, teams: [] });
+        }
+
+        if (path === "/api/teams" && method === "GET") {
             return jsonResponse({ total: 0, from: 0, to: 0, teams: [] });
         }
 
         if (path === "/api/club/join-request" && method === "GET") {
-            return jsonResponse({ requests: state.joinRequests });
+            return jsonResponse(
+                { requests: state.joinRequests },
+                joinRequestStatus,
+            );
         }
 
         if (path === "/api/club/join-request" && method === "POST") {
+            state.dashboardData = {
+                ...state.dashboardData,
+                pending_requests: {
+                    ...(state.dashboardData.pending_requests || {}),
+                    my_requests: [
+                        ...(state.dashboardData.pending_requests?.my_requests || []),
+                        {
+                            id: 501,
+                            club_id: body.club_id,
+                            club_name: state.clubs.find((club) => club.id === body.club_id)?.name || `Club #${body.club_id}`,
+                            status: "pending",
+                        },
+                    ],
+                    my_club_creation_requests: [],
+                },
+            };
             return jsonResponse({ message: "Join request submitted." });
+        }
+
+        if (path === "/api/club/join-request/decide" && method === "POST") {
+            state.joinRequests = state.joinRequests.filter(
+                (request) => !(request.club_id === body.club_id && request.user_id === body.user_id),
+            );
+            return jsonResponse({ message: "Join request updated." });
         }
 
         if (path === "/api/me/availability" && method === "GET") {
@@ -221,7 +312,7 @@ function setupDashboardFetch({
     return state;
 }
 
-function renderDashboard({ lang = "en", currentUser = null } = {}) {
+function renderDashboard({ lang = "en", currentUser = null, route = "/dashboard" } = {}) {
     const onCurrentUserChange = vi.fn();
 
     function Harness() {
@@ -242,14 +333,30 @@ function renderDashboard({ lang = "en", currentUser = null } = {}) {
             onCurrentUserChange(nextUser);
         };
 
+        const reloadCurrentUser = async () => {
+            const response = await fetch("/api/me", {
+                method: "GET",
+                credentials: "include",
+            });
+            if (!response.ok) {
+                updateUser(null);
+                return null;
+            }
+            const data = await response.json();
+            const account = data?.account ?? null;
+            updateUser(account);
+            return account;
+        };
+
         return (
-            <MemoryRouter>
+            <MemoryRouter initialEntries={[route]}>
                 <LangContext.Provider value={{ lang, setLang: () => {} }}>
                     <CurrentUserContext.Provider
                         value={{
                             currentUser: user,
                             setCurrentUser: updateUser,
                             loadingUser: false,
+                            reloadCurrentUser,
                         }}
                     >
                         <Dashboard />
@@ -314,6 +421,150 @@ describe("Dashboard frontend flows", () => {
 
         expect(screen.queryByText("Tuesday 12:00 - 14:00")).not.toBeInTheDocument();
         expect(screen.getByText("Availability block deleted.")).toBeInTheDocument();
+    });
+
+    // Verifies the dashboard can open directly on the teams tab for the ladder shortcut.
+    test("dashboard query tab opens the teams panel", async () => {
+        renderDashboard({ route: "/dashboard?tab=teams" });
+
+        expect(await screen.findByRole("button", { name: "New Team" })).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "My Teams" })).toBeInTheDocument();
+    });
+
+    // Verifies creating a team refreshes the current user and exposes the self-add shortcut.
+    test("team creation refreshes current user and offers add-yourself checkbox", async () => {
+        const user = userEvent.setup();
+        const { onCurrentUserChange } = renderDashboard({ route: "/dashboard?tab=teams" });
+
+        await user.click(await screen.findByRole("button", { name: "New Team" }));
+        await user.type(await screen.findByLabelText("Team Name *"), "Fresh Crew");
+        await user.click(screen.getByRole("checkbox", { name: "Add yourself as player" }));
+        await user.click(screen.getByRole("button", { name: "Create Team" }));
+
+        await waitFor(() => {
+            expect(global.fetch).toHaveBeenCalledWith(
+                "/api/me",
+                expect.objectContaining({ method: "GET" }),
+            );
+        });
+
+        expect(await screen.findByText("Team created and you were added as a player.")).toBeInTheDocument();
+        expect(onCurrentUserChange).toHaveBeenCalled();
+    });
+
+    // Verifies the self-add checkbox uses the normal join-request and accept flow.
+    test("team creation self-add checkbox accepts the new player request", async () => {
+        const user = userEvent.setup();
+        renderDashboard({ route: "/dashboard?tab=teams" });
+
+        await user.click(await screen.findByRole("button", { name: "New Team" }));
+        await user.type(await screen.findByLabelText("Team Name *"), "Fresh Crew");
+        await user.click(screen.getByRole("checkbox", { name: "Add yourself as player" }));
+        await user.click(screen.getByRole("button", { name: "Create Team" }));
+
+        await waitFor(() => {
+            expect(getFetchCall("/api/teams/99/players", "POST")).toBeTruthy();
+            expect(getFetchCall("/api/teams/99/players/join-requests/777/accept", "POST")).toBeTruthy();
+        });
+
+        expect(screen.getByText("Team created and you were added as a player.", { selector: "p" })).toBeInTheDocument();
+    });
+
+    // Verifies upcoming matches in the availability tab show a date-only recommendation.
+    test("availability upcoming matches hide timestamps", async () => {
+        setupDashboardFetch({
+            dashboardData: {
+                roles: ["user"],
+                clubs: [],
+                pending_requests: { my_requests: [], my_club_creation_requests: [] },
+                upcoming_matches: [
+                    {
+                        id: 21,
+                        team1Id: 11,
+                        team2Id: 12,
+                        team1Name: "NetRank Aces",
+                        team2Name: "Rally Rockets",
+                        status: "accepted",
+                        weekStartDate: "2026-05-18",
+                        proposedStartAt: "2026-05-21T10:00:00Z",
+                        proposedEndAt: "2026-05-21T11:00:00Z",
+                    },
+                ],
+            },
+        });
+
+        const user = userEvent.setup();
+        renderDashboard();
+
+        await screen.findByRole("button", { name: "Availability" });
+        await user.click(screen.getByRole("button", { name: "Availability" }));
+
+        expect(await screen.findByText("NetRank Aces vs Rally Rockets")).toBeInTheDocument();
+        expect(screen.getByText("Week of 2026-05-18")).toBeInTheDocument();
+        expect(screen.queryByText("10:00")).not.toBeInTheDocument();
+        expect(screen.queryByText("11:00")).not.toBeInTheDocument();
+    });
+
+    // Verifies non-owner dashboards do not treat the owner join-request reload as a failure.
+    test("join request reload ignores forbidden responses for non owners", async () => {
+        const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+        setupDashboardFetch({ joinRequestStatus: 403 });
+
+        renderDashboard();
+
+        await waitFor(() => {
+            expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+                "Not an owner or fetch failed",
+                expect.any(Error),
+            );
+        });
+
+        consoleErrorSpy.mockRestore();
+    });
+
+    // Verifies club invitation acceptance succeeds and removes the row from the list.
+    test("club invitation accept succeeds for a mismatched sport invitation", async () => {
+        const user = userEvent.setup();
+        setupDashboardFetch({
+            joinRequests: [
+                {
+                    id: 12,
+                    team_id: 88,
+                    team_name: "Serve Squad",
+                    club_name: "NetRank Club",
+                    sport_name: "Padel",
+                },
+            ],
+            clubInvitations: [
+                {
+                    id: 4,
+                    teamId: 37,
+                    teamName: "LrkSolo",
+                    clubName: "Player Demo Club",
+                    ladderName: "Player Demo Singles",
+                    sportName: "Tennis",
+                    ladderSportName: "Tennis",
+                    sportMismatch: true,
+                },
+            ],
+            clubInvitationAcceptStatus: 200,
+            clubInvitationAcceptDescription: "Team joined the club successfully.",
+        });
+
+        renderDashboard();
+
+        await screen.findByRole("button", { name: /My teams/i });
+        await user.click(screen.getByRole("button", { name: /My teams/i }));
+
+        expect(screen.getByText("Player invite")).toBeInTheDocument();
+        expect(screen.getByText("Ladder invite")).toBeInTheDocument();
+        expect(screen.getByText("Accepting this invite will change the team's sport to Tennis.")).toBeInTheDocument();
+        const ladderInviteRow = screen.getByText("Ladder invite").closest("li");
+        await user.click(within(ladderInviteRow).getByRole("button", { name: "Accept" }));
+
+        await waitFor(() => {
+            expect(screen.queryByText("LrkSolo")).not.toBeInTheDocument();
+        });
     });
 
     // Verifies the profile form submits the edited personal details.
@@ -434,5 +685,75 @@ describe("Dashboard frontend flows", () => {
 
         const joinRequestCall = getFetchCall("/api/club/join-request", "POST");
         expect(JSON.parse(joinRequestCall[1].body)).toEqual({ club_id: 2 });
+    });
+
+    // Verifies a submitted club request appears in the requests tab without a page refresh.
+    test("club join request appears in my requests after submitting", async () => {
+        const user = userEvent.setup();
+
+        renderDashboard({
+            currentUser: {
+                id: 7,
+                email: "demo@netrank.com",
+                firstName: "Demo",
+                lastName: "User",
+                gender: "male",
+                phoneNumber: "0400000000",
+            },
+        });
+
+        await screen.findByRole("button", { name: "Search clubs" });
+        await user.click(screen.getByRole("button", { name: "Search clubs" }));
+        await user.type(screen.getByPlaceholderText("Search by club name"), "Rally");
+
+        await user.click(await screen.findByRole("button", { name: "Request to Join" }));
+
+        await waitFor(() => {
+            expect(screen.getByText("Request sent.")).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByRole("button", { name: /My requests/i }));
+
+        expect(await screen.findByRole("heading", { name: "My Join Requests" })).toBeInTheDocument();
+        expect(screen.getByText("Rally Rockets")).toBeInTheDocument();
+    });
+
+    // Verifies club-owner decisions remove the request row without reloading the page.
+    test("incoming join request disappears after approving it", async () => {
+        const user = userEvent.setup();
+
+        setupDashboardFetch({
+            joinRequests: [
+                {
+                    club_id: 1,
+                    user_id: 33,
+                    user_name: "Alex",
+                    club_name: "NetRank Club",
+                    status: "pending",
+                },
+            ],
+        });
+
+        renderDashboard({
+            currentUser: {
+                id: 7,
+                email: "owner@netrank.com",
+                firstName: "Owner",
+                lastName: "User",
+                gender: "male",
+                phoneNumber: "0400000000",
+            },
+        });
+
+        await screen.findByRole("button", { name: /Manage your clubs/i });
+        await user.click(screen.getByRole("button", { name: /Manage your clubs/i }));
+
+        expect(await screen.findByText("Alex")).toBeInTheDocument();
+
+        await user.click(screen.getByRole("button", { name: "Approve" }));
+
+        await waitFor(() => {
+            expect(screen.queryByText("Alex")).not.toBeInTheDocument();
+        });
     });
 });

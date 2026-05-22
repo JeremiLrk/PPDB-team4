@@ -7,11 +7,21 @@ export function useTeamInvitations() {
      Loads and mutates the current user's team invitations.
     */
     const [invitations, setInvitations] = useState([]);
+    const [clubInvitations, setClubInvitations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     useEffect(() => {
         fetchInvitations();
     }, []);
+
+    async function readErrorMessage(response, fallback) {
+        try {
+            const data = await response.json();
+            return data?.message || data?.description || fallback;
+        } catch {
+            return fallback;
+        }
+    }
 
     async function fetchInvitations() {
         /*
@@ -20,13 +30,19 @@ export function useTeamInvitations() {
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch("/api/teams/my-join-requests");
-            if (!response.ok) throw new Error("Failed to fetch");
-            const data = await response.json();
-            setInvitations(Array.isArray(data.joinRequests) ? data.joinRequests : []);
+            const [teamResponse, clubResponse] = await Promise.all([
+                fetch("/api/teams/my-join-requests", { credentials: "include" }),
+                fetch("/api/teams/my-club-invitations", { credentials: "include" }),
+            ]);
+            if (!teamResponse.ok || !clubResponse.ok) throw new Error("Failed to fetch");
+            const teamData = await teamResponse.json();
+            const clubData = await clubResponse.json();
+            setInvitations(Array.isArray(teamData.joinRequests) ? teamData.joinRequests : []);
+            setClubInvitations(Array.isArray(clubData.clubInvitations) ? clubData.clubInvitations : []);
         } catch (err) {
             setError(err.message);
             setInvitations([]);
+            setClubInvitations([]);
         } finally {
             setLoading(false);
         }
@@ -39,9 +55,11 @@ export function useTeamInvitations() {
         try {
             const response = await fetch(
                 `/api/teams/${teamId}/players/join-requests/${invitationId}/accept`,
-                { method: "POST" }
+                { method: "POST", credentials: "include" }
             );
-            if (!response.ok) throw new Error("Failed to accept");
+            if (!response.ok) {
+                throw new Error(await readErrorMessage(response, "Failed to accept"));
+            }
             setInvitations(prev => prev.filter(inv => inv.id !== invitationId));
             return true;
         } catch (err) {
@@ -57,10 +75,52 @@ export function useTeamInvitations() {
         try {
             const response = await fetch(
                 `/api/teams/${teamId}/players/join-requests/${invitationId}/reject`,
-                { method: "POST" }
+                { method: "POST", credentials: "include" }
             );
-            if (!response.ok) throw new Error("Failed to reject");
+            if (!response.ok) {
+                throw new Error(await readErrorMessage(response, "Failed to reject"));
+            }
             setInvitations(prev => prev.filter(inv => inv.id !== invitationId));
+            return true;
+        } catch (err) {
+            setError(err.message);
+            return false;
+        }
+    }
+
+    async function acceptClubInvitation(invitationId, teamId) {
+        /*
+         Accepts one club/ladder invitation for a managed team.
+        */
+        try {
+            const response = await fetch(
+                `/api/teams/${teamId}/club-invitations/${invitationId}/accept`,
+                { method: "POST", credentials: "include" }
+            );
+            if (!response.ok) {
+                throw new Error(await readErrorMessage(response, "Failed to accept"));
+            }
+            setClubInvitations(prev => prev.filter(inv => inv.id !== invitationId));
+            return true;
+        } catch (err) {
+            setError(err.message);
+            return false;
+        }
+    }
+
+    async function rejectClubInvitation(invitationId, teamId) {
+        /*
+         Rejects one club/ladder invitation for a managed team.
+        */
+        try {
+            const response = await fetch(
+                `/api/teams/${teamId}/club-invitations/${invitationId}/reject`,
+                { method: "POST", credentials: "include" }
+            );
+            if (!response.ok) {
+                throw new Error(await readErrorMessage(response, "Failed to reject"));
+            }
+            setClubInvitations(prev => prev.filter(inv => inv.id !== invitationId));
             return true;
         } catch (err) {
             setError(err.message);
@@ -70,9 +130,12 @@ export function useTeamInvitations() {
 
     return {
         invitations,
+        clubInvitations,
         loading,
         error,
         acceptInvitation,
         rejectInvitation,
+        acceptClubInvitation,
+        rejectClubInvitation,
     };
 }

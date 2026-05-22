@@ -5,6 +5,9 @@ This folder contains deeper explanations of how NetRank works.
 ## Read This First
 
 - [README.md](../README.md) for the short project overview and setup instructions.
+
+## Product Areas
+
 - [clubs-and-teams.md](clubs-and-teams.md) for club, team, and membership management.
 - [club-page.md](club-page.md) for the club home page.
 - [club-settings.md](club-settings.md) for the club settings pages.

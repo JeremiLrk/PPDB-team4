@@ -416,6 +416,31 @@ def test_weekly_generation_skips_pair_when_rematch_cooldown_active(seeded_app: F
         assert any(row["reason"] == "rematch_cooldown" for row in result["skipped"])
 
 
+# Verifies weekly generation skips pair when the teams have no shared availability.
+def test_weekly_generation_skips_pair_when_no_common_availability(seeded_app: Flask, monkeypatch):
+    with seeded_app.app_context():
+        account = Account.query.filter_by(email="jeremilorek@outlook.com").first()
+        ladder = Ladder.query.filter_by(name="Player Demo Singles").first()
+        assert account is not None
+        assert ladder is not None
+
+        future_week = next_week_start() - timedelta(weeks=10)
+        monkeypatch.setattr(weekly_service, "meets_rematch_cooldown", lambda *_args, **_kwargs: True)
+        monkeypatch.setattr(weekly_service, "find_common_team_window", lambda *_args, **_kwargs: None)
+
+        result = generate_weekly_match_proposals(
+            proposed_by_user_id=account.id,
+            week_start_date=future_week,
+            ladder_id=ladder.id,
+            managed_team_ids=None,
+            duration_minutes=60,
+            location="Player Demo Court 1",
+        )
+
+        assert result["created_count"] == 0
+        assert any(row["reason"] == "no_common_availability" for row in result["skipped"])
+
+
 # Verifies weekly generation rejects weeks too far ahead.
 def test_weekly_generation_rejects_weeks_too_far_ahead(seeded_app: Flask):
     with seeded_app.app_context():

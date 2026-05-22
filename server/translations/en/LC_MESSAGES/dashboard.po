@@ -103,6 +103,30 @@ msgstr "Team created!"
 msgid "dashboard.create_team"
 msgstr "Create Team"
 
+msgid "dashboard.new_team_created"
+msgstr "Team created"
+
+msgid "dashboard.add_self_as_player"
+msgstr "Add yourself as player"
+
+msgid "dashboard.team_created_and_self_added"
+msgstr "Team created and you were added as a player."
+
+msgid "dashboard.self_add_success"
+msgstr "You are now added as a player."
+
+msgid "dashboard.added_label"
+msgstr "Added"
+
+msgid "dashboard.self_add_failed"
+msgstr "Could not add yourself as a player."
+
+msgid "dashboard.self_add_missing_request"
+msgstr "Missing join request for self-add."
+
+msgid "dashboard.self_add_warning"
+msgstr "Adding yourself would exceed the ladder roster limit."
+
 msgid "dashboard.switch_to_light_mode"
 msgstr "Switch to light mode"
 
@@ -145,8 +169,65 @@ msgstr "Sport"
 msgid "dashboard.independent_team"
 msgstr "Independent"
 
+msgid "dashboard.player_invite"
+msgstr "Player invite"
+
+msgid "dashboard.ladder_invite"
+msgstr "Ladder invite"
+
+msgid "dashboard.club_invite"
+msgstr "Club invite"
+
+msgid "dashboard.team_prefix"
+msgstr "Team"
+
+msgid "dashboard.team_one"
+msgstr "Team 1"
+
+msgid "dashboard.team_two"
+msgstr "Team 2"
+
 msgid "dashboard.quick_highlights"
 msgstr "Quick Highlights"
+
+msgid "dashboard.sent_club_requests"
+msgstr "Club requests sent"
+
+msgid "dashboard.sent_club_requests_hint"
+msgstr "Requests you sent to join clubs."
+
+msgid "dashboard.pending_club_approvals"
+msgstr "Waiting for club approval"
+
+msgid "dashboard.pending_club_approvals_hint"
+msgstr "Your club join requests that are still pending."
+
+msgid "dashboard.incoming_join_requests_hint"
+msgstr "Players waiting for a club owner decision."
+
+msgid "dashboard.team_join_requests"
+msgstr "Team invites"
+
+msgid "dashboard.team_join_requests_hint"
+msgstr "Invitations for you to join a team as a player."
+
+msgid "dashboard.ladder_invites"
+msgstr "Ladder and club invites"
+
+msgid "dashboard.ladder_invites_hint"
+msgstr "Invitations for teams you manage to join a club or ladder."
+
+msgid "dashboard.match_proposals_to_check"
+msgstr "Match proposals"
+
+msgid "dashboard.match_proposals_to_check_hint"
+msgstr "Visible active proposals that may need accepting, scoring, or follow-up."
+
+msgid "dashboard.upcoming_matches_hint"
+msgstr "Scheduled matches from your dashboard overview."
+
+msgid "dashboard.upcoming_matches"
+msgstr "Upcoming matches"
 
 msgid "dashboard.join_requests"
 msgstr "Join requests"
@@ -168,6 +249,21 @@ msgstr "No incoming requests yet."
 
 msgid "dashboard.wants_to_join"
 msgstr "wants to join"
+
+msgid "dashboard.approve"
+msgstr "Approve"
+
+msgid "dashboard.reject"
+msgstr "Reject"
+
+msgid "dashboard.saving"
+msgstr "Saving..."
+
+msgid "dashboard.request_updated"
+msgstr "Request updated."
+
+msgid "dashboard.could_not_update_request"
+msgstr "Could not update request."
 
 msgid "dashboard.settings"
 msgstr "Settings"
@@ -193,6 +289,12 @@ msgstr "Joined"
 msgid "dashboard.request_to_join"
 msgstr "Request to Join"
 
+msgid "dashboard.join_request_sent"
+msgstr "Request sent."
+
+msgid "dashboard.could_not_request_join"
+msgstr "Could not send request."
+
 msgid "dashboard.my_join_requests"
 msgstr "My Join Requests"
 
@@ -216,6 +318,12 @@ msgstr "Start time"
 
 msgid "dashboard.end_time"
 msgstr "End time"
+
+msgid "dashboard.weekday"
+msgstr "Weekday"
+
+msgid "dashboard.select_weekday"
+msgstr "Choose a weekday"
 
 msgid "dashboard.adding"
 msgstr "Adding..."
@@ -243,6 +351,9 @@ msgstr "Loading..."
 
 msgid "dashboard.no_availability_blocks"
 msgstr "No availability blocks yet."
+
+msgid "dashboard.availability_block_detail"
+msgstr "Weekly recurring block"
 
 msgid "dashboard.delete"
 msgstr "Delete"
@@ -288,6 +399,9 @@ msgstr "City where your club is based"
 
 msgid "dashboard.main_sport"
 msgstr "Main Sport"
+
+msgid "dashboard.select_sport_placeholder"
+msgstr "Select a sport"
 
 msgid "dashboard.main_sport_placeholder"
 msgstr "Padel"
@@ -352,14 +466,41 @@ msgstr "First name"
 msgid "dashboard.last_name"
 msgstr "Last name"
 
+msgid "dashboard.email"
+msgstr "Email"
+
 msgid "dashboard.date_of_birth"
 msgstr "Date of birth"
+
+msgid "dashboard.gender"
+msgstr "Gender"
+
+msgid "dashboard.select_gender"
+msgstr "Select gender"
+
+msgid "dashboard.gender_male"
+msgstr "Male"
+
+msgid "dashboard.gender_female"
+msgstr "Female"
+
+msgid "dashboard.gender_other"
+msgstr "Other"
+
+msgid "dashboard.phone_number"
+msgstr "Phone number"
 
 msgid "dashboard.save_changes"
 msgstr "Save changes"
 
 msgid "dashboard.profile_required_fields"
 msgstr "First name and last name are required."
+
+msgid "dashboard.profile_gender_required"
+msgstr "Gender is required."
+
+msgid "dashboard.profile_phone_required"
+msgstr "Phone number is required."
 
 msgid "dashboard.profile_updated_success"
 msgstr "Profile updated successfully."
@@ -393,3 +534,6 @@ msgstr "Current password and new password are required."
 
 msgid "dashboard.passwords_do_not_match"
 msgstr "Passwords do not match."
+
+msgid "dashboard.your_clubs"
+msgstr "Your clubs"

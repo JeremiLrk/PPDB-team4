@@ -14,6 +14,7 @@ import { FormPanel }             from "@/components/forms/FormPanel.jsx";
 import { FormPage }              from "@/components/forms/FormPage.jsx";
 import ItemCard                  from "@/components/common/ItemCard.jsx";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 
 const PERMISSION_KEYS = [
@@ -71,9 +72,12 @@ function canEditManagers(account, team) {
  * team {object} — Team object { id, clubId, … }
  * onAdded {() => void} — Callback after successful addition
  */
-export default function AddManagerButton({ teamId, team, onAdded }) {
+export default function AddManagerButton({ teamId, team, onAdded, theme: providedTheme }) {
     const { currentUser } = useCurrentUserContext();
     const { lang }        = useLangContext();
+    const { theme: contextTheme } = useThemeContext();
+    const theme = providedTheme || contextTheme;
+    const isLight = theme === "light";
     const texts           = usePageTexts("team_settings", lang);
 
     const {
@@ -121,6 +125,7 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
             error={addErr ? (texts[addErr] ?? addErr) : (searchErr || null)}
             ariaLabel={t("add_manager_aria", "Beheerder aan team toevoegen")}
             panelClassName={teamStyles.addPlayerPanel}
+            theme={theme}
         >
             {/* ── Page 0: account search ── */}
             <FormPage active={step === 0}>
@@ -159,6 +164,7 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
                                 account={account}
                                 selectLabel={t("select_btn", "Selecteren")}
                                 onSelect={() => selectAccount(account)}
+                                theme={theme}
                             />
                         ))}
                     </ul>
@@ -172,6 +178,7 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
                     <SelectedAccountBadge
                         account={selected}
                         label={t("selected_account_label", "Wordt toegevoegd als beheerder:")}
+                        theme={theme}
                     />
                 )}
 
@@ -194,7 +201,7 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
                                     type="checkbox"
                                     checked={permissions[field]}
                                     onChange={() => togglePermission(field)}
-                                    style={{ accentColor: "#38bdf8", width: "1rem", height: "1rem" }}
+                                    style={{ accentColor: isLight ? "#0ea5e9" : "#38bdf8", width: "1rem", height: "1rem" }}
                                 />
                                 <span className={commonStyles.primaryText}>
                                     {t(textKey, PERMISSION_FALLBACKS[field])}
@@ -211,9 +218,10 @@ export default function AddManagerButton({ teamId, team, onAdded }) {
 
 /* ── Sub-components ──────────────────────────────────────────────────────── */
 
-function SearchResultCard({ account, selectLabel, onSelect }) {
+function SearchResultCard({ account, selectLabel, onSelect, theme }) {
     const fullName = [account.firstName, account.lastName]
         .filter(Boolean).join(" ") || "-";
+    const isLight = theme === "light";
     /*
      Renders one selectable account result.
     */
@@ -221,10 +229,19 @@ function SearchResultCard({ account, selectLabel, onSelect }) {
     return (
         <ItemCard>
             <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: "0.9rem", color: "#f1f5f9" }}>
+                <p style={{
+                    margin: 0,
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: isLight ? "#0f172a" : "#f1f5f9",
+                }}>
                     {fullName}
                 </p>
-                <p style={{ margin: 0, fontSize: "0.78rem", color: "#94a3b8" }}>
+                <p style={{
+                    margin: 0,
+                    fontSize: "0.78rem",
+                    color: isLight ? "#475569" : "#94a3b8",
+                }}>
                     {account.email}
                 </p>
             </div>
@@ -232,10 +249,10 @@ function SearchResultCard({ account, selectLabel, onSelect }) {
                 onClick={onSelect}
                 aria-label={`${selectLabel} ${fullName}`}
                 style={{
-                    background:   "rgba(56,189,248,0.12)",
-                    border:       "1px solid rgba(56,189,248,0.28)",
+                    background:   isLight ? "rgba(186, 230, 253, 0.55)" : "rgba(56,189,248,0.12)",
+                    border:       isLight ? "1px solid rgba(14, 165, 233, 0.26)" : "1px solid rgba(56,189,248,0.28)",
                     borderRadius: "0.5rem",
-                    color:        "#38bdf8",
+                    color:        isLight ? "#0369a1" : "#38bdf8",
                     padding:      "0.25rem 0.75rem",
                     cursor:       "pointer",
                     fontSize:     "0.82rem",
@@ -249,9 +266,10 @@ function SearchResultCard({ account, selectLabel, onSelect }) {
     );
 }
 
-function SelectedAccountBadge({ account, label }) {
+function SelectedAccountBadge({ account, label, theme }) {
     const fullName = [account.firstName, account.lastName]
         .filter(Boolean).join(" ") || "-";
+    const isLight = theme === "light";
     /*
      Renders the chosen account before permissions are confirmed.
     */
@@ -261,8 +279,8 @@ function SelectedAccountBadge({ account, label }) {
             display:      "flex",
             alignItems:   "center",
             gap:          "0.6rem",
-            background:   "rgba(56,189,248,0.07)",
-            border:       "1px solid rgba(56,189,248,0.2)",
+            background:   isLight ? "rgba(186, 230, 253, 0.36)" : "rgba(56,189,248,0.07)",
+            border:       isLight ? "1px solid rgba(14, 165, 233, 0.24)" : "1px solid rgba(56,189,248,0.2)",
             borderRadius: "0.65rem",
             padding:      "0.55rem 0.9rem",
             marginBottom: "1rem",
@@ -270,12 +288,12 @@ function SelectedAccountBadge({ account, label }) {
             <span style={{ fontSize: "1.1rem" }}>👤</span>
             <div style={{ flex: 1, minWidth: 0 }}>
                 {label && (
-                    <p style={{ margin: 0, fontSize: "0.72rem", color: "#64748b" }}>{label}</p>
+                    <p style={{ margin: 0, fontSize: "0.72rem", color: isLight ? "#475569" : "#64748b" }}>{label}</p>
                 )}
-                <p style={{ margin: 0, fontWeight: 600, fontSize: "0.88rem", color: "#f1f5f9" }}>
+                <p style={{ margin: 0, fontWeight: 600, fontSize: "0.88rem", color: isLight ? "#0f172a" : "#f1f5f9" }}>
                     {fullName}
                 </p>
-                <p style={{ margin: 0, fontSize: "0.76rem", color: "#94a3b8" }}>
+                <p style={{ margin: 0, fontSize: "0.76rem", color: isLight ? "#475569" : "#94a3b8" }}>
                     {account.email}
                 </p>
             </div>

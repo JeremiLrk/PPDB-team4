@@ -1,9 +1,9 @@
 // Page container for Dashboard.
 
-import styles from "@/style/dashboard/Dashboard.module.css";
 import commonStyles from "@/style/common/Common.module.css";
 import workspaceStyles from "@/style/dashboard/Workspace.module.css";
 import formStyles from "@/style/common/Forms.module.css";
+import { useLocation } from "react-router-dom";
 import { useDashboardWorkspace } from "@/hooks/useDashboardWorkspace.js";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar.jsx";
 import {
@@ -23,9 +23,11 @@ import {TeamsTab} from "@/components/dashboard/TeamsDashboardTab.jsx";
 
 function Dashboard() {
     const { currentUser, setCurrentUser } = useCurrentUserContext();
+    const location = useLocation();
     const { lang } = useLangContext()
     const dashboardTexts = usePageTexts("dashboard", lang)
-    const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts, lang)
+    const initialTab = new URLSearchParams(location.search).get("tab") || "overview";
+    const workspace = useDashboardWorkspace(setCurrentUser, dashboardTexts, lang, initialTab)
 
     if (workspace.loading|| !dashboardTexts.tab_overview) {
         return (
@@ -44,6 +46,11 @@ function Dashboard() {
                 activeTab={workspace.activeTab}
                 isClubOwner={workspace.isClubOwner}
                 texts={dashboardTexts}
+                tabCounts={{
+                    requests: workspace.myRequests.length,
+                    manageClubs: workspace.incomingJoinRequests.length,
+                    teams: workspace.teamInvitationCount,
+                }}
                 onTabChange={workspace.setActiveTab}
                 onThemeToggle={workspace.onThemeToggle}
                 onGoHome={workspace.onGoHome}
@@ -63,6 +70,10 @@ function Dashboard() {
                             workspace.pendingJoinRequestClubIds
                         }
                         incomingJoinRequests={workspace.incomingJoinRequests}
+                        teamJoinRequestCount={workspace.teamJoinRequestCount}
+                        clubInvitationCount={workspace.clubInvitationCount}
+                        activeMatchProposalCount={workspace.activeMatchProposalCount}
+                        upcomingMatches={workspace.upcomingMatches}
                         texts={dashboardTexts}
                         lang={lang}
                     />
@@ -86,6 +97,7 @@ function Dashboard() {
                         myClubIds={workspace.myClubIds}
                         pendingJoinRequestClubIds={workspace.pendingJoinRequestClubIds}
                         clubJoinrequest={workspace.clubJoinrequest}
+                        onRequestSubmitted={workspace.reloadDashboard}
                         texts={dashboardTexts}
                         lang={lang}
                     />
@@ -124,6 +136,7 @@ function Dashboard() {
                     <TeamsTab
                         texts={dashboardTexts}
                         theme={workspace.theme}
+                        onInvitationsChanged={workspace.reloadTeamInvitationCount}
                     />
                 ) : null}
 
@@ -152,6 +165,7 @@ function Dashboard() {
                         decideJoinrequest={workspace.decideJoinrequest}
                         isClubOwner={workspace.isClubOwner}
                         onGoSettings={workspace.onGoSettings}
+                        onRequestsUpdated={workspace.reloadIncomingJoinRequests}
                         texts={dashboardTexts}
                         lang={lang}
                     />
