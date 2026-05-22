@@ -56,6 +56,21 @@ def test_signup_success(client: FlaskClient, app: Flask):
         assert account.phone == "+32 470 12 34 56"
 
 
+# Verifies signup invalid year of birth is rejected.
+def test_signup_invalid_date_of_birth(client: FlaskClient, app: Flask):
+    email = _unique_email()
+    response = client.post(
+        "/api/signup",
+        json=_signup_body(email, dateOfBirth="10000-01-01"),
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["message"] == "dateOfBirth must be a valid ISO date (YYYY-MM-DD)."
+
+    with app.app_context():
+        assert Account.query.filter_by(email=email).first() is None
+
+
 # Verifies signup invalid gender.
 def test_signup_invalid_gender(client: FlaskClient):
     email = _unique_email()
@@ -206,6 +221,35 @@ def test_me_success(client: FlaskClient):
     assert data["account"]["gender"] == "male"
     assert data["account"]["phoneNumber"] == "+32 470 99 00 01"
     assert data["account"]["playerTeamIds"] == []
+
+
+# Verifies patch me rejects invalid year of birth.
+def test_patch_me_rejects_invalid_date_of_birth(client: FlaskClient, app: Flask):
+    email = _unique_email()
+    client.post(
+        "/api/signup",
+        json=_signup_body(email),
+    )
+    client.post("/api/login", json={"email": email, "password": "password123"})
+
+    response = client.patch(
+        "/api/me",
+        json={
+            "firstName": "Updated",
+            "lastName": "Name",
+            "dateOfBirth": "10000-01-01",
+            "gender": "other",
+            "phoneNumber": "+32 2 123 45 67",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["message"] == "dateOfBirth must be a valid ISO date (YYYY-MM-DD)."
+
+    with app.app_context():
+        account = Account.query.filter_by(email=email).first()
+        assert account is not None
+        assert str(account.date_of_birth) == "2000-01-01"
 
 
 # Verifies patch me profile fields.

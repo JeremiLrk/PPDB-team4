@@ -67,6 +67,8 @@ from datetime import datetime, timezone
 
 from server.extensions import db
 from server.app.models.account import Account, Administrator
+from server.app.models.club import Club
+from server.app.models.club_player import ClubPlayer
 from server.app.models.match_rule import MatchRuleSet
 from server.app.models.team import Team
 from server.app.models.player import Player, PlayerTeam
@@ -302,6 +304,49 @@ class TestAddPlayerWarning:
             json={"accountId": target_id, "confirmDropLadders": True},
         )
         assert resp.status_code == 201
+
+
+# ===========================================================================
+# POST /api/teams/<id>/players/join-requests/<request_id>/accept
+# ===========================================================================
+
+class TestAcceptPlayerJoinRequestClubMembership:
+    """Accepting a player join request should also make the player a club member when the team already belongs to a club."""
+
+    # Verifies accepted club-team player joins create both team and club membership rows.
+    def test_accepting_join_request_adds_player_to_club(self, client, app, monkeypatch):
+        with app.app_context():
+            club = Club(name="Club Join Request Club")
+            db.session.add(club)
+            db.session.flush()
+
+            team = _make_team(name="Club Join Request Team", club_id=club.id)
+            target = _make_account(email="club_join_request_player@t.com", role_name="user")
+            join_request = TeamJoinRequest(
+                team_id=team.id,
+                user_id=target.id,
+                date=datetime.now(timezone.utc),
+                status="pending",
+            )
+            db.session.add(join_request)
+            db.session.flush()
+
+            team_id = team.id
+            request_id = join_request.id
+            target_id = target.id
+            club_id = club.id
+            db.session.commit()
+
+        with app.app_context():
+            _authed_client(client, monkeypatch, Account.query.get(target_id))
+
+        response = client.post(f"/api/teams/{team_id}/players/join-requests/{request_id}/accept")
+
+        assert response.status_code == 200
+
+        with app.app_context():
+            assert PlayerTeam.query.filter_by(team_id=team_id, player_id=target_id).first() is not None
+            assert ClubPlayer.query.filter_by(club_id=club_id, player_id=target_id).first() is not None
 
 
 # ===========================================================================

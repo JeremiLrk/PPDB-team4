@@ -5,6 +5,8 @@ These routes back the "my teams", "my all teams", and join-request tabs in
 the frontend dashboard and team management screens.
 """
 
+from datetime import datetime, timezone
+
 from flask import Blueprint, request, jsonify, abort
 from server.app.models.account import Account, Administrator
 from server.app.models.club_player import ClubPlayer
@@ -25,7 +27,17 @@ from ...utils.promote import promote_to_player
 my_teams_bp = Blueprint("team_my", __name__)
 
 
-def _next_ladder_rank(ladder_id: int) -> int:
+def serialize_account_name(account: Account | None) -> dict | None:
+    if account is None:
+        return None
+    name = " ".join(part for part in [account.first_name, account.last_name] if part).strip()
+    return {
+        "id": account.id,
+        "name": name or account.email,
+    }
+
+
+def next_ladder_rank(ladder_id: int) -> int:
     return (
         db.session.query(db.func.coalesce(db.func.max(LadderTeam.rank), 0))
         .filter_by(ladder_id=ladder_id)
@@ -33,16 +45,16 @@ def _next_ladder_rank(ladder_id: int) -> int:
     ) + 1
 
 
-def _ensure_club_member(account: Account, club_id: int) -> None:
-    if account.player is None and Player.query.get(account.id) is None:
+def ensure_club_member(account: Account, club_id: int) -> None:
+    if db.session.get(Player, account.id) is None:
         db.session.add(Player(id=account.id))
         db.session.flush()
 
-    if ClubPlayer.query.filter_by(club_id=club_id, player_id=account.id).first() is None:
+    if db.session.get(ClubPlayer, (club_id, account.id)) is None:
         db.session.add(ClubPlayer(club_id=club_id, player_id=account.id))
 
 
-def _attach_team_people_to_club(team: Team, club_id: int) -> None:
+def attach_team_people_to_club(team: Team, club_id: int) -> None:
     accounts_by_id: dict[int, Account] = {}
     for manager in team.managers:
         if manager.account is not None:
@@ -52,10 +64,10 @@ def _attach_team_people_to_club(team: Team, club_id: int) -> None:
             accounts_by_id[player.account.id] = player.account
 
     for account in accounts_by_id.values():
-        _ensure_club_member(account, club_id)
+        ensure_club_member(account, club_id)
 
 
-def _add_team_to_ladder_if_needed(team: Team, ladder: Ladder | None) -> LadderTeam | None:
+def add_team_to_ladder_if_needed(team: Team, ladder: Ladder | None) -> LadderTeam | None:
     if ladder is None:
         return None
 
@@ -66,12 +78,79 @@ def _add_team_to_ladder_if_needed(team: Team, ladder: Ladder | None) -> LadderTe
     ladder_team = LadderTeam(
         ladder_id=ladder.id,
         team_id=team.id,
-        rank=_next_ladder_rank(ladder.id),
+        rank=next_ladder_rank(ladder.id),
         rating=1000,
         matches_played=0,
     )
     db.session.add(ladder_team)
     return ladder_team
+
+
+def pending_team_club_invitation(club_id: int, team_id: int) -> TeamClubJoinRequest | None:
+    return TeamClubJoinRequest.query.filter_by(
+        club_id=club_id,
+        team_id=team_id,
+        status="pending",
+    ).first()
+
+
+def serialize_ladder_candidate(team: Team, club_id: int) -> dict:
+    payload = team.to_dict()
+    ladder_rows = LadderTeam.query.filter_by(team_id=team.id).all()
+    pending_invitation = pending_team_club_invitation(club_id, team.id)
+
+    managers = [
+        item
+        for item in (serialize_account_name(manager.account) for manager in team.managers)
+        if item is not None
+    ]
+    players = [
+        item
+        for item in (serialize_account_name(player.account) for player in team.players)
+        if item is not None
+    ]
+
+    payload.update({
+        "membershipStatus": "club" if team.club_id == club_id else "independent",
+        "ladderIds": [row.ladder_id for row in ladder_rows],
+        "pendingClubInvitation": pending_invitation.serialize() if pending_invitation else None,
+        "managers": managers,
+        "players": players,
+        "managerCount": len(managers),
+        "playerCount": len(players),
+        "canAddDirectly": team.club_id == club_id,
+        "requiresInvite": team.club_id is None,
+    })
+    return payload
+
+
+def create_or_refresh_team_club_invitation(
+    *,
+    account: Account,
+    club_id: int,
+    team: Team,
+    ladder: Ladder,
+) -> TeamClubJoinRequest | None:
+    if not team.managers:
+        return None
+
+    invitation = pending_team_club_invitation(club_id, team.id)
+    if invitation is None:
+        invitation = TeamClubJoinRequest(
+            club_id=club_id,
+            team_id=team.id,
+            ladder_id=ladder.id,
+            requested_by=account.id,
+            date=datetime.now(timezone.utc),
+            status="pending",
+        )
+        db.session.add(invitation)
+    else:
+        invitation.ladder_id = ladder.id
+        invitation.requested_by = account.id
+        invitation.date = datetime.now(timezone.utc)
+
+    return invitation
 
 
 @my_teams_bp.route("/my", methods=["GET"])
@@ -216,6 +295,7 @@ def accept_player_join_request(account: Account, team_id: int, request_id: int):
         - The join request status is updated to "accepted" in the database.
         - The user associated with the join request is promoted to a player role if not already a player.
         - An association between the player and the team is created in the database.
+        - If the team already belongs to a club, the accepted player is also added to that club.
     """
     team = get_team_or_404(team_id)
     resolved = account.resolved_role
@@ -241,6 +321,10 @@ def accept_player_join_request(account: Account, team_id: int, request_id: int):
 
     assoc = PlayerTeam(player_id=target.player.id, team_id=team.id)
     db.session.add(assoc)
+
+    if team.club_id is not None:
+        ensure_club_member(target, team.club_id)
+
     db.session.commit()
 
     return jsonify({
@@ -392,7 +476,7 @@ def accept_team_club_invitation(account: Account, team_id: int, invitation_id: i
         if team.club_id == invitation.club_id:
             if ladder is not None and ladder.sport_type_id and team.sport_type_id != ladder.sport_type_id:
                 team.sport_type_id = ladder.sport_type_id
-            ladder_team = _add_team_to_ladder_if_needed(team, ladder)
+            ladder_team = add_team_to_ladder_if_needed(team, ladder)
             db.session.commit()
             return jsonify({
                 "message": "Team joined the club successfully.",
@@ -419,8 +503,8 @@ def accept_team_club_invitation(account: Account, team_id: int, invitation_id: i
             team.sport_type_id = ladder.sport_type_id
 
     team.club_id = invitation.club_id
-    _attach_team_people_to_club(team, invitation.club_id)
-    ladder_team = _add_team_to_ladder_if_needed(team, ladder)
+    attach_team_people_to_club(team, invitation.club_id)
+    ladder_team = add_team_to_ladder_if_needed(team, ladder)
 
     invitation.status = "accepted"
     db.session.commit()

@@ -19,6 +19,24 @@ EMAIL_VERIFICATION_SALT = os.environ.get("EMAIL_VERIFICATION_SALT", "email-verif
 _ALLOWED_GENDERS = frozenset({"male", "female", "other"})
 
 
+def parse_date_of_birth(date_of_birth, *, allow_none: bool = False):
+    """Parse an ISO date string into a date object for account records."""
+    if date_of_birth in (None, ""):
+        if allow_none:
+            return None
+        raise ValueError("dateOfBirth is required.")
+
+    if isinstance(date_of_birth, datetime.datetime):
+        return date_of_birth.date()
+    if isinstance(date_of_birth, datetime.date):
+        return date_of_birth
+
+    try:
+        return datetime.date.fromisoformat(str(date_of_birth))
+    except (TypeError, ValueError):
+        raise ValueError("dateOfBirth must be a valid ISO date (YYYY-MM-DD).")
+
+
 def register_user(email, password, first_name, last_name, date_of_birth, gender=None, phone=None):
     """
     Registers a new user with the provided details.
@@ -51,6 +69,8 @@ def register_user(email, password, first_name, last_name, date_of_birth, gender=
     if account:
         raise ValueError("Account already exists.")
 
+    parsed_date_of_birth = parse_date_of_birth(date_of_birth)
+
     user_role = AccountRole.query.filter_by(name="user").first()
 
     if not user_role:
@@ -63,7 +83,7 @@ def register_user(email, password, first_name, last_name, date_of_birth, gender=
         password_hash=generate_password_hash(password),
         first_name=first_name,
         last_name=last_name,
-        date_of_birth=date_of_birth,
+        date_of_birth=parsed_date_of_birth,
         gender=gender,
         phone=phone,
         account_role_id=user_role.id,

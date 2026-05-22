@@ -1,6 +1,5 @@
 import os
 import resend
-from datetime import date
 from pathlib import Path
 from dotenv import load_dotenv
 from flask import Blueprint, request, jsonify, make_response
@@ -8,7 +7,7 @@ from flask import current_app
 
 from server.app.decorators.login_required import login_required
 from server.app.models.account import Account
-from server.app.services.auth_service import register_user, login_user, generate_reset_token, verify_reset_token, update_password, generate_verification_token, verify_email_token, mark_user_as_verified, change_password
+from server.app.services.auth_service import register_user, login_user, generate_reset_token, verify_reset_token, update_password, generate_verification_token, verify_email_token, mark_user_as_verified, change_password, parse_date_of_birth
 from server.extensions import db
 
 env_path = Path(__file__).resolve().parents[2] / ".env"
@@ -205,14 +204,10 @@ def update_me(account: Account):
     if not first_name or not last_name:
         return jsonify({"message": "First name and last name are required."}), 400
 
-    parsed_date_of_birth = account.date_of_birth
-    if date_of_birth_raw in (None, ""):
-        parsed_date_of_birth = None
-    else:
-        try:
-            parsed_date_of_birth = date.fromisoformat(str(date_of_birth_raw))
-        except ValueError:
-            return jsonify({"message": "dateOfBirth must be a valid ISO date (YYYY-MM-DD)."}), 400
+    try:
+        parsed_date_of_birth = parse_date_of_birth(date_of_birth_raw, allow_none=True)
+    except ValueError as e:
+        return jsonify({"message": str(e)}), 400
 
     if not gender or not phone:
         return jsonify({"message": "Gender and phone number are required."}), 400
