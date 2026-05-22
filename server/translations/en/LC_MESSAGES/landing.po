@@ -32,16 +32,16 @@ msgid "landing.player_step_1_description"
 msgstr "Sign up to get access to your dashboard."
 
 msgid "landing.player_step_2_title"
-msgstr "Find clubs and request to join"
+msgstr "Join clubs and teams"
 
 msgid "landing.player_step_2_description"
-msgstr "Search clubs and send a join request to the one you want."
+msgstr "Search clubs, send club join requests, or accept team invitations."
 
 msgid "landing.player_step_3_title"
-msgstr "Get accepted and placed in ladders"
+msgstr "Plan, play, and submit scores"
 
 msgid "landing.player_step_3_description"
-msgstr "A club manager accepts your request and adds you to the right ladders."
+msgstr "Set weekly availability, respond to match proposals, and submit results after play."
 
 msgid "landing.manager_step_1_title"
 msgstr "Create account"
@@ -50,14 +50,13 @@ msgid "landing.manager_step_1_description"
 msgstr "Sign up to get access to your dashboard."
 
 msgid "landing.manager_step_2_title"
-msgstr "Request your own club"
+msgstr "Request or manage a club"
 
 msgid "landing.manager_step_2_description"
-msgstr "Submit your club creation request."
+msgstr "Create a club request, review club join requests, and invite independent teams."
 
 msgid "landing.manager_step_3_title"
-msgstr "Manage club ladders"
+msgstr "Run ladders and matches"
 
 msgid "landing.manager_step_3_description"
-msgstr "Create, update, and manage ladders and members in your club."
-
+msgstr "Create rulesets and ladders, generate proposals, record scores, and resolve disputes."

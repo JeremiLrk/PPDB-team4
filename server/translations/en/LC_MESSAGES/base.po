@@ -7,6 +7,9 @@ msgstr ""
 msgid "base.hero_title"
 msgstr "Welcome"
 
+msgid "base.net_rank"
+msgstr "NetRank"
+
 msgid "base.clubs"
 msgstr "Clubs"
 
@@ -30,4 +33,3 @@ msgstr "Offline"
 
 msgid "base.e404"
 msgstr "404 - Page Not Found"
-

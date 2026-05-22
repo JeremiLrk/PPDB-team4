@@ -43,3 +43,80 @@ msgstr "Regelset"
 msgid "ladder.system_label"
 msgstr "Systeem"
 
+msgid "ladder.top_achievements"
+msgstr "Topprestaties"
+
+msgid "ladder.most_wins"
+msgstr "Meeste overwinningen"
+
+msgid "ladder.best_win_streak"
+msgstr "Beste winstreeks"
+
+msgid "ladder.longest_rank1_reign"
+msgstr "Langste periode op #1"
+
+msgid "ladder.wins_unit"
+msgstr "overwinningen"
+
+msgid "ladder.in_a_row_unit"
+msgstr "op rij"
+
+msgid "ladder.matches_unit"
+msgstr "wedstrijden"
+
+msgid "ladder.wins_short"
+msgstr "W"
+
+msgid "ladder.streak"
+msgstr "Reeks"
+
+msgid "ladder.close"
+msgstr "Sluiten"
+
+msgid "ladder.ruleset_match_format"
+msgstr "Wedstrijdformaat"
+
+msgid "ladder.ruleset_third_set"
+msgstr "Derde set"
+
+msgid "ladder.ruleset_deuce"
+msgstr "40-40 (Deuce)"
+
+msgid "ladder.ruleset_game_format"
+msgstr "Spelvorm"
+
+msgid "ladder.ruleset_minutes"
+msgstr "minuten"
+
+msgid "ladder.ruleset_to"
+msgstr "tot"
+
+msgid "ladder.ruleset_games"
+msgstr "games"
+
+msgid "ladder.format_best_of_3"
+msgstr "Best of 3 sets"
+
+msgid "ladder.format_timed"
+msgstr "Op tijd"
+
+msgid "ladder.format_pro_set"
+msgstr "Pro set"
+
+msgid "ladder.format_full_set"
+msgstr "Volledige derde set"
+
+msgid "ladder.format_super_tiebreak"
+msgstr "Super tiebreak tot 10"
+
+msgid "ladder.format_advantage"
+msgstr "Klassiek voordeel"
+
+msgid "ladder.format_golden_point"
+msgstr "Golden Point (No-Ad)"
+
+msgid "ladder.format_singles"
+msgstr "Enkelspel (1v1)"
+
+msgid "ladder.format_doubles"
+msgstr "Dubbelspel (2v2)"

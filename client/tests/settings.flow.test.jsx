@@ -509,14 +509,14 @@ describe("Disputed matches and rulesets", () => {
 
         expect(await screen.findByRole("heading", { name: "Weekend Rules" })).toBeInTheDocument();
         expect(screen.getByText("Used for weekend play only")).toBeInTheDocument();
-        expect(screen.getByText("Wedstrijdformaat")).toBeInTheDocument();
+        expect(screen.getByText("Match format")).toBeInTheDocument();
         expect(screen.getByText("Best of 3 sets")).toBeInTheDocument();
-        expect(screen.getByText("Derde set")).toBeInTheDocument();
-        expect(screen.getByText("Super Tiebreak (tot 10 punten)")).toBeInTheDocument();
+        expect(screen.getByText("Third set")).toBeInTheDocument();
+        expect(screen.getByText("Super tiebreak to 10")).toBeInTheDocument();
         expect(screen.getByText("40-40 (Deuce)")).toBeInTheDocument();
         expect(screen.getByText("Golden Point (No-Ad)")).toBeInTheDocument();
-        expect(screen.getByText("Spelvorm")).toBeInTheDocument();
-        expect(screen.getByText("Enkelspel (1v1)")).toBeInTheDocument();
+        expect(screen.getByText("Game format")).toBeInTheDocument();
+        expect(screen.getByText("Singles (1v1)")).toBeInTheDocument();
     });
 
     // Verifies non-racket clubs do not show a ruleset field in the ladder create form.

@@ -114,3 +114,15 @@ That means:
 
 - the ladder standings update immediately after the final result
 - the ranking changes are stored, not calculated only on the fly
+
+## Ladder Achievements
+
+Ladder pages include a small achievement summary for the teams in that ladder.
+
+It highlights:
+
+- most wins in the ladder
+- best win streak in the ladder
+- longest #1 reign in the ladder
+
+These cards are derived from finalized match results for teams in the ladder. The longest #1 reign starts from the ladder rows' stored ratings and match counts, replays the ladder's finalized match history in order, and counts the longest run of consecutive completed matches where a team held the simulated top rank. The cards help explain performance history, but they do not change Elo ratings, ladder order, or match generation.

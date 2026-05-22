@@ -43,3 +43,80 @@ msgstr "Ruleset"
 msgid "ladder.system_label"
 msgstr "System"
 
+msgid "ladder.top_achievements"
+msgstr "Top Achievements"
+
+msgid "ladder.most_wins"
+msgstr "Most wins"
+
+msgid "ladder.best_win_streak"
+msgstr "Best win streak"
+
+msgid "ladder.longest_rank1_reign"
+msgstr "Longest #1 reign"
+
+msgid "ladder.wins_unit"
+msgstr "wins"
+
+msgid "ladder.in_a_row_unit"
+msgstr "in a row"
+
+msgid "ladder.matches_unit"
+msgstr "matches"
+
+msgid "ladder.wins_short"
+msgstr "W"
+
+msgid "ladder.streak"
+msgstr "Streak"
+
+msgid "ladder.close"
+msgstr "Close"
+
+msgid "ladder.ruleset_match_format"
+msgstr "Match format"
+
+msgid "ladder.ruleset_third_set"
+msgstr "Third set"
+
+msgid "ladder.ruleset_deuce"
+msgstr "40-40 (Deuce)"
+
+msgid "ladder.ruleset_game_format"
+msgstr "Game format"
+
+msgid "ladder.ruleset_minutes"
+msgstr "minutes"
+
+msgid "ladder.ruleset_to"
+msgstr "to"
+
+msgid "ladder.ruleset_games"
+msgstr "games"
+
+msgid "ladder.format_best_of_3"
+msgstr "Best of 3 sets"
+
+msgid "ladder.format_timed"
+msgstr "Timed"
+
+msgid "ladder.format_pro_set"
+msgstr "Pro set"
+
+msgid "ladder.format_full_set"
+msgstr "Full third set"
+
+msgid "ladder.format_super_tiebreak"
+msgstr "Super tiebreak to 10"
+
+msgid "ladder.format_advantage"
+msgstr "Classic advantage"
+
+msgid "ladder.format_golden_point"
+msgstr "Golden Point (No-Ad)"
+
+msgid "ladder.format_singles"
+msgstr "Singles (1v1)"
+
+msgid "ladder.format_doubles"
+msgstr "Doubles (2v2)"

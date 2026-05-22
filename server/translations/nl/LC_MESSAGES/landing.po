@@ -32,16 +32,16 @@ msgid "landing.player_step_1_description"
 msgstr "Registreer je voor toegang tot je dashboard."
 
 msgid "landing.player_step_2_title"
-msgstr "Zoek clubs en vraag toegang aan"
+msgstr "Sluit je aan bij clubs en teams"
 
 msgid "landing.player_step_2_description"
-msgstr "Zoek clubs en stuur een aanvraag naar de club waar je bij wilt."
+msgstr "Zoek clubs, stuur clubaanvragen of accepteer teamuitnodigingen."
 
 msgid "landing.player_step_3_title"
-msgstr "Word geaccepteerd en in ladders geplaatst"
+msgstr "Plan, speel en dien scores in"
 
 msgid "landing.player_step_3_description"
-msgstr "Een clubmanager accepteert je aanvraag en plaatst je in de juiste ladders."
+msgstr "Stel je wekelijkse beschikbaarheid in, reageer op wedstrijdvoorstellen en dien resultaten in."
 
 msgid "landing.manager_step_1_title"
 msgstr "Account aanmaken"
@@ -50,14 +50,13 @@ msgid "landing.manager_step_1_description"
 msgstr "Registreer je voor toegang tot je dashboard."
 
 msgid "landing.manager_step_2_title"
-msgstr "Vraag je eigen club aan"
+msgstr "Vraag een club aan of beheer er een"
 
 msgid "landing.manager_step_2_description"
-msgstr "Dien je clubaanvraag in."
+msgstr "Maak een clubaanvraag, beoordeel clubaanvragen en nodig onafhankelijke teams uit."
 
 msgid "landing.manager_step_3_title"
-msgstr "Beheer clubladders"
+msgstr "Beheer ladders en wedstrijden"
 
 msgid "landing.manager_step_3_description"
-msgstr "Maak, update en beheer ladders en leden in je club."
-
+msgstr "Maak regelsets en ladders, genereer voorstellen, registreer scores en los betwistingen op."

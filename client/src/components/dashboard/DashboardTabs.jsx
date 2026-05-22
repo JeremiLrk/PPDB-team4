@@ -10,6 +10,12 @@ import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js
 import { GENDER_SELECT_OPTIONS, GENDER_VALUES } from "@/constants/genderOptions.js";
 import CityAutocompleteField from "@/components/common/CityAutocompleteField.jsx";
 
+const GENDER_TEXT_KEYS = {
+    male: "gender_male",
+    female: "gender_female",
+    other: "gender_other",
+}
+
 function profileGenderFromUser(user) {
     /*
      Converts the stored gender value into the select-friendly form value.
@@ -119,12 +125,16 @@ function formatWeeklyAvailability(block, lang) {
     return "-"
 }
 
-function formatMatchTitle(match) {
+function formatTeamFallback(id, texts, lang) {
+    return `${texts?.team_prefix || defaultText(lang, "Team", "Team")} #${id}`
+}
+
+function formatMatchTitle(match, texts, lang) {
     /*
      Builds the public title for one upcoming match.
     */
-    const team1 = match?.team1Name || (match?.team1Id ? `Team #${match.team1Id}` : "Team 1")
-    const team2 = match?.team2Name || (match?.team2Id ? `Team #${match.team2Id}` : "Team 2")
+    const team1 = match?.team1Name || (match?.team1Id ? formatTeamFallback(match.team1Id, texts, lang) : texts?.team_one || defaultText(lang, "Team 1", "Team 1"))
+    const team2 = match?.team2Name || (match?.team2Id ? formatTeamFallback(match.team2Id, texts, lang) : texts?.team_two || defaultText(lang, "Team 2", "Team 2"))
     return `${team1} vs ${team2}`
 }
 
@@ -207,7 +217,7 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
             firstName: currentUser?.firstName || "",
             lastName: currentUser?.lastName || "",
             dateOfBirth: currentUser?.dateOfBirth || "",
-            gender: profileGenderFromUser(currentUser),
+            gender: GENDER_VALUES.includes(currentUser?.gender) ? currentUser.gender : "",
             phoneNumber: currentUser?.phoneNumber ?? "",
         });
     }, [
@@ -476,11 +486,11 @@ export function ProfileTab({ currentUser, setCurrentUser, texts }) {
                                 onChange={onFieldChange}
                             >
                                 <option value="" disabled>
-                                    Select gender
+                                    {texts?.select_gender || "Select gender"}
                                 </option>
                                 {GENDER_SELECT_OPTIONS.map((opt) => (
                                     <option key={opt.value} value={opt.value}>
-                                        {opt.label}
+                                        {texts?.[GENDER_TEXT_KEYS[opt.value]] || opt.label}
                                     </option>
                                 ))}
                             </select>
@@ -609,9 +619,79 @@ export function OverviewTab({
     myRequests,
     pendingJoinRequestClubIds,
     incomingJoinRequests,
+    teamJoinRequestCount = 0,
+    clubInvitationCount = 0,
+    activeMatchProposalCount = 0,
+    upcomingMatches = [],
     texts,
     lang = "en",
 }) {
+    const highlightItems = [
+        {
+            label: texts?.sent_club_requests || defaultText(lang, "Club requests sent", "Verzonden clubaanvragen"),
+            value: myRequests.length,
+            description: texts?.sent_club_requests_hint || defaultText(
+                lang,
+                "Requests you sent to join clubs.",
+                "Aanvragen die jij hebt ingediend om lid te worden van clubs.",
+            ),
+        },
+        {
+            label: texts?.pending_club_approvals || defaultText(lang, "Waiting for club approval", "Wachten op clubgoedkeuring"),
+            value: pendingJoinRequestClubIds.size,
+            description: texts?.pending_club_approvals_hint || defaultText(
+                lang,
+                "Your club join requests that are still pending.",
+                "Jouw clubaanvragen die nog in behandeling zijn.",
+            ),
+        },
+        {
+            label: texts?.incoming_join_requests || defaultText(lang, "Club requests to review", "Clubaanvragen om te beoordelen"),
+            value: incomingJoinRequests.length,
+            description: texts?.incoming_join_requests_hint || defaultText(
+                lang,
+                "Players waiting for a club owner decision.",
+                "Spelers die wachten op een beslissing van een clubeigenaar.",
+            ),
+        },
+        {
+            label: texts?.team_join_requests || defaultText(lang, "Team invites", "Teamuitnodigingen"),
+            value: teamJoinRequestCount,
+            description: texts?.team_join_requests_hint || defaultText(
+                lang,
+                "Invitations for you to join a team as a player.",
+                "Uitnodigingen om als speler bij een team aan te sluiten.",
+            ),
+        },
+        {
+            label: texts?.ladder_invites || defaultText(lang, "Ladder and club invites", "Ladder- en clubuitnodigingen"),
+            value: clubInvitationCount,
+            description: texts?.ladder_invites_hint || defaultText(
+                lang,
+                "Invitations for teams you manage to join a club or ladder.",
+                "Uitnodigingen voor teams die jij beheert om bij een club of ladder te komen.",
+            ),
+        },
+        {
+            label: texts?.match_proposals_to_check || defaultText(lang, "Match proposals", "Wedstrijdvoorstellen"),
+            value: activeMatchProposalCount,
+            description: texts?.match_proposals_to_check_hint || defaultText(
+                lang,
+                "Visible active proposals that may need accepting, scoring, or follow-up.",
+                "Zichtbare actieve voorstellen die mogelijk acceptatie, score-invoer of opvolging nodig hebben.",
+            ),
+        },
+        {
+            label: texts?.upcoming_matches || defaultText(lang, "Upcoming matches", "Aankomende wedstrijden"),
+            value: upcomingMatches.length,
+            description: texts?.upcoming_matches_hint || defaultText(
+                lang,
+                "Scheduled matches from your dashboard overview.",
+                "Geplande wedstrijden uit je dashboardoverzicht.",
+            ),
+        },
+    ];
+
     return (
         <div className={`${styles.contentGrid} ${styles.contentFade}`}>
             <article className={styles.panel}>
@@ -644,22 +724,13 @@ export function OverviewTab({
             <article className={styles.panel}>
                 <h3 className={styles.panelTitle}>{texts?.quick_highlights || defaultText(lang, "Request Overview", "Aanvragen overzicht")}</h3>
                 <div className={styles.metrics}>
-                    <div className={styles.metricCard}>
-                        <p className={styles.metricLabel}>{texts?.requests_i_sent || defaultText(lang, "Requests I sent", "Mijn ingediende aanvragen")}</p>
-                        <p className={styles.metricValue}>{myRequests.length}</p>
-                    </div>
-                    <div className={styles.metricCard}>
-                        <p className={styles.metricLabel}>
-                            {texts?.pending_join_requests || defaultText(lang, "Pending join requests", "Aanvraag in afwachting van clubgoedkeuring")}
-                        </p>
-                        <p className={styles.metricValue}>{pendingJoinRequestClubIds.size}</p>
-                    </div>
-                    <div className={styles.metricCard}>
-                        <p className={styles.metricLabel}>
-                            {texts?.incoming_join_requests || defaultText(lang, "Incoming requests to review", "Binnenkomende aanvragen om te beoordelen")}
-                        </p>
-                        <p className={styles.metricValue}>{incomingJoinRequests.length}</p>
-                    </div>
+                    {highlightItems.map((item) => (
+                        <div className={styles.metricCard} key={item.label}>
+                            <p className={styles.metricLabel}>{item.label}</p>
+                            <p className={styles.metricValue}>{item.value}</p>
+                            <p className={styles.secondaryText}>{item.description}</p>
+                        </div>
+                    ))}
                 </div>
             </article>
         </div>
@@ -742,7 +813,9 @@ export function SearchTab({
 
                             return (
                                 <div className={styles.discoverCard} key={clubId}>
-                                    <p className={styles.primaryText}>{club?.name || `Club #${clubId}`}</p>
+                                    <p className={styles.primaryText}>
+                                        {club?.name || `${texts?.club_prefix || defaultText(lang, "Club", "Club")} #${clubId}`}
+                                    </p>
 
                                     <div className={styles.actionRow}>
                                         {isJoined ? (
@@ -1223,7 +1296,7 @@ export function AvailabilityTab({
                             {upcomingMatches.map((match) => (
                                 <li className={styles.availabilityCard} key={match.id}>
                                     <div>
-                                        <p className={styles.primaryText}>{formatMatchTitle(match)}</p>
+                                        <p className={styles.primaryText}>{formatMatchTitle(match, texts, lang)}</p>
                                         <p className={styles.secondaryText}>
                                             {formatUpcomingMatchDate(match, texts, lang)}
                                         </p>

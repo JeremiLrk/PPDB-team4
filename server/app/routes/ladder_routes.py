@@ -188,6 +188,7 @@ def get_players(club_id, ladder_id):
             "wins": achievement_stats.get(team.id, {}).get("wins", 0),
             "win_streak": achievement_stats.get(team.id, {}).get("win_streak", 0),
             "best_win_streak": achievement_stats.get(team.id, {}).get("best_win_streak", 0),
+            "best_rank1_streak": achievement_stats.get(team.id, {}).get("best_rank1_streak", 0),
             "win_rate": (
                 achievement_stats.get(team.id, {}).get("wins", 0)
                 / achievement_stats.get(team.id, {}).get("matches_played", 0)

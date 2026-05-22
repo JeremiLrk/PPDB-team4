@@ -139,6 +139,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en", initialT
 
     const [isClubOwner, setIsClubOwner] = useState(false);
     const [teamInvitationCount, setTeamInvitationCount] = useState(0);
+    const [teamJoinRequestCount, setTeamJoinRequestCount] = useState(0);
+    const [clubInvitationCount, setClubInvitationCount] = useState(0);
+    const [activeMatchProposalCount, setActiveMatchProposalCount] = useState(0);
     const weekdayOptions = useMemo(
         () => (String(lang).toLowerCase().startsWith("nl") ? WEEKDAY_OPTIONS_NL : WEEKDAY_OPTIONS_EN),
         [lang],
@@ -159,27 +162,40 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en", initialT
 
     const reloadTeamInvitationCount = useCallback(async () => {
         /*
-         Refreshes the dashboard badge for pending team invitations.
+         Refreshes dashboard action counts for team, ladder, and match work.
         */
-        try {
-            const [teamResponse, clubResponse] = await Promise.all([
-                fetch("/api/teams/my-join-requests", { credentials: "include" }),
-                fetch("/api/teams/my-club-invitations", { credentials: "include" }),
-            ])
-
-            if (!teamResponse.ok || !clubResponse.ok) {
-                throw new Error("Failed to fetch team invitations")
+        const readJson = async (url) => {
+            const response = await fetch(url, { credentials: "include" });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ${url}`);
             }
+            return response.json();
+        };
 
-            const teamData = await teamResponse.json()
-            const clubData = await clubResponse.json()
-            const teamCount = Array.isArray(teamData.joinRequests) ? teamData.joinRequests.length : 0
-            const clubCount = Array.isArray(clubData.clubInvitations) ? clubData.clubInvitations.length : 0
-            setTeamInvitationCount(teamCount + clubCount)
-        } catch (err) {
-            console.error("Could not load team invitation count", err)
-            setTeamInvitationCount(0)
-        }
+        const [teamResult, clubResult, matchResult] = await Promise.allSettled([
+            readJson("/api/teams/my-join-requests"),
+            readJson("/api/teams/my-club-invitations"),
+            readJson("/api/matches/proposals"),
+        ]);
+
+        const teamData = teamResult.status === "fulfilled" ? teamResult.value : {};
+        const clubData = clubResult.status === "fulfilled" ? clubResult.value : {};
+        const matchData = matchResult.status === "fulfilled" ? matchResult.value : {};
+
+        const teamCount = Array.isArray(teamData.joinRequests) ? teamData.joinRequests.length : 0;
+        const clubCount = Array.isArray(clubData.clubInvitations) ? clubData.clubInvitations.length : 0;
+        const matchCount = Array.isArray(matchData.proposals)
+            ? matchData.proposals.filter((proposal) => {
+                const status = String(proposal?.status || proposal?.statusName || "").toLowerCase();
+                return !["played", "rejected", "cancelled"].includes(status);
+            }).length
+            : 0;
+
+        setTeamJoinRequestCount(teamCount);
+        setClubInvitationCount(clubCount);
+        setActiveMatchProposalCount(matchCount);
+        setTeamInvitationCount(teamCount + clubCount);
+
     }, [])
 
     const filteredDiscoverClubs = useMemo(() => {
@@ -666,6 +682,9 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en", initialT
         incomingJoinRequests,
         isClubOwner,
         teamInvitationCount,
+        teamJoinRequestCount,
+        clubInvitationCount,
+        activeMatchProposalCount,
         onGoSettings,
         decideJoinrequest,
         clubJoinrequest,

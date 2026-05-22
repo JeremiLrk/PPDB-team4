@@ -72,6 +72,10 @@ function Dashboard() {
                             workspace.pendingJoinRequestClubIds
                         }
                         incomingJoinRequests={workspace.incomingJoinRequests}
+                        teamJoinRequestCount={workspace.teamJoinRequestCount}
+                        clubInvitationCount={workspace.clubInvitationCount}
+                        activeMatchProposalCount={workspace.activeMatchProposalCount}
+                        upcomingMatches={workspace.upcomingMatches}
                         texts={dashboardTexts}
                         lang={lang}
                     />

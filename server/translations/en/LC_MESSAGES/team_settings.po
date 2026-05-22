@@ -37,6 +37,9 @@ msgstr "Edit managers"
 msgid "team_settings.select_btn"
 msgstr "Select"
 
+msgid "team_settings.confirm"
+msgstr "Confirm"
+
 msgid "team_settings.selected_account_label"
 msgstr "Adding as manager:"
 

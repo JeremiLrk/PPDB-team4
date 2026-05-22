@@ -16,6 +16,12 @@ msgstr "Match proposals loading..."
 msgid "matches.empty"
 msgstr "No match proposals yet."
 
+msgid "matches.show_active"
+msgstr "Active"
+
+msgid "matches.show_archived"
+msgstr "Archived"
+
 msgid "matches.retry"
 msgstr "Retry"
 

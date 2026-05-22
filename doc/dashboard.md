@@ -15,6 +15,7 @@ The dashboard brings the common player and club tools into one place:
 - availability blocks
 - weekly match proposals
 - match proposal responses and score submission
+- action counts for requests, invitations, match proposals, and upcoming matches
 - club management requests
 - light and dark theme switching
 
@@ -22,7 +23,7 @@ The dashboard brings the common player and club tools into one place:
 
 The dashboard is split into focused tabs so the page stays readable:
 
-- overview for the main account summary
+- overview for clubs and the action-count summary of things to check
 - profile for personal details and password changes
 - search for finding clubs
 - availability for weekly planning blocks
@@ -46,10 +47,22 @@ The dashboard supports both light and dark mode, and the sidebar collapses into 
 
 The dashboard is the place where most signed-in users will start:
 
-- players use it for profile and availability
+- players use it for profile, availability, invitations, and match proposals
 - club owners use it for club requests and management
 - team managers use it for match and team work
 - the whole page is designed to keep controls usable on narrow screens
+
+## Overview Highlights
+
+The overview tab shows a compact list of counts that help the user decide what needs attention:
+
+- club requests the user sent
+- club requests still waiting for approval
+- incoming club join requests for club owners
+- team invitations for the user as a player
+- club or ladder invitations for teams the user manages
+- active match proposals that may need a response, score, or follow-up
+- upcoming matches already scheduled
 
 ## Team Invitations
 

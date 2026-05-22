@@ -1,8 +1,7 @@
 """
 Dashboard and club-landing routes.
 
-These endpoints power the signed-in dashboard, club join-request actions,
-and the lightweight achievements summary shown on the frontend.
+These endpoints power the signed-in dashboard and club join-request actions.
 """
 
 from flask import Blueprint, jsonify, request
