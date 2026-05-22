@@ -114,7 +114,6 @@ export function useDashboardWorkspace(setUser, texts = {}, lang = "en", initialT
     */
 
     const [activeTab, setActiveTab] = useState(initialTab || "overview")
-    const { theme, toggleTheme } = useThemeContext()
     const [searchTerm, setSearchTerm] = useState("")
 
     const [clubRequestForm, setClubRequestForm] = useState(
