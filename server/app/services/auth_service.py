@@ -87,7 +87,7 @@ def register_user(email, password, first_name, last_name, date_of_birth, gender=
         gender=gender,
         phone=phone,
         account_role_id=user_role.id,
-        is_verified=True,
+        is_verified=False,
     )
 
     db.session.add(new_user)
