@@ -2,6 +2,7 @@
  =====
  INFRASTRUCTURE
  =====
+ Shared lookup tables used by clubs, ladders, matches, and seed data.
  */
 
 CREATE TABLE IF NOT EXISTS venue_type(
@@ -11,7 +12,7 @@ CREATE TABLE IF NOT EXISTS venue_type(
 
 CREATE TABLE IF NOT EXISTS sport_type (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
     minimum_number_of_players_on_a_team INT,
     maximum_number_of_players_per_team INT,
 
@@ -31,7 +32,7 @@ CREATE TABLE IF NOT EXISTS sport_type (
 
 CREATE TABLE IF NOT EXISTS match_status (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
 
     CONSTRAINT pk_match_status
         PRIMARY KEY (id)
@@ -39,7 +40,7 @@ CREATE TABLE IF NOT EXISTS match_status (
 
 CREATE TABLE IF NOT EXISTS ladder_rating_function (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
 
     CONSTRAINT pk_ladder_rating_function
     PRIMARY KEY (id)

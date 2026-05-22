@@ -5,7 +5,7 @@ class LadderRatingFunction(db.Model):
     __tablename__ = "ladder_rating_function"
 
     id      = db.Column(db.BigInteger, primary_key=True)
-    name    = db.Column(db.String(64), nullable=False)
+    name    = db.Column(db.String(64), nullable=False, unique=True)
 
 
 class Ladder(db.Model):

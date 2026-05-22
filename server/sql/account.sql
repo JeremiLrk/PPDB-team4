@@ -2,11 +2,13 @@
  =====
  USERS
  =====
+ Accounts share one base table and extend into role-specific tables through
+ one-to-one primary-key foreign keys.
  */
 
 CREATE TABLE IF NOT EXISTS account_role (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
 
     CONSTRAINT pk_account_role
         PRIMARY KEY (id)

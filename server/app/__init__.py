@@ -75,15 +75,7 @@ def create_app():
     babel.init_app(app, locale_selector=get_locale)
     _init_cache(app)
 
-    should_reset_db = os.getenv("RESET_DB_ON_STARTUP", "").lower() in {"1", "true", "yes"}
-    if should_reset_db:
-        with app.app_context():
-            print("Dropping all tables including dependencies...")
-            db.session.execute(text("DROP SCHEMA public CASCADE"))
-            db.session.execute(text("CREATE SCHEMA public"))
-            db.session.execute(text("GRANT ALL ON SCHEMA public TO public"))  # restore rights
-            db.session.commit()
-            print("Database schema reset complete.")
+    maybe_reset_db_on_startup(app)
 
     @app.errorhandler(Exception)
     def handle_http_exception(e):
@@ -96,21 +88,51 @@ def create_app():
     _register_cli_commands(app)
     init_db(app)
 
-    should_seed = os.getenv("SEED_ON_STARTUP", "").lower() in {"1", "true", "yes"}
-    # Flask's debug reloader imports the app twice. The child process is the
-    # one that actually serves requests, so only seed there to avoid doing the
-    # heavy demo build in the parent watchdog process as well.
-    if should_seed and os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        seed_verbose = os.getenv("SEED_VERBOSE", "1").lower() not in {"0", "false", "no"}
-        seed_db(app, verbose=seed_verbose)
-    elif should_seed:
-        print("[seed_db] Skipping startup seed in Flask reloader parent process.")
+    maybe_seed_on_startup(app)
 
     @app.get("/")
     def root():
         return {"message": "API running"}, 200
 
     return app
+
+
+def maybe_reset_db_on_startup(app: Flask):
+    should_reset_db = os.getenv("RESET_DB_ON_STARTUP", "").lower() in {"1", "true", "yes"}
+    if not should_reset_db:
+        return
+
+    if os.environ.get("PPDB_RESET_ON_STARTUP") == "1":
+        print("[reset_db] Skipping database reset; already reset for this backend launch.")
+        return
+
+    with app.app_context():
+        print("Dropping all tables including dependencies...")
+        db.session.execute(text("DROP SCHEMA public CASCADE"))
+        db.session.execute(text("CREATE SCHEMA public"))
+        db.session.execute(text("GRANT ALL ON SCHEMA public TO public"))  # restore rights
+        db.session.commit()
+        db.session.remove()
+        db.engine.dispose()
+        os.environ["PPDB_RESET_ON_STARTUP"] = "1"
+        print("Database schema reset complete.")
+
+
+def maybe_seed_on_startup(app: Flask):
+    should_seed = os.getenv("SEED_ON_STARTUP", "").lower() in {"1", "true", "yes"}
+    if not should_seed:
+        return
+
+    # Flask's debug reloader can import the app in more than one process.
+    # Mark the launched command after seeding so the inherited child process
+    # does not repeat the heavy demo build.
+    if os.environ.get("PPDB_SEEDED_ON_STARTUP") == "1":
+        print("[seed_db] Skipping startup seed; already seeded for this backend launch.")
+        return
+
+    seed_verbose = os.getenv("SEED_VERBOSE", "1").lower() not in {"0", "false", "no"}
+    seed_db(app, verbose=seed_verbose)
+    os.environ["PPDB_SEEDED_ON_STARTUP"] = "1"
 
 
 def _register_blueprints(app: Flask):
@@ -219,7 +241,8 @@ def init_db(app: Flask):
             "server/sql/triggers.sql"
         ])
         db.create_all()
-
+        db.session.remove()
+        db.engine.dispose()
 
         _seed_reference_tables()
 

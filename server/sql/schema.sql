@@ -2,6 +2,8 @@
 =====
 AVAILABILITY
 =====
+ Player availability is stored as concrete datetime ranges plus weekday and
+ time fields used by weekly match generation.
 */
 
 CREATE TABLE IF NOT EXISTS availability_block (
@@ -35,6 +37,8 @@ CREATE TABLE IF NOT EXISTS availability_block (
  =====
  LADDERS
  =====
+ Ladders belong to clubs and connect teams, sport type, ruleset, and rating
+ function for ranking.
  */
 CREATE TABLE IF NOT EXISTS ladder (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
@@ -43,11 +47,8 @@ CREATE TABLE IF NOT EXISTS ladder (
     description VARCHAR(1024),
     sport_type_id BIGINT,
     ruleset_id BIGINT,
-    -- FIX: was NOT NULL with ON DELETE SET NULL — contradiction; made nullable.
     ladder_rating_function_id BIGINT,
 
-    -- FIX: was ON DELETE CASCADE — deleting a sport_type destroyed all ladders.
-    --      Changed to SET NULL because sport_type_id is already nullable.
     CONSTRAINT fk_ladder_sport_type_id
         FOREIGN KEY (sport_type_id)
         REFERENCES sport_type(id)
@@ -128,7 +129,7 @@ CREATE TABLE IF NOT EXISTS team_club_join_request (
         PRIMARY KEY (id)
 );
 
--- A club can have only one open invitation for the same independent team.
+-- A club can have one pending invitation for the same independent team.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_team_club_join_request_pending
     ON team_club_join_request (club_id, team_id)
     WHERE status = 'pending';

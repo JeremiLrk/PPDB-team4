@@ -2,6 +2,8 @@
  =====
  CLUBS
  =====
+ Clubs group teams, owners, and players. Permission flags live on join tables
+ so access can vary per club or team.
  */
 
 CREATE TABLE IF NOT EXISTS club (
@@ -93,9 +95,9 @@ CREATE TABLE IF NOT EXISTS team (
     name VARCHAR(64) NOT NULL,
     sport_type_id BIGINT,
 
-    -- FIX: UNIQUE(club_id, name) silently allows duplicate names when club_id IS NULL
-    --      because PostgreSQL does not consider NULL = NULL in UNIQUE constraints.
-    --      The partial index below covers the NULL case separately.
+    -- Team names are unique within a club. Club-less teams are covered by
+    -- the partial unique index below because PostgreSQL treats NULL values
+    -- as distinct in regular unique constraints.
     UNIQUE (club_id, name),
 
     CONSTRAINT fk_team_club
@@ -111,7 +113,7 @@ CREATE TABLE IF NOT EXISTS team (
     CONSTRAINT pk_team
         PRIMARY KEY (id)
 );
--- Prevents duplicate team names among club-less (independent) teams.
+-- Team names are also unique for independent teams without a club.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_team_name_no_club
     ON team (name)
     WHERE club_id IS NULL;
@@ -181,8 +183,8 @@ CREATE TABLE IF NOT EXISTS team_join_request (
         PRIMARY KEY (id)
 );
 
--- Only one pending request allowed per (team_id, user_id) pair at a time.
--- Rejected/accepted requests do not block new pending ones.
+-- A user can have one pending join request per team. Completed requests do
+-- not block a later request.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_team_join_request_pending
     ON team_join_request (team_id, user_id)
     WHERE status = 'pending';
