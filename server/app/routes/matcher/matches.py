@@ -442,3 +442,64 @@ def cancel_match(account: Account, match_id: int) -> tuple[Response, int]:
         "message": "Match cancelled.",
         "match":   proposal.to_dict_full(),
     }), 200
+
+# ===========================================================================
+# GET /api/matches/<id>/percentages
+# ===========================================================================
+
+@matches_core_bp.route("/<int:match_id>/percentages", methods=["GET"])
+def get_match_percentages(match_id: int) -> tuple[Response, int]:
+    """
+    Get the win/draw/loss percentages for a match proposal.
+
+    Preconditions:
+        - match_id must correspond to an existing match proposal in the database.
+
+    Args:
+        match_id (int): The ID of the match proposal for which to retrieve percentages.
+
+    Returns:
+        a JSON response containing the win percentages for the match proposal, along with a 200 status code.
+    """
+    proposal = get_proposal_or_404(match_id)
+
+    if proposal.status_id != MatchStatus.ACCEPTED:
+        abort(409, description=f"Match is not in 'accepted' state (current: {proposal.status.name}).")
+
+    percentages = calculate_percentages(proposal)
+
+    return jsonify({
+        "team1WinPercentage": percentages["team1_win_percentage"],
+        "team2WinPercentage": percentages["team2_win_percentage"],
+    }), 200
+
+
+def calculate_percentages(proposal: MatchProposal) -> dict[str, float]:
+    """ Helper to calculate win percentages for a match proposal. """
+    team1 = get_team_or_404(proposal.team1_id)
+    team2 = get_team_or_404(proposal.team2_id)
+    
+    ladder_id = proposal.ladder_id
+    ladder = Ladder.query.get(ladder_id) if ladder_id else None
+    if not ladder:
+        return {"team1_win_percentage": 0.0, "team2_win_percentage": 0.0}
+
+    team_ladder1 = LadderTeam.query.filter_by(ladder_id=ladder.id, team_id=team1.id).first()
+    team_ladder2 = LadderTeam.query.filter_by(ladder_id=ladder.id, team_id=team2.id).first()
+    if not team_ladder1 or not team_ladder2:
+        return {"team1_win_percentage": 0.0, "team2_win_percentage": 0.0}
+    
+    team1_rating = team_ladder1.rating
+    team2_rating = team_ladder2.rating
+
+    total = team1_rating + team2_rating
+    if total == 0:
+        return {"team1_win_percentage": 0.0, "team2_win_percentage": 0.0}
+
+    team1_win_percentage = (team1_rating / total) * 100
+    team2_win_percentage = (team2_rating / total) * 100
+
+    return {
+        "team1_win_percentage": round(team1_win_percentage, 2),
+        "team2_win_percentage": round(team2_win_percentage, 2),
+    }
