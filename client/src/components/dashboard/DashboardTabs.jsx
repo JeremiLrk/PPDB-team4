@@ -9,6 +9,7 @@ import dashStyles from "@/style/ClubSettings.module.css";
 import {statusClass, statusLabel} from "@/components/dashboard/dashboardUtils.js";
 import { GENDER_SELECT_OPTIONS, GENDER_VALUES } from "@/constants/genderOptions.js";
 import CityAutocompleteField from "@/components/common/CityAutocompleteField.jsx";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 const GENDER_TEXT_KEYS = {
     male: "gender_male",
@@ -1153,6 +1154,9 @@ export function AvailabilityTab({
     texts,
     lang = "en",
 }) {
+    const { theme } = useThemeContext();
+    const isLight = theme === "light";
+
     return (
         <section className={`${styles.availabilityLayout} ${styles.contentFade}`}>
             <article className={styles.panel}>
@@ -1259,10 +1263,16 @@ export function AvailabilityTab({
                             {availabilityBlocks.map((block) => (
                                 <li className={styles.availabilityCard} key={block.id}>
                                     <div>
-                                        <p className={styles.primaryText}>
+                                        <p
+                                            className={styles.primaryText}
+                                            style={isLight ? { color: "#020617", WebkitTextFillColor: "#020617" } : undefined}
+                                        >
                                             {formatWeeklyAvailability(block, lang)}
                                         </p>
-                                        <p className={styles.secondaryText}>
+                                        <p
+                                            className={styles.secondaryText}
+                                            style={isLight ? { color: "#475569", WebkitTextFillColor: "#475569" } : undefined}
+                                        >
                                             {texts?.availability_block_detail || defaultText(lang, "Weekly recurring block", "Wekelijks terugkerend blok")}
                                         </p>
                                     </div>
@@ -1296,8 +1306,16 @@ export function AvailabilityTab({
                             {upcomingMatches.map((match) => (
                                 <li className={styles.availabilityCard} key={match.id}>
                                     <div>
-                                        <p className={styles.primaryText}>{formatMatchTitle(match, texts, lang)}</p>
-                                        <p className={styles.secondaryText}>
+                                        <p
+                                            className={styles.primaryText}
+                                            style={isLight ? { color: "#020617", WebkitTextFillColor: "#020617" } : undefined}
+                                        >
+                                            {formatMatchTitle(match, texts, lang)}
+                                        </p>
+                                        <p
+                                            className={styles.secondaryText}
+                                            style={isLight ? { color: "#475569", WebkitTextFillColor: "#475569" } : undefined}
+                                        >
                                             {formatUpcomingMatchDate(match, texts, lang)}
                                         </p>
                                     </div>

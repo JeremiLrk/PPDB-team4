@@ -209,6 +209,7 @@ export default function CreateMatchButton({ managedTeams = [], onCreated, theme 
                                 <PeerCard
                                     key={peer.id}
                                     peer={peer}
+                                    theme={theme}
                                     selected={String(selectedPeerId) === String(peer.id)}
                                     onSelect={() => setSelectedPeerId(peer.id)}
                                     selectLabel={t("create_match_select_btn", "Select")}
@@ -247,7 +248,7 @@ function LoadingRow({ label }) {
  * Single opponent card rendered in the step-2 list.
  * Shows the team name, club, rank, and rating with a toggle-select button.
  */
-function PeerCard({ peer, selected, onSelect, selectLabel, selectedLabel }) {
+function PeerCard({ peer, theme, selected, onSelect, selectLabel, selectedLabel }) {
     /*
      Renders one selectable opponent row inside the final wizard step.
     */
@@ -259,7 +260,8 @@ function PeerCard({ peer, selected, onSelect, selectLabel, selectedLabel }) {
                         margin: 0,
                         fontWeight: 600,
                         fontSize: "0.9rem",
-                        color: "#f1f5f9",
+                        color: theme === "light" ? "#0f172a" : "#f1f5f9",
+                        WebkitTextFillColor: theme === "light" ? "#0f172a" : "#f1f5f9",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
@@ -267,7 +269,14 @@ function PeerCard({ peer, selected, onSelect, selectLabel, selectedLabel }) {
                 >
                     {peer.name}
                 </p>
-                <p style={{ margin: 0, fontSize: "0.78rem", color: "#94a3b8" }}>
+                <p
+                    style={{
+                        margin: 0,
+                        fontSize: "0.78rem",
+                        color: theme === "light" ? "#475569" : "#94a3b8",
+                        WebkitTextFillColor: theme === "light" ? "#475569" : "#94a3b8",
+                    }}
+                >
                     {[
                         peer.clubName,
                         peer.rank   != null ? `#${peer.rank}`   : null,

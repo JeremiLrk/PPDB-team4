@@ -10,6 +10,7 @@ import { MemoryRouter } from "react-router-dom";
 import Dashboard from "../src/pages/Dashboard.jsx";
 import { LangContext } from "../src/context/useLangContext.jsx";
 import CurrentUserContext from "../src/context/useCurrentUserContext.jsx";
+import { ThemeContext } from "../src/context/useThemeContext.jsx";
 
 const dashboardTextsState = vi.hoisted(() => ({
     dashboard: {
@@ -111,6 +112,7 @@ function setupDashboardFetch({
     clubs,
     sportTypes,
     availability,
+    myTeams,
     me,
     joinRequests,
     clubInvitations,
@@ -131,6 +133,11 @@ function setupDashboardFetch({
             clubs || [
                 { id: 1, name: "NetRank Club", description: "Mock club", sport: "Padel", city: "Antwerp" },
                 { id: 2, name: "Rally Rockets", description: "Another club", sport: "Padel", city: "Ghent" },
+            ],
+        ),
+        myTeams: clone(
+            myTeams || [
+                { id: 11, name: "NetRank Aces", clubName: "NetRank Club" },
             ],
         ),
         sportTypes: clone(sportTypes || [{ id: 4, name: "Padel" }]),
@@ -246,6 +253,15 @@ function setupDashboardFetch({
             return jsonResponse({ total: 0, from: 0, to: 0, teams: [] });
         }
 
+        if (path === "/api/teams/my" && method === "GET") {
+            return jsonResponse({
+                total: state.myTeams.length,
+                from: 0,
+                to: state.myTeams.length,
+                teams: clone(state.myTeams),
+            });
+        }
+
         if (path === "/api/club/join-request" && method === "GET") {
             return jsonResponse(
                 { requests: state.joinRequests },
@@ -312,7 +328,7 @@ function setupDashboardFetch({
     return state;
 }
 
-function renderDashboard({ lang = "en", currentUser = null, route = "/dashboard" } = {}) {
+function renderDashboard({ lang = "en", currentUser = null, route = "/dashboard", theme = "dark" } = {}) {
     const onCurrentUserChange = vi.fn();
 
     function Harness() {
@@ -350,18 +366,20 @@ function renderDashboard({ lang = "en", currentUser = null, route = "/dashboard"
 
         return (
             <MemoryRouter initialEntries={[route]}>
-                <LangContext.Provider value={{ lang, setLang: () => {} }}>
-                    <CurrentUserContext.Provider
-                        value={{
-                            currentUser: user,
-                            setCurrentUser: updateUser,
-                            loadingUser: false,
-                            reloadCurrentUser,
-                        }}
-                    >
-                        <Dashboard />
-                    </CurrentUserContext.Provider>
-                </LangContext.Provider>
+                <ThemeContext.Provider value={{ theme, toggleTheme: () => {} }}>
+                    <LangContext.Provider value={{ lang, setLang: () => {} }}>
+                        <CurrentUserContext.Provider
+                            value={{
+                                currentUser: user,
+                                setCurrentUser: updateUser,
+                                loadingUser: false,
+                                reloadCurrentUser,
+                            }}
+                        >
+                            <Dashboard />
+                        </CurrentUserContext.Provider>
+                    </LangContext.Provider>
+                </ThemeContext.Provider>
             </MemoryRouter>
         );
     }
@@ -376,6 +394,33 @@ beforeEach(() => {
 // End-to-end or flow coverage for the main user journey in this file.
 
 describe("Dashboard frontend flows", () => {
+    // Verifies the matches tab opens the new-match panel with light theme tokens.
+    test("matches tab new match panel uses light theme variables", async () => {
+        const user = userEvent.setup();
+
+        renderDashboard({
+            route: "/dashboard?tab=matches",
+            theme: "light",
+            currentUser: {
+                id: 7,
+                role: "administrator",
+                roles: ["administrator"],
+                managedTeamIds: [11],
+                clubIds: [1],
+                playerTeamIds: [11],
+            },
+        });
+
+        const openButton = await screen.findByRole("button", { name: "New Match" });
+        await user.click(openButton);
+
+        const dialog = await screen.findByRole("dialog", { name: "Create a new match proposal" });
+        expect(dialog).toHaveStyle({
+            "--text-primary": "#0f172a",
+            "--action-text": "#0f172a",
+        });
+    });
+
     // Verifies the availability tab can create and remove a recurring block.
     test("availability tab can add and delete a weekly block", async () => {
         const user = userEvent.setup();
@@ -494,12 +539,15 @@ describe("Dashboard frontend flows", () => {
         });
 
         const user = userEvent.setup();
-        renderDashboard();
+        renderDashboard({ theme: "light" });
 
         await screen.findByRole("button", { name: "Availability" });
         await user.click(screen.getByRole("button", { name: "Availability" }));
 
         expect(await screen.findByText("NetRank Aces vs Rally Rockets")).toBeInTheDocument();
+        expect(screen.getByText("NetRank Aces vs Rally Rockets")).toHaveStyle({
+            color: "#020617",
+        });
         expect(screen.getByText("Week of 2026-05-18")).toBeInTheDocument();
         expect(screen.queryByText("10:00")).not.toBeInTheDocument();
         expect(screen.queryByText("11:00")).not.toBeInTheDocument();

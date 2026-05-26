@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styles from "@/style/Home.module.css";
 import { useLangContext } from "@/context/useLangContext.jsx";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 import { useClubHomeSummary } from "@/hooks/useClubHomeSummary";
@@ -12,6 +13,8 @@ import { fetchMatchPercentages } from "@/hooks/useMatchPercentages.js"; // Impor
 // --- SUB-COMPONENT FOR UPCOMING MATCHES WITH PERCENTAGES ---
 function UpcomingMatchRow({ match, ladderLabel }) {
     const [percentages, setPercentages] = useState(null);
+    const { theme } = useThemeContext();
+    const isLight = theme === "light";
 
     useEffect(() => {
         let alive = true;
@@ -30,8 +33,18 @@ function UpcomingMatchRow({ match, ladderLabel }) {
         <article className={styles.matchCardExtended}>
             {/* Top Row: Team Names */}
             <div className={styles.matchTeams}>
-                <div className={styles.matchTeamLeft}>{match.team1Name}</div>
-                <div className={styles.matchTeamRight}>{match.team2Name}</div>
+                <div
+                    className={styles.matchTeamLeft}
+                    style={isLight ? { color: "#0f172a", WebkitTextFillColor: "#0f172a" } : undefined}
+                >
+                    {match.team1Name}
+                </div>
+                <div
+                    className={styles.matchTeamRight}
+                    style={isLight ? { color: "#0f172a", WebkitTextFillColor: "#0f172a" } : undefined}
+                >
+                    {match.team2Name}
+                </div>
             </div>
 
             {/* Middle Row: The Classic VS Line */}
@@ -62,7 +75,12 @@ function UpcomingMatchRow({ match, ladderLabel }) {
 
             {/* Footer Pill */}
             <div className={styles.matchMetaCenter}>
-                <span className={styles.matchLadderPill}>{match.ladderName || ladderLabel}</span>
+                <span
+                    className={styles.matchLadderPill}
+                    style={isLight ? { color: "#0369a1", WebkitTextFillColor: "#0369a1" } : undefined}
+                >
+                    {match.ladderName || ladderLabel}
+                </span>
             </div>
         </article>
     );
@@ -72,6 +90,7 @@ function ClubHome() {
     const { clubId } = useParams();
     const navigate = useNavigate();
     const { lang } = useLangContext();
+    const { theme } = useThemeContext();
     const { currentUser, loadingUser } = useCurrentUserContext();
     /*
      Owns the club-home summary state and the manager flag.
@@ -234,6 +253,7 @@ function ClubHome() {
                                         key={match.id} 
                                         match={match} 
                                         ladderLabel={clubHomeTexts.ladder_label || "Ladder"} 
+                                        theme={theme}
                                     />
                                 ))}
                                 {upcomingVisible < upcomingMatches.length && (

@@ -12,6 +12,7 @@ import { usePageTexts } from "@/hooks/common/usePageTexts.js";
 import { useCurrentUserContext } from "@/context/useCurrentUserContext.jsx";
 import { useTeams } from "@/hooks/teams/useTeams.js";
 import CreateMatchButton from "@/components/matches/CreateMatchButton.jsx";
+import { useThemeContext } from "@/context/useThemeContext.jsx";
 
 function toIdSet(values) {
     /*
@@ -88,6 +89,7 @@ export default function MatchProposalsTab() {
     const texts = usePageTexts("matches", lang);
     const dashboardTexts = usePageTexts("dashboard", lang);
     const { currentUser, loadingUser } = useCurrentUserContext();
+    const { theme } = useThemeContext();
     /*
      Owns the tab-local controls for archived view and inline scoring.
     */
@@ -223,6 +225,7 @@ export default function MatchProposalsTab() {
                         <CreateMatchButton
                             managedTeams={managedTeams}
                             onCreated={handleMatchCreated}
+                            theme={theme}
                         />
                     ) : null}
                 </div>
