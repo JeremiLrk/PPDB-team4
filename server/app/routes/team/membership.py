@@ -8,7 +8,7 @@ requests, permissions, and the ladder-size checks that protect those flows.
 from flask import Blueprint, request, jsonify, Response, abort
 from datetime import datetime, timezone
 
-from server.extensions import cache, db
+from server.extensions import db
 from server.app.decorators import login_required
 from server.app.models.account import Account
 from server.app.models.team import TeamManagerTeam
@@ -31,7 +31,6 @@ from ._permissions import (
     is_admin,
     is_owner_of_team_club,
 )
-from .requests import get_team_players, get_team_managers
 
 membership_bp = Blueprint("team_membership", __name__)
 
@@ -89,8 +88,6 @@ def add_manager_to_team(account: Account, team_id: int) -> tuple[Response, int]:
     db.session.add(assoc)
     db.session.commit()
 
-    cache.delete_memoized(get_team_managers, team_id)
-
     return jsonify({
         "message": "Manager added successfully.",
         "manager": target.team_manager.to_dict()
@@ -123,8 +120,6 @@ def remove_manager_from_team(account: Account, team_id: int, account_id: int):
 
     handle_team_after_last_manager_removed(team)
     db.session.commit()
-
-    cache.delete_memoized(get_team_managers, team_id)
 
     return jsonify({
         "message": "Manager removed successfully."
@@ -211,8 +206,6 @@ def add_player_to_team(account: Account, team_id: int):
     db.session.add(join_request)
     db.session.commit()
 
-    cache.delete_memoized(get_team_players, team_id)
-
     response_body = {
         "message": "Player join request created successfully.",
         "request": join_request.serialize(),
@@ -283,8 +276,6 @@ def remove_player_from_team(account: Account, team_id: int, account_id: int):
 
     db.session.delete(assoc)
     db.session.commit()
-
-    cache.delete_memoized(get_team_players, team_id)
 
     response_body = {
         "message": "Player removed successfully."

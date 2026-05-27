@@ -13,7 +13,7 @@ from server.app.routes.team._helpers import (
     ladders_violating_min_after_remove,
 )
 from server.app.routes.team._permissions import can_edit_players_or_403, get_permissions, can_edit_managers_or_403
-from server.extensions import cache, db
+from server.extensions import db
 
 requests_bp = Blueprint("team_requests", __name__)
 
@@ -32,7 +32,6 @@ def get_my_permissions(account: Account, team_id: int):
 
 
 @requests_bp.route("/<int:team_id>/players", methods=["GET"])
-@cache.memoize(timeout=300)
 def get_team_players(team_id: int):
     """GET /api/teams/<team_id>/players — list of team players."""
 
@@ -82,7 +81,6 @@ def get_team_members(team_id: int):
 
 @requests_bp.route("/<int:team_id>/players/search", methods=["GET"])
 @login_required
-@cache.memoize(timeout=90)
 def search_accounts_not_in_team(account: Account, team_id: int):
     """GET /api/teams/<team_id>/players/search?q=<string>."""
     team = get_team_or_404(team_id)
@@ -118,7 +116,6 @@ def search_accounts_not_in_team(account: Account, team_id: int):
 
 @requests_bp.route("/<int:team_id>/managers/search", methods=["GET"])
 @login_required
-@cache.memoize(timeout=90)
 def search_accounts_not_manager_of_team(account: Account, team_id: int):
     """GET /api/teams/<team_id>/managers/search?q=<string>.
 
@@ -150,7 +147,6 @@ def search_accounts_not_manager_of_team(account: Account, team_id: int):
 
 
 @requests_bp.route("/<int:team_id>/managers", methods=["GET"])
-@cache.memoize(timeout=300)
 def get_team_managers(team_id: int):
     """GET /api/teams/<team_id>/managers — a list of team managers with their rights."""
     team = get_team_or_404(team_id)

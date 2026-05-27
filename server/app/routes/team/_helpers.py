@@ -10,7 +10,7 @@ from typing import Any
 from flask import abort
 from sqlalchemy import func
 
-from server.extensions import db
+from server.extensions import db, cache
 from server.app.models.account import Account, AccountRole
 from server.app.models.sport_type import SportType
 from server.app.models.team import Team, TeamManagerTeam, TeamManager
@@ -318,6 +318,13 @@ def ladders_violating_min_after_remove(team_id: int) -> list[Ladder]:
         if min_players is not None and projected < min_players:
             violating.append(ladder)
     return violating
+
+def delete_teams_cache_keys():
+    """Gets raw redis client and deletes all cache keys for the team listing page"""
+    redis_client = getattr(cache.cache, "_write_client", getattr(cache.cache, "_client", None))
+    keys_to_delete = redis_client.keys("ppdb:/api/teams*")
+    if keys_to_delete:
+        redis_client.delete(*keys_to_delete)
 
 
 # Compatibility aliases for older imports and tests.
