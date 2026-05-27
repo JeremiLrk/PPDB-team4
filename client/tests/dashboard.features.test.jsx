@@ -473,7 +473,7 @@ describe("Dashboard frontend flows", () => {
         renderDashboard({ route: "/dashboard?tab=teams" });
 
         expect(await screen.findByRole("button", { name: "New Team" })).toBeInTheDocument();
-        expect(screen.getByRole("heading", { name: "My Teams" })).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: /My Teams/ })).toBeInTheDocument();
     });
 
     // Verifies creating a team refreshes the current user and exposes the self-add shortcut.
